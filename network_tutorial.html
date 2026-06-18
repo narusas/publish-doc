@@ -1,0 +1,2245 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>네트워크 인터랙티브 튜토리얼 — TCP/IP · 소켓 · 라우팅 · iptables</title>
+
+<!-- 코드 하이라이트 테마 (Prism tomorrow, 임베딩 · 외부 의존성 0) -->
+<style id="prism-theme">
+code[class*=language-],pre[class*=language-]{color:#ccc;background:0 0;font-family:Consolas,Monaco,'Andale Mono','Ubuntu Mono',monospace;font-size:1em;text-align:left;white-space:pre;word-spacing:normal;word-break:normal;word-wrap:normal;line-height:1.5;-moz-tab-size:4;-o-tab-size:4;tab-size:4;-webkit-hyphens:none;-moz-hyphens:none;-ms-hyphens:none;hyphens:none}pre[class*=language-]{padding:1em;margin:.5em 0;overflow:auto}:not(pre)>code[class*=language-],pre[class*=language-]{background:#2d2d2d}:not(pre)>code[class*=language-]{padding:.1em;border-radius:.3em;white-space:normal}.token.block-comment,.token.cdata,.token.comment,.token.doctype,.token.prolog{color:#999}.token.punctuation{color:#ccc}.token.attr-name,.token.deleted,.token.namespace,.token.tag{color:#e2777a}.token.function-name{color:#6196cc}.token.boolean,.token.function,.token.number{color:#f08d49}.token.class-name,.token.constant,.token.property,.token.symbol{color:#f8c555}.token.atrule,.token.builtin,.token.important,.token.keyword,.token.selector{color:#cc99cd}.token.attr-value,.token.char,.token.regex,.token.string,.token.variable{color:#7ec699}.token.entity,.token.operator,.token.url{color:#67cdcc}.token.bold,.token.important{font-weight:700}.token.italic{font-style:italic}.token.entity{cursor:help}.token.inserted{color:green}
+</style>
+
+<style>
+/* ============================================================
+   디자인 시스템
+   ============================================================ */
+:root{
+  --bg:        #0b0f17;
+  --bg-soft:   #111726;
+  --panel:     #161d2e;
+  --panel-2:   #1c2435;
+  --border:    #283149;
+  --border-2:  #364263;
+  --text:      #e6ecf5;
+  --text-dim:  #9aa7bd;
+  --text-mut:  #6b7894;
+
+  --accent:    #38bdf8;   /* 메인(시안) */
+  --accent-2:  #818cf8;   /* 보조(인디고) */
+  --client:    #38bdf8;   /* 클라이언트 = 파랑 */
+  --server:    #34d399;   /* 서버 = 초록 */
+  --router:    #fbbf24;   /* 라우터 = 황색 */
+  --ok:        #34d399;
+  --warn:      #fbbf24;
+  --bad:       #f87171;
+  --purple:    #c084fc;
+
+  --radius:    14px;
+  --radius-sm: 9px;
+  --shadow:    0 10px 30px rgba(0,0,0,.35);
+  --mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  --sans: "Pretendard Variable", "Pretendard", -apple-system, BlinkMacSystemFont, system-ui, "Apple SD Gothic Neo", "Malgun Gothic", "Noto Sans KR", sans-serif;
+}
+
+*{box-sizing:border-box}
+html{scroll-behavior:smooth; scroll-padding-top:24px}
+body{
+  margin:0; background:var(--bg); color:var(--text);
+  font-family:var(--sans); line-height:1.7;
+  -webkit-font-smoothing:antialiased;
+  font-size:16px;
+}
+body::before{ /* 은은한 배경 그라데이션 */
+  content:""; position:fixed; inset:0; z-index:-1; pointer-events:none;
+  background:
+    radial-gradient(900px 500px at 12% -5%, rgba(56,189,248,.10), transparent 60%),
+    radial-gradient(800px 500px at 100% 0%, rgba(129,140,248,.10), transparent 55%);
+}
+
+/* ============================================================
+   레이아웃: 사이드바 + 본문
+   ============================================================ */
+.layout{display:flex; min-height:100vh}
+#sidebar{
+  width:288px; flex:0 0 288px; position:sticky; top:0; height:100vh;
+  background:linear-gradient(180deg,var(--bg-soft),var(--bg));
+  border-right:1px solid var(--border);
+  display:flex; flex-direction:column; z-index:50;
+}
+.brand{padding:22px 22px 14px}
+.brand h1{font-size:16px; margin:0; letter-spacing:-.2px; line-height:1.4}
+.brand .sub{font-size:12px; color:var(--text-mut); margin-top:4px}
+.brand .logo{
+  display:inline-flex; gap:7px; align-items:center; margin-bottom:10px;
+  font-weight:800; color:var(--accent); font-size:13px; letter-spacing:.5px;
+}
+.brand .logo .dot{width:9px;height:9px;border-radius:50%;background:var(--accent);box-shadow:0 0 10px var(--accent)}
+
+.progress-wrap{padding:0 22px 14px}
+.progress-line{display:flex; justify-content:space-between; font-size:11px; color:var(--text-mut); margin-bottom:6px}
+.progress-bar{height:7px; border-radius:99px; background:var(--panel-2); overflow:hidden}
+.progress-bar > i{
+  display:block; height:100%; width:0%;
+  background:linear-gradient(90deg,var(--accent),var(--accent-2));
+  border-radius:99px; transition:width .5s cubic-bezier(.2,.8,.2,1);
+}
+
+#toc{flex:1; overflow-y:auto; padding:6px 12px 18px}
+#toc a{
+  display:flex; align-items:center; gap:10px; padding:9px 12px; border-radius:10px;
+  color:var(--text-dim); text-decoration:none; font-size:13.5px; font-weight:500;
+  transition:background .15s,color .15s; position:relative;
+}
+#toc a .num{
+  flex:0 0 22px; width:22px; height:22px; border-radius:7px; display:grid; place-items:center;
+  font-size:11px; font-family:var(--mono); background:var(--panel-2); color:var(--text-mut);
+  border:1px solid var(--border);
+}
+#toc a:hover{background:var(--panel); color:var(--text)}
+#toc a.active{background:var(--panel-2); color:#fff}
+#toc a.active .num{background:var(--accent); color:#06121c; border-color:var(--accent)}
+#toc a.done .num::after{content:"✓"; }
+#toc a.done .num{color:var(--ok)}
+
+.side-tools{padding:14px 16px; border-top:1px solid var(--border); display:flex; gap:8px; flex-wrap:wrap}
+.side-tools button{flex:1}
+
+#content{flex:1; min-width:0; max-width:1000px; margin:0 auto; padding:40px 48px 120px}
+
+/* ============================================================
+   타이포 / 공통 컴포넌트
+   ============================================================ */
+section{scroll-margin-top:20px; padding-top:26px; margin-bottom:18px}
+section > .sec-head{margin-bottom:18px}
+.kicker{
+  display:inline-flex; align-items:center; gap:7px; font-family:var(--mono); font-size:12px;
+  color:var(--accent); letter-spacing:1px; text-transform:uppercase; margin-bottom:10px;
+  padding:4px 10px; border:1px solid var(--border-2); border-radius:99px; background:var(--panel);
+}
+h2.sec-title{font-size:30px; line-height:1.25; margin:0 0 8px; letter-spacing:-.5px}
+h3{font-size:20px; margin:34px 0 10px; letter-spacing:-.3px}
+h4{font-size:16px; margin:22px 0 8px; color:var(--text)}
+p{color:var(--text-dim); margin:12px 0}
+.lead{font-size:17.5px; color:var(--text); line-height:1.75}
+strong{color:#fff; font-weight:700}
+ul,ol{color:var(--text-dim); padding-left:22px}
+li{margin:7px 0}
+a.link{color:var(--accent); text-decoration:none; border-bottom:1px dashed var(--border-2)}
+hr{border:none; border-top:1px solid var(--border); margin:34px 0}
+
+/* 카드 / 패널 */
+.card{
+  background:var(--panel); border:1px solid var(--border); border-radius:var(--radius);
+  padding:22px; margin:18px 0; box-shadow:var(--shadow);
+}
+.card.tight{padding:16px}
+.grid2{display:grid; grid-template-columns:1fr 1fr; gap:16px}
+@media(max-width:720px){.grid2{grid-template-columns:1fr}}
+
+/* 콜아웃 박스 */
+.callout{border-radius:var(--radius-sm); padding:14px 16px 14px 18px; margin:16px 0; border:1px solid var(--border); background:var(--panel); position:relative}
+.callout::before{content:""; position:absolute; left:0; top:0; bottom:0; width:4px; border-radius:4px 0 0 4px}
+.callout h4{margin:0 0 4px; font-size:14px; display:flex; align-items:center; gap:8px}
+.callout p{margin:4px 0 0; font-size:14.5px}
+.callout.why::before{background:var(--accent)}
+.callout.tip::before{background:var(--ok)}
+.callout.warn::before{background:var(--warn)}
+.callout.key::before{background:var(--purple)}
+.callout .tag{font-size:11px; font-family:var(--mono)}
+
+/* 용어 인라인 (툴팁) */
+.term{
+  color:#cfe9fb; border-bottom:1.5px dotted var(--accent); cursor:help;
+  font-weight:500; text-underline-offset:3px; white-space:nowrap;
+}
+#tooltip{
+  position:fixed; z-index:999; max-width:320px; pointer-events:none;
+  background:#0a1422; color:var(--text); border:1px solid var(--border-2);
+  border-radius:10px; padding:11px 13px; font-size:13.5px; line-height:1.6;
+  box-shadow:0 12px 30px rgba(0,0,0,.5); opacity:0; transform:translateY(6px);
+  transition:opacity .14s, transform .14s;
+}
+#tooltip.show{opacity:1; transform:translateY(0)}
+#tooltip b{color:var(--accent)}
+
+/* 코드 블록 */
+pre[class*="language-"]{
+  border-radius:12px !important; border:1px solid var(--border); margin:16px 0 !important;
+  font-size:13px; box-shadow:var(--shadow);
+}
+code:not([class*="language-"]){
+  font-family:var(--mono); font-size:.86em; background:var(--panel-2);
+  border:1px solid var(--border); border-radius:6px; padding:1px 6px; color:#ffd9a8;
+}
+pre .hl-line{display:block; background:rgba(56,189,248,.14); box-shadow:inset 3px 0 0 var(--accent); margin:0 -1em; padding:0 1em}
+
+/* 버튼 */
+button{
+  font-family:var(--sans); font-size:13.5px; font-weight:600; cursor:pointer;
+  background:var(--panel-2); color:var(--text); border:1px solid var(--border-2);
+  border-radius:9px; padding:9px 15px; transition:all .15s; line-height:1;
+}
+button:hover{border-color:var(--accent); color:#fff; transform:translateY(-1px)}
+button:active{transform:translateY(0)}
+button:disabled{opacity:.4; cursor:not-allowed; transform:none}
+button.primary{background:linear-gradient(90deg,var(--accent),var(--accent-2)); color:#06121c; border:none}
+button.ghost{background:transparent}
+button.sm{padding:6px 11px; font-size:12.5px}
+.btn-row{display:flex; gap:9px; flex-wrap:wrap; align-items:center; margin:14px 0}
+.btn-row .spacer{flex:1}
+.step-label{font-family:var(--mono); font-size:12px; color:var(--text-mut)}
+
+/* 데모(인터랙션) 무대 공통 */
+.demo{
+  background:linear-gradient(180deg,var(--bg-soft),var(--panel));
+  border:1px solid var(--border-2); border-radius:var(--radius);
+  padding:20px; margin:20px 0; position:relative; overflow:hidden;
+}
+.demo .demo-tag{
+  position:absolute; top:12px; right:14px; font-family:var(--mono); font-size:10.5px;
+  color:var(--text-mut); letter-spacing:1px; text-transform:uppercase;
+  border:1px solid var(--border); padding:3px 8px; border-radius:6px; background:var(--bg)
+}
+
+/* 노드(호스트/라우터/서버) 박스 */
+.node{
+  border-radius:12px; border:1px solid var(--border-2); background:var(--panel);
+  padding:12px 14px; text-align:center; min-width:120px;
+}
+.node .role{font-size:11px; font-family:var(--mono); color:var(--text-mut); text-transform:uppercase; letter-spacing:1px}
+.node .name{font-weight:700; margin:3px 0 1px}
+.node .ip{font-family:var(--mono); font-size:12.5px; color:var(--accent)}
+.node.client{border-color:rgba(56,189,248,.5); box-shadow:0 0 0 1px rgba(56,189,248,.12) inset}
+.node.server{border-color:rgba(52,211,153,.5); box-shadow:0 0 0 1px rgba(52,211,153,.12) inset}
+.node.router{border-color:rgba(251,191,36,.5); box-shadow:0 0 0 1px rgba(251,191,36,.12) inset}
+
+/* 바이트 스트림 (캡슐화) */
+.byte-panel{margin-top:14px; border-top:1px dashed var(--border); padding-top:14px}
+.byte-head{font-size:13px; color:var(--text-dim); margin-bottom:9px}
+.byte-head b{color:var(--text)}
+.byte-dump{font-family:var(--mono); font-size:12px; line-height:2.1; display:flex; flex-wrap:wrap; gap:4px 4px; align-items:center;
+  background:var(--bg); border:1px solid var(--border); border-radius:10px; padding:13px}
+.byte-dump .hx{padding:2px 4px; border-radius:4px; border:1px solid transparent}
+.rlabel{font-family:var(--sans); font-size:10px; font-weight:800; padding:3px 8px; border-radius:6px; margin:0 3px 0 6px; white-space:nowrap; letter-spacing:.3px}
+.rlabel:first-child{margin-left:0}
+.hx.data{color:#9bdcf7; background:rgba(56,189,248,.10); border-color:rgba(56,189,248,.28)}
+.hx.tcp{color:#7eecbb; background:rgba(52,211,153,.10); border-color:rgba(52,211,153,.28)}
+.hx.ip{color:#fcd667; background:rgba(251,191,36,.10); border-color:rgba(251,191,36,.28)}
+.hx.eth{color:#dcb6fe; background:rgba(192,132,252,.10); border-color:rgba(192,132,252,.28)}
+.hx.fcs{color:var(--text-mut); background:rgba(255,255,255,.03); border-color:var(--border)}
+.rlabel.data{background:rgba(56,189,248,.18); color:#bfe8fb}
+.rlabel.tcp{background:rgba(52,211,153,.18); color:#aef0d2}
+.rlabel.ip{background:rgba(251,191,36,.18); color:#fde6a8}
+.rlabel.eth{background:rgba(192,132,252,.18); color:#ecd9ff}
+.rlabel.fcs{background:var(--panel-2); color:var(--text-mut)}
+.byte-notes{margin-top:11px; display:flex; flex-direction:column; gap:6px}
+.bfield{font-size:12.5px; color:var(--text-dim); display:flex; align-items:baseline; gap:4px; flex-wrap:wrap}
+.bfield .fv{font-family:var(--mono); font-size:12px}
+
+/* 서브넷 판단 */
+.sn-grid{background:var(--bg); border:1px solid var(--border); border-radius:10px; padding:12px 14px; overflow-x:auto}
+.sn-iprow{display:flex; align-items:center; gap:12px; white-space:nowrap; padding:4px 0}
+.sn-lab{font-family:var(--sans); font-size:12px; font-weight:700; flex:0 0 46px}
+.sn-ip{font-family:var(--mono); font-size:12.5px; flex:0 0 116px; color:var(--text)}
+.sn-bin{font-family:var(--mono); font-size:12px; letter-spacing:.4px}
+.sn-bin .oct{margin:0 1px}
+.sn-bin .dot{color:var(--text-mut); margin:0 4px}
+.bit{padding:0 .5px}
+.bit.net{color:#7eecbb; background:rgba(52,211,153,.16); border-radius:2px}
+.bit.host{color:var(--text-mut)}
+.net-underline{color:var(--ok); font-weight:700}
+.sn-cmp{display:flex; flex-wrap:wrap; gap:10px 22px; font-family:var(--mono); font-size:13px; margin:14px 0; padding:0 2px}
+.sn-diagram{display:flex; align-items:center; gap:9px; flex-wrap:wrap; margin-top:12px; font-size:12px}
+.sn-arrow{font-family:var(--mono); font-size:11.5px; font-weight:700}
+.sn-arrow.ok{color:var(--ok)} .sn-arrow.warn{color:var(--warn)}
+
+/* 핸드셰이크 무대 */
+.hs-stage{display:grid; grid-template-columns:140px 1fr 140px; align-items:start; gap:10px; padding:10px 0 4px}
+.hs-node{text-align:center}
+.hs-state{margin-top:10px; font-family:var(--mono); font-size:12px; padding:5px 8px; border-radius:7px; background:var(--bg); border:1px solid var(--border-2); transition:all .25s}
+.hs-state.est{color:var(--ok); border-color:var(--ok); background:rgba(52,211,153,.12)}
+.hs-state.mid{color:var(--warn); border-color:var(--warn)}
+.hs-wire{position:relative; height:96px; margin-top:24px;
+  background:linear-gradient(var(--border),var(--border)) center/100% 2px no-repeat}
+.hs-packet{position:absolute; top:50%; left:6%; transform:translate(-50%,-50%) scale(.6);
+  font-family:var(--mono); font-size:11px; font-weight:700; padding:7px 11px; border-radius:8px;
+  white-space:nowrap; opacity:0; pointer-events:none;
+  background:var(--panel); border:1.5px solid var(--accent); color:var(--accent);
+  box-shadow:0 6px 18px rgba(0,0,0,.4); transition:left .7s cubic-bezier(.4,0,.2,1), opacity .25s, transform .25s;}
+.hs-packet.show{opacity:1; transform:translate(-50%,-50%) scale(1)}
+.hs-packet.syn{border-color:var(--client); color:var(--client)}
+.hs-packet.synack{border-color:var(--router); color:var(--router)}
+.hs-packet.ack{border-color:var(--ok); color:var(--ok)}
+
+/* 세그먼트 칩 */
+.seg-chip{display:flex; align-items:center; gap:9px; padding:8px 11px; border-radius:9px;
+  border:1px solid var(--border-2); background:var(--panel); font-size:13px; transition:all .3s}
+.seg-chip .seq{font-family:var(--mono); font-size:10.5px; color:var(--accent); background:var(--bg); border:1px solid var(--border); border-radius:5px; padding:2px 6px; white-space:nowrap}
+.seg-chip .pay{flex:1; font-family:var(--mono); font-size:12.5px; color:var(--text); overflow-wrap:anywhere}
+.seg-chip.fly{opacity:0; transform:translateX(20px)}
+
+@media(max-width:720px){
+  .layer-layout,.tuple-layout,.seg-grid{grid-template-columns:1fr !important}
+  .hs-stage{grid-template-columns:90px 1fr 90px}
+}
+
+/* 상태 배지 */
+.badge{font-family:var(--mono); font-size:11px; padding:3px 8px; border-radius:6px; border:1px solid var(--border-2); background:var(--bg)}
+.badge.ok{color:var(--ok); border-color:rgba(52,211,153,.4)}
+.badge.bad{color:var(--bad); border-color:rgba(248,113,113,.4)}
+.badge.warn{color:var(--warn); border-color:rgba(251,191,36,.4)}
+.badge.cli{color:var(--client); border-color:rgba(56,189,248,.4)}
+
+/* 퀴즈 */
+.quiz{border:1px solid var(--border-2); border-radius:var(--radius); padding:18px 20px; margin:22px 0; background:var(--panel)}
+.quiz .q-head{display:flex; align-items:center; gap:9px; font-size:12px; color:var(--accent); font-family:var(--mono); text-transform:uppercase; letter-spacing:1px; margin-bottom:8px}
+.quiz .q{font-weight:700; font-size:16px; color:#fff; margin:0 0 14px}
+.quiz .opt{
+  display:block; width:100%; text-align:left; margin:8px 0; padding:12px 14px;
+  background:var(--panel-2); border:1px solid var(--border); border-radius:10px; color:var(--text);
+  font-weight:500; transition:all .15s;
+}
+.quiz .opt:hover{border-color:var(--accent-2); transform:none; color:#fff}
+.quiz .opt .mk{font-family:var(--mono); color:var(--text-mut); margin-right:9px}
+.quiz .opt.correct{border-color:var(--ok); background:rgba(52,211,153,.13); color:#fff}
+.quiz .opt.correct .mk{color:var(--ok)}
+.quiz .opt.wrong{border-color:var(--bad); background:rgba(248,113,113,.12); color:#fff}
+.quiz .opt.wrong .mk{color:var(--bad)}
+.quiz .opt:disabled{cursor:default; opacity:1}
+.quiz .explain{display:none; margin-top:12px; padding:13px 15px; border-radius:10px; background:var(--bg); border:1px solid var(--border); font-size:14.5px; color:var(--text-dim)}
+.quiz .explain.show{display:block}
+.quiz .explain b{color:var(--ok)}
+
+/* 분석/테이블 */
+table.t{width:100%; border-collapse:collapse; margin:14px 0; font-size:14px}
+table.t th,table.t td{border:1px solid var(--border); padding:9px 12px; text-align:left}
+table.t th{background:var(--panel-2); color:var(--text); font-weight:600; font-size:12.5px}
+table.t td{color:var(--text-dim); font-family:var(--mono); font-size:12.5px}
+table.t tr.hit td{background:rgba(52,211,153,.12)}
+
+/* 터미널 시뮬레이터 */
+.terminal{background:#0a0e16; border:1px solid var(--border-2); border-radius:12px; overflow:hidden; box-shadow:var(--shadow); margin:16px 0}
+.term-screen{padding:16px; font-family:var(--mono); font-size:12.5px; line-height:1.55; max-height:380px; overflow-y:auto; color:#d6e2f0}
+.term-screen .cmd-echo{color:#7ee787}
+.term-screen .cmd-echo .pr{color:var(--accent)}
+.term-screen .out{white-space:pre-wrap; color:#c9d4e3; margin:2px 0 4px}
+.term-screen .note{color:var(--text-mut); border-left:2px solid var(--border-2); padding-left:9px; margin:4px 0 12px; font-family:var(--sans); font-size:12.5px}
+.term-screen .err{color:var(--bad)}
+.term-input-row{display:flex; align-items:center; gap:8px; padding:10px 16px; border-top:1px solid var(--border); background:#070b12}
+.term-prompt{color:var(--accent); font-family:var(--mono); font-size:12.5px; white-space:nowrap}
+#termInput{flex:1; background:transparent; border:none; outline:none; color:#d6e2f0; font-family:var(--mono); font-size:12.5px}
+
+/* 통합 흐름 타임라인 */
+.flow-step{display:flex; gap:14px; padding:12px 0; position:relative; opacity:.4; transition:opacity .3s}
+.flow-step.active{opacity:1}
+.flow-step.done{opacity:.75}
+.flow-step .fs-ic{flex:0 0 42px; height:42px; width:42px; border-radius:11px; display:grid; place-items:center; font-size:20px; border:1px solid var(--border-2); background:var(--panel); transition:all .3s}
+.flow-step.active .fs-ic{border-color:var(--accent); box-shadow:0 0 0 3px rgba(56,189,248,.18); transform:scale(1.08)}
+.flow-step.done .fs-ic{border-color:var(--ok)}
+.flow-step .fs-body .fs-t{font-weight:700; font-size:14.5px}
+.flow-step .fs-body .fs-d{font-size:12.5px; color:var(--text-mut)}
+.flow-step:not(:last-child)::before{content:""; position:absolute; left:21px; top:54px; bottom:-12px; width:2px; background:var(--border)}
+.flow-step.done:not(:last-child)::before{background:var(--ok)}
+
+/* 용어 사전 드로어 */
+#glossary{
+  position:fixed; top:0; right:0; height:100vh; width:380px; max-width:90vw; z-index:200;
+  background:var(--bg-soft); border-left:1px solid var(--border-2); box-shadow:-20px 0 50px rgba(0,0,0,.5);
+  transform:translateX(105%); transition:transform .3s cubic-bezier(.2,.8,.2,1);
+  display:flex; flex-direction:column;
+}
+#glossary.open{transform:translateX(0)}
+#glossary .g-head{padding:18px 20px; border-bottom:1px solid var(--border); display:flex; justify-content:space-between; align-items:center}
+#glossary .g-head h3{margin:0; font-size:17px}
+#glossary .g-body{overflow-y:auto; padding:8px 20px 30px}
+#glossary input{width:100%; margin:10px 0 6px; padding:10px 12px; border-radius:9px; background:var(--panel-2); border:1px solid var(--border); color:var(--text); font-family:var(--sans); font-size:14px}
+.g-item{padding:13px 0; border-bottom:1px solid var(--border)}
+.g-item .t{font-weight:700; color:var(--accent); font-size:14.5px}
+.g-item .d{font-size:13.5px; color:var(--text-dim); margin-top:3px}
+#scrim{position:fixed; inset:0; background:rgba(0,0,0,.5); z-index:150; opacity:0; pointer-events:none; transition:opacity .3s}
+#scrim.open{opacity:1; pointer-events:auto}
+
+/* 히어로 */
+.hero{padding:30px 0 6px}
+.hero h2.sec-title{font-size:38px; background:linear-gradient(90deg,#fff,#9fd6f5); -webkit-background-clip:text; background-clip:text; -webkit-text-fill-color:transparent}
+.hero .chips{display:flex; flex-wrap:wrap; gap:9px; margin:20px 0}
+.chip{font-size:13px; padding:7px 13px; border-radius:99px; border:1px solid var(--border-2); background:var(--panel); color:var(--text-dim)}
+.chip b{color:var(--accent)}
+.map-grid{display:grid; grid-template-columns:repeat(auto-fill,minmax(150px,1fr)); gap:12px; margin-top:16px}
+.map-card{padding:14px; border-radius:12px; border:1px solid var(--border); background:var(--panel); cursor:pointer; text-decoration:none; color:var(--text); transition:all .15s; display:block}
+.map-card:hover{border-color:var(--accent); transform:translateY(-2px)}
+.map-card .ic{font-size:22px}
+.map-card .tt{font-weight:700; margin-top:6px; font-size:14.5px}
+.map-card .dd{font-size:12.5px; color:var(--text-mut); margin-top:2px}
+
+/* 모바일 */
+.menu-btn{display:none}
+@media(max-width:980px){
+  #sidebar{position:fixed; left:0; top:0; transform:translateX(-105%); transition:transform .3s; box-shadow:var(--shadow)}
+  #sidebar.open{transform:translateX(0)}
+  #content{padding:64px 20px 100px}
+  .menu-btn{display:inline-flex; position:fixed; top:12px; left:12px; z-index:60}
+  h2.sec-title{font-size:25px}
+  .hero h2.sec-title{font-size:30px}
+}
+
+/* 작은 유틸 */
+.mono{font-family:var(--mono)}
+.dim{color:var(--text-mut)}
+.center{text-align:center}
+.flex{display:flex; gap:10px; align-items:center}
+.between{justify-content:space-between}
+.wrap{flex-wrap:wrap}
+.pill{font-family:var(--mono); font-size:12px; padding:2px 8px; border-radius:6px; background:var(--panel-2); border:1px solid var(--border)}
+</style>
+</head>
+<body>
+
+<button class="menu-btn" id="menuBtn" aria-label="메뉴">☰ 목차</button>
+
+<div class="layout">
+  <!-- ============ 사이드바 ============ -->
+  <aside id="sidebar">
+    <div class="brand">
+      <div class="logo"><span class="dot"></span> NET·DEEP·DIVE</div>
+      <h1>네트워크 인터랙티브 튜토리얼</h1>
+      <div class="sub">TCP/IP · 소켓 · 라우팅 · iptables</div>
+    </div>
+    <div class="progress-wrap">
+      <div class="progress-line"><span>학습 진행률</span><span id="progPct">0%</span></div>
+      <div class="progress-bar"><i id="progBar"></i></div>
+    </div>
+    <nav id="toc"><!-- 자동 생성 --></nav>
+    <div class="side-tools">
+      <button class="sm ghost" id="glossaryBtn">📖 용어 사전</button>
+      <button class="sm ghost" id="resetBtn" title="진행률 초기화">↺ 초기화</button>
+    </div>
+  </aside>
+
+  <!-- ============ 본문 ============ -->
+  <main id="content">
+
+    <!-- ===== HERO ===== -->
+    <section id="intro" data-title="개요" class="hero">
+      <div class="kicker">주니어 개발자를 위한 길잡이</div>
+      <h2 class="sec-title">패킷은 어떻게<br>목적지를 찾아갈까?</h2>
+      <p class="lead">
+        "<span class="term" data-t="포트">포트</span> 80으로 접속했는데 왜 소켓이 두 개일까?",
+        "긴 메시지는 어떻게 쪼개져서 가지?", "<span class="term" data-t="라우터">라우터</span>는 길을 어떻게 알까?",
+        "<span class="term" data-t="iptables">iptables</span>는 대체 뭘 막는 거지?"<br>
+        — 이런 질문이 한 번이라도 떠올랐다면 잘 찾아왔습니다.
+        용어 하나하나를 <strong>쉬운 말</strong>로 풀고, 직접 <strong>눌러보고 움직여보며</strong> 개념을 쌓아갑니다.
+      </p>
+
+      <div class="chips">
+        <span class="chip">🖱️ <b>클릭/애니메이션</b>으로 흐름 관찰</span>
+        <span class="chip">🧪 값을 바꾸면 <b>결과가 실시간</b>으로</span>
+        <span class="chip">💬 어려운 용어엔 <b>점선 밑줄</b> — 올려보세요</span>
+        <span class="chip">✅ 섹션마다 <b>체크포인트 퀴즈</b></span>
+      </div>
+
+      <div class="callout tip">
+        <h4>👋 사용법</h4>
+        <p>왼쪽 목차로 이동하고, 본문의 <span class="term" data-t="포트">점선 단어</span>에 마우스를 올리면 뜻이 떠요.
+        진행률과 퀴즈 결과는 브라우저에 자동 저장되니, 닫았다 열어도 이어서 학습할 수 있습니다.
+        순서대로 따라오면 마지막엔 "내 PC의 요청이 서버까지 가는 전체 여정"이 머릿속에 그려질 거예요.</p>
+      </div>
+
+      <h3>무엇을 배우나요?</h3>
+      <div class="map-grid">
+        <a class="map-card" href="#layers"><div class="ic">🧅</div><div class="tt">계층 & 캡슐화</div><div class="dd">데이터가 전선까지 내려가는 길</div></a>
+        <a class="map-card" href="#socket"><div class="ic">🔌</div><div class="tt">소켓 & 포트</div><div class="dd">왜 포트/소켓이 2개일까</div></a>
+        <a class="map-card" href="#tcp"><div class="ic">🤝</div><div class="tt">TCP 연결</div><div class="dd">3-way handshake · 분할 전송</div></a>
+        <a class="map-card" href="#routing"><div class="ic">🗺️</div><div class="tt">라우팅</div><div class="dd">패킷이 길을 찾는 법</div></a>
+        <a class="map-card" href="#iptables"><div class="ic">🧱</div><div class="tt">iptables</div><div class="dd">방화벽과 NAT의 정체</div></a>
+        <a class="map-card" href="#fullflow"><div class="ic">🌐</div><div class="tt">전체 여정</div><div class="dd">모든 조각을 하나로</div></a>
+      </div>
+
+      <div class="callout why" style="margin-top:22px">
+        <h4>🧭 먼저 큰 그림 — 한 문장 요약</h4>
+        <p><strong>앱</strong>이 만든 데이터를 <strong>소켓</strong>이 받아 <strong>TCP</strong>가 토막내 번호를 매기고,
+        <strong>IP</strong>가 주소를 붙여 <strong>라우터</strong>들을 거쳐 목적지로 보냅니다.
+        도착한 서버에서는 <strong>iptables</strong>가 통과/차단을 결정하고, 통과한 패킷은 다시 서버의 <strong>소켓</strong>으로 올라가 앱에 전달됩니다.
+        지금은 이 한 문장이 외계어처럼 보여도 괜찮아요. 아래로 내려가며 단어 하나씩 정복해 봅시다.</p>
+      </div>
+    </section>
+
+
+    <!-- ===== 섹션 1: 계층 & 캡슐화 ===== -->
+    <section id="layers" data-title="계층 & 캡슐화">
+      <div class="sec-head">
+        <div class="kicker">01 · 큰 그림</div>
+        <h2 class="sec-title">🧅 계층 모델과 캡슐화</h2>
+        <p class="lead">네트워크는 거대한 한 덩어리가 아니라, 책임이 다른 <strong>여러 층(layer)</strong>이 쌓인 구조입니다.
+        왜 굳이 층으로 나눴는지부터 이해하면 나머지가 전부 쉬워집니다.</p>
+      </div>
+
+      <h3>왜 "층"으로 나눌까?</h3>
+      <p>택배를 떠올려 봅시다. <strong>물건을 만드는 사람</strong>은 트럭이 어느 고속도로를 타는지 신경 쓸 필요가 없습니다.
+      그냥 상자에 담아 <strong>송장(주소)</strong>을 붙이면, 택배사가 알아서 분류하고 운송합니다.
+      네트워크도 똑같이 <strong>역할을 분리</strong>했습니다. 각 층은 "바로 아래 층"에게만 일을 맡기고, 내부 사정은 서로 묻지 않습니다(<span class="term" data-t="추상화">추상화</span>).</p>
+
+      <div class="callout why">
+        <h4>💡 왜 중요한가</h4>
+        <p>앱 개발자인 당신은 보통 <strong>맨 위 두 층(소켓·TCP)</strong>만 다룹니다.
+        하지만 "연결이 안 돼요", "느려요" 같은 문제는 아래 층(IP·라우팅·방화벽)에서 터지는 경우가 많아요.
+        그래서 전체 층을 한 번은 훑어둬야 디버깅할 때 어디를 봐야 할지 감이 옵니다.</p>
+      </div>
+
+      <h3>TCP/IP 4계층 — 클릭해서 살펴보기</h3>
+      <p>아래 층을 하나씩 눌러보세요. 각 층이 <strong>무슨 일을 하고, 어떤 주소/단위를 쓰는지</strong> 오른쪽에 나타납니다.</p>
+
+      <div class="demo">
+        <span class="demo-tag">interactive · 계층</span>
+        <div style="display:grid; grid-template-columns:1fr 1.1fr; gap:18px; align-items:start" class="layer-layout">
+          <div id="layerStack" style="display:flex; flex-direction:column; gap:10px"></div>
+          <div id="layerInfo" class="card tight" style="margin:0; min-height:230px"></div>
+        </div>
+      </div>
+
+      <h3>맨 아래층은 "갈아 끼울 수 있다" — 이더넷·와이파이·LTE·광</h3>
+      <p>계층 구조의 진짜 힘이 여기서 나옵니다. <strong>맨 아래(링크/물리) 계층</strong>은 상황에 따라 <strong>이더넷(유선)·와이파이·모바일(LTE/5G)·광케이블</strong> 등으로 얼마든지 바뀝니다.
+      그런데 <strong>그 위의 세 층(앱·TCP·IP)은 전혀 바뀌지 않아요.</strong> 그래서 같은 카톡 메시지가 와이파이로 가든 LTE로 가든, 앱은 어떤 매체로 가는지 신경 쓸 필요가 없습니다. 아래에서 맨 아래층을 바꿔보세요.</p>
+
+      <div class="demo">
+        <span class="demo-tag">interactive · 링크 계층</span>
+        <div class="flex wrap" style="gap:6px; margin-bottom:14px">
+          <span class="dim" style="font-size:13px">맨 아래층 매체 선택:</span>
+          <button class="sm media-btn primary" data-k="eth">🔌 이더넷</button>
+          <button class="sm media-btn" data-k="wifi">📶 와이파이</button>
+          <button class="sm media-btn" data-k="lte">📱 LTE/5G</button>
+          <button class="sm media-btn" data-k="fiber">💡 광케이블</button>
+        </div>
+        <div style="display:grid; grid-template-columns:240px 1fr; gap:18px; align-items:center" class="media-layout">
+          <div id="mediaStack" style="display:flex; flex-direction:column; gap:7px"></div>
+          <div id="mediaInfo" class="card tight" style="margin:0; min-height:170px"></div>
+        </div>
+      </div>
+
+      <div class="callout key">
+        <h4>🔑 핵심 — 위 3층은 그대로, 맨 아래만 교체</h4>
+        <p>택배로 치면 <strong>내용물(앱 데이터)과 송장(IP 주소)은 그대로</strong>인데, 그걸 나르는 <strong>운송수단(트럭→배→비행기 = 링크 계층)</strong>만 구간에 따라 바뀌는 셈입니다.
+        덕분에 새 무선 기술(예: 6G)이 나와도 위 계층은 손댈 필요가 없어요. 이게 계층을 나눈 가장 큰 이득입니다.</p>
+      </div>
+
+      <h4>한 번의 통신 안에서도 구간마다 매체가 바뀐다</h4>
+      <p>심지어 패킷 하나가 가는 도중에도 구간마다 매체가 달라집니다. 각 구간(<span class="term" data-t="홉">홉</span>)에서 <strong>링크 계층 프레임은 새로 만들어지지만(MAC 주소가 매번 바뀜), 그 안에 든 IP 패킷은 끝까지 그대로</strong> 유지됩니다.</p>
+
+      <div class="demo">
+        <span class="demo-tag">구간별 매체</span>
+        <div id="mediaJourney" style="display:flex; align-items:stretch; gap:0; overflow-x:auto; padding:6px 2px"></div>
+        <div class="callout tip" style="margin:14px 0 0"><h4>🚚 관찰 포인트</h4><p>구간마다 <b>매체(프레임)는 갈아입지만</b>, 위에 떠 있는 <b>IP 패킷의 목적지(203.0.113.7)는 변하지 않습니다.</b> "링크는 한 구간용, IP는 끝까지용"이라고 기억하세요.</p></div>
+      </div>
+
+      <h3>캡슐화(Encapsulation) — 데이터에 옷을 입히는 과정</h3>
+      <p>당신이 <code>"Hello"</code>를 보내면, 그 데이터는 맨 위 층에서 시작해 아래로 내려가며 <strong>각 층의 헤더(머리표)를 하나씩 덧입습니다.</strong>
+      이걸 <span class="term" data-t="캡슐화">캡슐화</span>라고 해요. 마치 편지를 봉투에 넣고, 그 봉투를 다시 택배 상자에 넣는 것과 같습니다.</p>
+
+      <div class="demo">
+        <span class="demo-tag">interactive · 캡슐화</span>
+        <div class="center" style="min-height:170px; display:flex; align-items:center; justify-content:center; padding:14px 0">
+          <div id="encapStage" style="display:flex; align-items:center; gap:0"></div>
+        </div>
+        <div class="btn-row">
+          <button class="primary" id="encapDown">⬇ 한 층 내려가기 (헤더 추가)</button>
+          <button id="encapUp">⬆ 한 층 올라가기 (헤더 제거)</button>
+          <button class="ghost" id="encapReset">처음으로</button>
+          <span class="spacer"></span>
+          <span class="step-label" id="encapStep"></span>
+        </div>
+        <div id="encapDesc" class="callout key"><h4>📦 지금 상태</h4><p>맨 위 <strong>응용 계층</strong>의 순수 데이터입니다. "한 층 내려가기"를 눌러 헤더가 어떻게 붙는지 보세요.</p></div>
+        <div id="encapBytes" class="byte-panel"></div>
+      </div>
+
+      <p class="dim" style="font-size:13.5px">위 16진수는 실제 헤더 구조에 맞춘 <strong>예시 바이트</strong>입니다(체크섬·CRC 등 일부 값은 설명용 임의값). 헤더가 붙을 때마다 전선에 흐르는 바이트가 어떻게 길어지는지 보세요.</p>
+
+      <div class="callout tip">
+        <h4>🎯 한 줄 정리</h4>
+        <p>내려갈 때(보낼 때)는 <strong>헤더를 덧입히고</strong>(캡슐화), 올라갈 때(받을 때)는 <strong>헤더를 벗깁니다</strong>(역캡슐화).
+        각 층의 헤더에는 그 층이 책임지는 "주소"가 들어있어요: 전송계층=<span class="term" data-t="포트">포트</span>, 인터넷계층=<span class="term" data-t="IP주소">IP 주소</span>, 링크계층=<span class="term" data-t="MAC주소">MAC 주소</span>.</p>
+      </div>
+
+      <div class="quiz" data-qid="q-layers" data-answer="c">
+        <div class="q-head">✅ 체크포인트</div>
+        <p class="q">데이터를 <b>보낼 때</b> 각 층을 지나며 일어나는 일은?</p>
+        <button class="opt" data-opt="a"><span class="mk">A</span>위로 올라가며 헤더를 하나씩 제거한다</button>
+        <button class="opt" data-opt="b"><span class="mk">B</span>아무 일도 일어나지 않고 그대로 전선으로 나간다</button>
+        <button class="opt" data-opt="c"><span class="mk">C</span>아래로 내려가며 각 층의 헤더를 하나씩 덧붙인다(캡슐화)</button>
+        <button class="opt" data-opt="d"><span class="mk">D</span>데이터를 암호화만 하고 헤더는 없다</button>
+        <div class="explain"><b>정답: C.</b> 송신 시에는 응용→전송(TCP 헤더)→인터넷(IP 헤더)→링크(이더넷 헤더/트레일러) 순으로 내려가며 캡슐화됩니다. 받는 쪽은 그 반대로 헤더를 벗겨 올라갑니다.</div>
+      </div>
+    </section>
+
+
+    <!-- ===== 섹션 2: 소켓 & 포트 ===== -->
+    <section id="socket" data-title="소켓 & 포트">
+      <div class="sec-head">
+        <div class="kicker">02 · 핵심 질문</div>
+        <h2 class="sec-title">🔌 소켓과 포트 — 왜 2개일까?</h2>
+        <p class="lead">가장 많이 헷갈리는 부분입니다. "서버 포트 하나로 접속했는데 왜 소켓이 두 개?"
+        이 질문을 끝까지 따라오면 <strong>연결의 정체</strong>가 또렷해집니다.</p>
+      </div>
+
+      <h3>소켓이 뭐예요?</h3>
+      <p><span class="term" data-t="소켓">소켓(socket)</span>은 프로그램이 네트워크와 대화하기 위해 잡는 <strong>"전화기"</strong>입니다.
+      운영체제가 만들어 주고, 프로그램은 이 전화기에 대고 <code>write()</code>(말하기)·<code>read()</code>(듣기)를 합니다.
+      벽에 있는 <strong>콘센트</strong>에 비유하면, 콘센트의 위치를 정하는 게 바로 주소예요.</p>
+
+      <div class="callout key">
+        <h4>🔑 소켓의 신분증 = IP + 포트 + 프로토콜</h4>
+        <p>소켓 하나는 <span class="term" data-t="IP주소">IP 주소</span>(어느 컴퓨터?) + <span class="term" data-t="포트">포트 번호</span>(그 컴퓨터의 어느 프로그램?) + 프로토콜(<span class="term" data-t="TCP">TCP</span>/<span class="term" data-t="UDP">UDP</span>)로 식별됩니다.
+        IP가 <strong>건물 주소</strong>라면, 포트는 그 건물의 <strong>호실 번호</strong>예요.</p>
+      </div>
+
+      <h3>그럼 본론 — 포트는 왜 2개(클라/서버)일까?</h3>
+      <p>여기가 핵심입니다. 천천히 갑니다.</p>
+      <ol>
+        <li><strong>서버</strong>는 손님을 받으려고 <strong>잘 알려진 포트</strong>에서 기다립니다. 웹이면 <span class="pill">80</span>(HTTP)·<span class="pill">443</span>(HTTPS). (당신의 <code>EchoServer</code>는 예시로 <span class="pill">18080</span>을 씁니다.)</li>
+        <li><strong>클라이언트</strong>도 답장을 받을 자기만의 포트가 필요합니다. 하지만 클라이언트 포트는 아무 의미가 없어도 되니, 운영체제가 비어있는 번호를 <strong>아무거나 하나 자동 배정</strong>합니다. 이걸 <span class="term" data-t="임시포트">임시 포트(ephemeral port)</span>라 하고 보통 <span class="pill">49152~65535</span> 범위예요.</li>
+        <li>그래서 하나의 연결에는 항상 <strong>양 끝점 2개</strong>가 존재합니다: <span class="badge cli">클라 IP:임시포트</span> ↔ <span class="badge ok">서버 IP:80</span>. 양쪽 모두 자기 쪽 소켓을 하나씩 가져요.</li>
+      </ol>
+
+      <div class="callout why">
+        <h4>💡 비유: 회사 대표번호</h4>
+        <p>서버의 80번 포트는 회사 <strong>대표번호</strong>입니다(누구나 이 번호로 검). 전화를 건 손님(클라이언트)은 각자 <strong>자기 휴대폰 번호</strong>(임시 포트)를 가지고 있죠.
+        통화(연결)는 "<strong>대표번호 ↔ 내 번호</strong>" 한 쌍으로 정의됩니다. 그래서 번호(포트)는 양쪽에 하나씩, 합쳐서 2개가 필요한 거예요.</p>
+      </div>
+
+      <h3>연결의 진짜 신분증 — 4-튜플(4-tuple)</h3>
+      <p>운영체제는 수많은 연결을 어떻게 구분할까요? 답은 <strong>네 가지 정보의 조합</strong>입니다. 이걸 <span class="term" data-t="4튜플">4-튜플</span>이라 불러요.</p>
+      <pre class="mono" style="background:var(--panel-2); border:1px solid var(--border); border-radius:10px; padding:14px; font-size:13px; color:var(--text)">연결 ID = ( 출발지 IP , 출발지 포트 , 목적지 IP , 목적지 포트 )</pre>
+      <p>이 네 개 중 <strong>하나라도 다르면 다른 연결</strong>로 취급됩니다. 아래에서 직접 확인해 보세요.</p>
+
+      <div class="demo">
+        <span class="demo-tag">interactive · 4-튜플</span>
+        <p style="margin-top:0" class="dim">손님(클라이언트)을 추가할 때마다, 모두 같은 <b>서버 IP:80</b>으로 접속하지만 운영체제가 서로 다른 임시 포트를 줍니다.
+        그래서 서버 포트는 <b>딱 하나</b>여도 연결은 4-튜플로 모두 구별됩니다.</p>
+        <div style="display:grid; grid-template-columns:160px 1fr; gap:18px; align-items:center" class="tuple-layout">
+          <div class="center">
+            <div class="node server" style="margin:0 auto"><div class="role">SERVER</div><div class="name">웹 서버</div><div class="ip">203.0.113.7</div>
+              <div class="badge ok" style="margin-top:8px; display:inline-block">listen :80</div></div>
+            <div class="dim mono" style="font-size:11px; margin-top:8px">listen 소켓 · fd=3</div>
+          </div>
+          <div>
+            <div id="connList" style="display:flex; flex-direction:column; gap:8px; margin-bottom:12px"></div>
+            <div class="btn-row" style="margin:0">
+              <button class="primary sm" id="addConn">+ 손님(연결) 추가</button>
+              <button class="ghost sm" id="addSameIp">+ 같은 손님이 또 접속</button>
+              <button class="ghost sm" id="clearConn">비우기</button>
+            </div>
+          </div>
+        </div>
+        <div id="tupleNote" class="callout tip" style="margin-bottom:0; margin-top:14px"><h4>🔢 관찰 포인트</h4><p>손님을 추가해 보세요. <b>서버 IP·포트(초록)</b>는 모두 같고, <b>클라 IP·포트(파랑)</b>만 달라집니다. 이 4개의 조합이 곧 연결의 고유 ID예요.</p></div>
+      </div>
+
+      <div class="callout key">
+        <h4>🔑 listen 소켓 vs 연결 소켓 (소켓이 2개로 보이는 진짜 이유)</h4>
+        <p>서버 입장에서 소켓은 사실 <strong>두 종류</strong>예요.<br>
+        ① <strong>listen 소켓</strong>: <code>:80</code>에서 노크를 기다리는 "안내데스크" 소켓(딱 1개).<br>
+        ② <strong>연결 소켓</strong>: 손님이 올 때마다 <code>accept()</code>가 만들어 주는 "1:1 상담용" 소켓(손님 수만큼).<br>
+        클라이언트 소켓 1개 + 서버의 연결 소켓 1개 = 한 연결에 양 끝 소켓 2개. 그래서 "포트 하나로 접속했는데 소켓이 둘"인 겁니다.</p>
+      </div>
+
+      <div class="callout key">
+        <h4>🔑 그럼 서버는 연결마다 "포트"를 하나씩 더 쓰는 걸까? — 아니, "소켓(fd)"을 더 쓴다</h4>
+        <p>여기를 딱 짚고 갑시다. "서버도 손님이 늘면 포트를 하나씩 더 소진한다"고 흔히 오해하는데, 정확히는 <strong>포트가 아니라 <span class="term" data-t="파일디스크립터">파일 디스크립터(fd)</span>가 하나씩 더 생기는 것</strong>입니다.</p>
+        <ul style="margin:8px 0">
+          <li><strong>연결 소켓의 로컬 포트는 계속 <code>:80</code></strong> 입니다. <code>accept()</code>는 새 포트를 따로 떼어내지 않아요. 위 데모에서 연결이 늘어도 서버 쪽 주소가 전부 <code>:80</code>인 이유입니다. (<code>ss -tn</code>으로 보면 ESTABLISHED 연결 소켓의 로컬도 <code>:80</code>으로 찍혀요.)</li>
+          <li>대신 연결마다 <strong>fd 하나 + 커널의 연결 추적 항목 하나</strong>가 소진됩니다. 위 데모의 <code>fd=4, 5, 6…</code>이 바로 그것 (안내데스크인 listen 소켓은 <code>fd=3</code>).</li>
+          <li>그래서 서버의 동시 연결 한계는 "포트 65535개"가 <strong>아니라</strong> <strong>fd 한도(<code>ulimit -n</code>)와 메모리</strong>로 정해집니다. 포트 하나(:80)로 수십만 연결도 가능해요.</li>
+        </ul>
+        <p><strong>오히려 포트를 진짜로 하나씩 소진하는 쪽은 클라이언트</strong>입니다. 연결마다 임시 포트를 쓰니, 한 클라이언트가 같은 서버(같은 IP:포트)로 맺을 수 있는 동시 연결은 임시 포트 범위(약 2.8만 개)에 묶입니다.</p>
+      </div>
+
+      <div class="callout warn">
+        <h4>📌 비유로 한 번 더</h4>
+        <p>회사 <strong>대표번호 80</strong>은 그대로입니다(서버 포트 고정). 손님이 올 때마다 새로 붙는 건 <strong>응대 상담원 = 소켓(fd)</strong>이에요. 손님 1만 명이면 상담원 1만 명이 필요할 뿐, <strong>대표번호를 1만 개 파는 게 아닙니다.</strong>
+        <br><span class="dim">⚠️ 예외: 서버가 또 다른 서버(DB·외부 API)로 <b>스스로 접속</b>할 땐, 그 순간만큼은 자신이 클라이언트 역할이라 나가는 쪽 임시 포트를 하나 씁니다.</span></p>
+      </div>
+
+      <h3>실제 코드로 보기 — 당신의 EchoServer / EchoClient</h3>
+      <p>아래는 이 저장소의 실제 코드입니다. 버튼으로 한 단계씩 진행하면, <strong>서버와 클라이언트의 소켓 생애주기</strong>가 코드 라인과 함께 켜집니다.</p>
+
+      <div class="demo">
+        <span class="demo-tag">interactive · 코드 연계</span>
+        <div class="btn-row" style="margin-top:0">
+          <button class="primary" id="lcNext">▶ 다음 단계</button>
+          <button id="lcPrev">◀ 이전</button>
+          <button class="ghost" id="lcReset">처음으로</button>
+          <span class="spacer"></span>
+          <span class="step-label" id="lcStep">단계 0 / 7</span>
+        </div>
+        <div id="lcDesc" class="callout why" style="margin:0 0 14px"><h4>🎬 시작</h4><p>"다음 단계"를 눌러 서버가 손님을 받고, 클라이언트가 접속해 데이터를 주고받는 전 과정을 따라가 보세요.</p></div>
+        <div class="grid2">
+          <div>
+            <div class="flex between"><h4 style="margin:0; color:var(--server)">🖥️ EchoServer.java</h4><span class="badge ok">서버</span></div>
+            <pre style="font-size:12px; margin-top:8px"><code class="language-java" id="serverCode">ServerSocket ss = new ServerSocket(18080); // ① socket+bind+listen
+while (true) {
+    Socket soc = ss.accept();              // ② 손님 대기/수락 → 연결 소켓 생성
+    new Thread(() -> {
+        InputStream in = soc.getInputStream();
+        OutputStream out = soc.getOutputStream();
+        int b = in.read();                 // ④ 요청 읽기
+        // ... 줄 단위로 모아 요청 파싱 ...
+        out.write(response.getBytes());    // ⑤ 응답 쓰기
+        out.flush();
+    }).start();
+}</code></pre>
+          </div>
+          <div>
+            <div class="flex between"><h4 style="margin:0; color:var(--client)">💻 EchoClient.java</h4><span class="badge cli">클라이언트</span></div>
+            <pre style="font-size:12px; margin-top:8px"><code class="language-java" id="clientCode">Socket soc = new Socket("127.0.0.1", 18080); // ③ socket+connect (임시포트 자동배정)
+OutputStream out = soc.getOutputStream();
+InputStream in = soc.getInputStream();
+String req = "GET / HTTP/1.0\r\nHost: www.naver.com\r\n\r\n";
+out.write(req.getBytes("UTF-8"));            // ④ 요청 전송
+out.flush();
+int b;
+while ((b = in.read()) != -1) {              // ⑥ 응답 수신
+    System.out.print((char) b);
+}</code></pre>
+          </div>
+        </div>
+      </div>
+
+      <div class="callout warn">
+        <h4>⚠️ 자주 하는 오해</h4>
+        <p>"서버가 손님마다 포트를 새로 연다"고 오해하기 쉬운데, <strong>아닙니다.</strong> 서버는 계속 <code>:80</code> 하나만 듣습니다.
+        손님이 많아도 <strong>새로 생기는 건 연결 소켓</strong>이지 포트가 아니에요. 연결은 4-튜플로 구별되니까 포트 하나로 수만 명도 받을 수 있습니다.</p>
+      </div>
+
+      <div class="quiz" data-qid="q-socket" data-answer="b">
+        <div class="q-head">✅ 체크포인트</div>
+        <p class="q">웹 서버가 <b>:443 포트 하나</b>로 동시에 1만 명의 사용자를 처리할 수 있는 이유는?</p>
+        <button class="opt" data-opt="a"><span class="mk">A</span>접속자마다 서버가 새 포트를 1만 개 연다</button>
+        <button class="opt" data-opt="b"><span class="mk">B</span>연결은 4-튜플로 구별되므로, 서버 포트가 같아도 클라 IP·포트가 달라 모두 다른 연결이 된다</button>
+        <button class="opt" data-opt="c"><span class="mk">C</span>한 번에 한 명씩만 처리하고 나머지는 기다린다</button>
+        <button class="opt" data-opt="d"><span class="mk">D</span>포트는 사실 의미가 없고 IP만으로 구분한다</button>
+        <div class="explain"><b>정답: B.</b> 연결의 신분증은 (출발지 IP, 출발지 포트, 목적지 IP, 목적지 포트) 4-튜플입니다. 서버 IP·포트(443)가 모두 같아도 클라이언트 IP나 임시 포트가 다르면 운영체제는 별개의 연결로 구분합니다. <code>accept()</code>가 연결마다 별도의 연결 소켓을 만들어 주죠.</div>
+      </div>
+    </section>
+
+    <!-- ===== 섹션 3: TCP 연결 ===== -->
+    <section id="tcp" data-title="TCP 연결">
+      <div class="sec-head">
+        <div class="kicker">03 · 신뢰성</div>
+        <h2 class="sec-title">🤝 TCP — 연결과 분할 전송</h2>
+        <p class="lead">TCP는 데이터를 <strong>끊김 없는 바이트 흐름</strong>처럼 다루면서, 순서·도착을 보장합니다.
+        그 비결인 <strong>3-way handshake</strong>와 <strong>세그먼트 분할</strong>을 직접 움직여 봅시다.</p>
+      </div>
+
+      <h3>왜 TCP일까? (vs UDP)</h3>
+      <p>인터넷은 본질적으로 불안정합니다. 패킷이 <strong>사라지거나, 순서가 뒤바뀌거나, 중복</strong>될 수 있어요.
+      <span class="term" data-t="TCP">TCP</span>는 이 위에 "마치 깔끔한 전화통화"처럼 보이는 신뢰성 계층을 얹습니다.</p>
+      <div class="grid2">
+        <div class="callout tip"><h4>✅ TCP — 신뢰성</h4><p>연결을 맺고(handshake), 번호를 매겨 순서를 맞추고, 빠진 건 <strong>재전송</strong>합니다. 웹·파일전송·메일 등 "빠짐없이 와야 하는" 데이터용.</p></div>
+        <div class="callout warn"><h4>⚡ UDP — 속도</h4><p>인사 없이 그냥 던집니다. 빠르지만 도착·순서 보장 없음. 실시간 영상·게임·<span class="term" data-t="UDP">DNS</span>처럼 "조금 빠져도 빠른 게 나은" 데이터용.</p></div>
+      </div>
+
+      <h3>3-way handshake — 연결 전 세 번의 인사</h3>
+      <p>데이터를 보내기 전에, TCP는 양쪽이 <strong>"서로 보내고 받을 준비가 됐는지"</strong>를 확인합니다.
+      이때 각자의 시작 <span class="term" data-t="시퀀스번호">시퀀스 번호</span>를 교환해요. "다음 단계" 버튼으로 한 인사씩 진행해 보세요.</p>
+
+      <div class="demo">
+        <span class="demo-tag">interactive · handshake</span>
+        <div class="hs-stage">
+          <div class="hs-node">
+            <div class="node client"><div class="role">CLIENT</div><div class="name">내 PC</div></div>
+            <div class="hs-state" id="hsClientState">CLOSED</div>
+          </div>
+          <div class="hs-wire" id="hsWire">
+            <div class="hs-packet" id="hsPacket"></div>
+          </div>
+          <div class="hs-node">
+            <div class="node server"><div class="role">SERVER</div><div class="name">웹 서버</div></div>
+            <div class="hs-state" id="hsServerState">LISTEN</div>
+          </div>
+        </div>
+        <div class="btn-row">
+          <button class="primary" id="hsNext">▶ 다음 단계</button>
+          <button id="hsReset">↺ 처음으로</button>
+          <span class="spacer"></span>
+          <span class="step-label" id="hsStep">단계 0 / 4</span>
+        </div>
+        <div id="hsDesc" class="callout why" style="margin-bottom:0"><h4>📞 연결 전</h4><p>클라이언트는 <span class="badge">CLOSED</span>, 서버는 손님을 기다리는 <span class="badge ok">LISTEN</span> 상태입니다. "다음 단계"를 눌러 첫 인사(SYN)를 보내보세요.</p></div>
+      </div>
+
+      <div class="callout key">
+        <h4>🔑 왜 "세 번"일까?</h4>
+        <p>① 클라이언트: "나 보낼 수 있어!"(SYN) → ② 서버: "알았어, 나도 보낼 수 있어!"(SYN+ACK) → ③ 클라이언트: "확인!"(ACK).
+        이 세 번이면 <strong>양쪽 모두 "내가 보낼 수 있고, 상대가 받을 수 있다"</strong>를 확인하게 됩니다. 두 번으론 한쪽 방향만 확인돼서 부족해요.</p>
+      </div>
+
+      <h3>긴 메시지는 어떻게 쪼개져서 갈까? (세그먼트 분할)</h3>
+      <p>여기서 많이 헷갈립니다. 당신이 긴 문장을 <code>write()</code> 한 번에 보내도, 그게 <strong>패킷 하나로 통째로 가는 게 아닙니다.</strong>
+      한 번에 보낼 수 있는 크기(<span class="term" data-t="MSS">MSS</span>)에 한계가 있어서, TCP가 데이터를 <strong>여러 세그먼트로 토막</strong>내고 각 토막에 <span class="term" data-t="시퀀스번호">시퀀스 번호</span>를 붙여 보냅니다.</p>
+      <p>받는 쪽은 이 번호를 보고 <strong>원래 순서대로 다시 이어 붙입니다</strong>(재조립). 그래서 중간에 순서가 뒤바뀌어 도착해도 원본이 복원돼요. 아래에서 직접 해보세요.</p>
+
+      <div class="demo">
+        <span class="demo-tag">interactive · 분할/재조립</span>
+        <label class="dim" style="font-size:13px">보낼 메시지</label>
+        <textarea id="segInput" rows="2" style="width:100%; margin:6px 0 12px; padding:10px 12px; border-radius:9px; background:var(--panel-2); border:1px solid var(--border); color:var(--text); font-family:var(--sans); font-size:14px; resize:vertical">안녕하세요, 이것은 TCP가 어떻게 긴 메시지를 여러 조각으로 나누어 보내는지 보여주는 예제 문장입니다.</textarea>
+        <div class="flex wrap" style="gap:16px; margin-bottom:6px">
+          <label class="flex" style="gap:8px; font-size:13px">MSS(한 조각 최대 글자):
+            <input type="range" id="segMss" min="6" max="30" value="12" style="vertical-align:middle">
+            <span class="pill" id="segMssVal">12</span>
+          </label>
+          <label class="flex" style="gap:6px; font-size:13px; cursor:pointer">
+            <input type="checkbox" id="segShuffle"> 순서 뒤섞여 도착 (현실의 네트워크)
+          </label>
+        </div>
+        <div class="btn-row">
+          <button class="primary" id="segSend">✂️ 쪼개서 전송</button>
+          <button id="segReset" class="ghost">지우기</button>
+        </div>
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px" class="seg-grid">
+          <div>
+            <h4 style="margin:4px 0; color:var(--client)">📤 보내는 쪽 (세그먼트)</h4>
+            <div id="segOut" style="display:flex; flex-direction:column; gap:7px; min-height:60px"></div>
+          </div>
+          <div>
+            <h4 style="margin:4px 0; color:var(--server)">📥 받는 쪽 (도착 → 재조립)</h4>
+            <div id="segIn" style="display:flex; flex-direction:column; gap:7px; min-height:60px"></div>
+          </div>
+        </div>
+        <div id="segResult" class="callout key" style="margin-bottom:0; display:none"></div>
+      </div>
+
+      <div class="callout warn">
+        <h4>⚠️ 그래서 read()는 "메시지 단위"가 아니다</h4>
+        <p>당신의 <code>EchoServer</code>가 <code>in.read()</code>를 한 바이트씩 도는 이유가 여기 있어요. TCP는 <strong>바이트 흐름</strong>일 뿐 "메시지 경계"를 모릅니다.
+        그래서 한 번 <code>read()</code>에 메시지 전체가 온다는 보장이 없고, 직접 <code>\n</code> 같은 <strong>구분자로 경계를 만들어</strong> 잘라 읽어야 합니다.</p>
+      </div>
+
+      <h3>연결 종료 — 4-way handshake</h3>
+      <p>연결을 끊을 때도 인사가 필요합니다. 양쪽이 각자 "나 다 보냈어(FIN)"를 보내고 "알았어(ACK)"로 답하죠. 보내는 방향이 둘이라 보통 <strong>네 번</strong> 오갑니다. "다음 단계"로 종료 과정과 양쪽 상태 변화를 따라가 보세요.</p>
+
+      <div class="demo">
+        <span class="demo-tag">interactive · 연결 종료</span>
+        <div class="hs-stage">
+          <div class="hs-node">
+            <div class="node client"><div class="role">CLIENT</div><div class="name">내 PC</div></div>
+            <div class="hs-state est" id="ctClientState">ESTABLISHED</div>
+          </div>
+          <div class="hs-wire" id="ctWire"><div class="hs-packet" id="ctPacket"></div></div>
+          <div class="hs-node">
+            <div class="node server"><div class="role">SERVER</div><div class="name">웹 서버</div></div>
+            <div class="hs-state est" id="ctServerState">ESTABLISHED</div>
+          </div>
+        </div>
+        <div class="btn-row">
+          <button class="primary" id="ctNext">▶ 다음 단계</button>
+          <button id="ctReset">↺ 처음으로</button>
+          <span class="spacer"></span>
+          <span class="step-label" id="ctStep">단계 0 / 5</span>
+        </div>
+        <div id="ctDesc" class="callout why" style="margin-bottom:0"><h4>🔚 종료 시작 전</h4><p>데이터를 다 주고받아 양쪽 모두 <span class="badge ok">ESTABLISHED</span>. 클라이언트가 먼저 연결을 끊는다고 가정하고 "다음 단계"를 눌러보세요.</p></div>
+      </div>
+
+      <div class="callout key">
+        <h4>🔑 연결 맺을 땐 3번인데 끊을 땐 왜 4번?</h4>
+        <p>맺을 땐 서버가 <code>SYN</code>과 <code>ACK</code>를 <strong>한 번에 묶어</strong> 보냈죠. 하지만 끊을 땐, 한쪽이 <code>FIN</code>을 보내도 <strong>상대는 아직 보낼 데이터가 남아 있을 수</strong> 있어요.
+        그래서 일단 <code>ACK</code>로 "끊겠다는 거 접수"만 하고(<span class="badge warn">CLOSE_WAIT</span>), 남은 데이터를 마저 보낸 뒤 자기 <code>FIN</code>을 따로 보냅니다. ACK와 FIN이 분리되니 보통 4번이 됩니다.</p>
+      </div>
+
+      <div class="callout warn">
+        <h4>⏳ 마지막에 TIME_WAIT으로 잠깐 기다리는 이유</h4>
+        <p>마지막 <code>ACK</code>를 보낸 쪽은 바로 닫지 않고 <span class="term" data-t="TIME_WAIT">TIME_WAIT</span> 상태로 잠시(보통 수십 초) 머뭅니다.
+        ① 내 ACK가 유실돼 상대가 FIN을 재전송하면 다시 응답해 주기 위해서, ② 옛 연결에서 늦게 도착한 패킷이 같은 4-튜플의 새 연결에 섞이는 걸 막기 위해서예요.</p>
+      </div>
+
+      <div class="quiz" data-qid="q-tcp" data-answer="c">
+        <div class="q-head">✅ 체크포인트</div>
+        <p class="q">긴 데이터를 한 번에 <code>write()</code> 했을 때 실제로 일어나는 일은?</p>
+        <button class="opt" data-opt="a"><span class="mk">A</span>항상 패킷 하나에 통째로 담겨 전송된다</button>
+        <button class="opt" data-opt="b"><span class="mk">B</span>크기가 크면 전송이 거부된다</button>
+        <button class="opt" data-opt="c"><span class="mk">C</span>MSS 단위의 여러 세그먼트로 쪼개지고, 각자 시퀀스 번호로 순서가 보장돼 재조립된다</button>
+        <button class="opt" data-opt="d"><span class="mk">D</span>받는 쪽 read() 한 번에 항상 전체가 도착한다</button>
+        <div class="explain"><b>정답: C.</b> TCP는 데이터를 MSS 크기의 세그먼트로 나누고 각 바이트에 시퀀스 번호를 매깁니다. 받는 쪽은 번호로 순서를 맞춰 재조립하죠. TCP는 바이트 스트림이라 "메시지 경계"가 없어서, read() 한 번에 전체가 온다는 보장도 없습니다.</div>
+      </div>
+    </section>
+
+    <!-- ===== 섹션 4: 라우팅 ===== -->
+    <section id="routing" data-title="라우팅">
+      <div class="sec-head">
+        <div class="kicker">04 · 길 찾기</div>
+        <h2 class="sec-title">🗺️ 라우팅 — 패킷이 길을 찾는 법</h2>
+        <p class="lead">패킷에는 "목적지 IP"만 적혀 있을 뿐, 전체 경로가 적혀있지 않습니다.
+        그런데 어떻게 지구 반대편 서버까지 갈까요? 비밀은 <strong>"각자 다음 한 걸음만 안다"</strong>입니다.</p>
+      </div>
+
+      <h3>핵심 아이디어 — 우체국 릴레이</h3>
+      <p>편지를 부칠 때 당신은 전 세계 우체국 경로를 모릅니다. 동네 우체국에 넣으면, 그곳이 "다음 어디로 보낼지"만 정해 넘기고, 그다음 우체국이 또 다음을 정합니다.
+      <span class="term" data-t="라우터">라우터</span>도 똑같이 <strong>목적지 IP를 보고 "다음 <span class="term" data-t="홉">홉</span>"만 결정</strong>해 넘깁니다. 이 릴레이가 쌓여 목적지에 도착해요.</p>
+
+      <div class="callout why">
+        <h4>💡 라우터의 판단 근거 = 라우팅 테이블</h4>
+        <p>모든 라우터(그리고 당신의 PC)는 <span class="term" data-t="라우팅테이블">라우팅 테이블</span>을 가집니다.
+        "이 <span class="term" data-t="서브넷">대역</span>으로 가는 건 → 저쪽으로" 식의 지도예요. 패킷의 목적지 IP를 이 표와 대조해 다음 홉을 고릅니다.</p>
+      </div>
+
+      <h3>같은 동네인가, 밖으로 나가야 하나? — 서브넷</h3>
+      <p>가장 먼저 따지는 건 "목적지가 <strong>나와 같은 네트워크(서브넷)</strong>인가?"입니다. 같은 동네면 라우터를 거칠 필요 없이 <strong>바로 전달</strong>(같은 네트워크 안에서 MAC 주소로 직접). 다른 동네면 <span class="term" data-t="게이트웨이">기본 게이트웨이</span>로 보냅니다.</p>
+      <p><span class="term" data-t="서브넷마스크">서브넷 마스크</span>(<code>/24</code> 등)는 IP에서 "어디까지가 동네 이름(네트워크), 어디부터가 집 번호(호스트)"인지 나누는 기준이에요. <code>192.168.0.0/24</code>면 앞 24비트(<code>192.168.0</code>)가 같은 집들이 한 동네입니다.</p>
+
+      <div class="demo">
+        <span class="demo-tag">interactive · 서브넷 판단</span>
+        <p class="dim" style="margin-top:0">판단법은 단순합니다: <b>내 IP와 목적지 IP의 "네트워크 부분"이 같은가?</b> 네트워크 부분은 <b>서브넷 마스크가 1인 만큼의 앞쪽 비트</b>예요. 마스크와 목적지를 바꿔가며, 초록 비트(네트워크)가 일치하는지 보세요.</p>
+        <div class="flex wrap" style="gap:14px 18px; margin-bottom:14px; align-items:center">
+          <div class="flex" style="gap:7px"><span class="dim" style="font-size:13px">내 IP</span><span class="pill" style="color:var(--client)">192.168.0.10</span></div>
+          <label class="flex" style="gap:7px; font-size:13px">마스크
+            <select id="snMask" style="background:var(--panel-2); color:var(--text); border:1px solid var(--border); border-radius:7px; padding:5px 8px; font-family:var(--mono)">
+              <option value="24">/24 (255.255.255.0)</option>
+              <option value="16">/16 (255.255.0.0)</option>
+              <option value="25">/25 (255.255.255.128)</option>
+            </select></label>
+          <div class="flex wrap" style="gap:6px"><span class="dim" style="font-size:13px">목적지</span>
+            <button class="sm sn-dst primary" data-ip="192.168.0.42">192.168.0.42</button>
+            <button class="sm sn-dst" data-ip="192.168.0.200">192.168.0.200</button>
+            <button class="sm sn-dst" data-ip="192.168.1.50">192.168.1.50</button>
+            <button class="sm sn-dst" data-ip="8.8.8.8">8.8.8.8</button>
+          </div>
+        </div>
+        <div id="snView"></div>
+      </div>
+
+      <div class="callout tip">
+        <h4>💡 직접 해보면 보이는 것</h4>
+        <p><code>192.168.1.50</code>은 <code>/24</code>에선 다른 동네(게이트웨이 경유)지만 <code>/16</code>으로 바꾸면 같은 동네가 됩니다. <code>192.168.0.200</code>은 <code>/24</code>에선 같은 동네지만 <code>/25</code>에선 다른 동네가 되죠. <strong>같은 IP라도 마스크에 따라 "동네 경계"가 달라진다</strong>는 게 핵심입니다.</p>
+      </div>
+
+      <h3>직접 해보기 — 라우팅 테이블 조회 (롱기스트 프리픽스 매치)</h3>
+      <p>아래는 <b>내 PC</b>의 라우팅 테이블입니다. 목적지 IP를 골라보세요. 여러 규칙에 걸리면, 가장 <strong>구체적으로(길게) 일치</strong>하는 규칙이 이깁니다 — 이걸 <span class="term" data-t="롱기스트프리픽스">롱기스트 프리픽스 매치</span>라고 해요.</p>
+
+      <div class="demo">
+        <span class="demo-tag">interactive · 라우팅 테이블</span>
+        <div class="flex wrap" style="gap:8px; margin-bottom:6px">
+          <span class="dim" style="font-size:13px">목적지 IP:</span>
+          <button class="sm route-dst" data-ip="192.168.0.42">192.168.0.42 (같은 동네 PC)</button>
+          <button class="sm route-dst" data-ip="10.5.5.5">10.5.5.5 (사내망)</button>
+          <button class="sm route-dst" data-ip="8.8.8.8">8.8.8.8 (인터넷)</button>
+        </div>
+        <table class="t" id="routeTable">
+          <thead><tr><th>목적지 대역 (CIDR)</th><th>다음 홉</th><th>인터페이스</th><th>프리픽스 길이</th></tr></thead>
+          <tbody>
+            <tr data-net="192.168.0.0" data-mask="24"><td>192.168.0.0/24</td><td>직접 연결 (게이트웨이 불필요)</td><td>eth0</td><td>/24</td></tr>
+            <tr data-net="10.0.0.0" data-mask="8"><td>10.0.0.0/8</td><td>10.0.0.1 (사내 라우터)</td><td>eth1</td><td>/8</td></tr>
+            <tr data-net="0.0.0.0" data-mask="0"><td>0.0.0.0/0 <span class="dim">(기본 경로)</span></td><td>192.168.0.1 (기본 게이트웨이)</td><td>eth0</td><td>/0</td></tr>
+          </tbody>
+        </table>
+        <div id="routeResult" class="callout key" style="margin-bottom:0"><h4>🔎 목적지를 골라보세요</h4><p>위 버튼으로 목적지 IP를 선택하면, 어떤 규칙들이 일치하고 그중 무엇이 채택되는지 보여줍니다.</p></div>
+      </div>
+
+      <h3>홉 바이 홉 — 패킷의 여정 따라가기</h3>
+      <p>목적지가 인터넷 밖일 때, 패킷은 여러 라우터를 거칩니다. 각 홉에서 <strong>출발/목적 IP는 그대로</strong>지만 <strong>MAC 주소(바로 옆 장비)는 매번 바뀌고</strong>, <code>TTL</code>(수명)이 1씩 줄어요.</p>
+
+      <div class="demo">
+        <span class="demo-tag">interactive · 홉 여정</span>
+        <div id="hopTrack" style="display:flex; align-items:flex-end; justify-content:space-between; gap:6px; position:relative; padding:30px 4px 4px"></div>
+        <div class="btn-row">
+          <button class="primary" id="hopSend">📦 8.8.8.8로 패킷 보내기</button>
+          <button class="ghost" id="hopReset">처음으로</button>
+          <span class="spacer"></span><span class="step-label" id="hopCap">TTL 64</span>
+        </div>
+        <div id="hopDesc" class="callout why" style="margin-bottom:0"><h4>🚦 출발 전</h4><p>"패킷 보내기"를 누르면 내 PC에서 출발해 게이트웨이·ISP·백본을 거쳐 8.8.8.8에 도착하는 과정을 한 홉씩 보여줍니다.</p></div>
+      </div>
+
+      <div class="callout tip">
+        <h4>🎯 한 줄 정리</h4>
+        <p>라우팅 = <strong>목적지 IP를 라우팅 테이블과 대조해 "다음 홉" 한 걸음을 정하는 일</strong>의 반복.
+        같은 서브넷이면 직접, 아니면 게이트웨이로. 겹치는 규칙은 가장 긴 프리픽스가 이깁니다.</p>
+      </div>
+
+      <div class="quiz" data-qid="q-routing" data-answer="b">
+        <div class="q-head">✅ 체크포인트</div>
+        <p class="q">라우팅 테이블에 <code>10.0.0.0/8</code>과 <code>0.0.0.0/0</code> 두 규칙이 있고, 목적지가 <code>10.5.5.5</code>일 때 선택되는 규칙은?</p>
+        <button class="opt" data-opt="a"><span class="mk">A</span>0.0.0.0/0 (먼저 적혀 있어서)</button>
+        <button class="opt" data-opt="b"><span class="mk">B</span>10.0.0.0/8 (더 구체적으로/길게 일치하므로)</button>
+        <button class="opt" data-opt="c"><span class="mk">C</span>둘 다 적용해서 두 곳으로 동시에 보낸다</button>
+        <button class="opt" data-opt="d"><span class="mk">D</span>일치하는 게 둘이라 에러가 난다</button>
+        <div class="explain"><b>정답: B.</b> 두 규칙 모두 10.5.5.5와 일치하지만, 롱기스트 프리픽스 매치 규칙에 따라 더 긴 프리픽스(/8 &gt; /0)가 이깁니다. 0.0.0.0/0은 "아무것도 안 맞을 때"의 최후 보루(기본 경로)예요.</div>
+      </div>
+    </section>
+
+    <!-- ===== 섹션 5: iptables / netfilter ===== -->
+    <section id="iptables" data-title="iptables / 방화벽">
+      <div class="sec-head">
+        <div class="kicker">05 · 문지기</div>
+        <h2 class="sec-title">🧱 iptables — 방화벽과 NAT</h2>
+        <p class="lead">패킷이 서버에 도착하면, 소켓으로 올라가기 전에 <strong>문지기</strong>를 통과해야 합니다.
+        리눅스에선 그 문지기가 커널의 <span class="term" data-t="netfilter">netfilter</span>이고, 규칙을 등록하는 도구가 <span class="term" data-t="iptables">iptables</span>예요.</p>
+      </div>
+
+      <h3>iptables가 대체 뭘 하나요?</h3>
+      <p>두 가지를 합니다. ① <strong>방화벽</strong>: 어떤 패킷을 통과(ACCEPT)/차단(DROP)할지 결정. ② <strong>NAT</strong>: 패킷의 IP·포트를 바꿔치기(주소 변환).
+      둘 다 "커널을 지나가는 패킷을 가로채 규칙대로 처리"하는 일입니다.</p>
+
+      <div class="callout why">
+        <h4>💡 용어 3종 세트 — 표/체인/규칙</h4>
+        <p>• <b>테이블(table)</b>: 용도별 묶음. <code>filter</code>(통과/차단), <code>nat</code>(주소변환).<br>
+        • <span class="term" data-t="체인">체인(chain)</span>: 패킷이 거쳐가는 검문소. <code>INPUT</code>·<code>OUTPUT</code>·<code>FORWARD</code> 등.<br>
+        • <b>규칙(rule)</b>: "이런 패킷이면(조건) → 이렇게 해라(타겟: ACCEPT/DROP/DNAT…)". 위에서 아래로 검사하다 <b>처음 맞는 규칙</b>이 적용됩니다.</p>
+      </div>
+
+      <h3>패킷은 어디서 검사받나? — netfilter 5개 훅</h3>
+      <p>커널은 패킷이 흐르는 길목 다섯 곳에 검문소를 둡니다. 핵심은 가운데 <strong>라우팅 결정</strong>이에요: 이 패킷이 <strong>"나(이 서버)에게 온 것"</strong>이면 <code>INPUT</code>으로, <strong>"남에게 가는 걸 내가 중계"</strong>하는 거면 <code>FORWARD</code>로 갈립니다.</p>
+
+      <div class="demo">
+        <span class="demo-tag">netfilter 경로</span>
+        <div id="hookFlow" style="display:flex; flex-direction:column; gap:8px"></div>
+      </div>
+
+      <h3>직접 해보기 — INPUT 체인 방화벽 시뮬레이터</h3>
+      <p>외부에서 우리 서버로 패킷이 들어옵니다. 규칙을 켜고 끄거나 기본 정책을 바꿔보며, 어떤 패킷이 통과하고 막히는지 확인하세요.</p>
+
+      <div class="demo">
+        <span class="demo-tag">interactive · INPUT 체인</span>
+        <div class="flex wrap between" style="gap:10px; margin-bottom:10px">
+          <div class="flex wrap" style="gap:6px">
+            <span class="dim" style="font-size:13px">들어오는 패킷:</span>
+            <button class="sm fw-pkt" data-proto="tcp" data-port="80">🌐 웹 tcp:80</button>
+            <button class="sm fw-pkt" data-proto="tcp" data-port="22">🔐 SSH tcp:22</button>
+            <button class="sm fw-pkt" data-proto="tcp" data-port="3306">🗄️ MySQL tcp:3306</button>
+            <button class="sm fw-pkt" data-proto="icmp" data-port="0">📡 ping(ICMP)</button>
+          </div>
+          <label class="flex" style="gap:6px; font-size:13px">기본 정책:
+            <select id="fwPolicy" style="background:var(--panel-2); color:var(--text); border:1px solid var(--border); border-radius:7px; padding:5px 8px; font-family:var(--mono)">
+              <option value="DROP">DROP (안전 기본값)</option>
+              <option value="ACCEPT">ACCEPT</option>
+            </select>
+          </label>
+        </div>
+        <pre style="margin:0 0 6px"><code class="language-bash" id="fwCmd"># iptables 명령 미리보기</code></pre>
+        <div id="fwChain" style="display:flex; flex-direction:column; gap:7px; margin:12px 0"></div>
+        <div class="btn-row" style="margin-top:4px">
+          <button class="primary" id="fwRun" disabled>▶ 패킷 흘려보내기</button>
+          <span class="step-label" id="fwHint">먼저 위에서 들어오는 패킷을 고르세요</span>
+        </div>
+        <div id="fwResult" class="callout" style="margin-bottom:0; display:none"></div>
+      </div>
+
+      <div class="callout tip">
+        <h4>🎯 두 가지 큰 교훈</h4>
+        <p>① <b>순서가 중요</b>: 규칙은 위에서부터 검사하고 <b>처음 맞는 것</b>이 이깁니다. 넓게 허용하는 규칙을 위에 두면 아래의 차단 규칙이 무용지물이 돼요.<br>
+        ② <b>기본 정책은 DROP</b>: "명시적으로 허용한 것만 통과"가 안전한 기본 자세입니다(화이트리스트).</p>
+      </div>
+
+      <h3>NAT — 주소를 바꿔치기하는 마법</h3>
+      <p>집에 있는 여러 기기가 공인 IP 하나로 인터넷을 쓰는 비결이 <span class="term" data-t="NAT">NAT</span>입니다. <span class="term" data-t="사설IP">사설 IP</span>는 인터넷에 그대로 못 나가서, 공유기가 출발지 주소를 자기 공인 IP로 바꿔 보냅니다.</p>
+
+      <div class="demo">
+        <span class="demo-tag">interactive · NAT</span>
+        <div class="flex wrap" style="gap:6px; margin-bottom:10px">
+          <button class="sm primary nat-mode" data-mode="snat">📤 나갈 때 (SNAT / 공유기)</button>
+          <button class="sm nat-mode" data-mode="dnat">📥 들어올 때 (DNAT / 포트포워딩)</button>
+        </div>
+        <div id="natView"></div>
+      </div>
+
+      <div class="quiz" data-qid="q-iptables" data-answer="b">
+        <div class="q-head">✅ 체크포인트</div>
+        <p class="q">기본 정책이 <code>DROP</code>인 INPUT 체인에, <code>tcp:22 ACCEPT</code> 규칙만 있습니다. <code>tcp:443</code> 패킷이 들어오면?</p>
+        <button class="opt" data-opt="a"><span class="mk">A</span>ACCEPT — 웹 트래픽은 항상 허용된다</button>
+        <button class="opt" data-opt="b"><span class="mk">B</span>DROP — 어떤 규칙에도 안 맞아 기본 정책(DROP)이 적용된다</button>
+        <button class="opt" data-opt="c"><span class="mk">C</span>REJECT 메시지를 보낸다</button>
+        <button class="opt" data-opt="d"><span class="mk">D</span>22번 규칙이 443도 허용한다</button>
+        <div class="explain"><b>정답: B.</b> 규칙은 위에서 아래로 검사되는데 tcp:443에 맞는 규칙이 없습니다. 맞는 규칙이 하나도 없으면 체인의 <b>기본 정책</b>이 적용되고, 여기선 DROP이라 조용히 버려집니다. 그래서 "허용할 포트는 명시적으로 열어야" 합니다.</div>
+      </div>
+    </section>
+
+    <!-- ===== 섹션 6: 전체 통합 흐름 ===== -->
+    <section id="fullflow" data-title="전체 여정">
+      <div class="sec-head">
+        <div class="kicker">06 · 종합</div>
+        <h2 class="sec-title">🌐 전체 여정 — 모든 조각을 하나로</h2>
+        <p class="lead">이제 배운 걸 전부 연결할 시간입니다. 브라우저에 주소를 치는 순간부터 서버 앱이 응답하기까지,
+        패킷이 거치는 <strong>모든 단계</strong>를 한 번에 따라가 봅시다.</p>
+      </div>
+
+      <p>"다음 단계"를 누르며 내 PC의 요청이 <strong>소켓 → 핸드셰이크 → 캡슐화 → 라우팅 → NAT → 방화벽 → 서버 소켓</strong>까지 가는 여정을 끝까지 보세요. 각 단계는 앞 섹션과 연결됩니다.</p>
+
+      <div class="demo">
+        <span class="demo-tag">interactive · end-to-end</span>
+        <div style="display:grid; grid-template-columns:1fr; gap:0" id="flowTimeline"></div>
+        <div class="btn-row">
+          <button class="primary" id="flowNext">▶ 다음 단계</button>
+          <button id="flowPrev">◀ 이전</button>
+          <button class="ghost" id="flowAuto">⏩ 자동 재생</button>
+          <button class="ghost" id="flowReset">↺ 처음</button>
+          <span class="spacer"></span><span class="step-label" id="flowStep"></span>
+        </div>
+        <div id="flowDesc" class="callout why" style="margin-bottom:0"></div>
+      </div>
+
+      <div class="callout key">
+        <h4>🔑 머릿속에 남길 한 장면</h4>
+        <p>앱의 데이터는 <b>소켓</b>으로 들어가 <b>TCP</b>가 토막내 번호를 매기고, <b>IP</b>가 주소를 붙여 <b>라우터</b>들을 홉바이홉 건너가며,
+        중간에 <b>NAT</b>로 주소가 바뀌고, 목적지 서버의 <b>iptables</b> 검문을 통과해야 비로소 <b>서버 소켓</b>으로 올라가 앱에 닿습니다. 그리고 응답은 이 길을 거꾸로 돌아옵니다.</p>
+      </div>
+
+      <div class="quiz" data-qid="q-flow" data-answer="d">
+        <div class="q-head">✅ 체크포인트</div>
+        <p class="q">클라이언트 요청이 서버 <b>앱</b>에 닿기 직전, 서버에서 마지막으로 통과하는 관문은?</p>
+        <button class="opt" data-opt="a"><span class="mk">A</span>라우팅 테이블</button>
+        <button class="opt" data-opt="b"><span class="mk">B</span>3-way handshake</button>
+        <button class="opt" data-opt="c"><span class="mk">C</span>DNS 조회</button>
+        <button class="opt" data-opt="d"><span class="mk">D</span>iptables INPUT 체인 → 서버 소켓</button>
+        <div class="explain"><b>정답: D.</b> 서버에 도착한 패킷은 PREROUTING → 라우팅 결정 → (자신에게 온 것이므로) INPUT 체인의 방화벽 검문을 통과한 뒤, 해당 포트를 듣고 있는 소켓 버퍼로 올라가 앱의 read()에 전달됩니다.</div>
+      </div>
+    </section>
+
+    <!-- ===== 섹션 7: 터미널 시뮬레이터 ===== -->
+    <section id="terminal" data-title="터미널 실습">
+      <div class="sec-head">
+        <div class="kicker">07 · 도구상자</div>
+        <h2 class="sec-title">⌨️ 터미널 실습 — 진짜 명령어 만져보기</h2>
+        <p class="lead">개념을 알았으니 도구도 익혀야죠. 실무에서 네트워크를 들여다볼 때 쓰는 명령어들을
+        안전한 가짜 터미널에서 실행해 보고, 출력을 어떻게 읽는지 배워봅시다.</p>
+      </div>
+
+      <p>아래 버튼을 누르거나 직접 입력해 보세요. 각 명령이 무엇을 보여주는지 출력 아래에 설명이 붙습니다.</p>
+
+      <div class="flex wrap" style="gap:6px; margin:14px 0">
+        <button class="sm term-cmd" data-cmd="ip route">ip route</button>
+        <button class="sm term-cmd" data-cmd="ss -tlnp">ss -tlnp</button>
+        <button class="sm term-cmd" data-cmd="ping 8.8.8.8">ping 8.8.8.8</button>
+        <button class="sm term-cmd" data-cmd="traceroute 8.8.8.8">traceroute 8.8.8.8</button>
+        <button class="sm term-cmd" data-cmd="iptables -L -n">iptables -L -n</button>
+        <button class="sm term-cmd" data-cmd="netstat -an | grep 18080">netstat (EchoServer)</button>
+        <button class="sm ghost term-cmd" data-cmd="clear">clear</button>
+      </div>
+
+      <div class="terminal" id="termWrap">
+        <div class="term-screen" id="termScreen"></div>
+        <div class="term-input-row">
+          <span class="term-prompt">user@host:~$</span>
+          <input id="termInput" autocomplete="off" spellcheck="false" placeholder="명령어 입력 후 Enter (예: ip route)">
+        </div>
+      </div>
+      <p class="dim" style="font-size:13px">💡 지원: <span class="mono">ip route</span>, <span class="mono">ss -tlnp</span>, <span class="mono">ping</span>, <span class="mono">traceroute</span>, <span class="mono">iptables -L -n</span>, <span class="mono">netstat</span>, <span class="mono">help</span>, <span class="mono">clear</span></p>
+
+      <hr>
+      <div class="callout tip">
+        <h4>🎓 끝까지 온 걸 축하해요!</h4>
+        <p>이제 패킷이 어떻게 쪼개지고(<a class="link" href="#tcp">TCP</a>), 길을 찾고(<a class="link" href="#routing">라우팅</a>), 문지기를 통과하는지(<a class="link" href="#iptables">iptables</a>) 그림이 그려질 거예요.
+        헷갈리면 언제든 <b>📖 용어 사전</b>을 열고, 섹션을 다시 눌러보며 복습하세요. 진행률은 저장돼 있습니다.</p>
+      </div>
+    </section>
+
+    <!-- @SECTIONS -->
+
+  </main>
+</div>
+
+<!-- 용어 사전 드로어 -->
+<div id="scrim"></div>
+<aside id="glossary">
+  <div class="g-head"><h3>📖 용어 사전</h3><button class="sm ghost" id="glossaryClose">닫기 ✕</button></div>
+  <div class="g-body">
+    <input type="text" id="gSearch" placeholder="용어 검색… (예: 포트, NAT)">
+    <div id="gList"></div>
+  </div>
+</aside>
+
+<!-- 툴팁 -->
+<div id="tooltip"></div>
+
+<!-- Prism core+clike+java+bash (v1.29.0, 임베딩 · 외부 의존성 0) -->
+<script>
+var _self="undefined"!=typeof window?window:"undefined"!=typeof WorkerGlobalScope&&self instanceof WorkerGlobalScope?self:{},Prism=function(e){var n=/(?:^|\s)lang(?:uage)?-([\w-]+)(?=\s|$)/i,t=0,r={},a={manual:e.Prism&&e.Prism.manual,disableWorkerMessageHandler:e.Prism&&e.Prism.disableWorkerMessageHandler,util:{encode:function e(n){return n instanceof i?new i(n.type,e(n.content),n.alias):Array.isArray(n)?n.map(e):n.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/\u00a0/g," ")},type:function(e){return Object.prototype.toString.call(e).slice(8,-1)},objId:function(e){return e.__id||Object.defineProperty(e,"__id",{value:++t}),e.__id},clone:function e(n,t){var r,i;switch(t=t||{},a.util.type(n)){case"Object":if(i=a.util.objId(n),t[i])return t[i];for(var l in r={},t[i]=r,n)n.hasOwnProperty(l)&&(r[l]=e(n[l],t));return r;case"Array":return i=a.util.objId(n),t[i]?t[i]:(r=[],t[i]=r,n.forEach((function(n,a){r[a]=e(n,t)})),r);default:return n}},getLanguage:function(e){for(;e;){var t=n.exec(e.className);if(t)return t[1].toLowerCase();e=e.parentElement}return"none"},setLanguage:function(e,t){e.className=e.className.replace(RegExp(n,"gi"),""),e.classList.add("language-"+t)},currentScript:function(){if("undefined"==typeof document)return null;if("currentScript"in document)return document.currentScript;try{throw new Error}catch(r){var e=(/at [^(\r\n]*\((.*):[^:]+:[^:]+\)$/i.exec(r.stack)||[])[1];if(e){var n=document.getElementsByTagName("script");for(var t in n)if(n[t].src==e)return n[t]}return null}},isActive:function(e,n,t){for(var r="no-"+n;e;){var a=e.classList;if(a.contains(n))return!0;if(a.contains(r))return!1;e=e.parentElement}return!!t}},languages:{plain:r,plaintext:r,text:r,txt:r,extend:function(e,n){var t=a.util.clone(a.languages[e]);for(var r in n)t[r]=n[r];return t},insertBefore:function(e,n,t,r){var i=(r=r||a.languages)[e],l={};for(var o in i)if(i.hasOwnProperty(o)){if(o==n)for(var s in t)t.hasOwnProperty(s)&&(l[s]=t[s]);t.hasOwnProperty(o)||(l[o]=i[o])}var u=r[e];return r[e]=l,a.languages.DFS(a.languages,(function(n,t){t===u&&n!=e&&(this[n]=l)})),l},DFS:function e(n,t,r,i){i=i||{};var l=a.util.objId;for(var o in n)if(n.hasOwnProperty(o)){t.call(n,o,n[o],r||o);var s=n[o],u=a.util.type(s);"Object"!==u||i[l(s)]?"Array"!==u||i[l(s)]||(i[l(s)]=!0,e(s,t,o,i)):(i[l(s)]=!0,e(s,t,null,i))}}},plugins:{},highlightAll:function(e,n){a.highlightAllUnder(document,e,n)},highlightAllUnder:function(e,n,t){var r={callback:t,container:e,selector:'code[class*="language-"], [class*="language-"] code, code[class*="lang-"], [class*="lang-"] code'};a.hooks.run("before-highlightall",r),r.elements=Array.prototype.slice.apply(r.container.querySelectorAll(r.selector)),a.hooks.run("before-all-elements-highlight",r);for(var i,l=0;i=r.elements[l++];)a.highlightElement(i,!0===n,r.callback)},highlightElement:function(n,t,r){var i=a.util.getLanguage(n),l=a.languages[i];a.util.setLanguage(n,i);var o=n.parentElement;o&&"pre"===o.nodeName.toLowerCase()&&a.util.setLanguage(o,i);var s={element:n,language:i,grammar:l,code:n.textContent};function u(e){s.highlightedCode=e,a.hooks.run("before-insert",s),s.element.innerHTML=s.highlightedCode,a.hooks.run("after-highlight",s),a.hooks.run("complete",s),r&&r.call(s.element)}if(a.hooks.run("before-sanity-check",s),(o=s.element.parentElement)&&"pre"===o.nodeName.toLowerCase()&&!o.hasAttribute("tabindex")&&o.setAttribute("tabindex","0"),!s.code)return a.hooks.run("complete",s),void(r&&r.call(s.element));if(a.hooks.run("before-highlight",s),s.grammar)if(t&&e.Worker){var c=new Worker(a.filename);c.onmessage=function(e){u(e.data)},c.postMessage(JSON.stringify({language:s.language,code:s.code,immediateClose:!0}))}else u(a.highlight(s.code,s.grammar,s.language));else u(a.util.encode(s.code))},highlight:function(e,n,t){var r={code:e,grammar:n,language:t};if(a.hooks.run("before-tokenize",r),!r.grammar)throw new Error('The language "'+r.language+'" has no grammar.');return r.tokens=a.tokenize(r.code,r.grammar),a.hooks.run("after-tokenize",r),i.stringify(a.util.encode(r.tokens),r.language)},tokenize:function(e,n){var t=n.rest;if(t){for(var r in t)n[r]=t[r];delete n.rest}var a=new s;return u(a,a.head,e),o(e,a,n,a.head,0),function(e){for(var n=[],t=e.head.next;t!==e.tail;)n.push(t.value),t=t.next;return n}(a)},hooks:{all:{},add:function(e,n){var t=a.hooks.all;t[e]=t[e]||[],t[e].push(n)},run:function(e,n){var t=a.hooks.all[e];if(t&&t.length)for(var r,i=0;r=t[i++];)r(n)}},Token:i};function i(e,n,t,r){this.type=e,this.content=n,this.alias=t,this.length=0|(r||"").length}function l(e,n,t,r){e.lastIndex=n;var a=e.exec(t);if(a&&r&&a[1]){var i=a[1].length;a.index+=i,a[0]=a[0].slice(i)}return a}function o(e,n,t,r,s,g){for(var f in t)if(t.hasOwnProperty(f)&&t[f]){var h=t[f];h=Array.isArray(h)?h:[h];for(var d=0;d<h.length;++d){if(g&&g.cause==f+","+d)return;var v=h[d],p=v.inside,m=!!v.lookbehind,y=!!v.greedy,k=v.alias;if(y&&!v.pattern.global){var x=v.pattern.toString().match(/[imsuy]*$/)[0];v.pattern=RegExp(v.pattern.source,x+"g")}for(var b=v.pattern||v,w=r.next,A=s;w!==n.tail&&!(g&&A>=g.reach);A+=w.value.length,w=w.next){var E=w.value;if(n.length>e.length)return;if(!(E instanceof i)){var P,L=1;if(y){if(!(P=l(b,A,e,m))||P.index>=e.length)break;var S=P.index,O=P.index+P[0].length,j=A;for(j+=w.value.length;S>=j;)j+=(w=w.next).value.length;if(A=j-=w.value.length,w.value instanceof i)continue;for(var C=w;C!==n.tail&&(j<O||"string"==typeof C.value);C=C.next)L++,j+=C.value.length;L--,E=e.slice(A,j),P.index-=A}else if(!(P=l(b,0,E,m)))continue;S=P.index;var N=P[0],_=E.slice(0,S),M=E.slice(S+N.length),W=A+E.length;g&&W>g.reach&&(g.reach=W);var z=w.prev;if(_&&(z=u(n,z,_),A+=_.length),c(n,z,L),w=u(n,z,new i(f,p?a.tokenize(N,p):N,k,N)),M&&u(n,w,M),L>1){var I={cause:f+","+d,reach:W};o(e,n,t,w.prev,A,I),g&&I.reach>g.reach&&(g.reach=I.reach)}}}}}}function s(){var e={value:null,prev:null,next:null},n={value:null,prev:e,next:null};e.next=n,this.head=e,this.tail=n,this.length=0}function u(e,n,t){var r=n.next,a={value:t,prev:n,next:r};return n.next=a,r.prev=a,e.length++,a}function c(e,n,t){for(var r=n.next,a=0;a<t&&r!==e.tail;a++)r=r.next;n.next=r,r.prev=n,e.length-=a}if(e.Prism=a,i.stringify=function e(n,t){if("string"==typeof n)return n;if(Array.isArray(n)){var r="";return n.forEach((function(n){r+=e(n,t)})),r}var i={type:n.type,content:e(n.content,t),tag:"span",classes:["token",n.type],attributes:{},language:t},l=n.alias;l&&(Array.isArray(l)?Array.prototype.push.apply(i.classes,l):i.classes.push(l)),a.hooks.run("wrap",i);var o="";for(var s in i.attributes)o+=" "+s+'="'+(i.attributes[s]||"").replace(/"/g,"&quot;")+'"';return"<"+i.tag+' class="'+i.classes.join(" ")+'"'+o+">"+i.content+"</"+i.tag+">"},!e.document)return e.addEventListener?(a.disableWorkerMessageHandler||e.addEventListener("message",(function(n){var t=JSON.parse(n.data),r=t.language,i=t.code,l=t.immediateClose;e.postMessage(a.highlight(i,a.languages[r],r)),l&&e.close()}),!1),a):a;var g=a.util.currentScript();function f(){a.manual||a.highlightAll()}if(g&&(a.filename=g.src,g.hasAttribute("data-manual")&&(a.manual=!0)),!a.manual){var h=document.readyState;"loading"===h||"interactive"===h&&g&&g.defer?document.addEventListener("DOMContentLoaded",f):window.requestAnimationFrame?window.requestAnimationFrame(f):window.setTimeout(f,16)}return a}(_self);"undefined"!=typeof module&&module.exports&&(module.exports=Prism),"undefined"!=typeof global&&(global.Prism=Prism);
+Prism.languages.clike={comment:[{pattern:/(^|[^\\])\/\*[\s\S]*?(?:\*\/|$)/,lookbehind:!0,greedy:!0},{pattern:/(^|[^\\:])\/\/.*/,lookbehind:!0,greedy:!0}],string:{pattern:/(["'])(?:\\(?:\r\n|[\s\S])|(?!\1)[^\\\r\n])*\1/,greedy:!0},"class-name":{pattern:/(\b(?:class|extends|implements|instanceof|interface|new|trait)\s+|\bcatch\s+\()[\w.\\]+/i,lookbehind:!0,inside:{punctuation:/[.\\]/}},keyword:/\b(?:break|catch|continue|do|else|finally|for|function|if|in|instanceof|new|null|return|throw|try|while)\b/,boolean:/\b(?:false|true)\b/,function:/\b\w+(?=\()/,number:/\b0x[\da-f]+\b|(?:\b\d+(?:\.\d*)?|\B\.\d+)(?:e[+-]?\d+)?/i,operator:/[<>]=?|[!=]=?=?|--?|\+\+?|&&?|\|\|?|[?*/~^%]/,punctuation:/[{}[\];(),.:]/};
+!function(e){var n=/\b(?:abstract|assert|boolean|break|byte|case|catch|char|class|const|continue|default|do|double|else|enum|exports|extends|final|finally|float|for|goto|if|implements|import|instanceof|int|interface|long|module|native|new|non-sealed|null|open|opens|package|permits|private|protected|provides|public|record(?!\s*[(){}[\]<>=%~.:,;?+\-*/&|^])|requires|return|sealed|short|static|strictfp|super|switch|synchronized|this|throw|throws|to|transient|transitive|try|uses|var|void|volatile|while|with|yield)\b/,t="(?:[a-z]\\w*\\s*\\.\\s*)*(?:[A-Z]\\w*\\s*\\.\\s*)*",s={pattern:RegExp("(^|[^\\w.])"+t+"[A-Z](?:[\\d_A-Z]*[a-z]\\w*)?\\b"),lookbehind:!0,inside:{namespace:{pattern:/^[a-z]\w*(?:\s*\.\s*[a-z]\w*)*(?:\s*\.)?/,inside:{punctuation:/\./}},punctuation:/\./}};e.languages.java=e.languages.extend("clike",{string:{pattern:/(^|[^\\])"(?:\\.|[^"\\\r\n])*"/,lookbehind:!0,greedy:!0},"class-name":[s,{pattern:RegExp("(^|[^\\w.])"+t+"[A-Z]\\w*(?=\\s+\\w+\\s*[;,=()]|\\s*(?:\\[[\\s,]*\\]\\s*)?::\\s*new\\b)"),lookbehind:!0,inside:s.inside},{pattern:RegExp("(\\b(?:class|enum|extends|implements|instanceof|interface|new|record|throws)\\s+)"+t+"[A-Z]\\w*\\b"),lookbehind:!0,inside:s.inside}],keyword:n,function:[e.languages.clike.function,{pattern:/(::\s*)[a-z_]\w*/,lookbehind:!0}],number:/\b0b[01][01_]*L?\b|\b0x(?:\.[\da-f_p+-]+|[\da-f_]+(?:\.[\da-f_p+-]+)?)\b|(?:\b\d[\d_]*(?:\.[\d_]*)?|\B\.\d[\d_]*)(?:e[+-]?\d[\d_]*)?[dfl]?/i,operator:{pattern:/(^|[^.])(?:<<=?|>>>?=?|->|--|\+\+|&&|\|\||::|[?:~]|[-+*/%&|^!=<>]=?)/m,lookbehind:!0},constant:/\b[A-Z][A-Z_\d]+\b/}),e.languages.insertBefore("java","string",{"triple-quoted-string":{pattern:/"""[ \t]*[\r\n](?:(?:"|"")?(?:\\.|[^"\\]))*"""/,greedy:!0,alias:"string"},char:{pattern:/'(?:\\.|[^'\\\r\n]){1,6}'/,greedy:!0}}),e.languages.insertBefore("java","class-name",{annotation:{pattern:/(^|[^.])@\w+(?:\s*\.\s*\w+)*/,lookbehind:!0,alias:"punctuation"},generics:{pattern:/<(?:[\w\s,.?]|&(?!&)|<(?:[\w\s,.?]|&(?!&)|<(?:[\w\s,.?]|&(?!&)|<(?:[\w\s,.?]|&(?!&))*>)*>)*>)*>/,inside:{"class-name":s,keyword:n,punctuation:/[<>(),.:]/,operator:/[?&|]/}},import:[{pattern:RegExp("(\\bimport\\s+)"+t+"(?:[A-Z]\\w*|\\*)(?=\\s*;)"),lookbehind:!0,inside:{namespace:s.inside.namespace,punctuation:/\./,operator:/\*/,"class-name":/\w+/}},{pattern:RegExp("(\\bimport\\s+static\\s+)"+t+"(?:\\w+|\\*)(?=\\s*;)"),lookbehind:!0,alias:"static",inside:{namespace:s.inside.namespace,static:/\b\w+$/,punctuation:/\./,operator:/\*/,"class-name":/\w+/}}],namespace:{pattern:RegExp("(\\b(?:exports|import(?:\\s+static)?|module|open|opens|package|provides|requires|to|transitive|uses|with)\\s+)(?!<keyword>)[a-z]\\w*(?:\\.[a-z]\\w*)*\\.?".replace(/<keyword>/g,(function(){return n.source}))),lookbehind:!0,inside:{punctuation:/\./}}})}(Prism);
+!function(e){var t="\\b(?:BASH|BASHOPTS|BASH_ALIASES|BASH_ARGC|BASH_ARGV|BASH_CMDS|BASH_COMPLETION_COMPAT_DIR|BASH_LINENO|BASH_REMATCH|BASH_SOURCE|BASH_VERSINFO|BASH_VERSION|COLORTERM|COLUMNS|COMP_WORDBREAKS|DBUS_SESSION_BUS_ADDRESS|DEFAULTS_PATH|DESKTOP_SESSION|DIRSTACK|DISPLAY|EUID|GDMSESSION|GDM_LANG|GNOME_KEYRING_CONTROL|GNOME_KEYRING_PID|GPG_AGENT_INFO|GROUPS|HISTCONTROL|HISTFILE|HISTFILESIZE|HISTSIZE|HOME|HOSTNAME|HOSTTYPE|IFS|INSTANCE|JOB|LANG|LANGUAGE|LC_ADDRESS|LC_ALL|LC_IDENTIFICATION|LC_MEASUREMENT|LC_MONETARY|LC_NAME|LC_NUMERIC|LC_PAPER|LC_TELEPHONE|LC_TIME|LESSCLOSE|LESSOPEN|LINES|LOGNAME|LS_COLORS|MACHTYPE|MAILCHECK|MANDATORY_PATH|NO_AT_BRIDGE|OLDPWD|OPTERR|OPTIND|ORBIT_SOCKETDIR|OSTYPE|PAPERSIZE|PATH|PIPESTATUS|PPID|PS1|PS2|PS3|PS4|PWD|RANDOM|REPLY|SECONDS|SELINUX_INIT|SESSION|SESSIONTYPE|SESSION_MANAGER|SHELL|SHELLOPTS|SHLVL|SSH_AUTH_SOCK|TERM|UID|UPSTART_EVENTS|UPSTART_INSTANCE|UPSTART_JOB|UPSTART_SESSION|USER|WINDOWID|XAUTHORITY|XDG_CONFIG_DIRS|XDG_CURRENT_DESKTOP|XDG_DATA_DIRS|XDG_GREETER_DATA_DIR|XDG_MENU_PREFIX|XDG_RUNTIME_DIR|XDG_SEAT|XDG_SEAT_PATH|XDG_SESSION_DESKTOP|XDG_SESSION_ID|XDG_SESSION_PATH|XDG_SESSION_TYPE|XDG_VTNR|XMODIFIERS)\\b",a={pattern:/(^(["']?)\w+\2)[ \t]+\S.*/,lookbehind:!0,alias:"punctuation",inside:null},n={bash:a,environment:{pattern:RegExp("\\$"+t),alias:"constant"},variable:[{pattern:/\$?\(\([\s\S]+?\)\)/,greedy:!0,inside:{variable:[{pattern:/(^\$\(\([\s\S]+)\)\)/,lookbehind:!0},/^\$\(\(/],number:/\b0x[\dA-Fa-f]+\b|(?:\b\d+(?:\.\d*)?|\B\.\d+)(?:[Ee]-?\d+)?/,operator:/--|\+\+|\*\*=?|<<=?|>>=?|&&|\|\||[=!+\-*/%<>^&|]=?|[?~:]/,punctuation:/\(\(?|\)\)?|,|;/}},{pattern:/\$\((?:\([^)]+\)|[^()])+\)|`[^`]+`/,greedy:!0,inside:{variable:/^\$\(|^`|\)$|`$/}},{pattern:/\$\{[^}]+\}/,greedy:!0,inside:{operator:/:[-=?+]?|[!\/]|##?|%%?|\^\^?|,,?/,punctuation:/[\[\]]/,environment:{pattern:RegExp("(\\{)"+t),lookbehind:!0,alias:"constant"}}},/\$(?:\w+|[#?*!@$])/],entity:/\\(?:[abceEfnrtv\\"]|O?[0-7]{1,3}|U[0-9a-fA-F]{8}|u[0-9a-fA-F]{4}|x[0-9a-fA-F]{1,2})/};e.languages.bash={shebang:{pattern:/^#!\s*\/.*/,alias:"important"},comment:{pattern:/(^|[^"{\\$])#.*/,lookbehind:!0},"function-name":[{pattern:/(\bfunction\s+)[\w-]+(?=(?:\s*\(?:\s*\))?\s*\{)/,lookbehind:!0,alias:"function"},{pattern:/\b[\w-]+(?=\s*\(\s*\)\s*\{)/,alias:"function"}],"for-or-select":{pattern:/(\b(?:for|select)\s+)\w+(?=\s+in\s)/,alias:"variable",lookbehind:!0},"assign-left":{pattern:/(^|[\s;|&]|[<>]\()\w+(?:\.\w+)*(?=\+?=)/,inside:{environment:{pattern:RegExp("(^|[\\s;|&]|[<>]\\()"+t),lookbehind:!0,alias:"constant"}},alias:"variable",lookbehind:!0},parameter:{pattern:/(^|\s)-{1,2}(?:\w+:[+-]?)?\w+(?:\.\w+)*(?=[=\s]|$)/,alias:"variable",lookbehind:!0},string:[{pattern:/((?:^|[^<])<<-?\s*)(\w+)\s[\s\S]*?(?:\r?\n|\r)\2/,lookbehind:!0,greedy:!0,inside:n},{pattern:/((?:^|[^<])<<-?\s*)(["'])(\w+)\2\s[\s\S]*?(?:\r?\n|\r)\3/,lookbehind:!0,greedy:!0,inside:{bash:a}},{pattern:/(^|[^\\](?:\\\\)*)"(?:\\[\s\S]|\$\([^)]+\)|\$(?!\()|`[^`]+`|[^"\\`$])*"/,lookbehind:!0,greedy:!0,inside:n},{pattern:/(^|[^$\\])'[^']*'/,lookbehind:!0,greedy:!0},{pattern:/\$'(?:[^'\\]|\\[\s\S])*'/,greedy:!0,inside:{entity:n.entity}}],environment:{pattern:RegExp("\\$?"+t),alias:"constant"},variable:n.variable,function:{pattern:/(^|[\s;|&]|[<>]\()(?:add|apropos|apt|apt-cache|apt-get|aptitude|aspell|automysqlbackup|awk|basename|bash|bc|bconsole|bg|bzip2|cal|cargo|cat|cfdisk|chgrp|chkconfig|chmod|chown|chroot|cksum|clear|cmp|column|comm|composer|cp|cron|crontab|csplit|curl|cut|date|dc|dd|ddrescue|debootstrap|df|diff|diff3|dig|dir|dircolors|dirname|dirs|dmesg|docker|docker-compose|du|egrep|eject|env|ethtool|expand|expect|expr|fdformat|fdisk|fg|fgrep|file|find|fmt|fold|format|free|fsck|ftp|fuser|gawk|git|gparted|grep|groupadd|groupdel|groupmod|groups|grub-mkconfig|gzip|halt|head|hg|history|host|hostname|htop|iconv|id|ifconfig|ifdown|ifup|import|install|ip|java|jobs|join|kill|killall|less|link|ln|locate|logname|logrotate|look|lpc|lpr|lprint|lprintd|lprintq|lprm|ls|lsof|lynx|make|man|mc|mdadm|mkconfig|mkdir|mke2fs|mkfifo|mkfs|mkisofs|mknod|mkswap|mmv|more|most|mount|mtools|mtr|mutt|mv|nano|nc|netstat|nice|nl|node|nohup|notify-send|npm|nslookup|op|open|parted|passwd|paste|pathchk|ping|pkill|pnpm|podman|podman-compose|popd|pr|printcap|printenv|ps|pushd|pv|quota|quotacheck|quotactl|ram|rar|rcp|reboot|remsync|rename|renice|rev|rm|rmdir|rpm|rsync|scp|screen|sdiff|sed|sendmail|seq|service|sftp|sh|shellcheck|shuf|shutdown|sleep|slocate|sort|split|ssh|stat|strace|su|sudo|sum|suspend|swapon|sync|sysctl|tac|tail|tar|tee|time|timeout|top|touch|tr|traceroute|tsort|tty|umount|uname|unexpand|uniq|units|unrar|unshar|unzip|update-grub|uptime|useradd|userdel|usermod|users|uudecode|uuencode|v|vcpkg|vdir|vi|vim|virsh|vmstat|wait|watch|wc|wget|whereis|which|who|whoami|write|xargs|xdg-open|yarn|yes|zenity|zip|zsh|zypper)(?=$|[)\s;|&])/,lookbehind:!0},keyword:{pattern:/(^|[\s;|&]|[<>]\()(?:case|do|done|elif|else|esac|fi|for|function|if|in|select|then|until|while)(?=$|[)\s;|&])/,lookbehind:!0},builtin:{pattern:/(^|[\s;|&]|[<>]\()(?:\.|:|alias|bind|break|builtin|caller|cd|command|continue|declare|echo|enable|eval|exec|exit|export|getopts|hash|help|let|local|logout|mapfile|printf|pwd|read|readarray|readonly|return|set|shift|shopt|source|test|times|trap|type|typeset|ulimit|umask|unalias|unset)(?=$|[)\s;|&])/,lookbehind:!0,alias:"class-name"},boolean:{pattern:/(^|[\s;|&]|[<>]\()(?:false|true)(?=$|[)\s;|&])/,lookbehind:!0},"file-descriptor":{pattern:/\B&\d\b/,alias:"important"},operator:{pattern:/\d?<>|>\||\+=|=[=~]?|!=?|<<[<-]?|[&\d]?>>|\d[<>]&?|[<>][&=]?|&[>&]?|\|[&|]?/,inside:{"file-descriptor":{pattern:/^\d/,alias:"important"}}},punctuation:/\$?\(\(?|\)\)?|\.\.|[{}[\];\\]/,number:{pattern:/(^|\s)(?:[1-9]\d*|0)(?:[.,]\d+)?\b/,lookbehind:!0}},a.inside=e.languages.bash;for(var s=["comment","function-name","for-or-select","assign-left","parameter","string","environment","function","keyword","builtin","boolean","file-descriptor","operator","punctuation","number"],o=n.variable[1].inside,i=0;i<s.length;i++)o[s[i]]=e.languages.bash[s[i]];e.languages.sh=e.languages.bash,e.languages.shell=e.languages.bash}(Prism);
+</script>
+
+<script>
+/* ============================================================
+   용어 사전 데이터
+   ============================================================ */
+const GLOSSARY = {
+  "포트":      "한 컴퓨터 안에서 '어느 프로그램'으로 데이터를 보낼지 가리키는 번호(0~65535). 건물(IP) 안의 호실 번호라고 생각하세요. 80=HTTP, 443=HTTPS.",
+  "소켓":      "프로그램이 네트워크와 대화하려고 잡는 '전화기'. (IP+포트+프로토콜)로 식별되며, write()로 보내고 read()로 받습니다.",
+  "IP주소":    "네트워크상의 컴퓨터(정확히는 인터페이스) 주소. 건물 주소에 해당. 예: 203.0.113.7",
+  "MAC주소":   "랜카드(네트워크 장비)에 박혀있는 하드웨어 주소. 같은 네트워크 안에서 '바로 옆 장비'에게 전달할 때 씁니다.",
+  "TCP":       "신뢰성 있는 연결형 프로토콜. 순서 보장·재전송·흐름제어를 해 줍니다. 데이터를 '끊김 없는 바이트 흐름'처럼 다룹니다.",
+  "UDP":       "비연결형 프로토콜. 빠르지만 순서·도착을 보장하지 않습니다. 영상통화·게임·DNS처럼 속도가 중요한 곳에 씁니다.",
+  "임시포트":   "클라이언트가 연결할 때 OS가 자동으로 배정하는 포트(보통 49152~65535). ephemeral port. 답장을 받을 통로 역할.",
+  "4튜플":     "하나의 TCP 연결을 유일하게 식별하는 네 값: (출발지 IP, 출발지 포트, 목적지 IP, 목적지 포트). 하나라도 다르면 다른 연결.",
+  "캡슐화":     "데이터를 보낼 때 각 계층이 자기 헤더를 덧붙이는 과정. 받을 때는 반대로 벗깁니다(역캡슐화).",
+  "추상화":     "복잡한 내부를 감추고 단순한 사용법만 노출하는 것. 각 계층은 아래 계층의 내부를 몰라도 됩니다.",
+  "라우터":     "서로 다른 네트워크를 연결하고, 패킷을 보고 '다음으로 어디로 보낼지' 결정해 전달하는 장비.",
+  "게이트웨이":  "내 네트워크 밖으로 나갈 때 거치는 출입구(보통 라우터). '기본 게이트웨이'는 목적지를 모를 때 일단 보내는 곳.",
+  "라우팅테이블": "라우터/호스트가 가진 '목적지 대역 → 다음 홉' 지도. 패킷의 목적지 IP를 보고 이 표를 뒤져 길을 정합니다.",
+  "홉":        "패킷이 라우터를 하나 거치는 것을 '한 홉(hop)'이라 합니다. traceroute는 홉을 하나씩 보여줍니다.",
+  "서브넷":     "IP 주소를 네트워크 부분과 호스트 부분으로 나눈 묶음. 예: 192.168.0.0/24 는 192.168.0.x 256개 묶음.",
+  "서브넷마스크": "IP에서 어디까지가 '네트워크 부분'인지 표시. /24 = 255.255.255.0. 앞 24비트가 네트워크.",
+  "롱기스트프리픽스": "라우팅 테이블에 목적지와 겹치는 항목이 여러 개면, 가장 길게(구체적으로) 일치하는 항목을 택하는 규칙.",
+  "NAT":       "사설 IP ↔ 공인 IP를 바꿔치기하는 기술. 공유기가 집 안의 여러 기기를 공인 IP 하나로 인터넷에 내보낼 때 씁니다.",
+  "사설IP":     "내부망 전용 주소대역(10.x, 172.16~31.x, 192.168.x). 인터넷에 그대로 나갈 수 없어 NAT가 필요합니다.",
+  "iptables":  "리눅스의 방화벽/NAT 설정 도구. 커널의 netfilter에 '어떤 패킷을 통과/차단/변환할지' 규칙을 등록합니다.",
+  "netfilter": "리눅스 커널 안에서 패킷을 가로채는 틀. iptables는 이 netfilter에 규칙을 넣는 사용자 도구입니다.",
+  "체인":      "netfilter에서 패킷이 거쳐가는 규칙 묶음. PREROUTING/INPUT/FORWARD/OUTPUT/POSTROUTING 등.",
+  "MSS":       "한 TCP 세그먼트에 담을 수 있는 최대 데이터 크기(헤더 제외). 보통 1460바이트. 긴 데이터는 MSS 단위로 쪼개집니다.",
+  "MTU":       "한 번에 보낼 수 있는 프레임 최대 크기(헤더 포함). 이더넷은 보통 1500바이트.",
+  "시퀀스번호":  "TCP가 각 바이트에 매기는 일련번호. 받는 쪽은 이 번호로 순서를 맞추고 빠진 곳을 알아냅니다.",
+  "핸드셰이크":  "TCP가 연결을 맺기 전에 SYN→SYN/ACK→ACK 세 번 인사를 주고받는 절차(3-way handshake).",
+  "ACK":       "잘 받았다는 확인 응답(Acknowledgement). 받은 데이터의 다음 기대 번호를 알려줍니다.",
+  "소켓버퍼":   "소켓이 보낼/받을 데이터를 잠시 담아두는 메모리 공간. 앱과 네트워크 속도 차이를 흡수합니다.",
+  "파일디스크립터": "운영체제가 열린 파일·소켓에 붙이는 정수 번호(fd). 0=표준입력,1=표준출력,2=표준에러로 예약돼 보통 3부터 시작. 소켓도 결국 fd 하나로 다뤄지며, 연결마다 fd가 하나씩 소비됩니다.",
+  "TIME_WAIT":  "연결을 끊은 쪽이 마지막 ACK를 보낸 뒤 잠시(보통 수십 초) 머무는 상태. 마지막 ACK 유실에 대비해 재응답하고, 옛 패킷이 새 연결에 섞이지 않게 하는 안전장치입니다.",
+  "FIN":       "연결을 끊겠다는 신호 비트. '내 쪽은 보낼 데이터가 끝났다'는 뜻으로, 양쪽이 각자 한 번씩 보냅니다."
+};
+
+/* ============================================================
+   유틸
+   ============================================================ */
+const $  = (s, r=document) => r.querySelector(s);
+const $$ = (s, r=document) => Array.from(r.querySelectorAll(s));
+const LS = {
+  get(k, d){ try{ return JSON.parse(localStorage.getItem("nettut:"+k)) ?? d; }catch(e){ return d; } },
+  set(k, v){ try{ localStorage.setItem("nettut:"+k, JSON.stringify(v)); }catch(e){} }
+};
+
+/* ============================================================
+   목차 자동 생성 + 스크롤스파이
+   ============================================================ */
+const sections = $$('section[data-title]');
+const toc = $('#toc');
+sections.forEach((sec, i) => {
+  const a = document.createElement('a');
+  a.href = '#' + sec.id;
+  a.dataset.target = sec.id;
+  a.innerHTML = `<span class="num">${i===0?'·':i}</span><span>${sec.dataset.title}</span>`;
+  toc.appendChild(a);
+});
+const tocLinks = $$('#toc a');
+
+const visited = new Set(LS.get('visited', []));
+function markVisited(id){
+  if(visited.has(id)) return;
+  visited.add(id);
+  LS.set('visited', [...visited]);
+  updateProgress();
+}
+tocLinks.forEach(a => { if(visited.has(a.dataset.target)) a.classList.add('done'); });
+
+const spy = new IntersectionObserver((entries) => {
+  entries.forEach(e => {
+    if(e.isIntersecting){
+      const id = e.target.id;
+      tocLinks.forEach(a => a.classList.toggle('active', a.dataset.target === id));
+      markVisited(id);
+      const link = tocLinks.find ? null : null;
+      const cur = $(`#toc a[data-target="${id}"]`);
+      if(cur) cur.classList.add('done');
+    }
+  });
+}, { rootMargin: '-45% 0px -50% 0px', threshold: 0 });
+sections.forEach(s => spy.observe(s));
+
+/* ============================================================
+   진행률 (방문 섹션 + 정답 퀴즈)
+   ============================================================ */
+const solved = new Set(LS.get('solved', []));
+function updateProgress(){
+  const totalSec = sections.length;
+  const totalQuiz = $$('.quiz').length;
+  const total = totalSec + totalQuiz;
+  const done = visited.size + solved.size;
+  const pct = total ? Math.round(Math.min(done, total) / total * 100) : 0;
+  $('#progBar').style.width = pct + '%';
+  $('#progPct').textContent = pct + '%';
+}
+
+/* ============================================================
+   툴팁 (용어)
+   ============================================================ */
+const tip = $('#tooltip');
+function showTip(el){
+  const key = el.dataset.t;
+  const txt = GLOSSARY[key] || key;
+  tip.innerHTML = `<b>${el.textContent}</b><br>${txt}`;
+  tip.classList.add('show');
+  positionTip(el);
+}
+function positionTip(el){
+  const r = el.getBoundingClientRect();
+  let x = r.left, y = r.bottom + 8;
+  tip.style.left = '0px'; tip.style.top = '0px';
+  const tw = tip.offsetWidth, th = tip.offsetHeight;
+  if(x + tw > window.innerWidth - 12) x = window.innerWidth - tw - 12;
+  if(y + th > window.innerHeight - 12) y = r.top - th - 8;
+  tip.style.left = Math.max(12, x) + 'px';
+  tip.style.top = y + 'px';
+}
+function hideTip(){ tip.classList.remove('show'); }
+function wireTerms(root=document){
+  $$('.term', root).forEach(el => {
+    if(el._wired) return; el._wired = true;
+    el.addEventListener('mouseenter', () => showTip(el));
+    el.addEventListener('mouseleave', hideTip);
+    el.addEventListener('click', (e) => { e.stopPropagation(); tip.classList.contains('show') ? hideTip() : showTip(el); });
+  });
+}
+document.addEventListener('click', hideTip);
+window.addEventListener('scroll', hideTip, true);
+
+/* ============================================================
+   퀴즈 엔진
+   ============================================================ */
+function wireQuizzes(root=document){
+  $$('.quiz', root).forEach(q => {
+    if(q._wired) return; q._wired = true;
+    const ans = q.dataset.answer;
+    const qid = q.dataset.qid;
+    const opts = $$('.opt', q);
+    const explain = $('.explain', q);
+    if(solved.has(qid)){ revealQuiz(q, true); }
+    opts.forEach(opt => {
+      opt.addEventListener('click', () => {
+        if(q._done) return;
+        const pick = opt.dataset.opt;
+        opts.forEach(o => {
+          o.disabled = true;
+          if(o.dataset.opt === ans) o.classList.add('correct');
+        });
+        if(pick !== ans) opt.classList.add('wrong');
+        else { solved.add(qid); LS.set('solved', [...solved]); updateProgress(); }
+        explain.classList.add('show');
+        q._done = true;
+      });
+    });
+  });
+}
+function revealQuiz(q, correct){
+  const ans = q.dataset.answer;
+  $$('.opt', q).forEach(o => {
+    o.disabled = true;
+    if(o.dataset.opt === ans) o.classList.add('correct');
+  });
+  $('.explain', q).classList.add('show');
+  q._done = true;
+}
+
+/* ============================================================
+   용어 사전 드로어
+   ============================================================ */
+const glossary = $('#glossary'), scrim = $('#scrim');
+function renderGlossary(filter=''){
+  const list = $('#gList'); list.innerHTML = '';
+  const f = filter.trim().toLowerCase();
+  Object.entries(GLOSSARY)
+    .filter(([k,v]) => !f || k.toLowerCase().includes(f) || v.toLowerCase().includes(f))
+    .sort((a,b)=>a[0].localeCompare(b[0],'ko'))
+    .forEach(([k,v]) => {
+      const d = document.createElement('div'); d.className = 'g-item';
+      d.innerHTML = `<div class="t">${k}</div><div class="d">${v}</div>`;
+      list.appendChild(d);
+    });
+}
+function openGlossary(){ renderGlossary(); glossary.classList.add('open'); scrim.classList.add('open'); }
+function closeGlossary(){ glossary.classList.remove('open'); scrim.classList.remove('open'); }
+$('#glossaryBtn').addEventListener('click', openGlossary);
+$('#glossaryClose').addEventListener('click', closeGlossary);
+scrim.addEventListener('click', () => { closeGlossary(); $('#sidebar').classList.remove('open'); });
+$('#gSearch').addEventListener('input', e => renderGlossary(e.target.value));
+
+/* 초기화 버튼 */
+$('#resetBtn').addEventListener('click', () => {
+  if(confirm('학습 진행률과 퀴즈 기록을 모두 지울까요?')){
+    ['visited','solved'].forEach(k => localStorage.removeItem('nettut:'+k));
+    location.reload();
+  }
+});
+/* 모바일 메뉴 */
+$('#menuBtn').addEventListener('click', () => { $('#sidebar').classList.toggle('open'); scrim.classList.toggle('open'); });
+$$('#toc a').forEach(a => a.addEventListener('click', () => $('#sidebar').classList.remove('open')));
+
+/* ============================================================
+   섹션 1: 계층 모델 (클릭) + 캡슐화 애니메이션
+   ============================================================ */
+(function layersSection(){
+  const LAYERS = [
+    { key:'app',  name:'응용 계층', en:'Application', icon:'🖥️', color:'var(--accent)',
+      unit:'메시지(Message)', addr:'-',
+      what:'사람이 쓰는 데이터를 만드는 곳. HTTP·DNS·SMTP 등. 당신의 코드가 <code>"GET / HTTP/1.0"</code> 같은 글자를 만드는 바로 그 층입니다.' },
+    { key:'tcp',  name:'전송 계층', en:'Transport', icon:'🚚', color:'var(--server)',
+      unit:'세그먼트(Segment)', addr:'포트(Port)',
+      what:'어느 <b>프로그램</b>에게 줄지(포트)를 정하고, TCP라면 순서·재전송·흐름제어로 <b>신뢰성</b>을 보장합니다. 긴 데이터를 MSS 단위로 쪼개는 것도 여기.' },
+    { key:'ip',   name:'인터넷 계층', en:'Internet', icon:'🗺️', color:'var(--router)',
+      unit:'패킷(Packet)', addr:'IP 주소',
+      what:'목적지 <b>컴퓨터</b>까지 가는 길을 책임집니다. IP 주소를 붙이고, 라우터들이 이 주소를 보고 길을 찾습니다(라우팅).' },
+    { key:'link', name:'링크 계층', en:'Link', icon:'🔗', color:'var(--purple)',
+      unit:'프레임(Frame)', addr:'MAC 주소',
+      what:'실제 전선/와이파이로 <b>바로 옆 장비</b>에게 비트를 전달합니다. MAC 주소로 같은 네트워크 안의 다음 장비를 지정해요.' },
+  ];
+  const stack = $('#layerStack'), info = $('#layerInfo');
+  let sel = 0;
+  function renderStack(){
+    stack.innerHTML = '';
+    LAYERS.forEach((L,i) => {
+      const d = document.createElement('button');
+      d.className = 'node'; d.style.textAlign='left'; d.style.width='100%'; d.style.borderColor = (i===sel)?L.color:'var(--border-2)';
+      d.style.borderLeft = `4px solid ${L.color}`;
+      if(i===sel) d.style.boxShadow = `0 0 0 1px ${L.color} inset`;
+      d.innerHTML = `<div class="flex between"><span><span style="font-size:18px">${L.icon}</span> <b>${L.name}</b> <span class="dim mono" style="font-size:11px">${L.en}</span></span></div>`;
+      d.addEventListener('click', () => { sel=i; renderStack(); renderInfo(); });
+      stack.appendChild(d);
+    });
+  }
+  function renderInfo(){
+    const L = LAYERS[sel];
+    info.innerHTML = `
+      <div class="flex" style="gap:10px"><span style="font-size:26px">${L.icon}</span>
+        <div><div style="font-weight:800; font-size:17px">${L.name} <span class="dim mono" style="font-size:12px">(${L.en})</span></div></div></div>
+      <p style="margin:12px 0">${L.what}</p>
+      <table class="t" style="margin-bottom:0">
+        <tr><th style="width:42%">데이터 단위</th><td style="color:${L.color}">${L.unit}</td></tr>
+        <tr><th>이 층의 주소</th><td style="color:${L.color}">${L.addr}</td></tr>
+      </table>`;
+  }
+  renderStack(); renderInfo();
+
+  // --- 캡슐화 애니메이션 ---
+  const STEPS = [
+    { tag:'app',  label:'응용 계층 데이터',  parts:['DATA'],
+      desc:'<strong>응용 계층</strong>의 순수 데이터입니다. 예: HTTP 요청 글자 <code>"GET / HTTP/1.0…"</code>. 아직 아무 헤더도 없어요.' },
+    { tag:'tcp',  label:'세그먼트(Segment)', parts:['TCP','DATA'],
+      desc:'<strong>전송 계층(TCP)</strong>이 <span class="badge ok">TCP 헤더</span>를 앞에 붙였습니다. 여기엔 <b>출발/목적 포트</b>와 <b>시퀀스 번호</b>가 들어가요. 이제 "세그먼트"라 부릅니다.' },
+    { tag:'ip',   label:'패킷(Packet)',     parts:['IP','TCP','DATA'],
+      desc:'<strong>인터넷 계층(IP)</strong>이 <span class="badge warn">IP 헤더</span>를 더 붙였습니다. <b>출발/목적 IP 주소</b>가 담겨, 이제 라우터가 길을 찾을 수 있어요. 단위는 "패킷".' },
+    { tag:'link', label:'프레임(Frame)',    parts:['ETH','IP','TCP','DATA','FCS'],
+      desc:'<strong>링크 계층</strong>이 <span class="badge" style="color:var(--purple);border-color:var(--purple)">이더넷 헤더</span>(목적지 <b>MAC 주소</b>)와 꼬리(FCS)를 붙였습니다. 이제 전선으로 나갈 "프레임"이 완성됐어요!' },
+  ];
+  const COLORS = { 'DATA':'var(--accent)','TCP':'var(--server)','IP':'var(--router)','ETH':'var(--purple)','FCS':'var(--text-mut)' };
+  const stage = $('#encapStage'), desc = $('#encapDesc'), stepLabel = $('#encapStep'), bytesEl = $('#encapBytes');
+  let lvl = 0;
+
+  // --- 실제 예시 바이트 스트림 (192.168.0.10:51514 → 203.0.113.7:80, "GET / HTTP/1.0\r\n") ---
+  const SAMPLE = {
+    data: { label:'DATA', cls:'data', bytes: Array.from(new TextEncoder().encode('GET / HTTP/1.0\r\n')) },
+    tcp:  { label:'TCP 헤더', cls:'tcp',
+            bytes:[0xC9,0x3A, 0x00,0x50, 0x00,0x00,0x04,0xD2, 0x00,0x00,0x00,0x00, 0x50,0x18, 0xFA,0xF0, 0x1A,0x2B, 0x00,0x00],
+            fields:[['출발 포트','0xC93A = 51514 (임시포트)'],['목적 포트','0x0050 = 80'],['Seq','0x000004D2 = 1234'],['플래그','0x18 = PSH, ACK']] },
+    ip:   { label:'IP 헤더', cls:'ip',
+            bytes:[0x45,0x00, 0x00,0x38, 0x1C,0x46, 0x40,0x00, 0x40,0x06, 0xB1,0xE6, 0xC0,0xA8,0x00,0x0A, 0xCB,0x00,0x71,0x07],
+            fields:[['버전/헤더길이','0x45 = IPv4, 20바이트'],['전체 길이','0x0038 = 56바이트'],['TTL','0x40 = 64'],['프로토콜','0x06 = TCP'],['출발 IP','C0 A8 00 0A = 192.168.0.10'],['목적 IP','CB 00 71 07 = 203.0.113.7']] },
+    eth:  { label:'이더넷 헤더', cls:'eth',
+            bytes:[0x00,0x1A,0x2B,0x3C,0x4D,0x5E, 0xAC,0xDE,0x48,0x00,0x11,0x22, 0x08,0x00],
+            fields:[['목적 MAC','00:1A:2B:3C:4D:5E (게이트웨이)'],['출발 MAC','AC:DE:48:00:11:22 (내 랜카드)'],['EtherType','0x0800 = IPv4']] },
+    fcs:  { label:'FCS', cls:'fcs', bytes:[0x9A,0x7D,0xEF,0x12],
+            fields:[['CRC','프레임 오류 검출용 체크값(트레일러)']] },
+  };
+  const LEVEL_REGIONS = [ ['data'], ['tcp','data'], ['ip','tcp','data'], ['eth','ip','tcp','data','fcs'] ];
+  const hex = b => b.toString(16).toUpperCase().padStart(2,'0');
+  function renderBytes(){
+    const regs = LEVEL_REGIONS[lvl];
+    let total = 0; regs.forEach(r=> total += SAMPLE[r].bytes.length);
+    const dump = regs.map(r=>{
+      const S = SAMPLE[r];
+      return `<span class="rlabel ${S.cls}">${S.label} · ${S.bytes.length}B</span>` +
+             S.bytes.map(b=>`<span class="hx ${S.cls}">${hex(b)}</span>`).join('');
+    }).join('');
+    // 설명도 헥스 덤프와 같은 순서(겉→속: 이더넷→IP→TCP→DATA→FCS)로 나열한다
+    const notes = regs.map(r=>{
+      const S = SAMPLE[r];
+      if(r==='data') return `<div class="bfield"><span class="rlabel data">DATA</span> <span class="fv">"GET / HTTP/1.0\\r\\n"</span> <span class="dim">← 사람이 만든 글자(ASCII), 16바이트</span></div>`;
+      if(!S.fields) return '';
+      const fs = S.fields.map(f=>`${f[0]}=<span class="fv">${f[1]}</span>`).join(' · ');
+      return `<div class="bfield"><span class="rlabel ${S.cls}">${S.label}</span> ${fs}</div>`;
+    }).join('');
+    bytesEl.innerHTML = `<div class="byte-head">📟 지금 전선에 흐르는 실제 바이트 — 총 <b>${total} bytes</b> <span class="dim">(${regs.map(r=>SAMPLE[r].label).join(' + ')})</span></div>
+      <div class="byte-dump">${dump}</div>
+      <div class="byte-notes">${notes}</div>`;
+  }
+
+  function renderEncap(){
+    const S = STEPS[lvl];
+    stage.innerHTML = '';
+    S.parts.forEach((p,i) => {
+      const seg = document.createElement('div');
+      const isData = p==='DATA';
+      seg.style.cssText = `padding:${isData?'18px 22px':'18px 12px'}; font-family:var(--mono); font-weight:700; font-size:${isData?'15px':'12px'};
+        border:1.5px solid ${COLORS[p]}; color:${COLORS[p]};
+        background:${isData?'rgba(56,189,248,.10)':'rgba(255,255,255,.02)'};
+        border-radius:${i===0?'10px 0 0 10px':i===S.parts.length-1?'0 10px 10px 0':'0'};
+        ${i>0?'border-left:none;':''} display:flex; align-items:center; min-height:58px;`;
+      seg.textContent = p==='ETH'?'ETH 헤더':p==='TCP'?'TCP 헤더':p==='IP'?'IP 헤더':p==='FCS'?'FCS':'DATA';
+      seg.style.opacity = '0'; seg.style.transform='translateY(6px)';
+      stage.appendChild(seg);
+      requestAnimationFrame(()=>{ setTimeout(()=>{ seg.style.transition='all .25s'; seg.style.opacity='1'; seg.style.transform='translateY(0)'; }, i*60); });
+    });
+    desc.innerHTML = `<h4>📦 ${S.label}</h4><p>${S.desc}</p>`;
+    stepLabel.textContent = `계층 ${lvl} / 3 — ${['응용','전송','인터넷','링크'][lvl]}`;
+    $('#encapDown').disabled = lvl>=STEPS.length-1;
+    $('#encapUp').disabled = lvl<=0;
+    renderBytes();
+    wireTerms(desc);
+  }
+  $('#encapDown').addEventListener('click', ()=>{ if(lvl<STEPS.length-1){lvl++; renderEncap();} });
+  $('#encapUp').addEventListener('click', ()=>{ if(lvl>0){lvl--; renderEncap();} });
+  $('#encapReset').addEventListener('click', ()=>{ lvl=0; renderEncap(); });
+  renderEncap();
+})();
+
+/* ============================================================
+   섹션 2: 4-튜플 연결 데모 + 코드 연계
+   ============================================================ */
+(function socketSection(){
+  const list = $('#connList'), note = $('#tupleNote');
+  const SERVER_IP = '203.0.113.7';
+  let conns = [];
+  let nextPort = 51514;
+  const CLIENTS = [
+    { name:'손님 A', ip:'198.51.100.23' },
+    { name:'손님 B', ip:'192.0.2.88' },
+    { name:'손님 C', ip:'203.0.113.150' },
+    { name:'손님 D', ip:'198.51.100.77' },
+  ];
+  function render(){
+    list.innerHTML = '';
+    if(conns.length===0){
+      list.innerHTML = `<div class="dim" style="padding:14px; text-align:center; border:1px dashed var(--border); border-radius:10px">아직 연결이 없습니다. <b>+ 손님(연결) 추가</b>를 눌러보세요.</div>`;
+      return;
+    }
+    conns.forEach((c,i) => {
+      const row = document.createElement('div');
+      row.style.cssText = 'display:flex; align-items:center; gap:8px; padding:10px 12px; border:1px solid var(--border); border-radius:10px; background:var(--panel); font-family:var(--mono); font-size:12.5px; flex-wrap:wrap';
+      row.innerHTML = `
+        <span class="badge cli">${c.ip}:${c.port}</span>
+        <span class="dim">→</span>
+        <span class="badge ok">${SERVER_IP}:80</span>
+        <span class="spacer" style="flex:1"></span>
+        <span class="dim" style="font-size:11px">${c.name} · 서버측 소켓 fd=${4+i}</span>`;
+      row.style.opacity='0'; row.style.transform='translateX(-8px)';
+      list.appendChild(row);
+      requestAnimationFrame(()=>{ row.style.transition='all .25s'; row.style.opacity='1'; row.style.transform='translateX(0)'; });
+    });
+  }
+  function add(sameIp){
+    const base = sameIp && conns.length ? CLIENTS.find(c=>c.ip===conns[conns.length-1].ip) || CLIENTS[0]
+                                        : CLIENTS[conns.length % CLIENTS.length];
+    conns.push({ name: base.name + (sameIp?' (탭2)':''), ip: base.ip, port: nextPort++ });
+    render();
+    if(conns.length>=2){
+      note.innerHTML = `<h4>🔢 보이시나요?</h4><p><b>서버 쪽(초록)</b>은 전부 <code>${SERVER_IP}:80</code>으로 똑같습니다. 그런데 <b>클라 쪽(파랑)</b>의 포트가 모두 달라서, 4-튜플 전체로 보면 <b>전부 다른 연결</b>이에요. 서버 포트 하나로 손님을 무한정 받는 비밀이 바로 이것!</p>`;
+    }
+    if(sameIp){
+      note.innerHTML = `<h4>🔢 같은 손님이 또 접속해도?</h4><p>같은 IP라도 OS가 <b>새 임시 포트</b>를 주기 때문에 4-튜플이 달라져 별개의 연결이 됩니다. (브라우저 탭 2개로 같은 사이트 접속하는 상황!)</p>`;
+    }
+    wireTerms(note);
+  }
+  $('#addConn').addEventListener('click', ()=>add(false));
+  $('#addSameIp').addEventListener('click', ()=>add(true));
+  $('#clearConn').addEventListener('click', ()=>{ conns=[]; nextPort=51514; render(); note.innerHTML = `<h4>🔢 관찰 포인트</h4><p>손님을 추가해 보세요. <b>서버 IP·포트(초록)</b>는 모두 같고, <b>클라 IP·포트(파랑)</b>만 달라집니다.</p>`; });
+  render();
+
+  // --- 코드 연계 단계 ---
+  const LC = [
+    { t:'시작', d:'"다음 단계"를 눌러 서버가 손님을 받고, 클라이언트가 접속해 데이터를 주고받는 과정을 따라가 보세요.', s:[], c:[] },
+    { t:'① 서버가 귀를 연다 (listen)', d:'서버가 <code>new ServerSocket(18080)</code>으로 <b>listen 소켓</b>을 만들고 18080 포트에서 손님을 기다립니다. (socket+bind+listen이 한 번에)', s:[1], c:[] },
+    { t:'② 서버가 대기 (accept)', d:'<code>ss.accept()</code>에서 멈춰 손님이 노크하기를 기다립니다. 아직 연결은 없어요.', s:[3], c:[] },
+    { t:'③ 클라이언트가 접속 (connect)', d:'클라이언트가 <code>new Socket("127.0.0.1", 18080)</code>로 접속합니다. 이때 OS가 클라이언트에게 <b>임시 포트</b>를 자동 배정해요. 서버의 <code>accept()</code>가 깨어나 <b>연결 소켓</b>을 반환합니다.', s:[3], c:[1] },
+    { t:'④ 요청 전송/수신', d:'클라가 <code>out.write(...)</code>로 HTTP 요청을 보내고, 서버는 <code>in.read()</code>로 한 바이트씩 읽어 요청을 조립합니다.', s:[6], c:[6] },
+    { t:'⑤ 서버가 응답', d:'서버가 <code>out.write(response)</code>로 302 응답을 보냅니다.', s:[8], c:[] },
+    { t:'⑥ 클라가 응답 수신', d:'클라가 <code>while((b=in.read())!=-1)</code>로 응답을 끝까지 읽어 출력합니다.', s:[], c:[9] },
+    { t:'⑦ 정리', d:'한 연결이 끝나면 연결 소켓은 닫히지만, 서버의 <b>listen 소켓(:18080)</b>은 그대로 살아 다음 손님을 계속 받습니다.', s:[1], c:[] },
+  ];
+  let li = 0;
+  const sCode = $('#serverCode'), cCode = $('#clientCode'), lcDesc=$('#lcDesc'), lcStep=$('#lcStep');
+  const sLines = sCode.textContent.split('\n');
+  const cLines = cCode.textContent.split('\n');
+  function hl(codeEl, lines, hset){
+    // Prism로 하이라이트 후 라인 강조는 간단히 텍스트 재구성
+    codeEl.innerHTML = lines.map((ln,idx)=>{
+      const n = idx+1;
+      const safe = ln.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+      return hset.includes(n) ? `<span class="hl-line">${safe||' '}</span>` : safe;
+    }).join('\n');
+  }
+  function renderLC(){
+    const L = LC[li];
+    hl(sCode, sLines, L.s);
+    hl(cCode, cLines, L.c);
+    lcDesc.innerHTML = `<h4>🎬 ${L.t}</h4><p>${L.d}</p>`;
+    lcStep.textContent = `단계 ${li} / ${LC.length-1}`;
+    $('#lcPrev').disabled = li<=0;
+    $('#lcNext').disabled = li>=LC.length-1;
+    wireTerms(lcDesc);
+  }
+  $('#lcNext').addEventListener('click', ()=>{ if(li<LC.length-1){li++; renderLC();} });
+  $('#lcPrev').addEventListener('click', ()=>{ if(li>0){li--; renderLC();} });
+  $('#lcReset').addEventListener('click', ()=>{ li=0; renderLC(); });
+  renderLC();
+})();
+
+/* ============================================================
+   섹션 3: TCP handshake + 세그먼트 분할
+   ============================================================ */
+(function tcpSection(){
+  // --- handshake ---
+  const packet = $('#hsPacket'), wire = $('#hsWire');
+  const cState = $('#hsClientState'), sState = $('#hsServerState');
+  const desc = $('#hsDesc'), step = $('#hsStep');
+  const HS = [
+    { cs:['CLOSED',''], ss:['LISTEN','ok'], t:'📞 연결 전',
+      d:'클라이언트는 <span class="badge">CLOSED</span>, 서버는 손님을 기다리는 <span class="badge ok">LISTEN</span>. "다음 단계"로 첫 인사(SYN)를 보내보세요.' },
+    { cs:['SYN_SENT','mid'], ss:['LISTEN','ok'], dir:'r', cls:'syn', label:'SYN  seq=100', t:'① SYN → (나 연결하고 싶어)',
+      d:'클라이언트가 <span class="badge cli">SYN</span>을 보냅니다. "연결 시작하자, 내 시작번호는 100이야." 클라이언트는 <span class="badge warn">SYN_SENT</span> 상태로 응답을 기다립니다.' },
+    { cs:['SYN_SENT','mid'], ss:['SYN_RCVD','mid'], dir:'l', cls:'synack', label:'SYN+ACK seq=300 ack=101', t:'② ← SYN+ACK (좋아, 나도)',
+      d:'서버가 <span class="badge warn">SYN+ACK</span>으로 답합니다. "네 SYN 잘 받았어(ack=101). 나도 보낼 준비됐고 내 시작번호는 300이야." 서버는 <span class="badge warn">SYN_RCVD</span>.' },
+    { cs:['ESTABLISHED','est'], ss:['SYN_RCVD','mid'], dir:'r', cls:'ack', label:'ACK  ack=301', t:'③ ACK → (확인!)',
+      d:'클라이언트가 마지막 <span class="badge ok">ACK</span>를 보냅니다. "네 SYN도 잘 받았어(ack=301)." 이제 클라이언트는 <span class="badge ok">ESTABLISHED</span> — 연결 완성!' },
+    { cs:['ESTABLISHED','est'], ss:['ESTABLISHED','est'], t:'✅ 연결 성립 (ESTABLISHED)',
+      d:'서버도 ACK를 받아 <span class="badge ok">ESTABLISHED</span>가 됐습니다. 양쪽 모두 "보내고 받을 수 있음"을 확인했어요. 이제 진짜 데이터를 주고받을 수 있습니다!' },
+  ];
+  let hi = 0;
+  function setState(el, [txt, cls]){ el.textContent = txt; el.className = 'hs-state' + (cls?(' '+cls):''); }
+  function renderHS(){
+    const H = HS[hi];
+    setState(cState, H.cs); setState(sState, H.ss);
+    desc.innerHTML = `<h4>${H.t}</h4><p>${H.d}</p>`;
+    step.textContent = `단계 ${hi} / ${HS.length-1}`;
+    $('#hsNext').disabled = hi >= HS.length-1;
+    // 패킷 애니메이션
+    if(H.dir){
+      packet.className = 'hs-packet ' + (H.cls||'');
+      packet.textContent = H.label;
+      const start = H.dir==='r' ? 6 : 94;
+      const end   = H.dir==='r' ? 94 : 6;
+      packet.style.transition = 'none';
+      packet.style.left = start + '%';
+      packet.classList.remove('show');
+      requestAnimationFrame(()=>{ requestAnimationFrame(()=>{
+        packet.style.transition = '';
+        packet.classList.add('show');
+        packet.style.left = end + '%';
+      }); });
+    } else {
+      packet.classList.remove('show');
+    }
+    wireTerms(desc);
+  }
+  $('#hsNext').addEventListener('click', ()=>{ if(hi<HS.length-1){ hi++; renderHS(); } });
+  $('#hsReset').addEventListener('click', ()=>{ hi=0; renderHS(); });
+  renderHS();
+
+  // --- 세그먼트 분할/재조립 ---
+  const enc = new TextEncoder();
+  const segMss = $('#segMss'), segMssVal = $('#segMssVal');
+  const segOut = $('#segOut'), segIn = $('#segIn'), segResult = $('#segResult');
+  segMss.addEventListener('input', ()=> segMssVal.textContent = segMss.value);
+  function buildSegments(text, mss){
+    const chars = Array.from(text);
+    const ISN = 1000;
+    const segs = []; let offset = 0;
+    for(let i=0; i<chars.length; i+=mss){
+      const piece = chars.slice(i, i+mss).join('');
+      const bytes = enc.encode(piece).length;
+      segs.push({ seq: ISN + offset, len: bytes, payload: piece });
+      offset += bytes;
+    }
+    return segs;
+  }
+  function chip(seg, flying){
+    const d = document.createElement('div');
+    d.className = 'seg-chip' + (flying?' fly':'');
+    d.innerHTML = `<span class="seq">seq=${seg.seq}</span><span class="pay">${seg.payload.replace(/</g,'&lt;')}</span><span class="dim mono" style="font-size:10px">${seg.len}B</span>`;
+    return d;
+  }
+  $('#segSend').addEventListener('click', ()=>{
+    const text = $('#segInput').value;
+    if(!text.trim()) return;
+    const mss = +segMss.value;
+    const segs = buildSegments(text, mss);
+    segOut.innerHTML = ''; segIn.innerHTML = ''; segResult.style.display='none';
+    // 보내는 쪽 표시
+    segs.forEach(s => segOut.appendChild(chip(s, false)));
+    // 도착 순서 (옵션: 뒤섞기)
+    const arrival = segs.map((s,i)=>({s,i}));
+    if($('#segShuffle').checked){
+      for(let i=arrival.length-1;i>0;i--){ const j=(i*7+3)%(i+1); [arrival[i],arrival[j]]=[arrival[j],arrival[i]]; }
+    }
+    // 도착 애니메이션 (순차)
+    arrival.forEach((a,idx)=>{
+      const c = chip(a.s, true);
+      segIn.appendChild(c);
+      setTimeout(()=>{ c.classList.remove('fly'); }, 120 + idx*260);
+    });
+    // 재조립
+    const total = arrival.length;
+    setTimeout(()=>{
+      const reassembled = segs.map(s=>s.payload).join(''); // seq 순서로 정렬 = 원본
+      const shuffled = $('#segShuffle').checked;
+      segResult.style.display='block';
+      segResult.innerHTML = `<h4>🧩 재조립 결과 (총 ${total}개 세그먼트)</h4>
+        <p>${shuffled? '도착 순서는 뒤죽박죽이었지만, <b>seq 번호로 정렬</b>하니 원본이 그대로 복원됩니다.' : '각 세그먼트를 seq 순서대로 이어 붙이면 원본 메시지가 됩니다.'}
+        <br><span class="mono" style="color:var(--ok)">"${reassembled.replace(/</g,'&lt;')}"</span></p>`;
+      wireTerms(segResult);
+    }, 120 + total*260 + 200);
+  });
+  $('#segReset').addEventListener('click', ()=>{ segOut.innerHTML=''; segIn.innerHTML=''; segResult.style.display='none'; });
+})();
+
+/* ============================================================
+   섹션 4: 라우팅 테이블 조회(LPM) + 홉 여정
+   ============================================================ */
+(function routingSection(){
+  const ipToInt = ip => ip.split('.').reduce((a,o)=>(a<<8>>>0)+(+o),0)>>>0;
+  const matchLen = (ip, net, mask) => {
+    if(mask===0) return 0;
+    const m = mask===32 ? 0xFFFFFFFF : (0xFFFFFFFF << (32-mask))>>>0;
+    return ((ipToInt(ip)&m)>>>0) === ((ipToInt(net)&m)>>>0) ? mask : -1;
+  };
+  const rows = $$('#routeTable tbody tr');
+  const result = $('#routeResult');
+  function lookup(ip){
+    let best=null, bestLen=-1;
+    rows.forEach(r => {
+      const len = matchLen(ip, r.dataset.net, +r.dataset.mask);
+      r.classList.remove('hit');
+      r._match = len>=0;
+      if(len>=0 && len>bestLen){ bestLen=len; best=r; }
+    });
+    rows.forEach(r => r.style.opacity = r._match ? '1' : '.4');
+    if(best) best.classList.add('hit');
+    const nh = best.children[1].textContent;
+    const direct = best.dataset.mask==='24';
+    result.innerHTML = `<h4>🔎 목적지 ${ip} → 채택: <span class="mono" style="color:var(--ok)">${best.children[0].textContent.trim()}</span></h4>
+      <p>일치한 규칙은 <b>${rows.filter(r=>r._match).length}개</b>, 그중 프리픽스가 가장 긴 <b>/${best.dataset.mask}</b>가 이겼습니다.<br>
+      ➡ 다음 홉: <b>${nh}</b>. ${direct ? '같은 서브넷이라 <b>라우터 없이 직접 전달</b>합니다(ARP로 MAC 찾아서).' : '다른 네트워크라 <b>해당 라우터/게이트웨이</b>로 넘깁니다.'}</p>`;
+    wireTerms(result);
+  }
+  $$('.route-dst').forEach(b => b.addEventListener('click', ()=>{
+    $$('.route-dst').forEach(x=>x.classList.remove('primary'));
+    b.classList.add('primary');
+    lookup(b.dataset.ip);
+  }));
+
+  // --- 홉 여정 ---
+  const HOPS = [
+    { name:'내 PC',      ip:'192.168.0.10', role:'CLIENT', cls:'client' },
+    { name:'홈 라우터',   ip:'192.168.0.1',  role:'GATEWAY', cls:'router' },
+    { name:'ISP 라우터',  ip:'100.64.0.1',   role:'ROUTER', cls:'router' },
+    { name:'백본 라우터', ip:'72.14.200.5',  role:'ROUTER', cls:'router' },
+    { name:'목적지 서버', ip:'8.8.8.8',      role:'SERVER', cls:'server' },
+  ];
+  const track = $('#hopTrack'), hopDesc=$('#hopDesc'), hopCap=$('#hopCap');
+  function buildTrack(){
+    track.innerHTML = '';
+    HOPS.forEach((h,i) => {
+      const wrap = document.createElement('div');
+      wrap.style.cssText='flex:1; display:flex; flex-direction:column; align-items:center; gap:6px; position:relative; min-width:60px';
+      wrap.innerHTML = `<div class="hop-dot" data-i="${i}" style="position:absolute; top:-26px; opacity:0; font-size:20px; transition:left .5s, opacity .3s">📦</div>
+        <div class="node ${h.cls}" style="min-width:0; padding:8px 6px; width:100%"><div class="role" style="font-size:9px">${h.role}</div><div class="name" style="font-size:12px">${h.name}</div><div class="ip" style="font-size:10.5px">${h.ip}</div></div>`;
+      track.appendChild(wrap);
+    });
+  }
+  buildTrack();
+  const HOP_DESCS = [
+    h=>`내 PC가 목적지 <b>8.8.8.8</b>은 같은 동네가 아님을 알고, 기본 게이트웨이 <b>192.168.0.1</b>로 보냅니다. (출발 MAC: 내 PC → 목적 MAC: 게이트웨이)`,
+    h=>`<b>홈 라우터</b> 도착. 라우팅 테이블 조회 → 다음 홉은 ISP. <b>NAT</b>로 출발지 IP를 공인 IP로 바꿔 내보냅니다. TTL 1 감소.`,
+    h=>`<b>ISP 라우터</b> 도착. 또 테이블 조회 → 백본으로. 목적/출발 <b>IP는 그대로</b>지만 옆 장비로 갈 <b>MAC만 교체</b>. TTL 또 감소.`,
+    h=>`<b>백본 라우터</b> 도착. 구글 네트워크 쪽으로 한 걸음 더. 이렇게 "다음 홉만 아는" 릴레이가 이어집니다.`,
+    h=>`🎉 <b>목적지 8.8.8.8 도착!</b> 서버의 소켓으로 올라가 앱에 전달됩니다. 응답은 반대 경로로 돌아와요.`,
+  ];
+  let hopBusy=false;
+  function sendHop(){
+    if(hopBusy) return; hopBusy=true;
+    const dots = $$('.hop-dot');
+    dots.forEach(d=>{ d.style.opacity='0'; });
+    let ttl = 64;
+    HOPS.forEach((h,i)=>{
+      setTimeout(()=>{
+        dots.forEach(d=>d.style.opacity='0');
+        const d = dots[i]; d.style.opacity='1';
+        if(i>0) ttl--;
+        hopCap.textContent = `홉 ${i} · TTL ${ttl}`;
+        hopDesc.innerHTML = `<h4>🚦 ${HOPS[i].name} (${HOPS[i].ip})</h4><p>${HOP_DESCS[i](h)}</p>`;
+        wireTerms(hopDesc);
+        if(i===HOPS.length-1) hopBusy=false;
+      }, i*1100);
+    });
+  }
+  $('#hopSend').addEventListener('click', sendHop);
+  $('#hopReset').addEventListener('click', ()=>{ $$('.hop-dot').forEach(d=>d.style.opacity='0'); hopCap.textContent='TTL 64'; hopDesc.innerHTML='<h4>🚦 출발 전</h4><p>"패킷 보내기"를 누르면 내 PC에서 출발해 게이트웨이·ISP·백본을 거쳐 8.8.8.8에 도착하는 과정을 한 홉씩 보여줍니다.</p>'; hopBusy=false; });
+})();
+
+/* ============================================================
+   섹션 5: netfilter 훅 + 방화벽 시뮬레이터 + NAT
+   ============================================================ */
+(function iptablesSection(){
+  // --- 훅 흐름 ---
+  const HOOK = [
+    { n:'PREROUTING', t:'nat (DNAT)', d:'들어오자마자. 목적지 주소를 바꾸는 포트포워딩(DNAT)이 여기서.' },
+    { n:'라우팅 결정', t:'분기', d:'이 패킷이 "나에게 온 것"인가, "남에게 가는 중계"인가 판단 → INPUT 또는 FORWARD로.', branch:true },
+    { n:'INPUT', t:'filter', d:'이 서버 자신에게 오는 패킷의 방화벽 검문소. (예: 우리 웹서버로 오는 :80)', accent:'var(--server)' },
+    { n:'로컬 프로세스', t:'소켓/앱', d:'통과하면 소켓으로 올라가 당신의 프로그램에 도착!', app:true },
+    { n:'OUTPUT', t:'filter', d:'이 서버가 "내보내는" 패킷의 검문소.', accent:'var(--client)' },
+    { n:'POSTROUTING', t:'nat (SNAT)', d:'나가기 직전. 출발지 주소를 바꾸는 공유기 NAT(SNAT/MASQUERADE)가 여기서.' },
+  ];
+  const hookFlow = $('#hookFlow');
+  HOOK.forEach((h,i) => {
+    const row = document.createElement('div');
+    row.style.cssText = `display:flex; align-items:center; gap:12px; padding:11px 14px; border-radius:10px;
+      border:1px solid var(--border-2); background:var(--panel);
+      ${h.branch?'border-style:dashed;':''} ${h.app?'border-color:var(--ok);background:rgba(52,211,153,.07);':''}`;
+    row.innerHTML = `<span class="pill" style="${h.accent?'color:'+h.accent+';border-color:'+h.accent:''}; min-width:120px; text-align:center">${h.n}</span>
+      <span class="badge" style="min-width:90px; text-align:center">${h.t}</span>
+      <span class="dim" style="font-size:13px">${h.d}</span>`;
+    hookFlow.appendChild(row);
+    if(i<HOOK.length-1){ const a=document.createElement('div'); a.style.cssText='text-align:center; color:var(--text-mut); font-size:13px; margin:-2px 0'; a.textContent='↓'; hookFlow.appendChild(a); }
+  });
+
+  // --- 방화벽 시뮬레이터 ---
+  let RULES = [
+    { id:'r1', proto:'tcp', ports:[22],     target:'ACCEPT', label:'SSH 접속 허용', on:true },
+    { id:'r2', proto:'tcp', ports:[80,443], target:'ACCEPT', label:'웹(HTTP/HTTPS) 허용', on:true },
+    { id:'r3', proto:'icmp', ports:[],      target:'ACCEPT', label:'ping(ICMP) 허용', on:true },
+  ];
+  let curPkt = null;
+  const fwChain = $('#fwChain'), fwResult = $('#fwResult'), fwCmd = $('#fwCmd');
+  function ruleText(r){
+    const cond = r.proto==='icmp' ? '-p icmp' : `-p tcp --dport ${r.ports.join(',')}`;
+    return `iptables -A INPUT ${cond} -j ${r.target}`;
+  }
+  function renderCmd(){
+    const pol = $('#fwPolicy').value;
+    const lines = [`iptables -P INPUT ${pol}            # 기본 정책`];
+    RULES.filter(r=>r.on).forEach(r=> lines.push(ruleText(r)));
+    fwCmd.textContent = lines.join('\n');
+    if(window.Prism) Prism.highlightElement(fwCmd);
+  }
+  function renderChain(active=-1, matchedId=null, dropped=false){
+    fwChain.innerHTML = '';
+    RULES.forEach((r,idx) => {
+      const matched = r.id===matchedId;
+      const row = document.createElement('div');
+      row.style.cssText = `display:flex; align-items:center; gap:10px; padding:10px 12px; border-radius:9px;
+        border:1px solid ${matched?'var(--ok)':(idx===active?'var(--accent)':'var(--border)')};
+        background:${matched?'rgba(52,211,153,.13)':(idx===active?'rgba(56,189,248,.10)':'var(--panel)')};
+        opacity:${r.on?1:.45}; transition:all .2s; font-family:var(--mono); font-size:12.5px`;
+      row.innerHTML = `<label class="flex" style="gap:7px; cursor:pointer"><input type="checkbox" ${r.on?'checked':''} data-rule="${r.id}"></label>
+        <span style="flex:1">${ruleText(r)}</span>
+        <span class="dim" style="font-family:var(--sans); font-size:11.5px">${r.label}</span>
+        ${matched?'<span class="badge ok">✓ 매치!</span>':''}`;
+      fwChain.appendChild(row);
+    });
+    const pol = $('#fwPolicy').value;
+    const polRow = document.createElement('div');
+    polRow.style.cssText = `padding:9px 12px; border-radius:9px; border:1px dashed var(--border-2); font-family:var(--mono); font-size:12px; color:var(--text-mut);
+      ${dropped?'border-color:var(--bad); color:var(--bad); background:rgba(248,113,113,.08)':''}`;
+    polRow.innerHTML = `↳ 맞는 규칙 없으면 → 기본 정책: <b>${pol}</b>`;
+    fwChain.appendChild(polRow);
+    fwChain.querySelectorAll('input[data-rule]').forEach(cb => cb.addEventListener('change', e=>{
+      RULES.find(r=>r.id===e.target.dataset.rule).on = e.target.checked;
+      renderCmd(); renderChain(); fwResult.style.display='none';
+    }));
+  }
+  function run(){
+    if(!curPkt) return;
+    const active = RULES.filter(r=>r.on);
+    let i=0;
+    fwResult.style.display='none';
+    const stepThru = () => {
+      const r = active[i];
+      // 현재 검사 중인 규칙을 전체 RULES 인덱스로 환산
+      const realIdx = r ? RULES.indexOf(r) : -1;
+      renderChain(realIdx);
+      if(!r){ // 끝까지 매치 없음 → 기본 정책
+        const pol = $('#fwPolicy').value;
+        verdict(pol, null);
+        return;
+      }
+      const portOk = r.proto==='icmp' ? curPkt.proto==='icmp'
+                    : (curPkt.proto==='tcp' && r.ports.includes(curPkt.port));
+      const protoOk = r.proto===curPkt.proto;
+      if(protoOk && portOk){ renderChain(realIdx, r.id); setTimeout(()=>verdict(r.target, r), 600); }
+      else { i++; setTimeout(stepThru, 550); }
+    };
+    stepThru();
+  }
+  function verdict(target, rule){
+    const dropped = target!=='ACCEPT';
+    if(target!=='ACCEPT') renderChain(-1, null, true);
+    const cls = target==='ACCEPT'?'tip':'warn';
+    const pktName = curPkt.label;
+    let msg;
+    if(target==='ACCEPT') msg = `<h4 style="color:var(--ok)">✅ ACCEPT — 통과!</h4><p><b>${pktName}</b> 패킷은 ${rule?('<code>'+ruleText(rule)+'</code> 규칙'):'규칙'}에 맞아 통과했습니다. 소켓으로 올라가 앱에 전달돼요.</p>`;
+    else msg = `<h4 style="color:var(--bad)">⛔ ${target} — 차단!</h4><p><b>${pktName}</b> 패킷은 ${rule?('<code>'+ruleText(rule)+'</code> 규칙'):'어떤 허용 규칙에도 안 맞아 <b>기본 정책</b>'}에 의해 버려졌습니다. 앱은 이 패킷의 존재조차 모릅니다.</p>`;
+    fwResult.className = 'callout '+cls; fwResult.style.display='block'; fwResult.innerHTML = msg;
+    wireTerms(fwResult);
+  }
+  $$('.fw-pkt').forEach(b => b.addEventListener('click', ()=>{
+    $$('.fw-pkt').forEach(x=>x.classList.remove('primary'));
+    b.classList.add('primary');
+    curPkt = { proto:b.dataset.proto, port:+b.dataset.port, label:b.textContent.trim() };
+    $('#fwRun').disabled = false; $('#fwHint').textContent = `선택됨: ${curPkt.label} — "흘려보내기"를 누르세요`;
+    fwResult.style.display='none'; renderChain();
+  }));
+  $('#fwPolicy').addEventListener('change', ()=>{ renderCmd(); renderChain(); fwResult.style.display='none'; });
+  $('#fwRun').addEventListener('click', run);
+  renderCmd(); renderChain();
+
+  // --- NAT ---
+  const natView = $('#natView');
+  const NAT = {
+    snat: { title:'📤 SNAT / MASQUERADE — 나갈 때 (공유기)',
+      desc:'집 안 PC(사설 IP)가 인터넷에 나갈 때, 공유기가 <b>출발지 IP</b>를 자기 <b>공인 IP</b>로 바꿉니다. 응답이 돌아오면 다시 원래 PC로 되돌려 줘요.',
+      rows:[
+        ['출발지', '192.168.0.10:51514', '203.0.113.7:51514', true],
+        ['목적지', '8.8.8.8:443', '8.8.8.8:443', false],
+      ],
+      cmd:'iptables -t nat -A POSTROUTING -o eth0 -j MASQUERADE' },
+    dnat: { title:'📥 DNAT — 들어올 때 (포트포워딩)',
+      desc:'외부에서 공유기 공인 IP의 80포트로 들어온 요청을, 내부 서버(예: 192.168.0.10:8080)로 <b>목적지를 바꿔</b> 넘깁니다. 외부엔 내부 구조가 안 보이죠.',
+      rows:[
+        ['출발지', '198.51.100.5:40000', '198.51.100.5:40000', false],
+        ['목적지', '203.0.113.7:80', '192.168.0.10:8080', true],
+      ],
+      cmd:'iptables -t nat -A PREROUTING -p tcp --dport 80 -j DNAT --to 192.168.0.10:8080' },
+  };
+  function renderNat(mode){
+    const N = NAT[mode];
+    natView.innerHTML = `
+      <div class="callout why" style="margin-top:0"><h4>${N.title}</h4><p>${N.desc}</p></div>
+      <table class="t">
+        <thead><tr><th>필드</th><th>변환 전 (NAT 통과 전)</th><th>변환 후 (NAT 통과 후)</th></tr></thead>
+        <tbody>${N.rows.map(r=>`<tr class="${r[3]?'hit':''}"><td style="font-family:var(--sans)">${r[0]}</td><td>${r[1]}</td><td style="color:${r[3]?'var(--ok)':'var(--text-dim)'}">${r[2]} ${r[3]?'⟵ 변경됨':''}</td></tr>`).join('')}</tbody>
+      </table>
+      <pre style="margin-bottom:0"><code class="language-bash">${N.cmd}</code></pre>`;
+    if(window.Prism) Prism.highlightAllUnder(natView);
+  }
+  $$('.nat-mode').forEach(b => b.addEventListener('click', ()=>{
+    $$('.nat-mode').forEach(x=>x.classList.remove('primary'));
+    b.classList.add('primary');
+    renderNat(b.dataset.mode);
+  }));
+  renderNat('snat');
+})();
+
+/* ============================================================
+   섹션 6: 전체 통합 흐름
+   ============================================================ */
+(function flowSection(){
+  const FLOW = [
+    { ic:'🖥️', t:'1. 앱이 요청을 만든다', d:'응용 계층', link:'#layers',
+      desc:'브라우저가 <code>GET / HTTP/1.1</code> 같은 요청 글자를 만듭니다. 여기까지는 그냥 문자열 — 아직 네트워크는 모릅니다. <a class="link" href="#layers">(계층 모델)</a>' },
+    { ic:'🔌', t:'2. 소켓을 열고 connect', d:'소켓 · 포트', link:'#socket',
+      desc:'OS가 소켓을 만들고 서버 <b>IP:443</b>으로 연결을 시도합니다. 이때 내 쪽엔 <b>임시 포트</b>가 자동 배정돼, (내IP:임시포트 ↔ 서버IP:443) 4-튜플이 정해집니다. <a class="link" href="#socket">(소켓)</a>' },
+    { ic:'🤝', t:'3. TCP 3-way handshake', d:'TCP 연결', link:'#tcp',
+      desc:'SYN → SYN/ACK → ACK 세 번의 인사로 연결을 성립시키고 시퀀스 번호를 맞춥니다. 이제 ESTABLISHED. <a class="link" href="#tcp">(handshake)</a>' },
+    { ic:'🧅', t:'4. 캡슐화 + 세그먼트 분할', d:'TCP→IP→이더넷', link:'#tcp',
+      desc:'요청 데이터를 MSS 단위 세그먼트로 쪼개고, TCP 헤더(포트·seq) → IP 헤더(주소) → 이더넷 헤더(MAC)를 차례로 입혀 프레임을 만듭니다. <a class="link" href="#layers">(캡슐화)</a>' },
+    { ic:'🗺️', t:'5. 라우팅 — 홉바이홉', d:'라우터 릴레이', link:'#routing',
+      desc:'목적지가 다른 네트워크라 기본 게이트웨이로 보냅니다. 라우터들이 각자 라우팅 테이블을 조회해 "다음 홉"만 정하며 릴레이로 전달합니다. <a class="link" href="#routing">(라우팅)</a>' },
+    { ic:'🔀', t:'6. NAT — 주소 바꿔치기', d:'SNAT', link:'#iptables',
+      desc:'공유기가 출발지 사설 IP를 자기 공인 IP로 바꿔 인터넷에 내보냅니다(POSTROUTING/SNAT). 응답이 오면 되돌릴 수 있게 변환 정보를 기억해 둬요. <a class="link" href="#iptables">(NAT)</a>' },
+    { ic:'🧱', t:'7. 서버의 방화벽 검문', d:'iptables INPUT', link:'#iptables',
+      desc:'서버 도착 → PREROUTING → 라우팅 결정(나에게 온 것!) → <b>INPUT 체인</b>의 iptables 규칙을 통과해야 합니다. tcp:443이 허용돼 있으면 ACCEPT. <a class="link" href="#iptables">(iptables)</a>' },
+    { ic:'📨', t:'8. 서버 소켓 → 앱 도착', d:'역캡슐화', link:'#socket',
+      desc:'통과한 패킷은 헤더를 벗으며(역캡슐화) 443을 듣던 소켓의 버퍼에 쌓이고, 서버 앱의 <code>read()</code>가 이를 읽어 요청을 처리합니다. 🎉' },
+    { ic:'↩️', t:'9. 응답은 반대로', d:'왕복', link:'#fullflow',
+      desc:'서버가 만든 응답은 같은 길을 거꾸로 — 캡슐화 → 라우팅 → NAT 복원 → 내 PC 소켓 → 브라우저 화면. 한 번의 클릭 뒤에 이 모든 일이 순식간에 일어납니다.' },
+  ];
+  const tl = $('#flowTimeline'), desc=$('#flowDesc'), step=$('#flowStep');
+  FLOW.forEach((f,i) => {
+    const d = document.createElement('div');
+    d.className = 'flow-step'; d.dataset.i = i;
+    d.innerHTML = `<div class="fs-ic">${f.ic}</div><div class="fs-body"><div class="fs-t">${f.t}</div><div class="fs-d">${f.d}</div></div>`;
+    d.addEventListener('click', ()=>{ fi=i; renderFlow(); });
+    tl.appendChild(d);
+  });
+  let fi=0, autoT=null;
+  const steps = $$('.flow-step', tl);
+  function renderFlow(){
+    steps.forEach((s,i)=>{ s.classList.toggle('active', i===fi); s.classList.toggle('done', i<fi); });
+    const f = FLOW[fi];
+    desc.innerHTML = `<h4>${f.ic} ${f.t}</h4><p>${f.desc}</p>`;
+    step.textContent = `단계 ${fi+1} / ${FLOW.length}`;
+    $('#flowPrev').disabled = fi<=0; $('#flowNext').disabled = fi>=FLOW.length-1;
+    wireTerms(desc);
+  }
+  $('#flowNext').addEventListener('click', ()=>{ if(fi<FLOW.length-1){fi++; renderFlow();} });
+  $('#flowPrev').addEventListener('click', ()=>{ if(fi>0){fi--; renderFlow();} });
+  $('#flowReset').addEventListener('click', ()=>{ fi=0; renderFlow(); stopAuto(); });
+  function stopAuto(){ if(autoT){ clearInterval(autoT); autoT=null; $('#flowAuto').textContent='⏩ 자동 재생'; } }
+  $('#flowAuto').addEventListener('click', ()=>{
+    if(autoT){ stopAuto(); return; }
+    $('#flowAuto').textContent='⏸ 멈춤';
+    autoT = setInterval(()=>{ if(fi<FLOW.length-1){ fi++; renderFlow(); } else stopAuto(); }, 1700);
+  });
+  renderFlow();
+})();
+
+/* ============================================================
+   섹션 7: 터미널 시뮬레이터
+   ============================================================ */
+(function terminalSection(){
+  const screen = $('#termScreen'), input = $('#termInput');
+  const OUT = {
+    'ip route': { o:
+`default via 192.168.0.1 dev eth0 proto dhcp metric 100
+10.0.0.0/8 via 10.0.0.1 dev eth1
+192.168.0.0/24 dev eth0 proto kernel scope link src 192.168.0.10`,
+      n:'이 PC의 라우팅 테이블입니다. 맨 윗줄 <b>default via 192.168.0.1</b> = 기본 게이트웨이. 192.168.0.0/24는 "직접 연결된 같은 동네"라 게이트웨이 없이 바로 전달합니다.' },
+    'ss -tlnp': { o:
+`State    Recv-Q   Send-Q     Local Address:Port      Peer Address:Port
+LISTEN   0        50               0.0.0.0:18080          0.0.0.0:*       users:(("java",pid=8123,fd=4))
+LISTEN   0        128              0.0.0.0:22             0.0.0.0:*       users:(("sshd",pid=701,fd=3))`,
+      n:'현재 <b>LISTEN(듣고 있는)</b> 소켓 목록입니다. <b>0.0.0.0:18080</b>이 바로 당신의 EchoServer! 0.0.0.0은 "모든 인터페이스에서 받겠다"는 뜻이고, fd=4는 listen 소켓의 파일 디스크립터예요.' },
+    'ping 8.8.8.8': { o:
+`PING 8.8.8.8 (8.8.8.8) 56(84) bytes of data.
+64 bytes from 8.8.8.8: icmp_seq=1 ttl=117 time=12.3 ms
+64 bytes from 8.8.8.8: icmp_seq=2 ttl=117 time=11.8 ms
+64 bytes from 8.8.8.8: icmp_seq=3 ttl=117 time=12.1 ms
+
+--- 8.8.8.8 ping statistics ---
+3 packets transmitted, 3 received, 0% packet loss, time 2003ms`,
+      n:'상대가 살아있는지 ICMP로 확인합니다. <b>time</b>=왕복 시간, <b>ttl=117</b>은 남은 수명(처음 128에서 라우터를 11번 거쳐 줄어든 값). 0% loss면 길이 깨끗하다는 뜻이에요.' },
+    'traceroute 8.8.8.8': { o:
+`traceroute to 8.8.8.8 (8.8.8.8), 30 hops max, 60 byte packets
+ 1  192.168.0.1 (192.168.0.1)   1.21 ms   1.05 ms   0.98 ms
+ 2  100.64.0.1 (100.64.0.1)     8.44 ms   8.12 ms   8.30 ms
+ 3  72.14.200.5 (72.14.200.5)  11.02 ms  10.88 ms  11.15 ms
+ 4  8.8.8.8 (8.8.8.8)          12.10 ms  12.04 ms  11.97 ms`,
+      n:'목적지까지 거치는 <b>홉(라우터)</b>을 하나씩 보여줍니다. 1번은 우리집 게이트웨이, 그다음 ISP·백본을 지나 8.8.8.8 도착. "라우팅이 릴레이"라는 걸 눈으로 확인하는 도구예요.' },
+    'iptables -L -n': { o:
+`Chain INPUT (policy DROP)
+target     prot opt source       destination
+ACCEPT     all  --  0.0.0.0/0    0.0.0.0/0    state RELATED,ESTABLISHED
+ACCEPT     tcp  --  0.0.0.0/0    0.0.0.0/0    tcp dpt:22
+ACCEPT     tcp  --  0.0.0.0/0    0.0.0.0/0    tcp dpt:80
+ACCEPT     tcp  --  0.0.0.0/0    0.0.0.0/0    tcp dpt:443
+
+Chain FORWARD (policy DROP)
+Chain OUTPUT (policy ACCEPT)`,
+      n:'방화벽 규칙입니다. <b>INPUT (policy DROP)</b> = 기본은 차단, 명시한 것만 통과. 22(SSH)·80·443만 열려 있죠. 맨 윗줄은 "이미 맺어진 연결의 응답은 통과"시키는 상태추적 규칙입니다.' },
+    'netstat -an | grep 18080': { o:
+`tcp6       0      0 :::18080                :::*                    LISTEN
+tcp6       0      0 192.168.0.10:18080      198.51.100.5:51662      ESTABLISHED`,
+      n:'EchoServer 관련 소켓만 추렸습니다. 첫 줄은 <b>LISTEN</b> 소켓(안내데스크). 둘째 줄은 실제 손님과 연결된 <b>ESTABLISHED</b> 연결 소켓 — 같은 18080 포트지만 상대(Peer) 주소가 찍혀 4-튜플로 구별되는 게 보이죠!' },
+    'help': { o:
+`사용 가능한 명령어:
+  ip route                 라우팅 테이블 보기
+  ss -tlnp                 LISTEN 중인 소켓 보기
+  ping 8.8.8.8             연결성/지연 확인 (ICMP)
+  traceroute 8.8.8.8       경로의 홉 추적
+  iptables -L -n           방화벽 규칙 보기
+  netstat -an | grep 18080 EchoServer 소켓 상태
+  clear                    화면 지우기`, n:'' },
+  };
+  function echo(cmd){
+    const div = document.createElement('div');
+    div.className = 'cmd-echo';
+    div.innerHTML = `<span class="pr">user@host:~$</span> ${cmd.replace(/</g,'&lt;')}`;
+    screen.appendChild(div);
+  }
+  function run(raw){
+    const cmd = raw.trim();
+    if(!cmd) return;
+    if(cmd==='clear'){ screen.innerHTML=''; return; }
+    echo(cmd);
+    const hit = OUT[cmd] || OUT[Object.keys(OUT).find(k=>cmd.startsWith(k.split(' ')[0]) && k!=='help' && k!=='clear' && cmd.split(' ')[0]===k.split(' ')[0])];
+    if(hit){
+      const o = document.createElement('div'); o.className='out'; o.textContent = hit.o; screen.appendChild(o);
+      if(hit.n){ const n=document.createElement('div'); n.className='note'; n.innerHTML = '💡 '+hit.n; screen.appendChild(n); }
+    } else {
+      const e = document.createElement('div'); e.className='err';
+      e.textContent = `${cmd.split(' ')[0]}: 이 시뮬레이터에서 지원하지 않는 명령입니다. 'help'를 입력해 보세요.`;
+      screen.appendChild(e);
+    }
+    screen.scrollTop = screen.scrollHeight;
+  }
+  $$('.term-cmd').forEach(b => b.addEventListener('click', ()=>{ run(b.dataset.cmd); input.focus(); }));
+  input.addEventListener('keydown', e=>{ if(e.key==='Enter'){ run(input.value); input.value=''; } });
+  // 환영 메시지
+  run('help');
+})();
+
+/* ============================================================
+   섹션 1 보강: 링크 계층 매체 교체 + 구간별 매체
+   ============================================================ */
+(function linkMediaSection(){
+  const MEDIA = {
+    eth:  { icon:'🔌', name:'이더넷 (유선 LAN)', frame:'이더넷 프레임', addr:'MAC 주소', speed:'1~10 Gbps', color:'var(--purple)',
+            desc:'랜선으로 직접 연결. 가장 안정적이고 빠르며 지연이 낮습니다. 사무실·데이터센터·집 데스크톱.' },
+    wifi: { icon:'📶', name:'와이파이 (무선 LAN · 802.11)', frame:'802.11 프레임', addr:'MAC 주소(+무선 제어 필드)', speed:'수백 Mbps ~ 수 Gbps', color:'var(--accent)',
+            desc:'전파로 공유기(AP)에 연결. 선이 없어 편하지만 거리·간섭에 민감합니다. 노트북·폰의 집/카페 환경.' },
+    lte:  { icon:'📱', name:'모바일 (LTE / 5G)', frame:'셀룰러 무선 프레임', addr:'단말·기지국 식별자', speed:'수십 Mbps ~ 수 Gbps', color:'var(--server)',
+            desc:'기지국을 거쳐 이동통신사 망에 연결. 어디서나 되지만 통신사 코어망을 통과합니다.' },
+    fiber:{ icon:'💡', name:'광케이블 (Fiber)', frame:'광 전송 프레임', addr:'(주로 라우터 간 구간)', speed:'수 ~ 수백 Gbps', color:'var(--router)',
+            desc:'빛으로 장거리·대용량 전송. ISP 백본과 해저 케이블의 주력. 보통 라우터와 라우터 사이 구간입니다.' },
+  };
+  const stack = $('#mediaStack'), info = $('#mediaInfo');
+  const FIXED = [
+    { n:'응용 (App)',  sub:'HTTP·카톡 메시지', c:'var(--accent)' },
+    { n:'전송 (TCP)',  sub:'포트·순서',        c:'var(--server)' },
+    { n:'인터넷 (IP)', sub:'목적지 IP 주소',    c:'var(--router)' },
+  ];
+  function render(k){
+    const M = MEDIA[k];
+    stack.innerHTML =
+      FIXED.map(f=>`<div style="padding:9px 12px; border-radius:9px; border:1px solid var(--border); background:var(--panel); display:flex; justify-content:space-between; align-items:center; opacity:.65">
+        <span><b style="color:${f.c}">${f.n}</b> <span class="dim" style="font-size:11px">${f.sub}</span></span>
+        <span class="badge" style="font-size:10px">그대로</span></div>`).join('') +
+      `<div style="text-align:center; color:var(--text-mut); font-size:11px; margin:1px 0">▲ 위 3층 불변 · 아래만 교체 ▼</div>` +
+      `<div style="padding:12px; border-radius:9px; border:1.5px solid ${M.color}; background:rgba(255,255,255,.03); box-shadow:0 0 0 1px ${M.color} inset; display:flex; align-items:center; gap:9px; transition:all .2s">
+        <span style="font-size:22px">${M.icon}</span>
+        <span><b style="color:${M.color}">링크/물리</b> <span class="dim" style="font-size:11.5px">${M.name}</span></span></div>`;
+    info.innerHTML = `
+      <div class="flex" style="gap:10px"><span style="font-size:26px">${M.icon}</span><div style="font-weight:800; font-size:16px">${M.name}</div></div>
+      <p style="margin:10px 0">${M.desc}</p>
+      <table class="t" style="margin-bottom:0">
+        <tr><th style="width:40%">프레임 이름</th><td style="color:${M.color}">${M.frame}</td></tr>
+        <tr><th>주소 체계</th><td>${M.addr}</td></tr>
+        <tr><th>대략 속도</th><td>${M.speed}</td></tr>
+      </table>`;
+  }
+  $$('.media-btn').forEach(b=>b.addEventListener('click', ()=>{
+    $$('.media-btn').forEach(x=>x.classList.remove('primary'));
+    b.classList.add('primary');
+    render(b.dataset.k);
+  }));
+  render('eth');
+
+  // --- 구간별 매체 여정 (일러스트) ---
+  const journey = $('#mediaJourney');
+  const SEGS = [
+    { node:'💻 내 노트북' },
+    { link:'📶 와이파이', node:'📡 공유기' },
+    { link:'💡 광케이블', node:'🏢 ISP' },
+    { link:'💡 광 백본',  node:'🌐 백본' },
+    { link:'🔌 이더넷',   node:'🖥️ 서버' },
+  ];
+  let row = '';
+  SEGS.forEach(s=>{
+    if(s.link){
+      const parts = s.link.split(' ');
+      row += `<div style="display:flex; flex-direction:column; align-items:center; justify-content:flex-end; min-width:74px; padding-bottom:18px">
+        <span style="font-size:10.5px; color:var(--text-mut); margin-bottom:3px">${parts[0]} ${parts.slice(1).join(' ')}</span>
+        <div style="width:100%; height:2px; background:linear-gradient(90deg,transparent,var(--border-2),transparent); position:relative"><span style="position:absolute; right:-3px; top:-6px; color:var(--text-mut)">▸</span></div>
+        <span style="font-size:9px; color:var(--text-mut); margin-top:3px">프레임 새로</span></div>`;
+    }
+    const np = s.node.split(' ');
+    row += `<div style="flex:0 0 auto; text-align:center; min-width:66px; padding-bottom:18px">
+      <div class="node" style="min-width:0; padding:9px 6px"><div style="font-size:18px">${np[0]}</div><div style="font-size:10.5px; margin-top:2px">${np.slice(1).join(' ')}</div></div></div>`;
+  });
+  journey.innerHTML = `<div style="min-width:max-content; width:100%">
+    <div style="display:flex; align-items:flex-end; gap:2px">${row}</div>
+    <div style="text-align:center; margin-top:4px"><span class="badge ok" style="font-size:11px">📦 IP 패킷: 목적지 203.0.113.7 — 끝까지 그대로</span></div>
+  </div>`;
+})();
+
+/* ============================================================
+   섹션 3 보강: 4-way 연결 종료 인터랙티브
+   ============================================================ */
+(function teardownSection(){
+  const packet=$('#ctPacket'), cState=$('#ctClientState'), sState=$('#ctServerState'), desc=$('#ctDesc'), step=$('#ctStep');
+  const CT=[
+    { cs:['ESTABLISHED','est'], ss:['ESTABLISHED','est'], t:'🔚 종료 시작 전',
+      d:'데이터를 다 주고받아 양쪽 모두 <span class="badge ok">ESTABLISHED</span>. 클라이언트가 먼저 연결을 끊는다고 가정합니다. "다음 단계"를 누르세요.' },
+    { cs:['FIN_WAIT_1','mid'], ss:['ESTABLISHED','est'], dir:'r', cls:'syn', label:'FIN  seq=800', t:'① FIN → (나 다 보냈어)',
+      d:'클라이언트가 <span class="badge cli">FIN</span>을 보내며 <span class="badge warn">FIN_WAIT_1</span>로 전환. "내 쪽은 보낼 거 끝났어, 연결 닫자."' },
+    { cs:['FIN_WAIT_2','mid'], ss:['CLOSE_WAIT','mid'], dir:'l', cls:'ack', label:'ACK  ack=801', t:'② ← ACK (접수했어)',
+      d:'서버가 일단 <span class="badge ok">ACK</span>로 "FIN 접수"만 보냅니다. 서버는 <span class="badge warn">CLOSE_WAIT</span>(아직 보낼 데이터가 남았을 수 있음), 클라는 <span class="badge warn">FIN_WAIT_2</span>로 서버의 FIN을 기다립니다.' },
+    { cs:['FIN_WAIT_2','mid'], ss:['LAST_ACK','mid'], dir:'l', cls:'synack', label:'FIN  seq=1500', t:'③ ← FIN (나도 다 보냈어)',
+      d:'서버가 남은 데이터를 마저 보낸 뒤, 자기 <span class="badge ok">FIN</span>을 보내고 <span class="badge warn">LAST_ACK</span>로. "이제 나도 끝났어."' },
+    { cs:['TIME_WAIT','mid'], ss:['CLOSED',''], dir:'r', cls:'ack', label:'ACK  ack=1501', t:'④ ACK → (확인, 잘 가)',
+      d:'클라이언트가 마지막 <span class="badge ok">ACK</span>를 보냅니다. 이를 받은 서버는 곧바로 <span class="badge">CLOSED</span> — 서버 쪽 연결 완전 종료. 클라는 <span class="badge warn">TIME_WAIT</span>로 잠시 대기합니다.' },
+    { cs:['CLOSED',''], ss:['CLOSED',''], t:'✅ 양쪽 모두 CLOSED',
+      d:'TIME_WAIT 시간이 지나면 클라이언트도 <span class="badge">CLOSED</span>. 이제 이 4-튜플 연결은 완전히 해제되고, 양쪽의 소켓(fd)도 회수됩니다.' },
+  ];
+  let ci=0;
+  function setState(el,arr){ el.textContent=arr[0]; el.className='hs-state'+(arr[1]?(' '+arr[1]):''); }
+  function render(){
+    const C=CT[ci];
+    setState(cState,C.cs); setState(sState,C.ss);
+    desc.innerHTML=`<h4>${C.t}</h4><p>${C.d}</p>`;
+    step.textContent=`단계 ${ci} / ${CT.length-1}`;
+    $('#ctNext').disabled=ci>=CT.length-1;
+    if(C.dir){
+      packet.className='hs-packet '+(C.cls||'');
+      packet.textContent=C.label;
+      const start=C.dir==='r'?6:94, end=C.dir==='r'?94:6;
+      packet.style.transition='none'; packet.style.left=start+'%'; packet.classList.remove('show');
+      requestAnimationFrame(()=>{ requestAnimationFrame(()=>{ packet.style.transition=''; packet.classList.add('show'); packet.style.left=end+'%'; }); });
+    } else packet.classList.remove('show');
+    wireTerms(desc);
+  }
+  $('#ctNext').addEventListener('click',()=>{ if(ci<CT.length-1){ci++; render();} });
+  $('#ctReset').addEventListener('click',()=>{ ci=0; render(); });
+  render();
+})();
+
+/* ============================================================
+   섹션 4 보강: 서브넷(같은 동네?) 판단 인터랙티브
+   ============================================================ */
+(function subnetSection(){
+  const MY='192.168.0.10';
+  const view=$('#snView');
+  let dst='192.168.0.42';
+  const oct = ip => ip.split('.').map(Number);
+  const bin8 = n => n.toString(2).padStart(8,'0');
+  function binRow(ip, maskN){
+    let bitIdx=0;
+    return oct(ip).map((o,oi)=>{
+      const bits = bin8(o).split('').map(ch=>{
+        const net = bitIdx < maskN; bitIdx++;
+        return `<span class="bit ${net?'net':'host'}">${ch}</span>`;
+      }).join('');
+      return `<span class="oct">${bits}</span>` + (oi<3?'<span class="dot">.</span>':'');
+    }).join('');
+  }
+  function netAddr(ip, maskN){
+    const ipInt = oct(ip).reduce((a,o)=>(a*256+o),0);
+    const mask = maskN===0 ? 0 : (0xFFFFFFFF << (32-maskN))>>>0;
+    const net = (ipInt & mask)>>>0;
+    return [(net>>>24)&255,(net>>>16)&255,(net>>>8)&255,net&255].join('.');
+  }
+  function render(){
+    const maskN = +$('#snMask').value;
+    const myNet = netAddr(MY, maskN), dNet = netAddr(dst, maskN);
+    const same = myNet === dNet;
+    const col = same ? 'var(--ok)' : 'var(--bad)';
+    const diagram = same
+      ? `<div class="sn-diagram"><span class="node client" style="min-width:0;padding:7px 11px">내 PC<br><span class="ip">${MY}</span></span><span class="sn-arrow ok">— 직접(ARP·MAC) →</span><span class="node server" style="min-width:0;padding:7px 11px">목적지<br><span class="ip">${dst}</span></span></div>`
+      : `<div class="sn-diagram"><span class="node client" style="min-width:0;padding:7px 11px">내 PC<br><span class="ip">${MY}</span></span><span class="sn-arrow warn">→ 게이트웨이 →</span><span class="node router" style="min-width:0;padding:7px 11px">기본 GW<br><span class="ip">192.168.0.1</span></span><span class="sn-arrow warn">→ 라우팅 … →</span><span class="node server" style="min-width:0;padding:7px 11px">목적지<br><span class="ip">${dst}</span></span></div>`;
+    view.innerHTML = `
+      <div class="sn-grid">
+        <div class="sn-iprow"><span class="sn-lab" style="color:var(--client)">내 IP</span><span class="sn-ip">${MY}</span><span class="sn-bin">${binRow(MY,maskN)}</span></div>
+        <div class="sn-iprow"><span class="sn-lab" style="color:var(--router)">목적지</span><span class="sn-ip">${dst}</span><span class="sn-bin">${binRow(dst,maskN)}</span></div>
+        <div class="sn-iprow"><span class="sn-lab"></span><span class="sn-ip"></span><span class="sn-bin"><span class="net-underline">↑ 초록 = 네트워크 부분(앞 ${maskN}비트)</span> <span class="dim">· 회색 = 호스트 부분</span></span></div>
+      </div>
+      <div class="sn-cmp">
+        <div>내 네트워크 = <b style="color:${col}">${myNet}/${maskN}</b></div>
+        <div>목적지 네트워크 = <b style="color:${col}">${dNet}/${maskN}</b></div>
+        <div>${same?'<span class="badge ok">일치 → 같은 동네</span>':'<span class="badge bad">불일치 → 다른 동네</span>'}</div>
+      </div>
+      ${ same
+        ? `<div class="callout tip" style="margin-bottom:0"><h4>🏠 같은 동네 → 라우터 없이 직접 전달</h4><p>네트워크 부분이 같으니 라우터가 필요 없습니다. <span class="term" data-t="MAC주소">ARP</span>로 목적지의 MAC 주소를 알아내, <b>같은 네트워크 안에서 곧장</b> 프레임을 보냅니다.</p>${diagram}</div>`
+        : `<div class="callout warn" style="margin-bottom:0"><h4>🚪 다른 동네 → 기본 게이트웨이로</h4><p>네트워크 부분이 다릅니다. 직접 못 가니 <span class="term" data-t="게이트웨이">기본 게이트웨이</span>(192.168.0.1)에게 넘기고, 게이트웨이가 라우팅으로 목적지까지 릴레이합니다.</p>${diagram}</div>` }`;
+    wireTerms(view);
+  }
+  $('#snMask').addEventListener('change', render);
+  $$('.sn-dst').forEach(b=>b.addEventListener('click', ()=>{
+    $$('.sn-dst').forEach(x=>x.classList.remove('primary'));
+    b.classList.add('primary'); dst=b.dataset.ip; render();
+  }));
+  render();
+})();
+
+/* @SCRIPTS */
+
+/* ============================================================
+   초기화
+   ============================================================ */
+wireTerms();
+wireQuizzes();
+updateProgress();
+// 첫 진입 섹션 방문 처리
+markVisited('intro');
+</script>
+</body>
+</html>

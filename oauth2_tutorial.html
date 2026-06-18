@@ -1,0 +1,1357 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>OAuth2 / OIDC 인터랙티브 튜토리얼 — 주니어를 위한 깊은 안내서</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&display=swap');
+:root{
+  --bg:#0a0f1a;
+  --bg-soft:#0e1626;
+  --panel:#131d30;
+  --panel-2:#1a2742;
+  --panel-3:#22324f;
+  --border:#26344c;
+  --border-2:#37496a;
+  --text:#eef4fc;
+  --text-dim:#aeb9cc;
+  --text-mut:#6f7d96;
+  --user:#38bdf8;     /* 사용자 */
+  --browser:#22d3ee;  /* 브라우저 */
+  --client:#34d399;   /* 클라이언트/앱 */
+  --auth:#fbbf24;     /* 인증서버 */
+  --api:#fb7185;      /* API 서버 */
+  --oidc:#a78bfa;     /* OIDC */
+  --ok:#34d399;
+  --warn:#fbbf24;
+  --bad:#f87171;
+  --front:#fbbf24;    /* 프론트채널 */
+  --back:#34d399;     /* 백채널 */
+  --ui:#7c8aa3;       /* 사람 행동 */
+  --radius:14px;
+  --radius-sm:9px;
+  --shadow:0 16px 40px rgba(0,0,0,.38);
+  --mono:"JetBrains Mono",ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+  --sans:"Pretendard Variable","Pretendard",-apple-system,BlinkMacSystemFont,system-ui,"Apple SD Gothic Neo","Malgun Gothic","Noto Sans KR",sans-serif;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth;scroll-padding-top:24px}
+body{
+  margin:0;background:var(--bg);color:var(--text);font-family:var(--sans);
+  line-height:1.75;font-size:16px;-webkit-font-smoothing:antialiased;
+}
+body::before{
+  content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;
+  background:
+    radial-gradient(1000px 560px at 6% -10%, rgba(56,189,248,.12), transparent 60%),
+    radial-gradient(760px 480px at 102% 4%, rgba(52,211,153,.09), transparent 58%),
+    radial-gradient(860px 560px at 92% 96%, rgba(167,139,250,.08), transparent 62%);
+}
+body::after{
+  content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;opacity:.4;
+  background-image:linear-gradient(rgba(255,255,255,.018) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.018) 1px,transparent 1px);
+  background-size:44px 44px;
+}
+.layout{display:flex;min-height:100vh}
+
+/* ===== Sidebar ===== */
+#sidebar{
+  width:300px;flex:0 0 300px;position:sticky;top:0;height:100vh;
+  background:linear-gradient(180deg,var(--bg-soft),var(--bg));
+  border-right:1px solid var(--border);display:flex;flex-direction:column;z-index:20;
+}
+.brand{padding:22px 22px 12px}
+.logo{display:inline-flex;gap:8px;align-items:center;color:var(--user);font-weight:800;font-size:11.5px;font-family:var(--mono);letter-spacing:1px;margin-bottom:12px}
+.logo i{display:block;width:9px;height:9px;border-radius:50%;background:var(--user);box-shadow:0 0 16px rgba(56,189,248,.85);animation:blink 2.4s infinite}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.35}}
+.brand h1{font-size:16.5px;margin:0;line-height:1.4;letter-spacing:-.2px}
+.brand .sub{font-size:12px;color:var(--text-mut);margin-top:6px}
+.progress-wrap{padding:0 22px 14px}
+.progress-line{display:flex;justify-content:space-between;font-size:11px;color:var(--text-mut);margin-bottom:6px;font-family:var(--mono)}
+.progress-bar{height:7px;border-radius:99px;background:var(--panel-2);overflow:hidden}
+.progress-bar i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--user),var(--client),var(--auth),var(--oidc));transition:width .35s}
+#toc{flex:1;overflow:auto;padding:4px 12px 18px}
+#toc a{display:flex;gap:10px;align-items:center;padding:8px 12px;border-radius:8px;color:var(--text-dim);text-decoration:none;font-size:13px;transition:.15s}
+#toc a:hover,#toc a.active{background:var(--panel-2);color:#fff}
+#toc a.active{box-shadow:inset 2px 0 0 var(--user)}
+#toc .num{width:24px;height:24px;flex:0 0 24px;display:grid;place-items:center;border-radius:7px;border:1px solid var(--border);font-family:var(--mono);font-size:11px;color:var(--text-mut)}
+#toc a.active .num{background:var(--user);color:#06121c;border-color:var(--user)}
+#toc a.done .num{color:var(--ok);border-color:rgba(52,211,153,.45)}
+#toc a.done .num::after{content:"✓"}
+#toc a.done .num span{display:none}
+.side-note{padding:13px 18px;border-top:1px solid var(--border);color:var(--text-mut);font-size:11.5px;line-height:1.6}
+
+/* ===== Content ===== */
+#content{flex:1;min-width:0;max-width:1080px;margin:0 auto;padding:40px 52px 120px}
+section{scroll-margin-top:20px;padding-top:30px;margin-bottom:26px;border-top:1px solid transparent}
+.kicker{display:inline-flex;align-items:center;gap:7px;font-family:var(--mono);font-size:11.5px;color:var(--user);letter-spacing:1px;text-transform:uppercase;margin-bottom:12px;padding:5px 11px;border:1px solid var(--border-2);border-radius:99px;background:var(--panel)}
+.kicker b{color:var(--text-mut);font-weight:500}
+h2{font-size:31px;line-height:1.25;margin:0 0 10px;letter-spacing:-.5px}
+h3{font-size:20px;margin:30px 0 10px;letter-spacing:-.25px}
+h4{font-size:14.5px;margin:0 0 8px;color:#fff}
+p{color:var(--text-dim);margin:13px 0}
+.lead{font-size:18px;color:var(--text);line-height:1.78}
+strong{color:#fff;font-weight:700}
+em{color:#ffd89a;font-style:normal;font-weight:600}
+ul,ol{color:var(--text-dim);padding-left:22px}
+li{margin:8px 0}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+.grid4{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+
+.card,.demo,.quiz,.callout,.analogy{
+  background:var(--panel);border:1px solid var(--border);border-radius:var(--radius);
+  box-shadow:var(--shadow);padding:22px;margin:18px 0;
+}
+.demo{background:linear-gradient(180deg,var(--bg-soft),var(--panel));border-color:var(--border-2)}
+.compact{padding:15px}
+.muted{color:var(--text-mut)}
+.callout{box-shadow:none;position:relative;overflow:hidden;padding-left:24px}
+.callout::before{content:"";position:absolute;left:0;top:0;bottom:0;width:4px;background:var(--user)}
+.callout.warn::before{background:var(--warn)} .callout.ok::before{background:var(--ok)}
+.callout.bad::before{background:var(--bad)} .callout.oidc::before{background:var(--oidc)}
+.callout h4{display:flex;align-items:center;gap:8px}
+.callout .ic{font-size:16px}
+
+/* analogy box */
+.analogy{background:linear-gradient(135deg,rgba(167,139,250,.08),rgba(56,189,248,.05));border-color:var(--border-2);position:relative}
+.analogy .tag{display:inline-flex;align-items:center;gap:6px;font-family:var(--mono);font-size:11px;letter-spacing:.5px;color:var(--oidc);text-transform:uppercase;margin-bottom:6px}
+.analogy h4{font-size:16px;margin-bottom:6px}
+.analogy .big{font-size:30px;line-height:1;margin-right:4px}
+
+/* devtools-style chrome */
+.win{border:1px solid var(--border-2);border-radius:12px;overflow:hidden;background:#070d18;margin:16px 0;box-shadow:var(--shadow)}
+.win-bar{display:flex;align-items:center;gap:8px;padding:9px 13px;background:linear-gradient(180deg,#16223a,#101a2e);border-bottom:1px solid var(--border)}
+.win-dots{display:flex;gap:6px}
+.win-dots i{width:11px;height:11px;border-radius:50%;display:block}
+.win-dots i:nth-child(1){background:#ff5f57} .win-dots i:nth-child(2){background:#febc2e} .win-dots i:nth-child(3){background:#28c840}
+.win-url{flex:1;font-family:var(--mono);font-size:12px;color:var(--text-dim);background:#0a1220;border:1px solid var(--border);border-radius:7px;padding:5px 11px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.win-url .lock{color:var(--ok)} .win-url .lock.bad{color:var(--bad)}
+.win-body{padding:18px}
+
+.matrix{width:100%;border-collapse:collapse;margin:16px 0;border:1px solid var(--border);border-radius:10px;overflow:hidden}
+.matrix th,.matrix td{border-bottom:1px solid var(--border);padding:11px 13px;text-align:left;vertical-align:top}
+.matrix th{background:var(--bg-soft);font-size:12px;color:var(--text);font-family:var(--mono);font-weight:600}
+.matrix td{color:var(--text-dim);font-size:13.5px}
+.matrix tr:last-child td{border-bottom:0}
+.matrix tr:hover td{background:rgba(255,255,255,.015)}
+
+button{font-family:var(--sans);font-size:13.5px;font-weight:650;cursor:pointer;background:var(--panel-2);color:var(--text);border:1px solid var(--border-2);border-radius:9px;padding:9px 15px;transition:.15s}
+button:hover{border-color:var(--user);color:#fff;transform:translateY(-1px)}
+button:active{transform:translateY(0)}
+button.primary{background:linear-gradient(90deg,var(--user),var(--client));color:#06121c;border:0;font-weight:750}
+button.sm{padding:6px 11px;font-size:12.5px}
+button:disabled{opacity:.4;cursor:not-allowed;transform:none}
+.btn-row{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin:14px 0}
+label{color:var(--text-dim);font-size:14px}
+select,input[type=text]{width:100%;margin-top:6px;padding:10px 11px;border-radius:9px;border:1px solid var(--border);background:var(--bg);color:var(--text);font-family:var(--sans)}
+input[type=checkbox]{accent-color:var(--user);width:16px;height:16px;vertical-align:-3px}
+code{font-family:var(--mono);font-size:.86em;background:var(--panel-2);border:1px solid var(--border);border-radius:6px;padding:1px 6px;color:#ffd89a;word-break:break-word}
+pre{font-family:var(--mono);font-size:12.5px;line-height:1.6;white-space:pre-wrap;word-break:break-word;background:#070d18;border:1px solid var(--border);border-radius:10px;padding:15px;overflow:auto;color:#d8e2ef;margin:14px 0}
+pre b{color:var(--auth);font-weight:700}
+.badge{display:inline-flex;align-items:center;gap:5px;border:1px solid var(--border-2);border-radius:999px;padding:3px 9px;font-family:var(--mono);font-size:11px;color:var(--text-dim);background:var(--bg-soft);white-space:nowrap}
+.badge.ok{color:var(--ok);border-color:rgba(52,211,153,.4)} .badge.warn{color:var(--warn);border-color:rgba(251,191,36,.45)}
+.badge.bad{color:var(--bad);border-color:rgba(248,113,113,.45)} .badge.oidc{color:var(--oidc);border-color:rgba(167,139,250,.45)}
+.badge.front{color:var(--front);border-color:rgba(251,191,36,.45)} .badge.back{color:var(--back);border-color:rgba(52,211,153,.4)}
+
+.term{color:#d9f2ff;border-bottom:1px dotted var(--user);cursor:help;white-space:nowrap}
+#tooltip{position:fixed;z-index:100;max-width:340px;background:#060d18;border:1px solid var(--border-2);border-radius:11px;padding:11px 13px;color:var(--text);font-size:13.5px;line-height:1.6;opacity:0;pointer-events:none;transform:translateY(5px);transition:.12s;box-shadow:0 16px 40px rgba(0,0,0,.5)}
+#tooltip.show{opacity:1;transform:translateY(0)}
+#tooltip b{color:var(--user)}
+
+/* quiz */
+.quiz .q-head{font-family:var(--mono);font-size:12px;color:var(--user);letter-spacing:1px;text-transform:uppercase}
+.quiz .q{font-weight:800;color:#fff;margin:8px 0 14px;font-size:16px}
+.quiz .opt{display:block;width:100%;text-align:left;margin:8px 0;line-height:1.5}
+.quiz .opt.correct{border-color:var(--ok);background:rgba(52,211,153,.12);color:#fff}
+.quiz .opt.wrong{border-color:var(--bad);background:rgba(248,113,113,.12);color:#fff}
+.quiz .explain{display:none;margin-top:12px;padding:14px;border-radius:9px;background:var(--bg-soft);border:1px solid var(--border);color:var(--text-dim)}
+.quiz .explain.show{display:block;animation:fadeIn .3s}
+@keyframes fadeIn{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
+
+/* ===== Sequence player ===== */
+.seq{background:#070d18;border:1px solid var(--border-2);border-radius:13px;padding:16px;margin:18px 0;box-shadow:var(--shadow)}
+.seq-head{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;margin-bottom:12px}
+.seq-title{font-family:var(--mono);font-size:12px;color:var(--text-dim);letter-spacing:.5px}
+.seq-legend{display:flex;gap:12px;flex-wrap:wrap;font-size:11px;color:var(--text-mut)}
+.seq-legend span{display:inline-flex;align-items:center;gap:5px}
+.seq-legend i{width:18px;height:0;border-top:2px solid;display:inline-block}
+.seq-legend .l-ui{border-color:var(--ui)} .seq-legend .l-front{border-top-style:dashed;border-color:var(--front)} .seq-legend .l-back{border-color:var(--back)}
+.seq-actors{display:grid;gap:8px;margin-bottom:6px}
+.seq-actor{text-align:center;padding:9px 4px;border:1px solid var(--border);border-radius:9px;background:var(--panel);font-size:11.5px}
+.seq-actor .ic{font-size:18px;display:block;line-height:1.3}
+.seq-actor .nm{font-weight:700;color:#fff;font-size:11.5px}
+.seq-actor.lit{border-color:var(--user);box-shadow:0 0 0 1px var(--user),0 0 18px rgba(56,189,248,.25);background:var(--panel-2)}
+.seq-track{position:relative;padding:14px 0 4px;min-height:80px}
+.seq-lifelines{position:absolute;inset:14px 0 4px;display:grid;pointer-events:none}
+.seq-life{justify-self:center;width:0;border-left:1px dashed var(--border-2);height:100%}
+.seq-rows{position:relative;display:flex;flex-direction:column;gap:8px}
+.seq-row{display:grid;align-items:center;min-height:42px;transition:.25s;opacity:.16}
+.seq-row.past{opacity:.5} .seq-row.cur{opacity:1}
+.seq-msg{position:relative;height:42px;display:flex;align-items:center}
+.seq-line{position:absolute;top:62%;left:8px;right:8px;height:0;border-top:2px solid var(--ui)}
+.seq-msg.ch-front .seq-line{border-top-style:dashed;border-top-color:var(--front)}
+.seq-msg.ch-back .seq-line{border-top-color:var(--back)}
+.seq-msg.ch-ui .seq-line{border-top-color:var(--ui)}
+.seq-arrow{position:absolute;top:62%;width:0;height:0;border-top:5px solid transparent;border-bottom:5px solid transparent;transform:translateY(-50%)}
+.seq-msg.dir-right .seq-arrow{right:6px;border-left:9px solid var(--ui)}
+.seq-msg.dir-left .seq-arrow{left:6px;border-right:9px solid var(--ui)}
+.seq-msg.ch-front.dir-right .seq-arrow{border-left-color:var(--front)} .seq-msg.ch-front.dir-left .seq-arrow{border-right-color:var(--front)}
+.seq-msg.ch-back.dir-right .seq-arrow{border-left-color:var(--back)} .seq-msg.ch-back.dir-left .seq-arrow{border-right-color:var(--back)}
+.seq-cap{position:absolute;bottom:58%;left:50%;transform:translateX(-50%);white-space:nowrap;font-size:11.5px;color:var(--text-dim);background:#070d18;padding:0 6px;font-weight:600}
+.seq-row.cur .seq-cap{color:#fff}
+.seq-row.cur .seq-line{box-shadow:0 0 10px currentColor;filter:brightness(1.3)}
+.seq-num{position:absolute;left:-2px;top:50%;transform:translateY(-50%);font-family:var(--mono);font-size:10px;color:var(--text-mut);background:var(--panel);border:1px solid var(--border);border-radius:5px;width:18px;height:18px;display:grid;place-items:center}
+.seq-detail{margin-top:14px;border:1px solid var(--border);border-radius:10px;background:var(--bg-soft);overflow:hidden}
+.seq-detail-head{display:flex;align-items:center;gap:9px;padding:10px 13px;border-bottom:1px solid var(--border);flex-wrap:wrap}
+.seq-detail-head .step-n{font-family:var(--mono);font-size:11px;color:var(--text-mut)}
+.seq-detail-head .lbl{font-weight:750;color:#fff;font-size:14px}
+.seq-detail pre{margin:0;border:0;border-radius:0;background:transparent}
+.seq-detail .note{padding:12px 13px;color:var(--text-dim);font-size:13.5px;border-top:1px dashed var(--border)}
+.seq-controls{display:flex;align-items:center;gap:8px;margin-top:12px;flex-wrap:wrap}
+.seq-counter{font-family:var(--mono);font-size:12px;color:var(--text-mut);margin-left:auto}
+
+/* jwt decoder */
+.jwt-raw{font-family:var(--mono);font-size:12.5px;word-break:break-all;line-height:1.7;background:#070d18;border:1px solid var(--border);border-radius:10px;padding:14px}
+.jwt-h{color:#fb7185} .jwt-p{color:#a78bfa} .jwt-s{color:#34d399}
+.jwt-parts{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-top:8px;font-size:11px;font-family:var(--mono);text-align:center;color:var(--text-mut)}
+.verify-row{display:flex;align-items:center;gap:8px;padding:7px 0;border-bottom:1px dashed var(--border);font-size:13.5px}
+.verify-row:last-child{border-bottom:0}
+.verify-row .vi{font-size:15px;width:20px;text-align:center}
+.ok-text{color:var(--ok)} .bad-text{color:var(--bad)}
+
+/* role / platform pickers */
+.pick-row{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:8px}
+.pick{flex:1;min-width:120px;text-align:left;padding:13px;border-radius:10px}
+.pick.active{border-color:var(--user);background:var(--panel-2);box-shadow:0 0 0 1px var(--user)}
+.pick .pt{font-family:var(--mono);font-size:10.5px;color:var(--text-mut);text-transform:uppercase;letter-spacing:.5px}
+.pick .pn{font-weight:750;color:#fff;margin-top:3px}
+.token-card{border:1px solid var(--border-2);border-radius:11px;padding:16px;background:rgba(255,255,255,.02)}
+.token-card h4{display:flex;justify-content:space-between;gap:8px;align-items:center;flex-wrap:wrap}
+.pill-row{display:flex;gap:7px;flex-wrap:wrap;margin:10px 0}
+.split-line{height:1px;background:var(--border);margin:18px 0}
+.tl{display:flex;gap:12px;margin:10px 0}
+.tl .n{flex:0 0 28px;height:28px;border-radius:50%;display:grid;place-items:center;font-family:var(--mono);font-size:12px;background:var(--panel-2);border:1px solid var(--border-2);color:var(--user);font-weight:700}
+.tl .c{flex:1}
+.chip{display:inline-block;font-family:var(--mono);font-size:11px;padding:2px 8px;border-radius:6px;background:var(--panel-2);border:1px solid var(--border);color:var(--text-dim);margin:2px 3px 2px 0}
+.hl-user{color:var(--user)} .hl-browser{color:var(--browser)} .hl-client{color:var(--client)} .hl-auth{color:var(--auth)} .hl-api{color:var(--api)} .hl-oidc{color:var(--oidc)}
+
+.tabs{display:flex;gap:4px;border-bottom:1px solid var(--border);margin-bottom:14px;flex-wrap:wrap}
+.tab{background:transparent;border:0;border-bottom:2px solid transparent;border-radius:0;padding:9px 13px;color:var(--text-mut)}
+.tab.active{color:#fff;border-bottom-color:var(--user)}
+.tab:hover{transform:none;color:var(--text)}
+.tab-panel{display:none} .tab-panel.active{display:block}
+
+.note-inline{font-size:12.5px;color:var(--text-mut);margin-top:6px}
+.toggle-pill{display:inline-flex;border:1px solid var(--border-2);border-radius:99px;overflow:hidden}
+.toggle-pill button{border:0;border-radius:0;background:transparent;padding:7px 14px}
+.toggle-pill button.on{background:var(--user);color:#06121c}
+
+@media(max-width:980px){
+  .layout{display:block}
+  #sidebar{position:relative;width:auto;height:auto}
+  #toc{max-height:230px}
+  .grid2,.grid3,.grid4{grid-template-columns:1fr}
+  #content{padding:26px 18px 80px}
+  h2{font-size:25px}
+  .jwt-parts{grid-template-columns:1fr}
+}
+</style>
+</head>
+<body>
+<div class="layout">
+  <aside id="sidebar">
+    <div class="brand">
+      <div class="logo"><i></i><span>AUTH TRAFFIC INSPECTOR</span></div>
+      <h1>OAuth2 / OIDC 인터랙티브 튜토리얼</h1>
+      <div class="sub">로그인 버튼 한 번에 무슨 일이 벌어지나 — 패킷 단위로 따라가기</div>
+    </div>
+    <div class="progress-wrap">
+      <div class="progress-line"><span>학습 진행률</span><span id="progressText">0%</span></div>
+      <div class="progress-bar"><i id="progressBar"></i></div>
+    </div>
+    <nav id="toc"></nav>
+    <div class="side-note">💡 <span style="color:var(--user)">점선 친 용어</span>에 마우스를 올리면 뜻이 나옵니다. 시뮬레이터 버튼은 실제 네트워크를 호출하지 않는 안전한 데모예요.</div>
+  </aside>
+
+  <main id="content">
+
+  <!-- ===================== 1. WHY ===================== -->
+  <section id="intro" data-title="왜 OAuth2인가">
+    <div class="kicker"><b>00 · 출발</b> 문제 정의</div>
+    <h2>"내 비밀번호를 남의 앱에 알려줘도 될까?"</h2>
+    <p class="lead">사진 인화 앱이 여러분의 구글 포토에 있는 사진을 가져오려 합니다. 가장 단순한 방법은 <strong>구글 아이디와 비밀번호를 그 앱에 직접 입력</strong>하는 것입니다. 그런데 이게 왜 끔찍한 생각일까요?</p>
+
+    <div class="grid2">
+      <div class="callout bad">
+        <h4><span class="ic">🚨</span> 비밀번호를 직접 넘기는 방식</h4>
+        <ul>
+          <li>그 앱은 이제 <strong>여러분 계정 전체</strong>를 할 수 있습니다. 사진뿐 아니라 메일, 결제, 비밀번호 변경까지.</li>
+          <li>앱이 비밀번호를 <strong>그대로 저장</strong>합니다. 그 회사가 해킹당하면 내 비밀번호도 유출됩니다.</li>
+          <li>권한을 <em>"사진만"</em>으로 좁힐 방법이 없습니다. 전부 아니면 전무.</li>
+          <li>앱 하나만 차단하려 해도 <strong>비밀번호를 바꾸는 수밖에</strong> 없고, 그러면 다른 앱도 전부 끊깁니다.</li>
+        </ul>
+      </div>
+      <div class="callout ok">
+        <h4><span class="ic">✅</span> OAuth2 방식</h4>
+        <ul>
+          <li>비밀번호는 <strong>구글에만</strong> 입력합니다. 앱은 비밀번호를 영원히 보지 못합니다.</li>
+          <li>앱은 <em>"사진 읽기"</em> 권한만 담긴 <strong>토큰(token)</strong>을 받습니다.</li>
+          <li>그 토큰은 <strong>몇 시간 뒤 만료</strong>되고, 언제든 내가 회수할 수 있습니다.</li>
+          <li>앱 하나를 끊어도 <strong>다른 앱과 내 비밀번호는 멀쩡</strong>합니다.</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="analogy">
+      <div class="tag">🅰️ 비유로 이해하기</div>
+      <h4><span class="big">🚗</span> OAuth2 = 발렛 파킹 키</h4>
+      <p>고급차에는 <strong>발렛 키</strong>가 따로 있습니다. 이 키로는 <em>시동을 걸고 잠깐 운전</em>만 할 수 있습니다. 트렁크는 안 열리고, 글로브박스도 잠긴 채입니다. 발렛에게 마스터 키(=비밀번호)를 통째로 주는 대신, <strong>딱 필요한 권한만 담긴 제한된 키(=토큰)</strong>를 건네는 것 — 이게 OAuth2의 핵심 아이디어입니다.</p>
+    </div>
+
+    <div class="callout oidc">
+      <h4><span class="ic">🧭</span> 한 문장으로 못 박기</h4>
+      <p><span class="term" data-t="OAuth2">OAuth2</span>는 <strong>"인증(로그인)"이 아니라 "권한 위임(authorization)"</strong> 프레임워크입니다. 즉 <em>"이 앱이 내 데이터에 이런 행동을 해도 좋다"</em>고 허락하는 표준이에요. <span class="term" data-t="OIDC">OIDC</span>(OpenID Connect)는 그 위에 <em>"그래서 지금 로그인한 사람이 누구냐"</em>를 얹은 로그인 표준입니다. 이 둘의 차이가 이 튜토리얼 전체를 관통하는 핵심이니, 천천히 익혀 봅시다.</p>
+    </div>
+
+    <div class="quiz" data-qid="q-intro" data-answer="b">
+      <div class="q-head">⚡ Quick Check</div>
+      <div class="q">OAuth2가 풀려는 가장 근본적인 문제는?</div>
+      <button class="opt" data-opt="a">A. 비밀번호를 더 강력하게 암호화하는 것</button>
+      <button class="opt" data-opt="b">B. 비밀번호를 넘기지 않고도, 제한된 권한만 안전하게 위임하는 것</button>
+      <button class="opt" data-opt="c">C. 로그인 화면을 더 예쁘게 만드는 것</button>
+      <div class="explain">정답은 <strong>B</strong>. OAuth2는 암호화 알고리즘이 아니라 <em>권한을 안전하게 빌려주는 약속(프로토콜)</em>입니다. "전부 아니면 전무"였던 비밀번호 공유를 "딱 필요한 만큼, 한시적으로"로 바꿔줍니다.</div>
+    </div>
+  </section>
+
+  <!-- ===================== 2. AUTHN vs AUTHZ ===================== -->
+  <section id="authn-authz" data-title="인증 vs 인가">
+    <div class="kicker"><b>01 · 기초</b> 헷갈리면 끝까지 헷갈리는 한 쌍</div>
+    <h2>인증(Authentication)과 인가(Authorization)는 다른 질문이다</h2>
+    <p class="lead">주니어가 가장 많이 섞어 쓰는 두 단어입니다. 이름도 둘 다 'Auth…'로 시작해서 더 헷갈리죠. 하지만 둘은 <strong>완전히 다른 질문</strong>에 답합니다.</p>
+
+    <div class="grid2">
+      <div class="card">
+        <h3>🪪 인증 = AuthN</h3>
+        <p style="font-size:17px;color:#fff;margin:6px 0"><strong>"너 누구야?"</strong></p>
+        <p>신원을 확인하는 일. 공항 보안검색대에서 <strong>여권을 보여주는</strong> 단계입니다.</p>
+        <ul>
+          <li>예: 아이디/비밀번호 로그인, 지문, OTP</li>
+          <li>OIDC에서 담당 — 결과물은 <code>id_token</code></li>
+          <li>확인하는 쪽: <span class="hl-client">클라이언트(앱)</span></li>
+        </ul>
+      </div>
+      <div class="card">
+        <h3>🎫 인가 = AuthZ</h3>
+        <p style="font-size:17px;color:#fff;margin:6px 0"><strong>"너 이거 해도 돼?"</strong></p>
+        <p>권한을 확인하는 일. 항공권에 적힌 <strong>좌석 등급으로 라운지 입장 여부</strong>를 판단하는 단계입니다.</p>
+        <ul>
+          <li>예: "이 사용자는 송장을 읽을 수 있나?"</li>
+          <li>OAuth2에서 담당 — 결과물은 <code>access_token</code></li>
+          <li>확인하는 쪽: <span class="hl-api">API 서버(리소스 서버)</span></li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="analogy">
+      <div class="tag">🅰️ 비유로 이해하기</div>
+      <h4><span class="big">✈️</span> 공항: 여권(인증) → 탑승권(인가)</h4>
+      <p><strong>여권 심사(인증)</strong>는 "당신이 진짜 김아무개인가"를 확인합니다. 그 다음 <strong>탑승권(인가)</strong>은 "당신이 이 비행기, 이 좌석에 탈 수 있는가"를 결정하죠. 여권이 있다고 아무 비행기나 타는 게 아니고, 탑승권이 있다고 그게 당신 신원을 증명하는 것도 아닙니다. <em>둘은 별개의 검사</em>예요. OAuth2/OIDC도 똑같습니다.</p>
+    </div>
+
+    <div class="callout warn">
+      <h4><span class="ic">⚠️</span> 가장 흔한 주니어 실수</h4>
+      <p><code>access_token</code>(인가용)을 가지고 <strong>"이 사람이 로그인했다"고 판단</strong>하는 것입니다. access_token은 "이 토큰을 든 자에게 이런 권한이 있다"는 뜻일 뿐, <em>"그게 누구인지"는 보장하지 않습니다.</em> 로그인 여부는 반드시 OIDC의 <code>id_token</code>으로 판단해야 합니다. (이 부분은 <a href="#oidc" style="color:var(--oidc)">OIDC 섹션</a>에서 깊게 다룹니다.)</p>
+    </div>
+  </section>
+
+  <!-- ===================== 3. ACTORS ===================== -->
+  <section id="actors" data-title="등장인물">
+    <div class="kicker"><b>02 · 기초</b> 다섯 배우</div>
+    <h2>등장인물 다섯을 모르면 모든 용어가 뒤엉킨다</h2>
+    <p class="lead">OAuth2 문서의 용어는 딱딱합니다. 하지만 사실은 <strong>실제 서비스의 역할 분담</strong>일 뿐이에요. 아래 카드를 눌러 각 역할이 정확히 뭘 책임지는지 확인하세요.</p>
+
+    <div class="pick-row" id="roleCards">
+      <button class="pick actor role-btn active" data-role="owner"><div class="pt">Resource Owner</div><div class="pn"><span class="hl-user">👤 사용자</span></div></button>
+      <button class="pick role-btn" data-role="browser"><div class="pt">User-Agent</div><div class="pn"><span class="hl-browser">🌐 브라우저</span></div></button>
+      <button class="pick role-btn" data-role="client"><div class="pt">Client</div><div class="pn"><span class="hl-client">📱 클라이언트</span></div></button>
+      <button class="pick role-btn" data-role="auth"><div class="pt">Authorization Server</div><div class="pn"><span class="hl-auth">🔐 인증 서버</span></div></button>
+      <button class="pick role-btn" data-role="api"><div class="pt">Resource Server</div><div class="pn"><span class="hl-api">📦 API 서버</span></div></button>
+    </div>
+    <div id="roleOut" class="card compact" style="min-height:120px"></div>
+
+    <div class="callout">
+      <h4><span class="ic">🔎</span> 구글 로그인으로 매핑해 보기</h4>
+      <p><span class="hl-user">사용자</span>=나 · <span class="hl-browser">브라우저</span>=크롬 · <span class="hl-client">클라이언트</span>=내가 쓰는 사진 앱 · <span class="hl-auth">인증 서버</span>=accounts.google.com · <span class="hl-api">API 서버</span>=photoslibrary.googleapis.com. 한 회사 안에서도 <strong>인증 서버와 API 서버는 보통 분리</strong>됩니다. 인증 서버는 토큰을 '발급'하고, 각 API 서버는 그 토큰을 '검증'만 하죠.</p>
+    </div>
+
+    <div class="quiz" data-qid="q-actors" data-answer="c">
+      <div class="q-head">⚡ Quick Check</div>
+      <div class="q">access_token이 유효한지, scope가 충분한지를 최종 판단하는 주체는?</div>
+      <button class="opt" data-opt="a">A. 브라우저</button>
+      <button class="opt" data-opt="b">B. 인증 서버(Authorization Server)</button>
+      <button class="opt" data-opt="c">C. API 서버(Resource Server)</button>
+      <div class="explain">정답은 <strong>C</strong>. 토큰을 <em>발급</em>하는 건 인증 서버지만, 매 API 요청마다 토큰의 유효성·scope·만료·대상(audience)을 <em>검증</em>해서 데이터를 줄지 말지 정하는 건 API 서버입니다.</div>
+    </div>
+  </section>
+
+  <!-- ===================== 4. TOKENS ===================== -->
+  <section id="tokens" data-title="토큰의 정체">
+    <div class="kicker"><b>03 · 기초</b> 토큰이 도대체 뭔데</div>
+    <h2>토큰은 "이미 확인받았다"는 증표다</h2>
+    <p class="lead">토큰(token)은 <strong>매번 신원을 다시 증명하지 않아도 되게 해주는 증표</strong>입니다. 한 번 제대로 확인받고 나면, 그 다음부터는 토큰만 내밀면 됩니다.</p>
+
+    <div class="analogy">
+      <div class="tag">🅰️ 비유로 이해하기</div>
+      <h4><span class="big">🎟️</span> access_token = 콘서트 입장 팔찌</h4>
+      <p>입구에서 <strong>신분증과 티켓을 확인(=로그인)</strong>받고 나면 손목에 <strong>팔찌(=access_token)</strong>를 채워줍니다. 공연장 안에서는 신분증을 다시 안 보여줘도 돼요. <em>팔찌만 보여주면</em> 음료 바, VIP존(=scope) 출입이 됩니다. 팔찌를 찬 사람이 곧 권한자라서 — 이게 <span class="term" data-t="bearer">Bearer 토큰</span>의 의미입니다. <strong>팔찌를 주우면 누구든 쓸 수 있으니 절대 흘리면 안 됩니다.</strong></p>
+    </div>
+
+    <h3>토큰에도 종류가 있다 — 두 가지 형태</h3>
+    <div class="demo">
+      <div class="toggle-pill" id="tokenShapeToggle">
+        <button class="on" data-shape="opaque">Opaque 토큰</button>
+        <button data-shape="jwt">JWT 토큰</button>
+      </div>
+      <div id="tokenShapeOut" style="margin-top:14px"></div>
+    </div>
+
+    <div class="matrix-wrap">
+    <table class="matrix">
+      <tr><th>토큰</th><th>한 줄 요약</th><th>누가 읽나</th><th>비유</th></tr>
+      <tr><td><code>access_token</code></td><td>API를 호출할 권한</td><td><span class="hl-api">API 서버</span></td><td>입장 팔찌</td></tr>
+      <tr><td><code>id_token</code></td><td>"이 사람은 누구"라는 신원 증명(OIDC)</td><td><span class="hl-client">클라이언트</span></td><td>명찰 / 신분증</td></tr>
+      <tr><td><code>refresh_token</code></td><td>만료된 access_token을 새로 받는 교환권</td><td><span class="hl-client">클라이언트</span></td><td>팔찌 재발급권</td></tr>
+    </table>
+    </div>
+    <p class="note-inline">⚠️ 자주 틀리는 포인트: <code>id_token</code>은 <strong>API 호출용이 아닙니다.</strong> "이 사람이 누구다"를 클라이언트가 확인하는 용도일 뿐, API 서버에 보내면 안 됩니다.</p>
+
+    <div class="quiz" data-qid="q-tokens" data-answer="b">
+      <div class="q-head">⚡ Quick Check</div>
+      <div class="q">"Bearer 토큰"이라는 말의 핵심 의미는?</div>
+      <button class="opt" data-opt="a">A. 곰(bear) 모양 아이콘이 붙은 토큰이다</button>
+      <button class="opt" data-opt="b">B. 그 토큰을 '소지한 자'면 누구든 권한을 행사할 수 있다 — 그래서 유출되면 위험하다</button>
+      <button class="opt" data-opt="c">C. 반드시 두 명이 함께 있어야 쓸 수 있는 토큰이다</button>
+      <div class="explain">정답은 <strong>B</strong>. Bearer = "지참인". 팔찌처럼 가진 사람이 곧 권한자이므로, URL이나 로그에 남기지 말고 <code>Authorization: Bearer &lt;token&gt;</code> 헤더로만, HTTPS 위에서 주고받아야 합니다.</div>
+    </div>
+  </section>
+
+  <!-- ===================== 5. BIG PICTURE (sequence) ===================== -->
+  <section id="bigpicture" data-title="전체 흐름 (애니메이션)">
+    <div class="kicker"><b>04 · 핵심</b> 가장 중요한 그림</div>
+    <h2>로그인 버튼 한 번에 일어나는 16단계, 전부 따라가 보자</h2>
+    <p class="lead">이게 이 튜토리얼의 <strong>심장</strong>입니다. <span class="term" data-t="authcode">Authorization Code + PKCE</span> 흐름 — 오늘날 웹·앱 로그인의 표준입니다. <strong>다음 ▶</strong> 버튼을 눌러 메시지가 누구에게서 누구에게로 가는지 한 줄씩 지켜보세요. 각 단계의 <strong>실제 HTTP 메시지</strong>가 아래에 펼쳐집니다.</p>
+
+    <div class="callout oidc">
+      <h4><span class="ic">🔑</span> 보기 전에 딱 하나만: 프론트채널 vs 백채널</h4>
+      <p><span class="badge front">┄ 프론트채널</span> = <strong>브라우저(주소창)를 거쳐</strong> 오가는 메시지. 사용자도 보이고, 가로채일 수도 있는 '노출된' 통로입니다. → 그래서 여기로는 <em>민감한 토큰을 직접 보내지 않습니다.</em><br>
+      <span class="badge back">━ 백채널</span> = <strong>서버끼리 직접</strong> 주고받는 통신(HTTPS). 브라우저를 안 거칩니다. → <code>client_secret</code>과 실제 토큰 교환은 전부 여기서 일어납니다.</p>
+    </div>
+
+    <div id="mainSeq"></div>
+
+    <div class="quiz" data-qid="q-bigpic" data-answer="a">
+      <div class="q-head">⚡ Quick Check</div>
+      <div class="q">authorization code가 브라우저 주소창(프론트채널)으로 돌아오는데, 왜 그걸 훔쳐도 공격자가 토큰을 못 받을까요? (대표적 이유 하나)</div>
+      <button class="opt" data-opt="a">A. 실제 토큰 교환은 백채널에서 일어나고, PKCE의 code_verifier·client_secret까지 있어야 하기 때문</button>
+      <button class="opt" data-opt="b">B. authorization code는 암호화되어 있어 아무도 읽을 수 없어서</button>
+      <button class="opt" data-opt="c">C. 브라우저가 코드를 자동으로 삭제해서</button>
+      <div class="explain">정답은 <strong>A</strong>. code 자체는 '교환권'에 불과합니다. 그걸 토큰으로 바꾸려면 백채널에서 <code>code_verifier</code>(PKCE)와 클라이언트 인증이 추가로 필요하죠. 그래서 코드만 새어나가도 공격이 성립하지 않습니다. PKCE는 다음에 자세히 봅니다.</div>
+    </div>
+  </section>
+
+  <!-- ===================== 6. AUTH REQUEST ===================== -->
+  <section id="authreq" data-title="인가 요청 만들기">
+    <div class="kicker"><b>05 · 단계별</b> 1단계</div>
+    <h2>로그인 버튼은 사실 'authorization request URL'을 만든다</h2>
+    <p class="lead">사용자가 버튼을 누르면, 앱은 브라우저를 인증 서버로 보냅니다. 그 주소(URL)에 들어가는 <strong>파라미터 하나하나가 보안의 핵심</strong>입니다. 아래에서 scope를 켜고 끄며 URL이 어떻게 바뀌는지 직접 만들어 보세요.</p>
+
+    <div class="demo">
+      <h4>🛠 Authorization URL 빌더</h4>
+      <div class="grid2">
+        <div class="card compact">
+          <h4>요청할 권한(scope) 고르기</h4>
+          <label><input type="checkbox" id="useOidc" checked> 로그인(신원확인) 포함: <code>openid</code> <span class="badge oidc">OIDC</span></label><br>
+          <label><input type="checkbox" id="scopeProfile" checked> 프로필 정보: <code>profile</code></label><br>
+          <label><input type="checkbox" id="scopeEmail" checked> 이메일: <code>email</code></label><br>
+          <label><input type="checkbox" id="scopeRepo"> 저장소 읽기: <code>repo:read</code></label>
+        </div>
+        <div class="card compact">
+          <h4>각 파라미터의 뜻</h4>
+          <ul style="margin:0;font-size:13px">
+            <li><code>response_type=code</code>: "코드 방식으로 줘" (요즘 표준)</li>
+            <li><code>redirect_uri</code>: 끝나면 돌아올 주소. <strong>미리 등록된 값과 정확히 일치</strong>해야만 허용</li>
+            <li><code>scope</code>: 요청하는 권한 목록</li>
+            <li><code>state</code>: 위조 방지용 일회성 난수 (<span class="term" data-t="state">자세히</span>)</li>
+            <li><code>nonce</code>: id_token 재사용 방지용 (<span class="term" data-t="nonce">자세히</span>)</li>
+            <li><code>code_challenge</code>: PKCE 자물쇠</li>
+          </ul>
+        </div>
+      </div>
+      <div class="win">
+        <div class="win-bar"><div class="win-dots"><i></i><i></i><i></i></div><div class="win-url"><span class="lock">🔒</span> auth.example.com/oauth/authorize</div></div>
+        <div class="win-body"><pre id="authUrl" style="margin:0;border:0;background:transparent;padding:0"></pre></div>
+      </div>
+    </div>
+
+    <div class="quiz" data-qid="q-redirect" data-answer="b">
+      <div class="q-head">⚡ Quick Check</div>
+      <div class="q">공격자가 <code>redirect_uri</code>를 자기 사이트로 바꿔 코드를 가로채려 합니다. 이를 막는 1차 방어선은?</div>
+      <button class="opt" data-opt="a">A. scope를 더 많이 요청한다</button>
+      <button class="opt" data-opt="b">B. 인증 서버에 사전 등록된 redirect_uri와 '정확히' 일치할 때만 허용한다</button>
+      <button class="opt" data-opt="c">C. URL을 더 길게 만든다</button>
+      <div class="explain">정답은 <strong>B</strong>. 인증 서버는 클라이언트 등록 시 적어둔 redirect_uri 목록과 <em>완전 일치(부분 일치 금지)</em>할 때만 코드를 보냅니다. 이것이 코드 탈취를 막는 가장 기본적인 장치입니다.</div>
+    </div>
+  </section>
+
+  <!-- ===================== 7. CONSENT ===================== -->
+  <section id="consent" data-title="로그인 & 동의">
+    <div class="kicker"><b>05 · 단계별</b> 2단계</div>
+    <h2>비밀번호는 오직 인증 서버에만 입력된다</h2>
+    <p class="lead">브라우저가 인증 서버로 이동하면, 사용자는 <strong>인증 서버 화면</strong>에서 로그인합니다. 핵심은 이겁니다 — <em>비밀번호는 클라이언트(앱)를 절대 거치지 않습니다.</em> 앱은 여러분의 비밀번호를 구경도 못 해요.</p>
+
+    <div class="grid2">
+      <div class="win">
+        <div class="win-bar"><div class="win-dots"><i></i><i></i><i></i></div><div class="win-url"><span class="lock">🔒</span> accounts.google.com/signin</div></div>
+        <div class="win-body">
+          <h4 style="margin-bottom:10px">🔐 인증 서버 로그인</h4>
+          <label style="font-size:12px">이메일</label>
+          <input type="text" value="junior@example.com" readonly aria-label="이메일" style="margin-bottom:8px">
+          <label style="font-size:12px">비밀번호</label>
+          <input type="text" value="••••••••••" readonly aria-label="비밀번호">
+          <p class="note-inline">이 화면의 주소는 <strong>인증 서버(google.com)</strong>입니다. 클라이언트 앱이 아니에요. 그래서 비밀번호가 앱으로 새지 않습니다.</p>
+        </div>
+      </div>
+      <div class="win">
+        <div class="win-bar"><div class="win-dots"><i></i><i></i><i></i></div><div class="win-url"><span class="lock">🔒</span> accounts.google.com/consent</div></div>
+        <div class="win-body">
+          <h4 style="margin-bottom:10px">📋 동의 화면 (Consent)</h4>
+          <p style="font-size:13.5px;margin:0 0 8px"><strong>사진앱</strong>이 다음 권한을 요청합니다:</p>
+          <div class="verify-row"><span class="vi">👤</span><span>프로필 정보 보기 <code>profile</code></span></div>
+          <div class="verify-row"><span class="vi">✉️</span><span>이메일 주소 보기 <code>email</code></span></div>
+          <div class="verify-row"><span class="vi">🖼️</span><span>사진 읽기 <code>photos:read</code></span></div>
+          <div class="btn-row" style="margin-bottom:0"><button class="primary sm">허용</button><button class="sm">취소</button></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="callout">
+      <h4><span class="ic">🗣️</span> scope는 '권한의 언어'다</h4>
+      <p>동의 화면에 보이는 항목 하나하나가 곧 <code>scope</code>입니다. 사용자는 여기서 <em>"앱에게 무엇을 허락할지"</em>를 눈으로 보고 동의합니다. 그래서 scope를 잘 쪼개 설계하면(최소 권한), 사용자도 안심하고 보안도 좋아집니다. <strong>필요 없는 scope는 요청하지 않는 것</strong>이 좋은 습관이에요.</p>
+    </div>
+  </section>
+
+  <!-- ===================== 8. CODE & STATE ===================== -->
+  <section id="code" data-title="코드 & state">
+    <div class="kicker"><b>05 · 단계별</b> 3단계</div>
+    <h2>돌아오는 건 토큰이 아니라 'authorization code'다</h2>
+    <p class="lead">동의가 끝나면 인증 서버는 브라우저를 다시 앱으로 돌려보냅니다(redirect). 이때 주소창에 <code>?code=...&state=...</code>가 붙어 옵니다. 이 <span class="term" data-t="authcode">code</span>는 <strong>토큰이 아니라, 토큰으로 바꿀 수 있는 짧은 수명의 교환권</strong>입니다.</p>
+
+    <div class="analogy">
+      <div class="tag">🅰️ 비유로 이해하기</div>
+      <h4><span class="big">🧥</span> authorization code = 물품보관소 교환권</h4>
+      <p>코트를 맡기면 <strong>번호표(교환권)</strong>를 줍니다. 번호표 자체는 코트가 아니에요. 나중에 <strong>카운터(백채널)</strong>에서 번호표를 내밀어야 코트(토큰)로 바꿔줍니다. 그래서 누가 번호표 사진을 몰래 찍어도(프론트채널 노출), 카운터에서 추가 확인(PKCE·클라이언트 인증)을 통과 못 하면 코트를 못 가져갑니다.</p>
+    </div>
+
+    <h3>그런데 왜 코드를 한 번 더 교환할까?</h3>
+    <p>코드는 <strong>브라우저 주소창</strong>을 거쳐 옵니다. 주소창은 기록에도 남고, 확장 프로그램이 볼 수도 있는 '노출된' 통로(프론트채널)예요. 그래서 진짜 권한이 담긴 토큰은 <strong>여기로 직접 보내지 않고</strong>, 다음 단계인 백채널 토큰 교환에서 안전하게 받습니다.</p>
+
+    <h3>🛡️ state: 위조 방지 도장</h3>
+    <p>요청을 보낼 때 만든 임의의 <code>state</code> 값을, 돌아온 응답의 <code>state</code>와 <strong>대조</strong>합니다. 다르면? 다른 흐름의 응답이거나 공격(CSRF)일 수 있으니 <strong>즉시 폐기</strong>합니다.</p>
+    <div class="demo">
+      <div class="btn-row">
+        <button class="primary" id="stateGood">정상 응답 (state 일치)</button>
+        <button id="stateBad">위조 응답 (state 불일치)</button>
+      </div>
+      <pre id="stateOut"></pre>
+    </div>
+
+    <div class="quiz" data-qid="q-state" data-answer="c">
+      <div class="q-head">⚡ Quick Check</div>
+      <div class="q">콜백으로 돌아온 <code>state</code>가 세션에 저장해 둔 값과 다르면?</div>
+      <button class="opt" data-opt="a">A. 일단 토큰 교환을 진행하고 나중에 확인한다</button>
+      <button class="opt" data-opt="b">B. scope만 다시 확인하면 된다</button>
+      <button class="opt" data-opt="c">C. 요청을 폐기한다. 위조이거나 다른 흐름의 응답일 수 있다</button>
+      <div class="explain">정답은 <strong>C</strong>. state 검증은 CSRF와 응답 섞임을 막는 기본 방어선입니다. 불일치하면 무조건 중단하세요.</div>
+    </div>
+  </section>
+
+  <!-- ===================== 9. PKCE ===================== -->
+  <section id="pkce" data-title="PKCE 안전핀">
+    <div class="kicker"><b>05 · 단계별</b> 핵심 보안 장치</div>
+    <h2>PKCE: 코드를 훔쳐가도 못 쓰게 만드는 안전핀</h2>
+    <p class="lead"><span class="term" data-t="PKCE">PKCE</span>(픽시, Proof Key for Code Exchange)는 코드 탈취 공격을 무력화합니다. 원리는 간단해요 — <strong>먼저 비밀(code_verifier)을 만들고, 그 자물쇠(code_challenge)만 미리 보낸 뒤</strong>, 나중에 토큰을 받을 때 비밀 원본을 증명하게 합니다.</p>
+
+    <div class="analogy">
+      <div class="tag">🅰️ 비유로 이해하기</div>
+      <h4><span class="big">🔐</span> code_verifier = 열쇠 원본 · code_challenge = 그 열쇠로만 열리는 자물쇠</h4>
+      <p>1) 앱이 무작위 비밀 <code>code_verifier</code>(열쇠)를 만듭니다. 2) 그것의 해시 <code>code_challenge</code>(자물쇠)만 인가 요청에 실어 보냅니다. 자물쇠로는 열쇠를 역산할 수 없어요. 3) 나중에 토큰을 받을 때 <strong>열쇠 원본</strong>을 제시합니다. 인증 서버는 "이 열쇠가 그때 그 자물쇠를 여나?"를 확인하죠. <strong>코드를 훔친 공격자에겐 열쇠 원본이 없으니</strong> 토큰 교환에 실패합니다.</p>
+    </div>
+
+    <div class="demo">
+      <h4>🧪 직접 해보기 — 실제 SHA-256 해싱</h4>
+      <label>code_verifier (앱이 만든 비밀)
+        <input type="text" id="verifierInput" value="dBjftJeZ4CVP-mB92K27uhbUJU1p1r_wW1gFWFOEjXk">
+      </label>
+      <div class="btn-row">
+        <button id="pkceBtn" class="primary">① code_challenge 계산 (SHA-256 → base64url)</button>
+        <button id="stealCodeBtn">② 공격자가 code만 탈취 시도</button>
+      </div>
+      <pre id="pkceOut"></pre>
+      <p class="note-inline">위 challenge 값은 여러분 브라우저가 <strong>실제로 SHA-256으로 계산</strong>한 결과입니다(데모). 같은 verifier를 넣으면 항상 같은 challenge가 나오죠 — 이게 인증 서버가 검증하는 방식이에요.</p>
+    </div>
+
+    <div class="quiz" data-qid="q-pkce" data-answer="a">
+      <div class="q-head">⚡ Quick Check</div>
+      <div class="q">공격자가 authorization code는 훔쳤지만 code_verifier는 모릅니다. 토큰 교환의 결과는?</div>
+      <button class="opt" data-opt="a">A. 인증 서버가 'invalid_grant'로 거부한다 — 자물쇠를 열 열쇠가 없으니까</button>
+      <button class="opt" data-opt="b">B. code만 있으면 항상 토큰을 받을 수 있다</button>
+      <button class="opt" data-opt="c">C. id_token만 발급되고 access_token은 안 나온다</button>
+      <div class="explain">정답은 <strong>A</strong>. PKCE는 특히 <code>client_secret</code>을 숨길 수 없는 <strong>SPA·모바일 앱(public client)</strong>에서 필수입니다. 요즘은 비밀을 보관할 수 있는 서버 앱에서도 함께 쓰는 게 권장돼요.</div>
+    </div>
+  </section>
+
+  <!-- ===================== 10. TOKEN EXCHANGE ===================== -->
+  <section id="exchange" data-title="토큰 교환 (백채널)">
+    <div class="kicker"><b>05 · 단계별</b> 4단계</div>
+    <h2>백채널에서 코드를 진짜 토큰으로 바꾼다</h2>
+    <p class="lead">이제 앱(서버)이 <strong>브라우저를 거치지 않고 인증 서버에 직접</strong> 요청을 보냅니다. authorization code, PKCE 열쇠, 그리고 (서버 앱이면) client_secret을 함께요. 통과하면 비로소 진짜 토큰들이 돌아옵니다.</p>
+
+    <div class="grid2">
+      <div class="token-card">
+        <h4>요청 <span class="badge back">━ 백채널 POST</span></h4>
+        <pre>POST /oauth/token HTTP/1.1
+Host: auth.example.com
+Content-Type: application/x-www-form-urlencoded
+
+grant_type=authorization_code
+&amp;code=SplxlOBeZQQYbYS6WxSbIA
+&amp;redirect_uri=https://app.example.com/callback
+&amp;client_id=study-client
+&amp;code_verifier=dBjftJeZ4CVP-mB92K27uhbUJU1p1r_wW1gFWFOEjXk
+&amp;client_secret=••••••  <b>← 서버 앱만, 브라우저엔 절대 없음</b></pre>
+      </div>
+      <div class="token-card">
+        <h4>응답 <span class="badge ok">200 OK</span></h4>
+        <pre>{
+  "<b>access_token</b>": "at_eyJh...",   <span class="muted">// API 호출용</span>
+  "token_type": "Bearer",
+  "expires_in": 3600,            <span class="muted">// 1시간 뒤 만료</span>
+  "<b>refresh_token</b>": "rt_8xM...",   <span class="muted">// 재발급용</span>
+  "<b>id_token</b>": "eyJhbGc..."      <span class="muted">// 누구인지(OIDC)</span>
+}</pre>
+      </div>
+    </div>
+
+    <div class="callout ok">
+      <h4><span class="ic">🧠</span> 왜 이 단계가 백채널이어야 하나</h4>
+      <p>여기서 오가는 <code>client_secret</code>과 실제 <code>access_token</code>은 <strong>절대 노출되면 안 되는 값</strong>입니다. 브라우저(프론트채널)는 주소창·로그·확장 프로그램에 노출될 위험이 있으니, 이 교환은 <strong>서버 ↔ 서버 직접 통신</strong>으로만 합니다. (SPA처럼 서버가 없는 앱은 브라우저에서 교환하되, secret 없이 PKCE로만 보호하거나 BFF 패턴으로 백엔드를 둡니다 — <a href="#platforms" style="color:var(--user)">플랫폼 섹션</a> 참고.)</p>
+    </div>
+  </section>
+
+  <!-- ===================== 11. API CALL ===================== -->
+  <section id="apicall" data-title="API 호출">
+    <div class="kicker"><b>05 · 단계별</b> 5단계</div>
+    <h2>드디어 access_token으로 API를 부른다</h2>
+    <p class="lead">받은 <code>access_token</code>을 <code>Authorization: Bearer</code> 헤더에 실어 API 서버를 호출합니다. API 서버는 토큰의 <strong>유효성·만료·대상(audience)·scope</strong>를 확인하고 응답을 결정합니다. 아래에서 토큰에 담긴 scope를 바꿔가며 어떤 호출이 통과/거부되는지 보세요.</p>
+
+    <div class="demo">
+      <h4>🧪 Scope 검사 시뮬레이터</h4>
+      <p style="margin:6px 0 4px;font-size:13px;color:var(--text-mut)">① 내 토큰에 담긴 scope:</p>
+      <div class="btn-row" style="margin-top:4px">
+        <label><input type="checkbox" class="api-scope" value="profile:read" checked> profile:read</label>
+        <label><input type="checkbox" class="api-scope" value="invoice:read"> invoice:read</label>
+        <label><input type="checkbox" class="api-scope" value="invoice:write"> invoice:write</label>
+      </div>
+      <p style="margin:10px 0 4px;font-size:13px;color:var(--text-mut)">② API를 호출해 보기:</p>
+      <div class="btn-row" style="margin-top:4px">
+        <button class="api-call primary" data-need="profile:read" data-path="/me">GET /me</button>
+        <button class="api-call" data-need="invoice:read" data-path="/invoices">GET /invoices</button>
+        <button class="api-call" data-need="invoice:write" data-path="/invoices">POST /invoices</button>
+      </div>
+      <pre id="apiOut"></pre>
+    </div>
+
+    <div class="callout bad">
+      <h4><span class="ic">🚫</span> Bearer 토큰 다루기 — 흘리면 끝</h4>
+      <p>access_token은 "가진 자가 임자"입니다. 그래서 <strong>URL 쿼리스트링에 넣거나(브라우저 기록·서버 로그에 남음), 콘솔/로그에 출력하면</strong> 매우 위험합니다. 반드시 <code>Authorization: Bearer &lt;token&gt;</code> 헤더로, HTTPS 위에서만 주고받으세요.</p>
+    </div>
+  </section>
+
+  <!-- ===================== 12. TOKEN TYPES & REFRESH ===================== -->
+  <section id="tokentypes" data-title="토큰 3종 & 갱신">
+    <div class="kicker"><b>06 · 심화</b> 세 토큰의 생애</div>
+    <h2>access · id · refresh — 셋을 헷갈리지 말 것</h2>
+    <p class="lead">앞서 받은 세 토큰은 <strong>각자 주인과 용도가 다릅니다.</strong> 가장 많이 나는 사고가 이 셋을 섞어 쓰는 것이에요.</p>
+
+    <table class="matrix">
+      <tr><th>토큰</th><th>받는 질문</th><th>소비자</th><th>API에 보내나?</th><th>수명</th></tr>
+      <tr><td><code>access_token</code></td><td>"이걸 호출할 권한 있나?"</td><td><span class="hl-api">API 서버</span></td><td>✅ 매 호출마다 보냄</td><td>짧음(분~시간)</td></tr>
+      <tr><td><code>id_token</code></td><td>"이 사람 누구야?"</td><td><span class="hl-client">클라이언트</span></td><td>❌ 절대 안 됨</td><td>로그인 시점용</td></tr>
+      <tr><td><code>refresh_token</code></td><td>"새 access 줘"</td><td><span class="hl-client">클라이언트→인증서버</span></td><td>❌ 인증서버에만</td><td>긺(엄중 보관)</td></tr>
+    </table>
+
+    <h3>🔄 refresh_token으로 갱신하기 — 그리고 'rotation'</h3>
+    <p>access_token이 만료되면 매번 로그인할 순 없죠. 그래서 <code>refresh_token</code>으로 조용히 새 access_token을 받습니다. 보안을 위해 보통 <strong>refresh token도 한 번 쓰면 새것으로 교체(rotation)</strong>하고, 옛것은 폐기합니다. 단계별로 따라가 보세요.</p>
+    <div class="demo">
+      <div class="stepper-mini">
+        <div class="btn-row">
+          <button class="rot-step primary" data-step="0">① access 만료</button>
+          <button class="rot-step" data-step="1">② refresh로 교환</button>
+          <button class="rot-step" data-step="2">③ 새 토큰 + 회전</button>
+          <button class="rot-step" data-step="3">④ 탈취된 옛 토큰 재사용 시도</button>
+        </div>
+        <pre id="rotOut"></pre>
+      </div>
+    </div>
+
+    <div class="quiz" data-qid="q-refresh" data-answer="b">
+      <div class="q-head">⚡ Quick Check</div>
+      <div class="q">refresh token rotation에서, 공격자가 훔친 '옛' refresh token을 쓰면 어떤 일이 가장 바람직한가?</div>
+      <button class="opt" data-opt="a">A. 그냥 새 토큰을 또 발급해 준다</button>
+      <button class="opt" data-opt="b">B. 이미 쓰인 토큰의 재사용을 감지하고, 해당 토큰 패밀리 전체를 무효화한다</button>
+      <button class="opt" data-opt="c">C. 아무 일도 일어나지 않는다</button>
+      <div class="explain">정답은 <strong>B</strong>. 한 번 쓴 refresh token이 또 들어오면 "유출됐다"는 신호입니다. 인증 서버는 그 계정의 토큰 체인을 통째로 무효화해 공격자와 정상 사용자 모두를 로그아웃시키고, 재로그인을 유도합니다.</div>
+    </div>
+  </section>
+
+  <!-- ===================== 13. OIDC ===================== -->
+  <section id="oidc" data-title="OIDC & JWT 검증">
+    <div class="kicker"><b>07 · 심화</b> 로그인의 완성</div>
+    <h2>OIDC: "그래서 로그인한 사람이 누구냐"</h2>
+    <p class="lead">OAuth2만으로는 <strong>"누가 로그인했는지"를 안전하게 알 수 없습니다.</strong> <span class="term" data-t="OIDC">OIDC</span>는 OAuth2 위에 신원 계층을 얹어, 검증 가능한 <code>id_token</code>으로 그 답을 줍니다.</p>
+
+    <div class="grid2">
+      <div class="card"><h3>OAuth2 (인가)</h3><ul><li>질문: <em>"이 API 호출 권한 있나?"</em></li><li>핵심 토큰: <code>access_token</code></li><li>검증 주체: <span class="hl-api">API 서버</span></li><li>토큰 내용: 클라이언트가 들여다볼 필요 없음(opaque일 수 있음)</li></ul></div>
+      <div class="card"><h3>OIDC (인증)</h3><ul><li>질문: <em>"이 사용자 누구야?"</em></li><li>핵심 토큰: <code>id_token</code> (항상 JWT)</li><li>검증 주체: <span class="hl-client">클라이언트</span></li><li>토큰 내용: 사용자 정보(claims)를 담음</li></ul></div>
+    </div>
+
+    <h3>🔬 id_token(JWT) 해부 — 직접 디코딩하고 서명 검증까지</h3>
+    <p>JWT는 점(<code>.</code>)으로 나뉜 <strong>세 조각</strong>입니다: <span class="jwt-h">헤더</span>.<span class="jwt-p">페이로드</span>.<span class="jwt-s">서명</span>. 앞 두 조각은 그냥 base64로 인코딩됐을 뿐 <strong>암호화가 아니라서 누구나 읽습니다.</strong> 신뢰는 오직 <strong>세 번째 '서명'을 검증</strong>해야 생깁니다. 아래에서 실제로 해봅시다.</p>
+
+    <div class="demo">
+      <h4>🧪 JWT 빌더 & 검증기 <span class="badge">실제 HMAC-SHA256 서명/검증</span></h4>
+      <div class="btn-row">
+        <button id="jwtBuild" class="primary">① 정상 id_token 생성 & 검증</button>
+        <button id="jwtTamper">② payload 위변조 (sub → admin)</button>
+        <button id="jwtBadNonce">③ nonce 불일치 공격</button>
+      </div>
+      <div class="jwt-raw" id="jwtRaw">버튼을 눌러 시작하세요.</div>
+      <div class="jwt-parts"><div class="jwt-h">HEADER · 알고리즘</div><div class="jwt-p">PAYLOAD · 사용자 정보(claims)</div><div class="jwt-s">SIGNATURE · 위변조 탐지</div></div>
+      <div class="split-line"></div>
+      <div class="grid2">
+        <div>
+          <h4>디코딩된 내용</h4>
+          <pre id="jwtDecoded" style="margin-top:6px">—</pre>
+        </div>
+        <div>
+          <h4>클라이언트의 검증 체크리스트</h4>
+          <div id="jwtChecks" class="card compact" style="margin-top:6px"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="callout oidc">
+      <h4><span class="ic">📝</span> id_token을 받으면 반드시 검증할 것들</h4>
+      <ul style="margin:0">
+        <li><code>iss</code>(issuer): 내가 믿는 인증 서버가 발급했나?</li>
+        <li><code>aud</code>(audience): 이 토큰이 <strong>나(이 클라이언트)</strong>를 위한 것인가?</li>
+        <li><code>exp</code>(expiry): 만료되지 않았나?</li>
+        <li><code>signature</code>: 인증 서버의 공개키(<span class="term" data-t="jwks">JWKS</span>)로 서명이 진짜인가? — <strong>이게 빠지면 위 모든 값이 위조 가능</strong></li>
+        <li><code>nonce</code>: 내가 보낸 요청에 대한 응답이 맞나? (재사용 방지)</li>
+      </ul>
+    </div>
+
+    <div class="quiz" data-qid="q-oidc" data-answer="b">
+      <div class="q-head">⚡ Quick Check</div>
+      <div class="q">동료가 "id_token이 JWT처럼 생겼고 payload에 email이 들어있으니, 디코딩해서 그 사람으로 로그인시키면 된다"고 합니다. 무엇이 문제일까요?</div>
+      <button class="opt" data-opt="a">A. 문제없다. JWT는 디코딩만 하면 신뢰할 수 있다</button>
+      <button class="opt" data-opt="b">B. 서명·iss·aud·exp·nonce 검증을 안 하면 누구나 위조한 토큰으로 로그인할 수 있다</button>
+      <button class="opt" data-opt="c">C. email 대신 전화번호를 봐야 한다</button>
+      <div class="explain">정답은 <strong>B</strong>. JWT의 payload는 그냥 base64라서 <em>아무나 만들 수 있습니다.</em> 위 시뮬레이터의 ②번처럼 payload만 바꾸면 서명이 깨지죠. 그 깨짐을 잡아내는 <strong>서명 검증</strong>이 신뢰의 전부입니다.</div>
+    </div>
+  </section>
+
+  <!-- ===================== 14. PLATFORMS ===================== -->
+  <section id="platforms" data-title="브라우저 vs 앱">
+    <div class="kicker"><b>08 · 심화</b> 어디서 도느냐가 다 바꾼다</div>
+    <h2>웹 서버 · SPA · 모바일 · CLI — secret을 숨길 수 있느냐</h2>
+    <p class="lead">같은 Authorization Code 흐름이라도, <strong>앱이 어디서 실행되느냐</strong>에 따라 보안 설계가 갈립니다. 기준은 단 하나 — <em>"client_secret을 안전하게 숨길 수 있는가?"</em></p>
+
+    <div class="grid2">
+      <div class="callout ok">
+        <h4><span class="ic">🔒</span> Confidential Client (비밀 보관 가능)</h4>
+        <p>서버에서 도는 앱. 코드가 서버에만 있어 <code>client_secret</code>을 안전하게 숨길 수 있습니다. → 백채널에서 secret으로 자신을 인증.</p>
+        <p style="margin:0"><strong>예:</strong> 전통적 웹 서버 앱(Spring, Django, Rails), 백엔드 서비스</p>
+      </div>
+      <div class="callout warn">
+        <h4><span class="ic">🌐</span> Public Client (비밀 못 숨김)</h4>
+        <p>사용자 기기에서 도는 앱. 자바스크립트·앱 바이너리를 뜯어보면 secret이 보입니다. → secret을 안 쓰고 <strong>PKCE로 보호</strong>.</p>
+        <p style="margin:0"><strong>예:</strong> SPA(React/Vue), 모바일 앱, 데스크톱·CLI</p>
+      </div>
+    </div>
+
+    <div class="demo">
+      <h4>🧭 플랫폼별 설계 탐색기</h4>
+      <div class="pick-row" id="platPicks">
+        <button class="pick active" data-plat="web"><div class="pt">Confidential</div><div class="pn">🖥️ 웹 서버 앱</div></button>
+        <button class="pick" data-plat="spa"><div class="pt">Public</div><div class="pn">⚛️ SPA</div></button>
+        <button class="pick" data-plat="mobile"><div class="pt">Public</div><div class="pn">📱 모바일 앱</div></button>
+        <button class="pick" data-plat="cli"><div class="pt">Public</div><div class="pn">⌨️ 데스크톱/CLI</div></button>
+      </div>
+      <div id="platOut" class="card compact" style="min-height:150px"></div>
+    </div>
+
+    <div class="callout bad">
+      <h4><span class="ic">⛔</span> 이제는 쓰지 않는 옛 방식</h4>
+      <p><strong>Implicit flow</strong>(브라우저로 access_token을 바로 던지던 방식)는 토큰이 주소창에 노출돼 위험합니다. 요즘은 SPA도 <strong>Authorization Code + PKCE</strong>를 씁니다. <strong>ROPC</strong>(사용자 비밀번호를 앱이 직접 받는 방식)도 OAuth2가 없애려던 문제를 되살리므로 피하세요.</p>
+    </div>
+  </section>
+
+  <!-- ===================== 15. M2M ===================== -->
+  <section id="m2m" data-title="머신·서비스 인증">
+    <div class="kicker"><b>09 · 심화</b> 사람이 없을 때</div>
+    <h2>사람이 없는 호출: client credentials · service token · PAT</h2>
+    <p class="lead">배치 작업, 마이크로서비스 간 통신, CI/CD 파이프라인… <strong>로그인할 '사람'이 없는</strong> 호출은 지금까지의 브라우저 흐름이 통째로 필요 없습니다. 동의 화면도, id_token도, redirect도 없죠. 대신 <strong>서비스가 '자기 자신'으로 토큰을 받습니다.</strong></p>
+
+    <h3>🤖 Client Credentials Grant — 서비스의 정식 로그인</h3>
+    <p>OAuth2 표준 grant입니다. 클라이언트가 <strong>자신의 자격증명(client_id + client_secret)</strong>만으로 access_token을 받습니다. 토큰의 주체(subject)는 사용자가 아니라 <em>그 서비스 자신</em>이에요. 흐름이 얼마나 단순한지 보세요 — 단 두 번의 백채널 왕복입니다.</p>
+    <div id="ccSeq"></div>
+
+    <h3>📚 세 가지를 똑바로 구분하기</h3>
+    <div class="grid3">
+      <div class="token-card">
+        <h4>Client Credentials <span class="badge ok">OAuth2 표준</span></h4>
+        <p>백엔드·배치·내부 워커가 <strong>자기 자신</strong>으로 호출. 사용자 동의·id_token·redirect 없음.</p>
+        <pre style="font-size:11.5px">grant_type=client_credentials
+&amp;scope=invoice:read</pre>
+        <p style="margin:0;font-size:13px">주체: <code>service:billing-worker</code></p>
+      </div>
+      <div class="token-card">
+        <h4>Service Token <span class="badge warn">우산 용어</span></h4>
+        <p>워크로드·자동화에 주는 자격증명을 <strong>폭넓게</strong> 부르는 말. 형태는 다양합니다:</p>
+        <ul style="font-size:13px;margin:6px 0">
+          <li>OAuth2 CC 토큰</li>
+          <li>정적 API 키</li>
+          <li>클라우드 <span class="term" data-t="workload">workload identity</span> (AWS IAM Role, GCP SA, K8s SA, SPIFFE)</li>
+        </ul>
+      </div>
+      <div class="token-card">
+        <h4>PAT <span class="badge bad">개인 계정 위험</span></h4>
+        <p><strong>Personal Access Token</strong>: 사람 계정의 권한을 API 토큰처럼 쓰는 것. 표준 OAuth2 grant가 <em>아님</em>(제품별 기능).</p>
+        <ul style="font-size:13px;margin:6px 0">
+          <li>로컬 스크립트·임시 작업엔 OK</li>
+          <li>운영 서비스 기본값으론 위험</li>
+        </ul>
+      </div>
+    </div>
+
+    <h3>🆚 PAT가 왜 위험한가</h3>
+    <div class="callout bad">
+      <ul style="margin:0">
+        <li><strong>주체가 '사람'이다.</strong> 그 사람이 퇴사하면 운영 서비스가 갑자기 멈춥니다. 감사 로그도 "김개발이 했다"로 찍혀 진짜 행위 주체(서비스)가 가려집니다.</li>
+        <li><strong>권한이 과하다.</strong> 보통 그 사람 계정의 넓은 권한을 그대로 물려받습니다. (그래서 GitHub은 권한을 좁히는 <em>fine-grained PAT</em>를 권장)</li>
+        <li><strong>오래 산다 & 잘 샌다.</strong> 만료를 안 걸면 영원히 유효하고, 실수로 코드에 커밋돼 유출되는 사고가 가장 흔합니다.</li>
+      </ul>
+    </div>
+    <p>그래서 PAT를 쓸 거면: <span class="chip">fine-grained 우선</span><span class="chip">만료일 필수</span><span class="chip">secret manager 보관</span><span class="chip">절대 커밋 금지</span><span class="chip">정기 회전</span></p>
+
+    <h3>🧭 어떤 토큰을 써야 할까 — 결정 도우미</h3>
+    <div class="demo">
+      <div class="grid2">
+        <label>누가 API를 호출하나?
+          <select id="callerType">
+            <option value="browser">브라우저 속 사용자</option>
+            <option value="backend">백엔드 서비스(서버↔서버)</option>
+            <option value="ci">CI/CD 자동화</option>
+            <option value="local">로컬 개발자 스크립트</option>
+            <option value="impersonation">서비스가 사용자를 대행</option>
+          </select>
+        </label>
+        <label>지금 '사람'이 참여 중인가?
+          <select id="humanPresent">
+            <option value="yes">예 — 사람이 클릭/동의함</option>
+            <option value="no">아니오 — 자동으로 돎</option>
+          </select>
+        </label>
+      </div>
+      <pre id="tokenChoiceOut"></pre>
+    </div>
+
+    <table class="matrix">
+      <tr><th>상황</th><th>권장 방식</th><th>주의할 점</th></tr>
+      <tr><td>사용자 로그인</td><td>Authorization Code + PKCE + OIDC</td><td>PAT/서비스 토큰으로 '로그인 흉내' 내지 말 것</td></tr>
+      <tr><td>백엔드가 자기 권한으로 호출</td><td>Client Credentials / workload identity</td><td>주체는 <code>service:billing</code>이지 <code>user:kim</code>이 아님</td></tr>
+      <tr><td>CI/CD 자동화</td><td>짧은 수명 service token / app installation token</td><td>저장소·환경 단위 scope + 감사 로그</td></tr>
+      <tr><td>로컬 개발 스크립트</td><td>fine-grained PAT (제한적 허용)</td><td>만료·최소 scope·이름·보관 위치 강제</td></tr>
+      <tr><td>서비스가 사용자 대행</td><td>명시적 delegation / on-behalf-of 설계</td><td>몰래 사용자처럼 쓰면 감사 모델 붕괴</td></tr>
+    </table>
+
+    <div class="quiz" data-qid="q-m2m" data-answer="c">
+      <div class="q-head">⚡ Quick Check</div>
+      <div class="q">운영 백엔드가 매시간 billing API를 자기 권한으로 호출해야 합니다. 가장 적절한 선택은?</div>
+      <button class="opt" data-opt="a">A. 개발자 개인 PAT를 서버 환경변수에 넣는다</button>
+      <button class="opt" data-opt="b">B. OIDC id_token을 API 호출에 사용한다</button>
+      <button class="opt" data-opt="c">C. Client Credentials 또는 workload identity 기반의 짧은 수명 service token을 쓴다</button>
+      <div class="explain">정답은 <strong>C</strong>. 사람이 없는 호출은 <em>서비스 자신을 주체로</em> 하고, 짧은 만료·최소 scope·감사 로그를 갖춘 토큰을 써야 합니다. A는 사람 의존·과권한, B는 id_token을 API에 쓰는 흔한 오용입니다.</div>
+    </div>
+  </section>
+
+  <!-- ===================== 16. MISTAKES ===================== -->
+  <section id="mistakes" data-title="흔한 실수 & 보안">
+    <div class="kicker"><b>10 · 정리</b> 사고는 늘 같은 곳에서</div>
+    <h2>주니어가 자주 밟는 지뢰 & 보안 체크리스트</h2>
+    <p class="lead">"작동한다"와 "안전하다"는 다릅니다. 토큰이 나온다고 끝이 아니에요. 아래는 실무에서 반복되는 실수들입니다.</p>
+
+    <div class="grid2">
+      <div class="card">
+        <h3>🧨 자주 하는 실수</h3>
+        <ul>
+          <li><strong>access_token으로 로그인 판단</strong> → 반드시 id_token으로</li>
+          <li><strong>id_token을 API에 전송</strong> → API엔 access_token만</li>
+          <li><strong>JWT를 디코딩만 하고 신뢰</strong> → 서명·iss·aud·exp 검증 필수</li>
+          <li><strong>state/nonce 생략</strong> → CSRF·재사용 공격에 노출</li>
+          <li><strong>토큰을 URL·로그에 노출</strong> → 헤더로만</li>
+          <li><strong>과도한 scope 요청</strong> → 최소 권한 원칙</li>
+          <li><strong>secret/PAT를 코드에 커밋</strong> → secret manager로</li>
+        </ul>
+      </div>
+      <div class="card">
+        <h3>✅ 배포 전 체크리스트</h3>
+        <ul>
+          <li>Authorization Code + PKCE 사용 (implicit·ROPC 금지)</li>
+          <li>redirect_uri 정확 일치 검증</li>
+          <li>콜백에서 state 검증, OIDC면 nonce 검증</li>
+          <li>id_token의 iss/aud/exp/signature 검증</li>
+          <li>access_token은 짧게, refresh는 rotation</li>
+          <li>토큰 저장 위치 점검(SPA: <span class="term" data-t="storage">localStorage vs 쿠키</span>)</li>
+          <li>머신 호출엔 client credentials/워크로드 ID</li>
+          <li>모든 secret은 만료·회전·감사 로그</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="callout warn">
+      <h4><span class="ic">💾</span> 토큰을 브라우저 어디에 저장하나?</h4>
+      <p>SPA에서 토큰을 <code>localStorage</code>에 두면 편하지만 <strong>XSS 한 방에 통째로 털립니다.</strong> 반대로 <code>HttpOnly</code> 쿠키는 JS가 못 읽어 XSS엔 강하지만 <strong>CSRF 대비(SameSite 등)</strong>가 필요하죠. 정답은 상황마다 다르고, 점점 <strong>BFF(Backend-for-Frontend)</strong> 패턴 — 토큰은 백엔드가 쥐고 브라우저엔 세션 쿠키만 주는 방식 — 이 권장됩니다.</p>
+    </div>
+  </section>
+
+  <!-- ===================== 17. REVIEW ===================== -->
+  <section id="review" data-title="복습 & 최종 퀴즈">
+    <div class="kicker"><b>11 · 마무리</b> 한 번에 복습</div>
+    <h2>요청과 실패 케이스를 눌러서 복습하기</h2>
+    <p class="lead">아래 콘솔은 실제 네트워크를 호출하지 않는 시뮬레이터입니다. 핵심 흐름과 대표적 실패 케이스를 빠르게 되짚어 보세요.</p>
+
+    <div class="win">
+      <div class="win-bar"><div class="win-dots"><i></i><i></i><i></i></div><div class="win-url">auth-traffic-inspector — console</div></div>
+      <div class="win-body">
+        <div class="btn-row" style="margin-top:0">
+          <button class="console-cmd primary" data-cmd="auth-url">authorize</button>
+          <button class="console-cmd" data-cmd="exchange-code">token exchange</button>
+          <button class="console-cmd" data-cmd="call-api">call API</button>
+          <button class="console-cmd" data-cmd="client-credentials">client credentials</button>
+          <button class="console-cmd" data-cmd="pat-risk">PAT 위험</button>
+          <button class="console-cmd" data-cmd="bad-state">state 불일치</button>
+          <button class="console-cmd" data-cmd="oidc-verify">id_token 검증</button>
+        </div>
+        <pre id="consoleOut" style="margin-bottom:0"></pre>
+      </div>
+    </div>
+
+    <div class="quiz" data-qid="q-final" data-answer="a">
+      <div class="q-head">🏁 Final Check</div>
+      <div class="q">access_token · id_token · PAT를 가장 정확히 설명한 것은?</div>
+      <button class="opt" data-opt="a">A. access_token=API 권한용, id_token=로그인 신원 확인용(OIDC), PAT=사람 계정 기반의 제품별 API 토큰</button>
+      <button class="opt" data-opt="b">B. 셋은 이름만 다르고 모두 같은 용도다</button>
+      <button class="opt" data-opt="c">C. PAT는 OAuth2 표준 client credentials grant의 정식 명칭이다</button>
+      <div class="explain">정답은 <strong>A</strong>. 토큰의 <em>주체(누구의 것이냐)</em>와 <em>소비자(누가 읽느냐)</em>와 <em>용도</em>를 구분하는 순간, OAuth2/OIDC 설계가 또렷해집니다. 여기까지 오셨다면 핵심은 모두 잡으셨어요. 🎉</div>
+    </div>
+
+    <div class="callout ok">
+      <h4><span class="ic">🎓</span> 한 페이지 요약</h4>
+      <ul style="margin:0">
+        <li>OAuth2 = <strong>권한 위임</strong>, OIDC = 그 위의 <strong>로그인</strong></li>
+        <li>등장인물 5: 사용자 · 브라우저 · 클라이언트 · 인증서버 · API서버</li>
+        <li>표준 흐름 = <strong>Authorization Code + PKCE</strong>. 코드는 프론트채널, 토큰 교환은 백채널</li>
+        <li>access(API용)·id(로그인용)·refresh(갱신용)를 섞지 말 것</li>
+        <li>id_token은 <strong>서명까지 검증</strong>해야 신뢰</li>
+        <li>secret 못 숨기는 앱(SPA/모바일)은 PKCE 필수, secret 없음</li>
+        <li>사람 없는 호출 = client credentials / workload identity. PAT는 신중히</li>
+      </ul>
+    </div>
+  </section>
+
+  </main>
+</div>
+<div id="tooltip"></div>
+
+<script>
+const $=(s,r=document)=>r.querySelector(s);
+const $$=(s,r=document)=>Array.from(r.querySelectorAll(s));
+
+/* ---------- glossary ---------- */
+const GLOSSARY={
+  OAuth2:'비밀번호를 공유하지 않고 제한된 권한을 위임하기 위한 표준 프레임워크. 인증이 아니라 "인가"가 본질입니다.',
+  OIDC:'OpenID Connect. OAuth2 위에 "로그인/신원확인"을 얹은 표준. 결과물은 검증 가능한 id_token.',
+  bearer:'"지참인" 토큰. 가진 사람이 곧 권한자라서, 흘리면 누구나 쓸 수 있습니다. 헤더로만, HTTPS로만.',
+  authcode:'Authorization Code. 토큰이 아니라 "토큰으로 바꿀 수 있는 짧은 수명의 교환권". 백채널에서 교환합니다.',
+  state:'요청과 응답을 묶고 CSRF를 막는 예측 불가능한 일회성 값. 콜백에서 반드시 대조합니다.',
+  nonce:'OIDC 요청과 id_token을 묶어 토큰 재사용을 막는 일회성 값.',
+  PKCE:'Proof Key for Code Exchange. code_verifier(비밀)와 그 해시 code_challenge로 코드 탈취를 무력화하는 확장.',
+  jwks:'JSON Web Key Set. 인증 서버가 공개하는 "공개키 묶음". 클라이언트는 이걸로 id_token 서명을 검증합니다.',
+  PAT:'Personal Access Token. 사람 계정 권한을 API 토큰처럼 쓰는 제품별 기능. OAuth2 표준 grant가 아닙니다.',
+  workload:'사람이 아닌 워크로드(서비스/머신)에 부여되는 신원. AWS IAM Role, GCP SA, K8s SA, SPIFFE 등.',
+  storage:'토큰 저장 위치. localStorage는 XSS에 약하고, HttpOnly 쿠키는 CSRF 대비가 필요. BFF 패턴이 권장됩니다.'
+};
+const visited=new Set(), quizDone=new Set();
+
+function buildToc(){
+  $('#toc').innerHTML=$$('section[data-title]').map((s,i)=>
+    `<a href="#${s.id}" data-target="${s.id}"><span class="num"><span>${String(i+1).padStart(2,'0')}</span></span><span>${s.dataset.title}</span></a>`).join('');
+}
+function markVisited(id){ visited.add(id); const c=$(`#toc a[data-target="${id}"]`); if(c)c.classList.add('done'); updateProgress(); }
+function updateProgress(){
+  const total=$$('section[data-title]').length + $$('.quiz').length;
+  const pct=total?Math.round((visited.size+quizDone.size)/total*100):0;
+  $('#progressText').textContent=pct+'%'; $('#progressBar').style.width=pct+'%';
+}
+function wireTerms(root=document){
+  const tip=$('#tooltip');
+  $$('.term',root).forEach(el=>{
+    el.addEventListener('mouseenter',()=>{const k=el.dataset.t||el.textContent.trim();
+      tip.innerHTML=`<b>${k}</b><br>${GLOSSARY[k]||'튜토리얼의 핵심 용어입니다.'}`; tip.classList.add('show');});
+    el.addEventListener('mousemove',e=>{tip.style.left=Math.min(e.clientX+14,window.innerWidth-360)+'px';tip.style.top=Math.min(e.clientY+16,window.innerHeight-110)+'px';});
+    el.addEventListener('mouseleave',()=>tip.classList.remove('show'));
+  });
+}
+function wireQuizzes(root=document){
+  $$('.quiz',root).forEach(q=>q.querySelectorAll('.opt').forEach(btn=>btn.addEventListener('click',()=>{
+    if(q.dataset.done)return; q.dataset.done='1';
+    btn.classList.add(btn.dataset.opt===q.dataset.answer?'correct':'wrong');
+    const good=q.querySelector(`.opt[data-opt="${q.dataset.answer}"]`); if(good)good.classList.add('correct');
+    q.querySelector('.explain')?.classList.add('show'); quizDone.add(q.dataset.qid); updateProgress();
+  })));
+}
+function wireScrollSpy(){
+  const io=new IntersectionObserver(es=>es.forEach(e=>{if(!e.isIntersecting)return;
+    markVisited(e.target.id); $$('#toc a').forEach(a=>a.classList.toggle('active',a.dataset.target===e.target.id));
+  }),{rootMargin:'-30% 0px -60% 0px',threshold:0});
+  $$('section[data-title]').forEach(s=>io.observe(s));
+}
+
+/* ---------- roles ---------- */
+function renderRole(role='owner'){
+  const d={
+    owner:['Resource Owner = 사용자(데이터 주인)','보호된 데이터의 주인입니다. 사진·이메일·주문내역 같은 리소스의 권한 일부를 클라이언트에게 위임할지 결정합니다. 비밀번호는 오직 인증 서버에만 입력합니다.','예: junior@example.com 의 실제 사람'],
+    browser:['User-Agent = 브라우저(전달자)','사용자와 서버들 사이에서 메시지를 실어 나릅니다. redirect를 따라 이동하고, 주소창에 code/state를 받아 옵니다. "프론트채널"이 바로 이 브라우저를 거치는 통로예요.','예: 크롬, 사파리, 또는 모바일 앱의 인앱 브라우저'],
+    client:['Client = 클라이언트(권한을 빌리는 앱)','사용자의 허락을 받아 API를 호출하려는 애플리케이션. 토큰을 받아 보관하고 사용합니다. secret을 숨길 수 있으면 confidential, 없으면 public client.','예: 사진 인화 앱, 학습 서비스, 결제 배치 워커'],
+    auth:['Authorization Server = 인증 서버(토큰 발급자)','사용자를 로그인시키고, 동의를 받고, authorization code와 토큰을 발급합니다. id_token의 서명도 이 서버의 키로 만들어집니다.','예: accounts.google.com, Keycloak, Auth0, 회사 IAM'],
+    api:['Resource Server = API 서버(토큰 검증자)','보호된 데이터를 가진 서버. 매 요청마다 access_token의 유효성·만료·audience·scope를 검증하고 응답합니다.','예: /me, 주문 API, billing API']
+  }[role];
+  $('#roleOut').innerHTML=`<h4 style="color:#fff;margin-bottom:8px">${d[0]}</h4><p style="margin:0 0 10px">${d[1]}</p><p class="muted" style="margin:0;font-size:13px">${d[2]}</p>`;
+  $$('.role-btn').forEach(b=>b.classList.toggle('active',b.dataset.role===role));
+}
+
+/* ---------- token shapes ---------- */
+function renderTokenShape(shape){
+  const out=$('#tokenShapeOut');
+  if(shape==='opaque'){
+    out.innerHTML=`<p><strong>Opaque(불투명) 토큰</strong> — 그냥 의미 없는 랜덤 문자열입니다. 정보가 안 들어있어요.</p>
+      <pre style="margin:8px 0">at_9f2c1ab7e0d4486f8c3b1129ee77a210</pre>
+      <p style="margin:6px 0 0">API 서버는 이 토큰의 진짜 정보(권한·만료)를 알려면 <strong>인증 서버에 물어봐야</strong> 합니다(introspection). 장점: 토큰을 즉시 폐기하기 쉬움. 단점: 매번 조회 필요.</p>`;
+  }else{
+    out.innerHTML=`<p><strong>JWT 토큰</strong> — 토큰 자체에 정보(claims)가 담겨 있고 서명이 붙어 있습니다.</p>
+      <pre style="margin:8px 0"><span class="jwt-h">eyJhbGciOiJSUzI1Ni...</span>.<span class="jwt-p">eyJzdWIiOiJ1c2VyXz...</span>.<span class="jwt-s">SflKxwRJSMeKKF2QT4...</span></pre>
+      <p style="margin:6px 0 0">API 서버는 인증 서버에 매번 묻지 않고 <strong>서명만 검증</strong>하면 바로 신뢰합니다(자기 완결적). 장점: 빠름. 단점: 발급 후 즉시 폐기가 어려워 만료를 짧게 둡니다. (id_token은 항상 JWT)</p>`;
+  }
+  $$('#tokenShapeToggle button').forEach(b=>b.classList.toggle('on',b.dataset.shape===shape));
+}
+
+/* ---------- auth url builder ---------- */
+function renderAuthUrl(){
+  const sc=[]; if($('#useOidc').checked)sc.push('openid');
+  if($('#scopeProfile').checked)sc.push('profile');
+  if($('#scopeEmail').checked)sc.push('email');
+  if($('#scopeRepo').checked)sc.push('repo:read');
+  const q=new URLSearchParams({response_type:'code',client_id:'study-client',
+    redirect_uri:'https://app.example.com/callback',scope:sc.join(' '),
+    state:'st_7Yqk9bV2',nonce:'n_4Wv2sLpQ',
+    code_challenge:'E9Melhoa2OwvFrEMTJguCHaoeK1t8URWbuGJSstw-cM',code_challenge_method:'S256'});
+  $('#authUrl').textContent='GET https://auth.example.com/oauth/authorize?\n  '+q.toString().replaceAll('&','\n  &');
+}
+
+/* ---------- state demo ---------- */
+function renderState(good){
+  if(good){
+    $('#stateOut').textContent='콜백 수신: https://app.example.com/callback?code=Splx...&state=st_7Yqk9bV2\n\n세션에 저장해 둔 state : st_7Yqk9bV2\n콜백으로 돌아온 state  : st_7Yqk9bV2\n\n✅ 일치 → 안전. 토큰 교환을 진행합니다.';
+  }else{
+    $('#stateOut').textContent='콜백 수신: https://app.example.com/callback?code=EVIL...&state=zzz_attacker\n\n세션에 저장해 둔 state : st_7Yqk9bV2\n콜백으로 돌아온 state  : zzz_attacker\n\n🚨 불일치 → CSRF 의심. 즉시 폐기, 토큰 교환 중단!';
+  }
+}
+
+/* ---------- PKCE ---------- */
+async function sha256Base64Url(text){
+  if(!crypto.subtle)return '(이 브라우저에선 crypto.subtle 사용 불가)';
+  const h=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(text));
+  return btoa(String.fromCharCode(...new Uint8Array(h))).replaceAll('+','-').replaceAll('/','_').replaceAll('=','');
+}
+async function renderPkce(){
+  const v=$('#verifierInput').value;
+  const c=await sha256Base64Url(v);
+  $('#pkceOut').textContent=`① 앱이 만든 비밀\n   code_verifier  = ${v}\n\n② SHA-256 해시 → base64url (인가 요청에 이것만 보냄)\n   code_challenge = ${c}\n\n③ 나중에 토큰 받을 때는 원본 verifier를 제시\n   인증 서버: SHA-256(verifier) == 저장해둔 challenge ?  → 통과해야 토큰 발급`;
+}
+
+/* ---------- API call ---------- */
+function renderApiCall(need,path){
+  const have=$$('.api-scope:checked').map(x=>x.value);
+  const ok=have.includes(need);
+  const method=$(`.api-call[data-need="${need}"]`)?.textContent.split(' ')[0]||'GET';
+  $('#apiOut').textContent=`${method} ${path} HTTP/1.1\nAuthorization: Bearer at_eyJscope...\n\n토큰에 담긴 scope : ${have.join(' ')||'(없음)'}\n이 호출에 필요한 scope: ${need}\n\n${ok?'✅ 200 OK — scope 충분, 데이터 응답':'🚫 403 Forbidden — scope 부족 (insufficient_scope)'}`;
+}
+
+/* ---------- refresh rotation ---------- */
+const ROT=[
+  'access_token(AT1)이 만료됨 (expires_in 경과).\nAPI 호출 시 401 Unauthorized 가 돌아옵니다.\n→ 사용자에게 다시 로그인하라고 하지 말고, refresh_token으로 조용히 갱신!',
+  'POST /oauth/token  (백채널)\n  grant_type=refresh_token\n  refresh_token=RT1\n  client_id=study-client\n\n→ 인증 서버가 RT1이 유효한지 확인합니다.',
+  '200 OK\n{\n  "access_token":  "AT2 (새것)",\n  "refresh_token": "RT2 (새것)",   ← 회전(rotation)!\n  "expires_in": 3600\n}\n\n인증 서버는 이제 RT1을 폐기하고 RT2만 유효하게 둡니다.',
+  '공격자가 예전에 훔친 RT1로 토큰을 요청합니다.\nPOST /oauth/token  grant_type=refresh_token  refresh_token=RT1\n\n🚨 인증 서버: "이미 쓰인 RT1이 또 왔다 = 유출 신호!"\n→ 400 invalid_grant + 이 계정의 토큰 패밀리(RT1·RT2…) 전체 무효화.\n   정상 사용자도 재로그인하게 되지만, 공격자도 차단됩니다.'
+];
+function renderRot(i){ $('#rotOut').textContent=ROT[i]; $$('.rot-step').forEach(b=>b.classList.toggle('primary',Number(b.dataset.step)===i)); }
+
+/* ---------- JWT builder/verifier (real HMAC) ---------- */
+function b64url(bytes){ let bin=''; bytes.forEach(b=>bin+=String.fromCharCode(b)); return btoa(bin).replaceAll('+','-').replaceAll('/','_').replaceAll('=',''); }
+function b64urlStr(str){ return b64url(new TextEncoder().encode(str)); }
+let HMAC_KEY=null;
+async function getKey(){ if(HMAC_KEY)return HMAC_KEY;
+  HMAC_KEY=await crypto.subtle.importKey('raw',new TextEncoder().encode('demo-shared-secret-for-tutorial'),{name:'HMAC',hash:'SHA-256'},false,['sign']);
+  return HMAC_KEY; }
+async function signInput(input){ const k=await getKey(); const sig=await crypto.subtle.sign('HMAC',k,new TextEncoder().encode(input)); return b64url(new Uint8Array(sig)); }
+
+const JWT_HEADER={alg:'HS256',typ:'JWT',kid:'key-2026-06'};
+const BASE_PAYLOAD={iss:'https://auth.example.com',sub:'user_2489',aud:'study-client',exp:2000000000,iat:1900000000,nonce:'n_4Wv2sLpQ',email:'junior@example.com',name:'주니어 개발자'};
+const EXPECTED={iss:'https://auth.example.com',aud:'study-client',nonce:'n_4Wv2sLpQ'};
+
+async function renderJwt(mode){
+  let payload={...BASE_PAYLOAD};
+  if(mode==='nonce')payload.nonce='attacker_nonce';
+  const h=b64urlStr(JSON.stringify(JWT_HEADER));
+  let p=b64urlStr(JSON.stringify(payload));
+  const realSig=await signInput(h+'.'+p);
+  let token, tamperedNote='';
+  if(mode==='tamper'){
+    // 정상 토큰을 만든 뒤, 서명은 그대로 두고 payload만 admin으로 바꿔치기
+    const evil={...payload,sub:'admin',name:'공격자'};
+    const evilP=b64urlStr(JSON.stringify(evil));
+    token={h,p:evilP,s:realSig,displayPayload:evil};
+    tamperedNote='payload를 admin으로 바꿨지만 서명은 옛것 그대로 → 서명 재계산 시 불일치!';
+  }else{
+    token={h,p,s:realSig,displayPayload:payload};
+  }
+  // raw 표시
+  $('#jwtRaw').innerHTML=`<span class="jwt-h">${token.h}</span><span style="color:var(--text-mut)">.</span><span class="jwt-p">${token.p}</span><span style="color:var(--text-mut)">.</span><span class="jwt-s">${token.s}</span>`;
+  // 디코딩
+  $('#jwtDecoded').textContent='HEADER:\n'+JSON.stringify(JWT_HEADER,null,2)+'\n\nPAYLOAD:\n'+JSON.stringify(token.displayPayload,null,2);
+  // 검증: 서명 재계산
+  const recomputed=await signInput(token.h+'.'+token.p);
+  const sigOk=recomputed===token.s;
+  const now=1950000000; // 고정 기준시각(데모)
+  const checks=[
+    ['서명(signature)',sigOk,sigOk?'공개키로 서명 일치 — 위변조 없음':'서명 불일치! 내용이 변조됨 → 거부'],
+    ['issuer (iss)',token.displayPayload.iss===EXPECTED.iss,token.displayPayload.iss],
+    ['audience (aud)',token.displayPayload.aud===EXPECTED.aud,token.displayPayload.aud],
+    ['expiry (exp)',token.displayPayload.exp>now,'만료 '+(token.displayPayload.exp>now?'안 됨':'됨')],
+    ['nonce',token.displayPayload.nonce===EXPECTED.nonce,token.displayPayload.nonce]
+  ];
+  const allOk=checks.every(c=>c[1]);
+  $('#jwtChecks').innerHTML=checks.map(c=>
+    `<div class="verify-row"><span class="vi ${c[1]?'ok-text':'bad-text'}">${c[1]?'✅':'❌'}</span><span><strong>${c[0]}</strong> <span class="muted">${c[2]}</span></span></div>`
+  ).join('')+`<div class="verify-row" style="border-top:1px solid var(--border);margin-top:6px;padding-top:10px"><span class="vi">${allOk?'🎉':'⛔'}</span><span class="${allOk?'ok-text':'bad-text'}"><strong>${allOk?'검증 통과 → 로그인 세션 생성 가능':'검증 실패 → 로그인 거부'}</strong></span></div>`+(tamperedNote?`<p class="note-inline" style="color:var(--bad)">${tamperedNote}</p>`:'');
+}
+
+/* ---------- platforms ---------- */
+function renderPlat(plat){
+  const d={
+    web:{t:'🖥️ 웹 서버 앱 (Confidential)',rows:[
+      ['client_secret','✅ 서버에 안전 보관 가능'],['권장 흐름','Authorization Code + PKCE'],
+      ['토큰 교환','백엔드(백채널)에서 secret과 함께'],['redirect_uri','https://app.example.com/callback'],
+      ['토큰 저장','서버 세션 — 브라우저엔 세션 쿠키만'],['포인트','가장 안전. 토큰이 브라우저에 노출되지 않음']]},
+    spa:{t:'⚛️ SPA (Public)',rows:[
+      ['client_secret','❌ 못 숨김 (JS 소스에 노출)'],['권장 흐름','Authorization Code + PKCE (secret 없음)'],
+      ['토큰 교환','브라우저에서 직접, PKCE로 보호'],['redirect_uri','https://app.example.com/callback'],
+      ['토큰 저장','XSS 위험 ↔ 메모리/쿠키 고민. BFF 권장'],['포인트','implicit flow 금지. PKCE 필수']]},
+    mobile:{t:'📱 모바일 앱 (Public)',rows:[
+      ['client_secret','❌ 앱 바이너리 디컴파일로 노출'],['권장 흐름','Authorization Code + PKCE'],
+      ['토큰 교환','앱에서 직접, PKCE로 보호'],['redirect_uri','myapp://callback 또는 https(App/Universal Links)'],
+      ['토큰 저장','iOS Keychain / Android Keystore'],['포인트','redirect 가로채기 방지 위해 Universal/App Links 권장']]},
+    cli:{t:'⌨️ 데스크톱 / CLI (Public)',rows:[
+      ['client_secret','❌ 배포 바이너리에 못 숨김'],['권장 흐름','Authorization Code + PKCE, 또는 Device Code'],
+      ['토큰 교환','로컬에서 PKCE로 보호'],['redirect_uri','http://127.0.0.1:{port}/callback (loopback)'],
+      ['토큰 저장','OS 보안 저장소 / 안전한 파일'],['포인트','브라우저 못 띄우는 기기(TV 등)는 Device Code Flow']]}
+  }[plat];
+  $('#platOut').innerHTML=`<h4 style="color:#fff;margin-bottom:10px">${d.t}</h4>`+
+    d.rows.map(r=>`<div class="verify-row"><span style="flex:0 0 130px;color:var(--text-mut);font-size:12.5px">${r[0]}</span><span>${r[1]}</span></div>`).join('');
+  $$('#platPicks .pick').forEach(b=>b.classList.toggle('active',b.dataset.plat===plat));
+}
+
+/* ---------- token chooser ---------- */
+function renderTokenChoice(){
+  const c=$('#callerType').value, h=$('#humanPresent').value;
+  const map={
+    browser:['Authorization Code + PKCE + OIDC','사용자 로그인·권한 위임. access_token은 API용, id_token은 로그인 확인용.'],
+    backend:['Client Credentials 또는 workload identity','서비스가 자기 자신(service:billing-worker)으로 호출. 사용자 동의/id_token 없음.'],
+    ci:['짧은 수명 service token / app installation token','저장소·환경 단위 scope, 만료, 감사 로그가 핵심.'],
+    local:['fine-grained PAT (제한적 허용)','개인 계정 권한이므로 최소 scope·만료일·이름·보관 위치를 강제.'],
+    impersonation:['명시적 delegation / on-behalf-of 설계','서비스 토큰을 몰래 사용자처럼 쓰면 감사·권한 모델이 무너짐.']
+  };
+  const [rec,why]=map[c];
+  const warn = (c!=='browser' && h==='yes') ? '\n\n⚠️ "사람이 참여"인데 머신 호출 주체를 골랐어요. 정말 사람의 로그인이라면 Authorization Code+OIDC가 맞습니다.'
+            : (c==='browser' && h==='no') ? '\n\n⚠️ 사람이 없는데 브라우저 사용자 흐름을 골랐어요. 자동 호출이면 client credentials 계열이 맞습니다.' : '';
+  $('#tokenChoiceOut').textContent=`추천: ${rec}\n이유: ${why}\n사람 참여: ${h==='yes'?'예':'아니오'}${warn}\n\n공통 허용 조건:\n  • 최소 권한(scope)\n  • 만료/회전 정책\n  • 소유자와 목적 기록\n  • secret manager 보관\n  • 마지막 사용 시각 감사`;
+}
+
+/* ---------- console ---------- */
+const CONSOLE={
+  'auth-url':'$ GET /oauth/authorize\n  response_type=code & scope=openid profile email\n  state, nonce, code_challenge(S256) 포함\n→ 302 로 인증 서버 로그인/동의 화면으로 이동 (프론트채널)',
+  'exchange-code':'$ POST /oauth/token   (백채널)\n  grant_type=authorization_code & code & code_verifier & client_secret\n→ 200 { access_token, refresh_token, id_token, expires_in }',
+  'call-api':'$ GET /me\n  Authorization: Bearer <access_token>\n→ scope 충분: 200 OK / 부족: 403 insufficient_scope',
+  'client-credentials':'$ POST /oauth/token   (백채널, 사용자 없음)\n  grant_type=client_credentials & client_secret & scope\n→ 200 { access_token }  (id_token·refresh_token 없음)\n   주체 = service:billing-worker',
+  'pat-risk':'$ PAT 점검\n  주체 = 사람 계정(과한 권한) · 퇴사 시 중단 · 잘 샘(코드 커밋)\n→ 운영 서비스 기본값으로 부적합. fine-grained + 만료 + secret manager.',
+  'bad-state':'$ 콜백 state 검사\n  saved=st_7Yqk9bV2  received=zzz_attacker\n→ 🚨 불일치: CSRF 의심. 토큰 교환 중단, 요청 폐기.',
+  'oidc-verify':'$ id_token 검증\n  iss✅ aud✅ exp✅ signature✅ nonce✅\n→ 전부 통과해야 로그인 세션 생성. 하나라도 실패 = 거부.'
+};
+
+/* ---------- Sequence Player ---------- */
+function createSequence(mountId,cfg){
+  const root=$('#'+mountId); if(!root)return;
+  const A=cfg.actors, idx={}; A.forEach((a,i)=>idx[a.id]=i); const N=A.length;
+  const wrap=document.createElement('div'); wrap.className='seq';
+  wrap.innerHTML=`
+    <div class="seq-head">
+      <div class="seq-title">▶ ${cfg.title}</div>
+      <div class="seq-legend">
+        <span><i class="l-ui"></i>사람 행동</span>
+        <span><i class="l-front"></i>프론트채널(브라우저 경유)</span>
+        <span><i class="l-back"></i>백채널(서버 직접)</span>
+      </div>
+    </div>
+    <div class="seq-actors"></div>
+    <div class="seq-track"><div class="seq-lifelines"></div><div class="seq-rows"></div></div>
+    <div class="seq-detail">
+      <div class="seq-detail-head"><span class="step-n"></span><span class="lbl"></span><span class="chan"></span></div>
+      <pre class="wire"></pre><div class="note"></div>
+    </div>
+    <div class="seq-controls">
+      <button class="sq-first sm">⏮ 처음</button>
+      <button class="sq-prev sm">◀ 이전</button>
+      <button class="sq-next primary">다음 ▶</button>
+      <button class="sq-auto sm">⏯ 자동재생</button>
+      <span class="seq-counter"></span>
+    </div>`;
+  root.appendChild(wrap);
+  const cols=`repeat(${N},1fr)`;
+  const actorsEl=$('.seq-actors',wrap); actorsEl.style.gridTemplateColumns=cols;
+  actorsEl.innerHTML=A.map(a=>`<div class="seq-actor" data-a="${a.id}"><span class="ic">${a.ic}</span><span class="nm">${a.nm}</span></div>`).join('');
+  const lifes=$('.seq-lifelines',wrap); lifes.style.gridTemplateColumns=cols;
+  lifes.innerHTML=A.map(()=>`<div class="seq-life"></div>`).join('');
+  const rowsEl=$('.seq-rows',wrap);
+  rowsEl.innerHTML=cfg.steps.map((s,i)=>{
+    const a=idx[s.from], b=idx[s.to], lo=Math.min(a,b), hi=Math.max(a,b);
+    const dir=b>a?'dir-right':'dir-left';
+    return `<div class="seq-row" data-i="${i}" style="grid-template-columns:${cols}">
+      <div class="seq-msg ${dir} ch-${s.ch}" style="grid-column:${lo+1}/${hi+2}">
+        <span class="seq-num">${i+1}</span><span class="seq-line"></span><span class="seq-arrow"></span><span class="seq-cap">${s.cap}</span>
+      </div></div>`;
+  }).join('');
+  let cur=0,timer=null;
+  const steps=cfg.steps;
+  function lit(){ const s=steps[cur]; $$('.seq-actor',wrap).forEach(el=>el.classList.toggle('lit',el.dataset.a===s.from||el.dataset.a===s.to)); }
+  function render(){
+    $$('.seq-row',wrap).forEach(r=>{const i=+r.dataset.i; r.classList.toggle('cur',i===cur); r.classList.toggle('past',i<cur);});
+    const s=steps[cur];
+    $('.step-n',wrap).textContent=`단계 ${cur+1}/${steps.length}`;
+    $('.lbl',wrap).textContent=s.cap;
+    const chan=$('.chan',wrap); const cm={front:['front','프론트채널'],back:['back','백채널'],ui:['', '사람 행동']};
+    chan.className='chan badge '+(cm[s.ch][0]); chan.textContent=cm[s.ch][1];
+    $('.wire',wrap).textContent=s.wire||'';
+    $('.note',wrap).textContent=s.note||'';
+    $('.seq-counter',wrap).textContent=`${cur+1} / ${steps.length}`;
+    lit();
+    const curRow=$(`.seq-row[data-i="${cur}"]`,wrap); curRow&&curRow.scrollIntoView({block:'nearest',behavior:'smooth'});
+  }
+  function stop(){ if(timer){clearInterval(timer);timer=null;$('.sq-auto',wrap).textContent='⏯ 자동재생';$('.sq-auto',wrap).classList.remove('primary');} }
+  $('.sq-next',wrap).onclick=()=>{ if(cur<steps.length-1){cur++;render();} else {cur=0;render();} };
+  $('.sq-prev',wrap).onclick=()=>{ stop(); if(cur>0){cur--;render();} };
+  $('.sq-first',wrap).onclick=()=>{ stop(); cur=0; render(); };
+  $('.sq-auto',wrap).onclick=function(){ if(timer){stop();return;} this.textContent='⏸ 멈춤'; this.classList.add('primary');
+    timer=setInterval(()=>{ if(cur<steps.length-1){cur++;render();} else {stop();} },1700); };
+  render();
+}
+
+const MAIN_ACTORS=[
+  {id:'user',ic:'👤',nm:'사용자'},{id:'browser',ic:'🌐',nm:'브라우저'},
+  {id:'client',ic:'📱',nm:'앱(클라이언트)'},{id:'auth',ic:'🔐',nm:'인증 서버'},{id:'api',ic:'📦',nm:'API 서버'}
+];
+const MAIN_STEPS=[
+  {from:'user',to:'browser',ch:'ui',cap:'로그인 클릭',wire:'(사용자가 "Google로 로그인" 버튼 클릭)',note:'아직 토큰은 없습니다. 사용자가 흐름을 시작합니다.'},
+  {from:'browser',to:'client',ch:'front',cap:'GET /auth/login',wire:'GET /auth/login\nHost: app.example.com',note:'앱 서버가 code_verifier/challenge, state, nonce를 생성하고 인가 요청 URL을 준비합니다.'},
+  {from:'client',to:'browser',ch:'front',cap:'302 → 인증 서버',wire:'HTTP/1.1 302 Found\nLocation: https://auth.example.com/oauth/authorize?\n  response_type=code&client_id=study-client\n  &redirect_uri=https://app.example.com/callback\n  &scope=openid profile email\n  &state=st_7Yqk9bV2&nonce=n_4Wv2sLpQ\n  &code_challenge=E9Mel...&code_challenge_method=S256',note:'프론트채널 시작! 브라우저를 인증 서버로 보냅니다. 여기엔 challenge(자물쇠)만 들어있고 verifier(열쇠)는 앱이 보관합니다.'},
+  {from:'browser',to:'auth',ch:'front',cap:'GET /authorize',wire:'GET /oauth/authorize?...(위 파라미터)\nHost: auth.example.com',note:'브라우저가 인증 서버로 이동합니다.'},
+  {from:'auth',to:'browser',ch:'front',cap:'200 로그인 화면',wire:'HTTP/1.1 200 OK\n(인증 서버의 로그인 폼 HTML)',note:'사용자에게 ID/PW 입력 화면을 보여줍니다. 이 화면의 주소는 인증 서버입니다.'},
+  {from:'user',to:'browser',ch:'ui',cap:'아이디/비번 입력',wire:'(사용자가 인증 서버 화면에 자격증명 입력)',note:'★중요: 비밀번호는 인증 서버에만 전달됩니다. 클라이언트(앱)는 절대 못 봅니다.'},
+  {from:'browser',to:'auth',ch:'front',cap:'POST 로그인',wire:'POST /login\nusername=...&password=...',note:'인증 서버가 사용자를 인증(신원 확인)합니다.'},
+  {from:'auth',to:'browser',ch:'front',cap:'200 동의 화면',wire:'HTTP/1.1 200 OK\n("사진앱이 profile, email 권한을 요청합니다 — 허용?")',note:'scope에 대한 동의를 구합니다. 사용자가 무엇을 허락하는지 눈으로 봅니다.'},
+  {from:'user',to:'browser',ch:'ui',cap:'동의(허용)',wire:'(사용자가 "허용" 클릭)',note:'사용자가 요청된 권한에 동의합니다.'},
+  {from:'auth',to:'browser',ch:'front',cap:'302 → 콜백(code)',wire:'HTTP/1.1 302 Found\nLocation: https://app.example.com/callback?\n  code=SplxlOBeZQQYbYS6WxSbIA&state=st_7Yqk9bV2',note:'authorization code가 프론트채널(주소창)로 돌아옵니다. 아직 토큰이 아니라 "교환권"일 뿐입니다.'},
+  {from:'browser',to:'client',ch:'front',cap:'GET /callback?code',wire:'GET /callback?code=Splx...&state=st_7Yqk9bV2\nHost: app.example.com',note:'앱 서버가 먼저 state를 검증합니다. 저장해 둔 값과 다르면 즉시 중단!'},
+  {from:'client',to:'auth',ch:'back',cap:'POST /token (백채널)',wire:'POST /oauth/token   ← 브라우저를 거치지 않음!\ngrant_type=authorization_code\n&code=Splx...&code_verifier=dBjftJ...\n&client_id=study-client&client_secret=••••••\n&redirect_uri=https://app.example.com/callback',note:'백채널 시작! 서버끼리 직접 통신. 여기서 PKCE 열쇠(verifier)와 client_secret을 증명합니다. 코드만 훔친 공격자는 이 단계를 통과 못 합니다.'},
+  {from:'auth',to:'client',ch:'back',cap:'200 토큰들',wire:'HTTP/1.1 200 OK\n{\n  "access_token": "at_eyJ...",\n  "id_token": "eyJhbGc...",\n  "refresh_token": "rt_8xM...",\n  "expires_in": 3600\n}',note:'드디어 진짜 토큰! 앱은 id_token의 서명·iss·aud·exp·nonce를 검증해 "누가 로그인했는지" 확인합니다.'},
+  {from:'client',to:'browser',ch:'front',cap:'세션 쿠키 + 완료',wire:'HTTP/1.1 302 Found\nSet-Cookie: session=...; HttpOnly; Secure\nLocation: /dashboard',note:'앱이 자체 로그인 세션을 만들고 사용자를 메인 화면으로 보냅니다.'},
+  {from:'client',to:'api',ch:'back',cap:'GET /api/me (Bearer)',wire:'GET /api/me\nAuthorization: Bearer at_eyJ...',note:'이제 access_token으로 보호된 API를 호출합니다.'},
+  {from:'api',to:'client',ch:'back',cap:'200 사용자 데이터',wire:'HTTP/1.1 200 OK\n{ "id":"user_2489","name":"주니어 개발자" }',note:'API 서버가 토큰의 유효성·scope·audience·만료를 검증한 뒤 데이터를 응답합니다.'}
+];
+
+const CC_ACTORS=[
+  {id:'client',ic:'📱',nm:'앱(서비스)'},{id:'auth',ic:'🔐',nm:'인증 서버'},{id:'api',ic:'📦',nm:'API 서버'}
+];
+const CC_STEPS=[
+  {from:'client',to:'auth',ch:'back',cap:'POST /token (CC)',wire:'POST /oauth/token   (사용자 없음, 백채널)\nAuthorization: Basic base64(client_id:client_secret)\n\ngrant_type=client_credentials\n&scope=invoice:read metrics:write',note:'서비스가 자기 자신의 자격증명만으로 토큰을 요청합니다. 동의 화면도, 브라우저도, redirect도 없습니다.'},
+  {from:'auth',to:'client',ch:'back',cap:'200 access_token',wire:'HTTP/1.1 200 OK\n{\n  "access_token": "at_svc_...",\n  "token_type": "Bearer",\n  "expires_in": 3600\n}',note:'id_token도 refresh_token도 없습니다. 만료되면 다시 client credentials로 새로 받으면 되니까요. 토큰 주체는 service:billing-worker.'},
+  {from:'client',to:'api',ch:'back',cap:'GET /invoices (Bearer)',wire:'GET /invoices\nAuthorization: Bearer at_svc_...',note:'받은 토큰으로 API를 호출합니다.'},
+  {from:'api',to:'client',ch:'back',cap:'200 데이터',wire:'HTTP/1.1 200 OK\n[ ...invoices... ]',note:'API 서버는 토큰의 scope(invoice:read)와 주체(서비스)를 확인하고 응답합니다.'}
+];
+
+/* ---------- init ---------- */
+function init(){
+  buildToc(); wireTerms(); wireQuizzes(); wireScrollSpy();
+  $$('.role-btn').forEach(b=>b.addEventListener('click',()=>renderRole(b.dataset.role)));
+  $$('#tokenShapeToggle button').forEach(b=>b.addEventListener('click',()=>renderTokenShape(b.dataset.shape)));
+  ['useOidc','scopeProfile','scopeEmail','scopeRepo'].forEach(id=>$('#'+id).addEventListener('change',renderAuthUrl));
+  $('#stateGood').addEventListener('click',()=>renderState(true));
+  $('#stateBad').addEventListener('click',()=>renderState(false));
+  $('#pkceBtn').addEventListener('click',renderPkce);
+  $('#stealCodeBtn').addEventListener('click',()=>{$('#pkceOut').textContent='공격자가 가진 것: code=SplxlOBeZQQYbYS6WxSbIA (프론트채널에서 탈취)\n공격자가 모르는 것: code_verifier (앱만 보관)\n\nPOST /oauth/token  grant_type=authorization_code&code=Splx...&code_verifier=???\n\n🚨 인증 서버: SHA-256(verifier) != 저장된 challenge\n→ 400 invalid_grant. 토큰 발급 거부. PKCE가 막아냈습니다!';});
+  $$('.api-call').forEach(b=>b.addEventListener('click',()=>{$$('.api-call').forEach(x=>x.classList.remove('primary'));b.classList.add('primary');renderApiCall(b.dataset.need,b.dataset.path);}));
+  $$('.api-scope').forEach(cb=>cb.addEventListener('change',()=>{const a=$('.api-call.primary');renderApiCall(a?.dataset.need||'profile:read',a?.dataset.path||'/me');}));
+  $$('.rot-step').forEach(b=>b.addEventListener('click',()=>renderRot(Number(b.dataset.step))));
+  $('#jwtBuild').addEventListener('click',()=>renderJwt('ok'));
+  $('#jwtTamper').addEventListener('click',()=>renderJwt('tamper'));
+  $('#jwtBadNonce').addEventListener('click',()=>renderJwt('nonce'));
+  $$('#platPicks .pick').forEach(b=>b.addEventListener('click',()=>renderPlat(b.dataset.plat)));
+  ['callerType','humanPresent'].forEach(id=>$('#'+id).addEventListener('change',renderTokenChoice));
+  $$('.console-cmd').forEach(b=>b.addEventListener('click',()=>{$('#consoleOut').textContent=CONSOLE[b.dataset.cmd];$$('.console-cmd').forEach(x=>x.classList.remove('primary'));b.classList.add('primary');}));
+
+  createSequence('mainSeq',{title:'Authorization Code + PKCE (+ OIDC) Flow',actors:MAIN_ACTORS,steps:MAIN_STEPS});
+  createSequence('ccSeq',{title:'Client Credentials Flow (머신 to 머신)',actors:CC_ACTORS,steps:CC_STEPS});
+
+  renderRole('owner'); renderTokenShape('opaque'); renderAuthUrl();
+  renderState(true); renderPkce(); renderApiCall('profile:read','/me');
+  renderRot(0); renderPlat('web'); renderTokenChoice();
+  $('#consoleOut').textContent='$ 버튼을 눌러 OAuth2/OIDC 요청을 시뮬레이션하세요.';
+  markVisited('intro');
+}
+if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init); else init();
+</script>
+</body>
+</html>
