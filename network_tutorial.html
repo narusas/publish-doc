@@ -596,7 +596,7 @@ table.t tr.hit td{background:rgba(52,211,153,.12)}
       <p>여기가 핵심입니다. 천천히 갑니다.</p>
       <ol>
         <li><strong>서버</strong>는 손님을 받으려고 <strong>잘 알려진 포트</strong>에서 기다립니다. 웹이면 <span class="pill">80</span>(HTTP)·<span class="pill">443</span>(HTTPS). (당신의 <code>EchoServer</code>는 예시로 <span class="pill">18080</span>을 씁니다.)</li>
-        <li><strong>클라이언트</strong>도 답장을 받을 자기만의 포트가 필요합니다. 하지만 클라이언트 포트는 아무 의미가 없어도 되니, 운영체제가 비어있는 번호를 <strong>아무거나 하나 자동 배정</strong>합니다. 이걸 <span class="term" data-t="임시포트">임시 포트(ephemeral port)</span>라 하고 보통 <span class="pill">49152~65535</span> 범위예요.</li>
+        <li><strong>클라이언트</strong>도 답장을 받을 자기만의 포트가 필요합니다. 하지만 클라이언트 포트는 아무 의미가 없어도 되니, 운영체제가 비어있는 번호를 <strong>아무거나 하나 자동 배정</strong>합니다. 이걸 <span class="term" data-t="임시포트">임시 포트(ephemeral port)</span>라 하고, OS·설정마다 다르지만 <strong>리눅스 기본은 <span class="pill">32768~60999</span>(약 2.8만 개)</strong>, IANA 권장은 <span class="pill">49152~65535</span> 범위예요.</li>
         <li>그래서 하나의 연결에는 항상 <strong>양 끝점 2개</strong>가 존재합니다: <span class="badge cli">클라 IP:임시포트</span> ↔ <span class="badge ok">서버 IP:80</span>. 양쪽 모두 자기 쪽 소켓을 하나씩 가져요.</li>
       </ol>
 
@@ -692,7 +692,7 @@ while (true) {
             <pre style="font-size:12px; margin-top:8px"><code class="language-java" id="clientCode">Socket soc = new Socket("127.0.0.1", 18080); // ③ socket+connect (임시포트 자동배정)
 OutputStream out = soc.getOutputStream();
 InputStream in = soc.getInputStream();
-String req = "GET / HTTP/1.0\r\nHost: www.naver.com\r\n\r\n";
+String req = "GET / HTTP/1.0\r\nHost: localhost:18080\r\n\r\n";
 out.write(req.getBytes("UTF-8"));            // ④ 요청 전송
 out.flush();
 int b;
@@ -734,7 +734,7 @@ while ((b = in.read()) != -1) {              // ⑥ 응답 수신
       <span class="term" data-t="TCP">TCP</span>는 이 위에 "마치 깔끔한 전화통화"처럼 보이는 신뢰성 계층을 얹습니다.</p>
       <div class="grid2">
         <div class="callout tip"><h4>✅ TCP — 신뢰성</h4><p>연결을 맺고(handshake), 번호를 매겨 순서를 맞추고, 빠진 건 <strong>재전송</strong>합니다. 웹·파일전송·메일 등 "빠짐없이 와야 하는" 데이터용.</p></div>
-        <div class="callout warn"><h4>⚡ UDP — 속도</h4><p>인사 없이 그냥 던집니다. 빠르지만 도착·순서 보장 없음. 실시간 영상·게임·<span class="term" data-t="UDP">DNS</span>처럼 "조금 빠져도 빠른 게 나은" 데이터용.</p></div>
+        <div class="callout warn"><h4>⚡ UDP — 속도</h4><p>인사 없이 그냥 던집니다. 빠르지만 도착·순서 보장 없음(오류 검출용 체크섬은 있음). 실시간 영상·게임·<span class="term" data-t="UDP">DNS</span>처럼 "조금 빠져도 빠른 게 나은" 데이터용. <span class="dim">(DNS는 주로 UDP를 쓰지만 응답이 크거나 영역 전송 시엔 TCP도 씁니다.)</span></p></div>
       </div>
 
       <h3>3-way handshake — 연결 전 세 번의 인사</h3>
@@ -769,6 +769,7 @@ while ((b = in.read()) != -1) {              // ⑥ 응답 수신
         <h4>🔑 왜 "세 번"일까?</h4>
         <p>① 클라이언트: "나 보낼 수 있어!"(SYN) → ② 서버: "알았어, 나도 보낼 수 있어!"(SYN+ACK) → ③ 클라이언트: "확인!"(ACK).
         이 세 번이면 <strong>양쪽 모두 "내가 보낼 수 있고, 상대가 받을 수 있다"</strong>를 확인하게 됩니다. 두 번으론 한쪽 방향만 확인돼서 부족해요.</p>
+        <p class="dim" style="margin-bottom:0">※ 아래 데모들에 나오는 시퀀스 번호(예: 100, 1000, 1234)는 각 데모를 위한 <b>임의의 예시값</b>입니다. 실제 초기 시퀀스 번호(ISN)는 보안을 위해 매 연결마다 무작위로 정해져요.</p>
       </div>
 
       <h3>긴 메시지는 어떻게 쪼개져서 갈까? (세그먼트 분할)</h3>
@@ -1163,13 +1164,13 @@ const GLOSSARY = {
   "IP주소":    "네트워크상의 컴퓨터(정확히는 인터페이스) 주소. 건물 주소에 해당. 예: 203.0.113.7",
   "MAC주소":   "랜카드(네트워크 장비)에 박혀있는 하드웨어 주소. 같은 네트워크 안에서 '바로 옆 장비'에게 전달할 때 씁니다.",
   "TCP":       "신뢰성 있는 연결형 프로토콜. 순서 보장·재전송·흐름제어를 해 줍니다. 데이터를 '끊김 없는 바이트 흐름'처럼 다룹니다.",
-  "UDP":       "비연결형 프로토콜. 빠르지만 순서·도착을 보장하지 않습니다. 영상통화·게임·DNS처럼 속도가 중요한 곳에 씁니다.",
-  "임시포트":   "클라이언트가 연결할 때 OS가 자동으로 배정하는 포트(보통 49152~65535). ephemeral port. 답장을 받을 통로 역할.",
+  "UDP":       "비연결형 프로토콜. 빠르지만 순서·도착을 보장하지 않습니다(오류 검출 체크섬은 있음). 영상통화·게임처럼 속도가 중요한 곳에 씁니다. DNS는 주로 UDP, 큰 응답·영역 전송 시엔 TCP를 씁니다.",
+  "임시포트":   "클라이언트가 연결할 때 OS가 자동으로 배정하는 포트. ephemeral port. 범위는 OS·설정마다 다르며 리눅스 기본은 32768~60999(약 2.8만 개), IANA 권장은 49152~65535. 답장을 받을 통로 역할.",
   "4튜플":     "하나의 TCP 연결을 유일하게 식별하는 네 값: (출발지 IP, 출발지 포트, 목적지 IP, 목적지 포트). 하나라도 다르면 다른 연결.",
   "캡슐화":     "데이터를 보낼 때 각 계층이 자기 헤더를 덧붙이는 과정. 받을 때는 반대로 벗깁니다(역캡슐화).",
   "추상화":     "복잡한 내부를 감추고 단순한 사용법만 노출하는 것. 각 계층은 아래 계층의 내부를 몰라도 됩니다.",
   "라우터":     "서로 다른 네트워크를 연결하고, 패킷을 보고 '다음으로 어디로 보낼지' 결정해 전달하는 장비.",
-  "게이트웨이":  "내 네트워크 밖으로 나갈 때 거치는 출입구(보통 라우터). '기본 게이트웨이'는 목적지를 모를 때 일단 보내는 곳.",
+  "게이트웨이":  "내 네트워크 밖으로 나갈 때 거치는 출입구(보통 라우터). '기본 게이트웨이'는 라우팅 테이블에 더 구체적으로 일치하는 경로가 없을 때(기본 경로 0.0.0.0/0) 보내는 곳.",
   "라우팅테이블": "라우터/호스트가 가진 '목적지 대역 → 다음 홉' 지도. 패킷의 목적지 IP를 보고 이 표를 뒤져 길을 정합니다.",
   "홉":        "패킷이 라우터를 하나 거치는 것을 '한 홉(hop)'이라 합니다. traceroute는 홉을 하나씩 보여줍니다.",
   "서브넷":     "IP 주소를 네트워크 부분과 호스트 부분으로 나눈 묶음. 예: 192.168.0.0/24 는 192.168.0.x 256개 묶음.",
@@ -1181,7 +1182,7 @@ const GLOSSARY = {
   "netfilter": "리눅스 커널 안에서 패킷을 가로채는 틀. iptables는 이 netfilter에 규칙을 넣는 사용자 도구입니다.",
   "체인":      "netfilter에서 패킷이 거쳐가는 규칙 묶음. PREROUTING/INPUT/FORWARD/OUTPUT/POSTROUTING 등.",
   "MSS":       "한 TCP 세그먼트에 담을 수 있는 최대 데이터 크기(헤더 제외). 보통 1460바이트. 긴 데이터는 MSS 단위로 쪼개집니다.",
-  "MTU":       "한 번에 보낼 수 있는 프레임 최대 크기(헤더 포함). 이더넷은 보통 1500바이트.",
+  "MTU":       "한 링크가 한 번에 실어 나를 수 있는 IP 패킷(L3)의 최대 크기. 이더넷은 보통 1500바이트(이더넷 헤더·FCS는 여기에 포함되지 않음).",
   "시퀀스번호":  "TCP가 각 바이트에 매기는 일련번호. 받는 쪽은 이 번호로 순서를 맞추고 빠진 곳을 알아냅니다.",
   "핸드셰이크":  "TCP가 연결을 맺기 전에 SYN→SYN/ACK→ACK 세 번 인사를 주고받는 절차(3-way handshake).",
   "ACK":       "잘 받았다는 확인 응답(Acknowledgement). 받은 데이터의 다음 기대 번호를 알려줍니다.",
@@ -1542,7 +1543,7 @@ $$('#toc a').forEach(a => a.addEventListener('click', () => $('#sidebar').classL
     { t:'② 서버가 대기 (accept)', d:'<code>ss.accept()</code>에서 멈춰 손님이 노크하기를 기다립니다. 아직 연결은 없어요.', s:[3], c:[] },
     { t:'③ 클라이언트가 접속 (connect)', d:'클라이언트가 <code>new Socket("127.0.0.1", 18080)</code>로 접속합니다. 이때 OS가 클라이언트에게 <b>임시 포트</b>를 자동 배정해요. 서버의 <code>accept()</code>가 깨어나 <b>연결 소켓</b>을 반환합니다.', s:[3], c:[1] },
     { t:'④ 요청 전송/수신', d:'클라가 <code>out.write(...)</code>로 HTTP 요청을 보내고, 서버는 <code>in.read()</code>로 한 바이트씩 읽어 요청을 조립합니다.', s:[6], c:[6] },
-    { t:'⑤ 서버가 응답', d:'서버가 <code>out.write(response)</code>로 302 응답을 보냅니다.', s:[8], c:[] },
+    { t:'⑤ 서버가 응답', d:'서버가 <code>out.write(response)</code>로 응답(에코 서버라면 받은 내용 그대로)을 돌려보냅니다.', s:[8], c:[] },
     { t:'⑥ 클라가 응답 수신', d:'클라가 <code>while((b=in.read())!=-1)</code>로 응답을 끝까지 읽어 출력합니다.', s:[], c:[9] },
     { t:'⑦ 정리', d:'한 연결이 끝나면 연결 소켓은 닫히지만, 서버의 <b>listen 소켓(:18080)</b>은 그대로 살아 다음 손님을 계속 받습니다.', s:[1], c:[] },
   ];
@@ -1754,7 +1755,7 @@ $$('#toc a').forEach(a => a.addEventListener('click', () => $('#sidebar').classL
       setTimeout(()=>{
         dots.forEach(d=>d.style.opacity='0');
         const d = dots[i]; d.style.opacity='1';
-        if(i>0) ttl--;
+        if(i>0 && i<HOPS.length-1) ttl--; // 중간 라우터만 TTL 감소(목적지 호스트는 자신에게 전달 시 감소 안 함)
         hopCap.textContent = `홉 ${i} · TTL ${ttl}`;
         hopDesc.innerHTML = `<h4>🚦 ${HOPS[i].name} (${HOPS[i].ip})</h4><p>${HOP_DESCS[i](h)}</p>`;
         wireTerms(hopDesc);
@@ -1886,9 +1887,9 @@ $$('#toc a').forEach(a => a.addEventListener('click', () => $('#sidebar').classL
   const natView = $('#natView');
   const NAT = {
     snat: { title:'📤 SNAT / MASQUERADE — 나갈 때 (공유기)',
-      desc:'집 안 PC(사설 IP)가 인터넷에 나갈 때, 공유기가 <b>출발지 IP</b>를 자기 <b>공인 IP</b>로 바꿉니다. 응답이 돌아오면 다시 원래 PC로 되돌려 줘요.',
+      desc:'집 안 PC(사설 IP)가 인터넷에 나갈 때, 공유기가 <b>출발지 IP</b>를 자기 <b>공인 IP</b>로 바꿉니다. 여러 기기를 공인 IP 하나로 다중화(NAPT)하려고 <b>출발지 포트</b>도 함께 바꿀 수 있어요. 응답이 돌아오면 이 매핑을 보고 다시 원래 PC로 되돌려 줍니다.',
       rows:[
-        ['출발지', '192.168.0.10:51514', '203.0.113.7:51514', true],
+        ['출발지', '192.168.0.10:51514', '203.0.113.200:62000', true],
         ['목적지', '8.8.8.8:443', '8.8.8.8:443', false],
       ],
       cmd:'iptables -t nat -A POSTROUTING -o eth0 -j MASQUERADE' },
@@ -1896,7 +1897,7 @@ $$('#toc a').forEach(a => a.addEventListener('click', () => $('#sidebar').classL
       desc:'외부에서 공유기 공인 IP의 80포트로 들어온 요청을, 내부 서버(예: 192.168.0.10:8080)로 <b>목적지를 바꿔</b> 넘깁니다. 외부엔 내부 구조가 안 보이죠.',
       rows:[
         ['출발지', '198.51.100.5:40000', '198.51.100.5:40000', false],
-        ['목적지', '203.0.113.7:80', '192.168.0.10:8080', true],
+        ['목적지', '203.0.113.200:80', '192.168.0.10:8080', true],
       ],
       cmd:'iptables -t nat -A PREROUTING -p tcp --dport 80 -j DNAT --to 192.168.0.10:8080' },
   };
@@ -1991,13 +1992,13 @@ LISTEN   0        128              0.0.0.0:22             0.0.0.0:*       users:
       n:'현재 <b>LISTEN(듣고 있는)</b> 소켓 목록입니다. <b>0.0.0.0:18080</b>이 바로 당신의 EchoServer! 0.0.0.0은 "모든 인터페이스에서 받겠다"는 뜻이고, fd=4는 listen 소켓의 파일 디스크립터예요.' },
     'ping 8.8.8.8': { o:
 `PING 8.8.8.8 (8.8.8.8) 56(84) bytes of data.
-64 bytes from 8.8.8.8: icmp_seq=1 ttl=117 time=12.3 ms
-64 bytes from 8.8.8.8: icmp_seq=2 ttl=117 time=11.8 ms
-64 bytes from 8.8.8.8: icmp_seq=3 ttl=117 time=12.1 ms
+64 bytes from 8.8.8.8: icmp_seq=1 ttl=61 time=12.3 ms
+64 bytes from 8.8.8.8: icmp_seq=2 ttl=61 time=11.8 ms
+64 bytes from 8.8.8.8: icmp_seq=3 ttl=61 time=12.1 ms
 
 --- 8.8.8.8 ping statistics ---
 3 packets transmitted, 3 received, 0% packet loss, time 2003ms`,
-      n:'상대가 살아있는지 ICMP로 확인합니다. <b>time</b>=왕복 시간, <b>ttl=117</b>은 남은 수명(처음 128에서 라우터를 11번 거쳐 줄어든 값). 0% loss면 길이 깨끗하다는 뜻이에요.' },
+      n:'상대가 살아있는지 ICMP로 확인합니다. <b>time</b>=왕복 시간, <b>ttl=61</b>은 남은 수명(처음 64에서 라우터를 3번 거쳐 줄어든 값 — 아래 traceroute의 중간 라우터 3개와 일치). 0% loss면 길이 깨끗하다는 뜻이에요.' },
     'traceroute 8.8.8.8': { o:
 `traceroute to 8.8.8.8 (8.8.8.8), 30 hops max, 60 byte packets
  1  192.168.0.1 (192.168.0.1)   1.21 ms   1.05 ms   0.98 ms
