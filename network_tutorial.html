@@ -448,12 +448,14 @@ table.t tr.hit td{background:rgba(52,211,153,.12)}
 
       <h3>무엇을 배우나요?</h3>
       <div class="map-grid">
+        <a class="map-card" href="#essence"><div class="ic">🌱</div><div class="tt">통신의 근간</div><div class="dd">정보→신호→정보의 한 줄기</div></a>
         <a class="map-card" href="#layers"><div class="ic">🧅</div><div class="tt">계층 & 캡슐화</div><div class="dd">데이터가 전선까지 내려가는 길</div></a>
         <a class="map-card" href="#socket"><div class="ic">🔌</div><div class="tt">소켓 & 포트</div><div class="dd">왜 포트/소켓이 2개일까</div></a>
         <a class="map-card" href="#tcp"><div class="ic">🤝</div><div class="tt">TCP 연결</div><div class="dd">3-way handshake · 분할 전송</div></a>
         <a class="map-card" href="#routing"><div class="ic">🗺️</div><div class="tt">라우팅</div><div class="dd">패킷이 길을 찾는 법</div></a>
         <a class="map-card" href="#iptables"><div class="ic">🧱</div><div class="tt">iptables</div><div class="dd">방화벽과 NAT의 정체</div></a>
         <a class="map-card" href="#fullflow"><div class="ic">🌐</div><div class="tt">전체 여정</div><div class="dd">모든 조각을 하나로</div></a>
+        <a class="map-card" href="#appendix-encoding"><div class="ic">🔤</div><div class="tt">부록 · 인코딩/디코딩</div><div class="dd">코드화의 여러 층위</div></a>
       </div>
 
       <div class="callout why" style="margin-top:22px">
@@ -462,6 +464,51 @@ table.t tr.hit td{background:rgba(52,211,153,.12)}
         <strong>IP</strong>가 주소를 붙여 <strong>라우터</strong>들을 거쳐 목적지로 보냅니다.
         도착한 서버에서는 <strong>iptables</strong>가 통과/차단을 결정하고, 통과한 패킷은 다시 서버의 <strong>소켓</strong>으로 올라가 앱에 전달됩니다.
         지금은 이 한 문장이 외계어처럼 보여도 괜찮아요. 아래로 내려가며 단어 하나씩 정복해 봅시다.</p>
+      </div>
+    </section>
+
+
+    <!-- ===== 섹션 0: 통신의 근간 ===== -->
+    <section id="essence" data-title="통신의 근간">
+      <div class="sec-head">
+        <div class="kicker">00 · 모든 것의 뿌리</div>
+        <h2 class="sec-title">🌱 네트워크의 근간 — 정보가 신호가 되었다가 다시 정보로</h2>
+      </div>
+      <p class="lead">'네트워크'라고 하면 라우터·프로토콜·IP 같은 복잡한 단어부터 떠오르지만, 그 모든 것의 뿌리엔 놀랄 만큼 단순한 <b>한 줄기 흐름</b>이 있습니다. 본격적인 챕터에 들어가기 전에, 이 큰 그림을 먼저 손에 쥐고 갑시다.</p>
+
+      <pre class="mono" style="background:var(--panel-2); border:1px solid var(--border); border-radius:10px; padding:16px; font-size:13.5px; color:var(--text); text-align:center; line-height:2">정보 → <span style="color:var(--client)">코드화</span> → <span style="color:var(--router)">매체 전송</span> → <span style="color:var(--server)">수신</span> → <span style="color:var(--server)">해독</span> → 정보</pre>
+
+      <div class="callout why">
+        <h4>💡 사실 이건 "대화"와 똑같다</h4>
+        <p>두 사람이 말로 대화할 때를 떠올려 보세요. 머릿속 <b>생각(정보)</b>을 <b>말(언어로 코드화)</b>로 바꿔 <b>공기의 음파(매체)</b>로 내보내면, 상대의 <b>귀가 음파를 듣고(수신)</b> 그 말을 <b>해석해(해독)</b> 똑같은 <b>생각(정보)</b>에 도달합니다.
+        컴퓨터 네트워크도 <b>토씨 하나 안 다르고</b> 이 흐름이에요. 차이는 단 둘 — 코드가 <b>0과 1(비트)</b>이고, 매체가 <b>전선·전파·빛</b>이라는 것뿐입니다.</p>
+      </div>
+
+      <h3>6단계를 직접 눌러보기</h3>
+      <p>각 칸을 누르면 무슨 일이 일어나는지, 그리고 이 튜토리얼의 <b>어느 챕터에서 자세히 다루는지</b> 보여줍니다. 양쪽이 <b>같은 약속(프로토콜)</b>을 알아야 어긋나지 않는다는 점에 주목하세요.</p>
+      <div class="demo">
+        <span class="demo-tag">interactive · 통신의 6단계</span>
+        <div id="essPipe" style="display:flex; align-items:center; gap:3px; flex-wrap:wrap; justify-content:center; padding:4px 0"></div>
+        <div id="essDetail" class="callout why" style="margin:14px 0 0"><h4>🖱️ 위 6칸 중 하나를 눌러보세요</h4><p>왼쪽 절반(정보→코드화→매체)은 <b>보내는 쪽</b>, 오른쪽 절반(매체→수신→해독→정보)은 <b>받는 쪽</b>입니다. 가운데 <b>매체</b>를 기준으로 거울처럼 대칭이에요.</p></div>
+      </div>
+
+      <div class="callout key">
+        <h4>🔑 한 줄로 — 통신은 "정보 ↔ 신호" 변환의 왕복</h4>
+        <p>보내는 쪽은 <b>정보를 신호로</b>(코드화), 받는 쪽은 <b>신호를 정보로</b>(해독) 되돌립니다. 이 변환 규칙을 양쪽이 똑같이 알기로 한 약속이 바로 <b>프로토콜</b>이에요.
+        앞으로 볼 캡슐화·TCP·IP·이더넷·라우팅은 전부 이 6칸 중 한 곳을 <b>현미경으로 확대</b>한 것입니다. 그러니 길을 잃으면 언제든 이 그림으로 돌아오세요.</p>
+      </div>
+      <div class="callout tip">
+        <h4>📎 코드화·해독을 더 깊게</h4>
+        <p>"코드화"는 사실 글자→바이트(UTF-8), 바이트→안전한 문자(Base64), 비트→물리 신호(변조)처럼 <b>여러 층위</b>가 포개진 것입니다. 인코딩과 디코딩이 정확히 무엇인지, 그리고 <b>암호화·압축과 어떻게 다른지</b>는 <a class="link" href="#appendix-encoding">부록 · 인코딩/디코딩</a>에서 자세히 다룹니다.</p>
+      </div>
+
+      <div class="quiz" data-qid="q-essence" data-answer="b">
+        <div class="q-head">✅ 체크포인트</div>
+        <div class="q">사람의 대화에서 <b>'공기의 음파'</b>에 해당하는 것은, 컴퓨터 네트워크에서는 무엇일까요?</div>
+        <button class="opt" data-opt="a"><span class="mk">A</span> 0과 1로 바꾸는 코드화 규칙</button>
+        <button class="opt" data-opt="b"><span class="mk">B</span> 전선의 전기·와이파이 전파·광케이블의 빛 같은 <b>매체(물리 신호)</b></button>
+        <button class="opt" data-opt="c"><span class="mk">C</span> 받은 데이터를 의미로 되돌리는 해독</button>
+        <div class="explain"><b>정답 B.</b> 음파는 소리가 실제로 실려 가는 <b>매체</b>죠. 네트워크에서 그 역할은 전선의 전기 신호·와이파이 전파·광케이블의 빛입니다. 코드화(A)는 '말로 바꾸는 것', 해독(C)은 '말을 알아듣는 것'에 해당해요. 매체는 갈아끼울 수 있다는 점(전선이든 와이파이든)이 다음 챕터의 중요한 주제가 됩니다.</div>
       </div>
     </section>
 
@@ -1125,6 +1172,58 @@ while ((b = in.read()) != -1) {              // ⑥ 응답 수신
         <h4>🎓 끝까지 온 걸 축하해요!</h4>
         <p>이제 패킷이 어떻게 쪼개지고(<a class="link" href="#tcp">TCP</a>), 길을 찾고(<a class="link" href="#routing">라우팅</a>), 문지기를 통과하는지(<a class="link" href="#iptables">iptables</a>) 그림이 그려질 거예요.
         헷갈리면 언제든 <b>📖 용어 사전</b>을 열고, 섹션을 다시 눌러보며 복습하세요. 진행률은 저장돼 있습니다.</p>
+      </div>
+    </section>
+
+    <!-- ===== 부록: 인코딩과 디코딩 ===== -->
+    <section id="appendix-encoding" data-title="부록 · 인코딩/디코딩">
+      <div class="sec-head">
+        <div class="kicker">부록 · 코드화 더 파기</div>
+        <h2 class="sec-title">🔤 인코딩과 디코딩 — '코드화'의 여러 층위</h2>
+      </div>
+      <p class="lead"><a class="link" href="#essence">근간 파트</a>에서 '코드화'를 한 단어로 뭉뚱그렸지만, 사실 인코딩은 <b>여러 층위</b>에서 겹겹이 일어납니다. "글자를 바이트로"도 인코딩이고, "비트를 전기 신호로"도 인코딩이에요. 여기서 그 층위들을 한 번에 정리합니다.</p>
+
+      <h3>인코딩이 일어나는 네 층위</h3>
+      <table class="t">
+        <thead><tr><th>층위</th><th>무엇 → 무엇</th><th>예</th></tr></thead>
+        <tbody>
+          <tr><td><b>① 문자 인코딩</b></td><td style="font-family:var(--sans)">사람 글자 ↔ 바이트</td><td>ASCII·<b>UTF-8</b> (예: 'A'=0x41, '한'=3바이트)</td></tr>
+          <tr><td><b>② 직렬화</b></td><td style="font-family:var(--sans)">구조화 데이터 ↔ 바이트열</td><td>JSON·Protobuf (객체를 줄 세워 바이트로)</td></tr>
+          <tr><td><b>③ 응용 인코딩</b></td><td style="font-family:var(--sans)">바이트 ↔ '안전한 글자'</td><td>Base64·URL 인코딩 (예: 공백→<code>%20</code>)</td></tr>
+          <tr><td><b>④ 회선 부호화·변조</b></td><td style="font-family:var(--sans)">비트 ↔ 물리 신호</td><td>NRZ·Manchester·주파수/위상 변조</td></tr>
+        </tbody>
+      </table>
+      <p>위에서 아래로 갈수록 사람 → 기계 → 전선에 가까워집니다. 보낼 땐 ①→④ 순으로 입히고, 받을 땐 ④→① 순으로 벗기죠(<b>디코딩</b>). ①~③은 보통 소프트웨어가, ④는 <a class="link" href="#layers">랜카드·물리 계층</a>이 합니다.</p>
+
+      <h3>직접 보기 — 글자가 바이트가 되는 순간 (①)</h3>
+      <p>가장 친숙한 문자 인코딩만 눌러봅니다. 글자를 입력하면 UTF-8 바이트와 2진수로 어떻게 바뀌는지 보여줘요. <b>영문은 1바이트, 한글은 3바이트</b>인 게 보일 거예요.</p>
+      <div class="demo">
+        <span class="demo-tag">interactive · UTF-8 encoding</span>
+        <div class="flex" style="gap:8px; flex-wrap:wrap; margin-bottom:10px">
+          <input type="text" id="encInput" value="Hi한" maxlength="12" style="background:var(--panel-2); border:1px solid var(--border-2); border-radius:8px; color:var(--text); font-family:var(--sans); font-size:14px; padding:8px 12px; width:180px">
+          <span class="dim" style="font-size:12px">짧은 글자를 입력해 보세요</span>
+        </div>
+        <div id="encOut" style="overflow-x:auto"></div>
+        <div class="callout tip" style="margin-bottom:0"><h4>👀 관찰 포인트</h4><p>같은 '글자'라도 인코딩 규칙(UTF-8)을 모르면 이 바이트들을 원래 글자로 되돌릴 수 없습니다. 그래서 받는 쪽도 <b>같은 인코딩</b>을 알아야 해요 — 안 그러면 그 유명한 <b>글자 깨짐(����)</b>이 납니다.</p></div>
+      </div>
+
+      <div class="callout warn">
+        <h4>⚠️ 헷갈리지 말기 — 인코딩 ≠ 암호화 ≠ 압축</h4>
+        <p><b>인코딩</b>은 규칙만 알면 <b>누구나 되돌릴 수 있는</b> 표현 변환입니다(비밀이 아님). <b>암호화</b>는 <b>키가 있어야</b> 되돌릴 수 있고(보안 — HTTPS편에서), <b>압축</b>은 크기를 줄이는 것. Base64가 "암호화된 것처럼" 보여도 사실은 그냥 인코딩이라, 누구나 디코딩됩니다.</p>
+      </div>
+
+      <div class="callout key">
+        <h4>🔑 한 줄 정리</h4>
+        <p>근간의 <b>코드화/해독</b>은 사실 이 네 층위가 포개진 것입니다. 각 층위는 "<b>양쪽이 같은 규칙을 안다</b>"는 전제 위에서만 되돌려집니다 — 그 규칙들의 묶음이 곧 <span class="term" data-t="추상화">프로토콜·표준</span>이에요.</p>
+      </div>
+
+      <div class="quiz" data-qid="q-encoding" data-answer="c">
+        <div class="q-head">✅ 체크포인트</div>
+        <div class="q">웹에서 받은 데이터가 <code>SGVsbG8=</code> 처럼 보입니다. 이건 무엇일까요?</div>
+        <button class="opt" data-opt="a"><span class="mk">A</span> 암호화돼서 키 없이는 못 읽는다</button>
+        <button class="opt" data-opt="b"><span class="mk">B</span> 압축돼서 풀어야 한다</button>
+        <button class="opt" data-opt="c"><span class="mk">C</span> Base64 <b>인코딩</b>이라 규칙만 알면 누구나 디코딩된다("Hello")</button>
+        <div class="explain"><b>정답 C.</b> <code>SGVsbG8=</code>는 "Hello"의 Base64 인코딩입니다. 인코딩은 <b>비밀이 아니라 표현 변환</b>이라, 규칙(Base64)만 알면 누구나 원래 바이트로 되돌립니다. 보안이 필요하면 인코딩이 아니라 <b>암호화</b>(키 필요)를 써야 해요.</div>
       </div>
     </section>
 
@@ -2228,6 +2327,74 @@ tcp6       0      0 192.168.0.10:18080      198.51.100.5:51662      ESTABLISHED`
     $$('.sn-dst').forEach(x=>x.classList.remove('primary'));
     b.classList.add('primary'); dst=b.dataset.ip; render();
   }));
+  render();
+})();
+
+/* ============================================================
+   섹션 0: 통신의 근간 (6단계 파이프라인)
+   ============================================================ */
+(function essencePipe(){
+  const pipe = $('#essPipe'), detail = $('#essDetail');
+  if(!pipe) return;
+  const STAGES = [
+    {ic:'📃', t:'정보', sub:'보내려는 의미', col:'var(--accent)', cls:'why',
+      d:'사람이 전하고 싶은 뜻 — "안녕", 사진, 웹페이지 요청. 그 자체로는 전선을 못 탑니다. 약속된 형식으로 바꿔야(코드화) 비로소 떠날 수 있어요.'},
+    {ic:'🔢', t:'코드화', sub:'의미 → 형식', col:'var(--client)', cls:'why',
+      d:'의미를 양쪽이 합의한 규칙으로 변환합니다. 글자·이미지를 <b>0과 1(비트)</b>로 바꾸고, 거기에 주소·순서번호 같은 꼬리표를 붙이는 <span class="term" data-t="캡슐화">캡슐화</span>도 넓게 보면 코드화예요. → 꼬리표 붙이기는 <b>섹션 1(계층·캡슐화)</b>, 글자↔바이트↔신호 같은 <b>인코딩의 여러 층위</b>는 <a class="link" href="#appendix-encoding">부록(인코딩/디코딩)</a>에서 자세히.'},
+    {ic:'📡', t:'매체 전송', sub:'비트 → 신호', col:'var(--router)', cls:'tip',
+      d:'비트를 실제 <b>물리 신호</b>로 바꿔 내보냅니다 — 전선의 <b>전기</b>, 와이파이의 <b>전파</b>, 광케이블의 <b>빛</b>. 0과 1이 전압·주파수·빛의 변화로 흐르죠. 이 매체는 구간마다 갈아끼울 수 있습니다. → <b>섹션 1(이더넷·와이파이·LTE)</b>.'},
+    {ic:'📥', t:'수신', sub:'신호 → 비트', col:'var(--server)', cls:'tip',
+      d:'반대편 장비가 도착한 물리 신호를 다시 <b>0/1 비트</b>로 복원합니다. 잡음·왜곡이 있어도 원래 비트를 알아낼 수 있게 설계돼 있어요.'},
+    {ic:'🔡', t:'해독', sub:'비트 → 의미', col:'var(--server)', cls:'why',
+      d:'비트에서 꼬리표(헤더)를 떼어내고 순서대로 다시 맞춰 원래 의미로 되돌립니다 — <b>역캡슐화</b>. 보낼 때의 코드화를 정확히 거꾸로 밟는 셈이에요.'},
+    {ic:'📃', t:'정보', sub:'같은 의미 복원', col:'var(--accent)', cls:'tip',
+      d:'받는 쪽이 보낸 쪽과 <b>똑같은 의미</b>를 얻습니다. 통신 성공! 이 6칸이 한 군데도 어긋나지 않게 맞춰주는 약속의 묶음이 곧 <b>프로토콜</b>입니다.'},
+  ];
+  let sel = -1;
+  function render(){
+    pipe.innerHTML = STAGES.map((s,i)=>{
+      const arrow = i<STAGES.length-1 ? '<span style="color:var(--text-mut); font-size:15px; padding:0 1px">→</span>' : '';
+      const hl = i===sel;
+      return `<button class="essStage" data-i="${i}" style="min-width:80px; flex:0 0 auto; text-align:center; padding:9px 6px; border-radius:10px; background:var(--panel); border:1px solid ${hl?s.col:'var(--border-2)'}; ${hl?'box-shadow:0 0 0 1px '+s.col+' inset;':''} border-top:3px solid ${s.col}; cursor:pointer; color:var(--text)"><div style="font-size:19px">${s.ic}</div><div style="font-weight:700; font-size:12.5px; margin-top:2px">${s.t}</div><div class="dim" style="font-size:9.5px; margin-top:1px">${s.sub}</div></button>${arrow}`;
+    }).join('');
+    $$('.essStage', pipe).forEach(b=> b.addEventListener('click', ()=>{ sel=+b.dataset.i; render(); }) );
+    if(sel>=0){ const s=STAGES[sel]; detail.className='callout '+s.cls; detail.innerHTML=`<h4>${s.ic} ${s.t} <span class="dim" style="font-weight:400">— ${s.sub}</span></h4><p>${s.d}</p>`; wireTerms(detail); }
+  }
+  render();
+})();
+
+/* ============================================================
+   부록: 인코딩/디코딩 — 글자 → UTF-8 바이트
+   ============================================================ */
+(function encodingDemo(){
+  const input = $('#encInput'), out = $('#encOut');
+  if(!input) return;
+  const enc = new TextEncoder();
+  function hex(n){ return n.toString(16).toUpperCase().padStart(2,'0'); }
+  function bin(n){ return n.toString(2).padStart(8,'0'); }
+  function render(){
+    const text = [...(input.value || '')].slice(0, 12);
+    if(!text.length){ out.innerHTML = '<span class="dim" style="font-size:12px">글자를 입력하세요</span>'; return; }
+    const rows = text.map(ch=>{
+      const bytes = Array.from(enc.encode(ch));
+      const cp = ch.codePointAt(0).toString(16).toUpperCase().padStart(4,'0');
+      const hexStr = bytes.map(hex).join(' ');
+      const binStr = bytes.map(bin).join(' ');
+      const nb = bytes.length;
+      const color = nb===1 ? 'var(--client)' : (nb===2 ? 'var(--router)' : 'var(--server)');
+      return `<tr>
+        <td style="font-family:var(--sans); font-size:16px; font-weight:700; color:${color}">${ch===' '?'␣':ch}</td>
+        <td>U+${cp}</td>
+        <td style="color:${color}">${hexStr}</td>
+        <td style="color:var(--text-dim)">${binStr}</td>
+        <td style="font-family:var(--sans)">${nb}바이트</td>
+      </tr>`;
+    }).join('');
+    const total = enc.encode(text.join('')).length;
+    out.innerHTML = `<table class="t" style="margin:0; min-width:520px"><thead><tr><th>글자</th><th>유니코드</th><th>UTF-8 (hex)</th><th>2진수</th><th>크기</th></tr></thead><tbody>${rows}</tbody></table>
+      <p class="dim" style="font-size:12px; margin:8px 0 0">총 <b style="color:var(--accent)">${total}바이트</b> · <span style="color:var(--client)">파랑=1바이트(ASCII)</span> · <span style="color:var(--router)">노랑=2바이트</span> · <span style="color:var(--server)">초록=3바이트(한글 등)</span></p>`;
+  }
+  input.addEventListener('input', render);
   render();
 })();
 
