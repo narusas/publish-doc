@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>인터랙티브 개발 튜토리얼 모음 — 네트워크 · 인증 · 권한 · HTTPS</title>
+<meta name="description" content="주니어 개발자를 위한 인터랙티브 HTML 튜토리얼 모음. 네트워크, OAuth2/OIDC, 권한 관리, HTTPS·TLS.">
+<style>
+:root{
+  --bg:#070b12; --bg-soft:#0c1320; --panel:#111a28; --panel-2:#172133;
+  --border:#233046; --border-2:#32425e;
+  --text:#e8eef7; --text-dim:#9fb0c6; --text-mut:#8698b3;
+  --accent:#2dd4bf; --accent-2:#a78bfa;
+  --net:#38bdf8; --auth:#fbbf24; --authz:#c084fc; --https:#2dd4bf; --iam:#ff9f43;
+  --radius:16px;
+  --mono:"JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  --sans:"Pretendard Variable","Pretendard",-apple-system,BlinkMacSystemFont,system-ui,"Apple SD Gothic Neo","Malgun Gothic","Noto Sans KR",sans-serif;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{
+  margin:0; background:var(--bg); color:var(--text); font-family:var(--sans);
+  line-height:1.75; -webkit-font-smoothing:antialiased; font-size:16px; min-height:100vh;
+}
+body::before{
+  content:""; position:fixed; inset:0; z-index:-2; pointer-events:none;
+  background:
+    radial-gradient(900px 520px at 8% -8%, rgba(45,212,191,.13), transparent 60%),
+    radial-gradient(820px 520px at 100% 0%, rgba(167,139,250,.13), transparent 55%),
+    radial-gradient(700px 700px at 50% 115%, rgba(56,189,248,.07), transparent 60%);
+}
+body::after{
+  content:""; position:fixed; inset:0; z-index:-1; pointer-events:none; opacity:.35;
+  background:repeating-linear-gradient(0deg, rgba(255,255,255,.014) 0 1px, transparent 1px 3px);
+}
+
+.wrap{max-width:960px; margin:0 auto; padding:72px 28px 96px}
+@media(max-width:640px){.wrap{padding:48px 18px 72px}}
+
+.logo{
+  display:inline-flex; align-items:center; gap:8px; font-family:var(--mono); font-weight:800;
+  font-size:12.5px; letter-spacing:1px; color:var(--accent); text-transform:uppercase;
+  border:1px solid var(--border-2); background:var(--panel); border-radius:99px; padding:5px 13px;
+}
+.logo .dot{width:8px; height:8px; border-radius:50%; background:var(--accent); box-shadow:0 0 12px var(--accent)}
+
+h1{
+  font-size:clamp(30px, 5.2vw, 46px); line-height:1.25; letter-spacing:-1px;
+  margin:22px 0 14px; font-weight:800;
+}
+h1 .g{background:linear-gradient(90deg,var(--accent),var(--accent-2)); -webkit-background-clip:text; background-clip:text; color:transparent}
+.lead{font-size:17px; color:var(--text-dim); max-width:660px; margin:0 0 8px; line-height:1.85}
+.lead b{color:var(--text)}
+
+.meta{display:flex; gap:9px; flex-wrap:wrap; margin:22px 0 46px}
+.meta span{
+  font-size:12.5px; color:var(--text-mut); border:1px solid var(--border);
+  background:var(--panel); border-radius:99px; padding:5px 12px;
+}
+.meta b{color:var(--text-dim); font-weight:600}
+
+.grid{display:grid; gap:16px}
+
+.card{
+  display:block; text-decoration:none; color:inherit; position:relative; overflow:hidden;
+  background:linear-gradient(180deg,var(--panel),var(--bg-soft));
+  border:1px solid var(--border); border-radius:var(--radius);
+  padding:24px 26px; transition:transform .18s cubic-bezier(.2,.8,.2,1), border-color .18s, background .18s;
+}
+.card::before{
+  content:""; position:absolute; left:0; top:0; bottom:0; width:3px;
+  background:var(--c, var(--accent)); opacity:.75; transition:opacity .18s, width .18s;
+}
+.card:hover{transform:translateY(-3px); border-color:var(--c, var(--accent)); background:linear-gradient(180deg,var(--panel-2),var(--panel))}
+.card:hover::before{opacity:1; width:5px}
+.card:focus-visible{outline:2px solid var(--accent); outline-offset:3px}
+
+.card .top{display:flex; align-items:baseline; gap:12px; flex-wrap:wrap; margin-bottom:8px}
+.card .ic{font-size:22px; line-height:1}
+.card .no{
+  font-family:var(--mono); font-size:11px; letter-spacing:1.2px; text-transform:uppercase;
+  color:var(--c, var(--accent)); border:1px solid var(--border-2); border-radius:99px; padding:3px 9px;
+}
+.card h2{font-size:20px; margin:0; letter-spacing:-.3px; line-height:1.4; font-weight:700}
+.card p{color:var(--text-dim); margin:8px 0 0; font-size:15px; line-height:1.75}
+.card p code{font-family:var(--mono); font-size:.85em; color:var(--c, var(--accent));
+  background:var(--bg); border:1px solid var(--border); border-radius:5px; padding:1px 5px}
+.card .tags{display:flex; gap:7px; flex-wrap:wrap; margin-top:14px}
+.card .tags i{
+  font-style:normal; font-family:var(--mono); font-size:11.5px; color:var(--text-mut);
+  border:1px solid var(--border); background:var(--bg); border-radius:7px; padding:3px 9px;
+}
+.card .go{
+  display:inline-flex; align-items:center; gap:6px; margin-top:16px;
+  font-size:13.5px; font-weight:700; color:var(--c, var(--accent));
+}
+.card .go .ar{transition:transform .18s}
+.card:hover .go .ar{transform:translateX(4px)}
+
+.new{
+  font-size:10.5px; font-family:var(--mono); font-weight:700; letter-spacing:.8px;
+  color:#04140f; background:linear-gradient(90deg,var(--accent),var(--accent-2));
+  border-radius:99px; padding:3px 9px; text-transform:uppercase;
+}
+
+footer{
+  margin-top:56px; padding-top:26px; border-top:1px solid var(--border);
+  font-size:13.5px; color:var(--text-mut); line-height:1.9;
+}
+footer a{color:var(--accent); text-decoration:none; border-bottom:1px dashed var(--border-2)}
+footer a:hover{color:#fff}
+footer .mono{font-family:var(--mono); font-size:12.5px}
+
+@media (prefers-reduced-motion: reduce){
+  *{transition-duration:.01ms !important}
+  html{scroll-behavior:auto}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="logo"><span class="dot"></span> interactive · deep dive</div>
+
+  <h1>읽고 끝나지 않는<br><span class="g">인터랙티브 튜토리얼</span> 모음</h1>
+
+  <p class="lead">
+    개념을 글로만 설명하지 않고 <b>직접 눌러 보고, 값을 바꿔 보고, 깨뜨려 보면서</b> 익히도록 만든 문서들입니다.
+    주니어 개발자를 기준으로 썼지만, 어렴풋이 알고 있던 것을 정확히 말할 수 있게 만드는 데 초점을 맞췄습니다.
+  </p>
+
+  <div class="meta">
+    <span>🗂️ <b>5개 문서</b></span>
+    <span>🖱️ <b>클릭·슬라이더</b>로 확인하는 데모</span>
+    <span>📦 <b>단일 HTML</b> · 외부 의존성 0</span>
+    <span>💾 진행률 <b>자동 저장</b></span>
+  </div>
+
+  <div class="grid">
+
+    <a class="card" href="https_tutorial.html" style="--c:var(--https)">
+      <div class="top">
+        <span class="ic">🔒</span>
+        <span class="no">HTTPS · TLS</span>
+        <span class="new">NEW</span>
+      </div>
+      <h2>HTTPS의 S를 끝까지 파보기</h2>
+      <p>주소창의 자물쇠 하나가 무엇을 보증하는지에서 출발해, 카이사르 암호부터 TLS 1.3 핸드셰이크까지를 한 흐름으로 잇습니다.
+      대칭키·키 교환·해시·서명·인증서 체인을 부품처럼 쌓아 올린 다음, 그 부품이 실제 프로토콜로 조립되는 순서를 한 프레임씩 재생해 봅니다.</p>
+      <div class="tags"><i>암호의 역사</i><i>대칭키·AEAD</i><i>디피–헬먼</i><i>RSA·서명</i><i>인증서 체인</i><i>TLS 1.2/1.3</i><i>HTTP/1·2·3</i></div>
+      <span class="go">열어 보기 <span class="ar">→</span></span>
+    </a>
+
+    <a class="card" href="rbac_tutorial.html" style="--c:var(--authz)">
+      <div class="top">
+        <span class="ic">🛂</span>
+        <span class="no">Authorization</span>
+      </div>
+      <h2>사용자 권한 관리 튜토리얼</h2>
+      <p>"이 사람, 이거 눌러도 되나?"라는 한 질문에 답하는 여러 방식을 비교합니다.
+      가상의 사내 포털 하나로 DAC·MAC·RBAC·ABAC·ReBAC를 관통하고, 검문소와 판단기를 어디에 둘지, 데이터와 RAG 검색까지 어떻게 지킬지 다룹니다.</p>
+      <div class="tags"><i>RBAC</i><i>ABAC</i><i>ReBAC</i><i>PEP/PDP</i><i>행 수준 보안</i><i>RAG 권한</i><i>Linux · AWS IAM</i></div>
+      <span class="go">열어 보기 <span class="ar">→</span></span>
+    </a>
+
+    <a class="card" href="iam_tutorial.html" style="--c:var(--iam)">
+      <div class="top">
+        <span class="ic">☁️</span>
+        <span class="no">Cloud IAM</span>
+        <span class="new">NEW</span>
+      </div>
+      <h2>AWS IAM 튜토리얼 — 권한 관리체계로 이해하기</h2>
+      <p>"<code>Action: *</code>인데 왜 거부되나"에서 출발합니다. IAM을 정책 문법이 아니라 <b>권한이 붙는 일곱 자리와 그 평가 순서</b>로 다시 세우고,
+      ARN·정책 JSON·평가 엔진·조직 SCP·권한 상승 경로를 직접 눌러 가며 확인합니다. 앞의 권한 관리 튜토리얼의 클라우드 후속편입니다.</p>
+      <div class="tags"><i>Principal · ARN</i><i>STS · AssumeRole</i><i>정책 7종</i><i>평가 로직</i><i>Organizations · SCP</i><i>최소권한 프로세스</i><i>PassRole 상승</i></div>
+      <span class="go">열어 보기 <span class="ar">→</span></span>
+    </a>
+
+    <a class="card" href="oauth2_tutorial.html" style="--c:var(--auth)">
+      <div class="top">
+        <span class="ic">🔑</span>
+        <span class="no">Authentication</span>
+      </div>
+      <h2>OAuth2 / OIDC 인터랙티브 튜토리얼</h2>
+      <p>"구글로 로그인" 버튼 한 번에 무슨 일이 벌어지는지를 패킷 단위로 따라갑니다.
+      인가 코드 흐름과 PKCE, 토큰의 정체, CLI와 기기 로그인 같은 변종까지 단계별로 짚습니다.</p>
+      <div class="tags"><i>Authorization Code</i><i>PKCE</i><i>Access/ID Token</i><i>Device Flow</i><i>OIDC</i></div>
+      <span class="go">열어 보기 <span class="ar">→</span></span>
+    </a>
+
+    <a class="card" href="network_basics.html" style="--c:var(--net)">
+      <div class="top">
+        <span class="ic">🌐</span>
+        <span class="no">Network</span>
+        <span class="new">NEW</span>
+      </div>
+      <h2>네트워크 기초 — 두 기계가 대화하려면 무엇이 필요할까</h2>
+      <p>계층 순서로도, 요청의 시간 순서로도 가지 않습니다. <b>풀어야 할 문제의 순서</b>로 갑니다.
+      "전선에는 뜻이 흐르지 않는다"에서 출발해, 답 하나가 다음 문제를 만들어 내는 사슬을 열세 번 따라가면
+      소켓·TCP·커널·라우팅·방화벽·DNS·HTTP·TLS·로드밸런싱·CDN이 차례로 필요해진 이유가 드러납니다.</p>
+      <div class="tags"><i>신호·인코딩</i><i>계층·캡슐화</i><i>소켓·포트</i><i>TCP</i><i>커널·시스템콜</i><i>라우팅</i><i>방화벽·NAT</i><i>DNS</i><i>HTTP/0.9→3</i><i>TLS</i><i>프락시·LB</i><i>CDN</i></div>
+      <span class="go">열어 보기 <span class="ar">→</span></span>
+    </a>
+
+  </div>
+
+  <footer>
+    문서마다 진행률과 퀴즈 결과는 브라우저에 저장되므로, 중간에 닫았다가 다시 열어도 이어서 볼 수 있습니다.<br>
+    각 파일은 외부 CDN이나 스크립트를 전혀 불러오지 않는 <span class="mono">단일 HTML</span>이라, 내려받아 오프라인에서 열어도 그대로 동작합니다.<br>
+    <a href="https://github.com/narusas/publish-doc">github.com/narusas/publish-doc</a>
+  </footer>
+
+</div>
+</body>
+</html>
