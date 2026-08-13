@@ -1291,6 +1291,62 @@ button:focus-visible, .pick:focus-visible, .term:focus-visible, a:focus-visible,
       </div>
     </section>
 
+    <section id="nfw" data-title="Network Firewall">
+      <div class="sec-head">
+        <div class="kicker">09 · 인라인</div>
+        <h2 class="sec-title">🚧 붙이는 게 아니라 <span style="color:var(--accent)">경유시키는</span> 통제 <span class="lvl adv">🔵 심화</span></h2>
+      </div>
+      <p class="lead">SG와 NACL은 리소스에 <b>붙습니다</b>. Network Firewall은 다릅니다 — 트래픽이 <b>지나가게 만들어야</b> 해요. 그래서 이 장은 방화벽 규칙 이야기가 아니라 <a class="link" href="#route">3장 라우팅</a> 이야기로 시작합니다.</p>
+
+      <h3>🔀 규칙을 아무리 써도 트래픽이 안 옵니다</h3>
+      <p>Network Firewall을 만들고, 도메인 필터링 규칙까지 정성껏 채워 넣었다고 해보죠. 콘솔은 <span class="mono">Ready</span>를 표시하고 요금도 시간당 꼬박꼬박 나갑니다. 그런데 로그를 열어 보면 텅 비어 있어요. 규칙이 틀린 걸까요.</p>
+      <p>아닙니다. 방화벽을 만들 때 실제로 생기는 건 규칙이 아니라 <b>자기 서브넷 안의 <span class="term" data-t="ENI">ENI</span> 하나</b>입니다. 그 ENI는 트래픽이 알아서 찾아와 주는 자리가 아니에요 — <a class="link" href="#route">3장</a>에서 본 <span class="term" data-t="라우팅 테이블">라우팅 테이블</span>이 그 ENI를 next hop으로 가리켜야, 비로소 패킷이 옆길로 새서 방화벽을 거쳐 갑니다. 가리키지 않으면 방화벽은 서브넷 한구석에 얌전히 앉아 자기 몫의 트래픽을 하나도 못 보고 있는 셈이에요. 리소스에 <b>붙어서</b> 지나가는 걸 자동으로 검사하는 SG·NACL과는 근본부터 다른 그림입니다.</p>
+      <p>그 next hop을 정확히 어디에 심어야 하는지, 라우팅 테이블 두 장을 붙잡고 직접 확인해보죠.</p>
+
+      <div class="demo" id="nfwRoute">
+        <span class="demo-tag">삽입 라우팅</span>
+        <p style="margin:0 0 4px">방화벽은 이미 만들었고 규칙도 넣었습니다. 라우팅을 어떻게 바꾸느냐에 따라 결과가 완전히 달라져요.</p>
+        <div class="picker" id="nfwPicker">
+          <button class="pick on" data-k="none">1️⃣ 방화벽만 만듦 (라우팅 그대로)</button>
+          <button class="pick" data-k="out">2️⃣ 나가는 길만 방화벽으로</button>
+          <button class="pick" data-k="both">3️⃣ 양방향 모두 방화벽으로</button>
+        </div>
+        <div id="nfwOut"></div>
+      </div>
+
+      <p>지금 본 세 가지는 전부 인터넷과 워크로드 사이, 그러니까 남북(north-south) 트래픽 얘기였습니다. <a class="link" href="#route">3장</a>에서 라우팅 테이블을 처음 소개할 때 이미 한 가지를 심어 뒀어요 — <code>local</code> 경로는 지울 수 없지만 <b>타깃은 바꿀 수 있다</b>고요. 그 타깃을 방화벽 엔드포인트로 바꿔 끼우면, 인터넷을 거치지 않고 같은 VPC 안에서 서버끼리 주고받는 트래픽, 즉 동서(east-west) 트래픽까지 방화벽을 지나가게 만들 수 있습니다. <a class="link" href="#ref">8장</a>에서 이름 붙인 <span class="term" data-t="횡이동">횡이동</span> — 침해당한 서버 한 대가 옆의 다른 시스템으로 건너뛰는 일 — 을 막는 통제가 바로 이 자리에서 만들어져요.</p>
+
+      <h3>🔍 SG가 못 보는 것을 본다</h3>
+      <p>라우팅으로 경로를 만들고 나면, 그제야 규칙 얘기를 할 수 있습니다. 그런데 이 규칙은 <a class="link" href="#sg">4장</a>의 SG나 <a class="link" href="#nacl">5장</a>의 NACL이 쓰던 것과 종류가 다릅니다. 그 둘은 IP·포트·프로토콜, 이른바 5-tuple까지만 보고 판정을 내렸어요. 패킷 안에 뭐가 들었는지는 애초에 볼 수 있는 자리가 아니었죠. Network Firewall은 그 안쪽, <b>패킷 내용</b>을 봅니다.</p>
+      <p>가장 흔히 쓰는 게 <span class="term" data-t="SNI">TLS SNI</span> 기반 도메인 필터링이에요. <code>*.github.com</code>만 허용하고 나머지는 막는 식의 규칙을 쓸 수 있습니다. SG로는 애초에 흉내조차 못 낼 규칙이에요 — 깃허브가 쓰는 IP를 전부 알 도리도 없고, 안다 한들 그 IP는 계속 바뀌니까요. IP가 아니라 <b>목적지의 정체</b>로 규칙을 쓴다는 뜻입니다.</p>
+      <p>여기에 <span class="term" data-t="Suricata">Suricata</span> 규칙과 세션 단위 상태 추적이 더해집니다. 알려진 악성 패턴이나 프로토콜 이상을 잡아내는 탐지 규칙 문법인데, Network Firewall은 이걸 그대로 받아들여요.</p>
+      <p>그런데 실무에서 이 장비를 꺼내는 이유는 인바운드 차단보다 <b>아웃바운드 통제</b> 쪽에 가깝습니다. 나가는 트래픽을 도메인 단위로 막는다 — 침해당한 서버가 공격자의 서버로 데이터를 실어 나르는 걸 막는, 현실적인 수단이에요. 이 얘기는 <a class="link" href="#pitfall">14장</a>에서 다시 붙잡습니다.</p>
+
+      <h3>🏢 중앙 인스펙션 VPC</h3>
+      <p>VPC가 열 개면 방화벽도 열 개 놓을 건가요. 이론적으로는 되지만, VPC가 늘어날수록 그 비용과 관리 부담은 고스란히 곱절로 불어납니다.</p>
+      <p>실무에서 자리 잡은 답은 방향을 바꾸는 쪽입니다. 방화벽을 VPC마다 두는 대신 <b>인스펙션 전용 VPC</b> 하나를 따로 두고, Transit Gateway 같은 허브 구조로 다른 VPC들을 거기에 모아 그 트래픽을 전부 이 VPC 하나가 검사하게 하는 구성이 표준으로 알려져 있어요. 그 트래픽이 실제로 어떤 경로를 타고 모이는지는 <a class="link" href="#peering">12장</a>에서 다룰 몫이고, 지금은 "방화벽은 지나가는 자리에 하나만 두고 나머지 VPC는 거기로 트래픽을 보낸다"는 그림만 챙겨 두면 됩니다.</p>
+
+      <div class="callout warn">
+        <h4>🚧 비대칭 라우팅 주의</h4>
+        <p>가는 길만 방화벽을 지나고 오는 길은 그냥 통과하면, 방화벽의 상태 추적이 깨집니다. 응답을 못 본 채로는 세션을 완성할 수 없으니, 규칙에는 아무 문제가 없는데도 정상 트래픽이 끊겨요. <b>양방향 모두 같은 방화벽 엔드포인트를 지나게 해야</b> 합니다 — 방금 데모의 2번이 정확히 이 상태였고요.</p>
+      </div>
+
+      <div class="oneline">
+        <div class="ol-ic">🚧</div>
+        <div><div class="ol-t">9장 한 줄 요약</div><div class="ol-b">Network Firewall의 절반은 <b>라우팅 설계</b>다. 규칙은 그다음 문제고, 라우팅이 틀리면 규칙은 실행조차 되지 않는다.</div></div>
+      </div>
+
+      <div class="quiz" data-qid="q-nfw" data-answer="b">
+        <div class="q-head">✅ 체크포인트</div>
+        <div class="q">Network Firewall을 만들고 도메인 필터링 규칙까지 넣었는데, 아무 트래픽도 검사되지 않는다(로그가 비어 있다). 방화벽 상태는 <code>Ready</code>다. 가장 유력한 원인은?</div>
+        <button class="opt" data-opt="a"><span class="mk">A</span> 규칙 문법이 틀렸다</button>
+        <button class="opt" data-opt="b"><span class="mk">B</span> 라우팅 테이블이 방화벽 엔드포인트를 가리키지 않는다</button>
+        <button class="opt" data-opt="c"><span class="mk">C</span> SG가 방화벽 엔드포인트를 차단하고 있다</button>
+        <button class="opt" data-opt="d"><span class="mk">D</span> NACL이 방화벽 서브넷을 막고 있다</button>
+        <div class="explain"><b>정답 B.</b> Network Firewall은 SG·NACL처럼 리소스에 <b>붙는</b> 통제가 아니라, 라우팅으로 <b>경로에 끼워 넣는</b> 장비입니다. 라우팅을 바꾸지 않으면 트래픽이 근처에도 가지 않아요. 방화벽이 <code>Ready</code>이고 요금이 나가는데 검사량이 0이라면 거의 확실히 이겁니다.</div>
+      </div>
+    </section>
+
   </main>
 </div>
 
@@ -1335,6 +1391,8 @@ const GLOSSARY = {
   "Hyperplane ENI": "Lambda가 VPC에 연결될 때 쓰는 공유형 ENI입니다. 동시 실행 수가 아니라 서브넷과 SG의 조합마다 하나가 만들어지고, 같은 조합을 쓰는 계정 안의 다른 함수와 공유됩니다.",
   "Reachability Analyzer": "출발지와 목적지를 지정하면 실제 패킷을 보내지 않고 라우팅·SG·NACL을 정적으로 분석해 도달 가능 여부를 알려주는 VPC 기능. OS 방화벽이나 앱 바인딩 문제는 볼 수 없습니다.",
   "횡이동": "lateral movement. 공격자가 침해한 한 대를 발판 삼아 내부의 다른 시스템으로 옮겨 다니는 것. 계층 간 통신을 좁게 제한하면 이 이동이 어려워집니다.",
+  "Suricata": "오픈소스 침입 탐지 규칙 문법. AWS Network Firewall이 이 문법을 그대로 받아들여, 패킷 내용에 기반한 탐지·차단 규칙을 쓸 수 있습니다.",
+  "SNI": "Server Name Indication. TLS 핸드셰이크 초반에 평문으로 오가는 접속 대상 도메인 이름. 암호화 전이라 중간 장비가 읽을 수 있어서 도메인 단위 필터링의 근거가 됩니다.",
   // @GLOSSARY_END
 };
 
@@ -2181,6 +2239,51 @@ if(location.hash){
   }
   wirePicker('#sgRefPicker', render);
   render('cidr');
+})();
+
+/* ============================================================
+   데모 13 — Network Firewall 삽입 라우팅 (9장)
+   ============================================================ */
+(function(){
+  const out = $('#nfwOut'); if(!out) return;
+  const D = {
+    none: {
+      rt:[["워크로드 서브넷 RT","0.0.0.0/0 → <b>igw-abc</b>",false],
+          ["IGW 엣지 연결 RT","(설정 없음)",false]],
+      path:"인터넷 ↔ IGW ↔ 워크로드",
+      ok:false,
+      v:"방화벽을 <b>한 번도 지나지 않습니다.</b>",
+      n:"규칙을 아무리 정교하게 써도 실행되지 않아요. 콘솔에는 방화벽이 <b>정상(Ready)</b>으로 보이고 요금도 나가는데, 검사한 트래픽은 0바이트입니다. \"방화벽을 켰는데 아무것도 안 잡힌다\"의 정체가 대개 이겁니다." },
+    out: {
+      rt:[["워크로드 서브넷 RT","0.0.0.0/0 → <b>vpce-fw</b> (방화벽 엔드포인트)",true],
+          ["IGW 엣지 연결 RT","(설정 없음)",false]],
+      path:"워크로드 → 방화벽 → IGW → 인터넷 &nbsp;/&nbsp; 인터넷 → IGW → <b>워크로드(방화벽 우회)</b>",
+      ok:false,
+      v:"<b style='color:var(--warn)'>비대칭 라우팅.</b> 나갈 때만 검사하고 들어올 때는 그냥 통과합니다.",
+      n:"더 나쁜 건 <b>연결이 아예 깨질 수 있다</b>는 점이에요. 방화벽은 상태를 추적하는데 응답 패킷을 못 보니 세션이 성립하지 않습니다. 정상 트래픽이 끊기는데 규칙에는 아무 문제가 없어서 원인을 찾기 어려워요. <b>양방향을 반드시 같이 걸어야 합니다.</b>" },
+    both: {
+      rt:[["워크로드 서브넷 RT","0.0.0.0/0 → <b>vpce-fw</b>",true],
+          ["IGW 엣지 연결 RT","10.0.1.0/24 → <b>vpce-fw</b>",true]],
+      path:"인터넷 ↔ IGW ↔ <b>방화벽</b> ↔ 워크로드",
+      ok:true,
+      v:"<b style='color:var(--ok)'>양방향 모두 검사됩니다.</b>",
+      n:"핵심은 <b>IGW에 라우팅 테이블을 연결(edge association)</b>한다는 발상입니다. \"게이트웨이도 라우팅 테이블을 가질 수 있다\"는 걸 모르면 떠올리기 어려운 구성이에요. 이제 도메인 필터링·Suricata 규칙이 실제로 동작합니다." }
+  };
+  function render(k){
+    const d = D[k];
+    const rows = d.rt.map(([n,v,on]) =>
+      `<div class="flow-step" style="border-left:3px solid ${on?'var(--g-fw)':'var(--border)'}; padding-left:12px; margin:6px 0">
+         <div><b style="color:${on?'var(--g-fw)':'var(--text-mut)'}">${esc(n)}</b></div>
+         <div class="mono" style="font-size:13px">${v}</div>
+       </div>`).join('');
+    out.innerHTML =
+      `<div style="margin-top:12px">${rows}</div>
+       <div class="dim" style="font-size:13px; margin:10px 0 6px">실제 경로 — ${d.path}</div>
+       <div class="verdict"><span class="vres ${d.ok?'allow':'deny'}">${d.v}</span></div>
+       <div class="callout ${d.ok?'why':'warn'}" style="margin-bottom:0"><p style="margin:0">${d.n}</p></div>`;
+  }
+  wirePicker('#nfwPicker', render);
+  render('none');
 })();
 </script>
 </body>
