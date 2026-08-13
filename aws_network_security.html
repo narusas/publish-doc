@@ -1097,7 +1097,7 @@ button:focus-visible, .pick:focus-visible, .term:focus-visible, a:focus-visible,
 
       <div class="callout key">
         <h4>🔑 증상은 관문마다 다르게 남는다</h4>
-        <p>관문마다 <b>막았을 때의 증상이 다릅니다.</b> 경로가 없으면 조용히 사라지고, SG가 막으면 <span class="term" data-t="Flow Logs">Flow Log</span>에 <code>REJECT</code>가 남고, OS가 REJECT하면 즉시 <b>connection refused</b>가 돌아옵니다. <b>증상 → 관문을 역으로 읽을 수 있게 되는 것</b>이 이 장의 목표예요.</p>
+        <p>관문마다 <b>막았을 때의 증상이 다릅니다.</b> 경로가 없으면 조용히 사라지고, SG가 막으면 <span class="term" data-t="Flow Logs">Flow Log</span>에 <code>REJECT</code>가 남고 — <b>NACL이 막아도 똑같은 REJECT 한 줄이 남아 이 둘은 가려지지 않습니다</b> — OS가 REJECT하면 즉시 <b>connection refused</b>가 돌아옵니다. <b>증상 → 관문을 역으로 읽을 수 있게 되는 것</b>이 이 장의 목표예요.</p>
       </div>
 
       <p>말로는 그럴듯한데, 실제로 손에 잡히려면 직접 눌러 봐야 합니다.</p>
@@ -1773,7 +1773,7 @@ if(location.hash){
 })();
 
 /* ============================================================
-   데모 8 — 관문 체인 시뮬레이터 (6장) · 이 문서의 핵심
+   데모 9 — 관문 체인 시뮬레이터 (6장) · 이 문서의 핵심
    ============================================================ */
 (function(){
   const stage = $('#chainStage'), out = $('#chainOut'); if(!stage || !out) return;
@@ -1821,7 +1821,7 @@ if(location.hash){
     naclInResp:{ t:"응답 — NACL 인바운드 (목적지 = ephemeral)", c:"var(--g-nacl)", kill:{
       naclout:{ why:"나가는 건 됐는데 <b>돌아오는 응답</b>이 NACL 인바운드에 막혔습니다. 응답의 목적지 포트는 앱의 ephemeral 포트예요.",
         client:"<b>timeout</b>",
-        log:"나가는 방향만 Flow Log에 남아 <b>편도만 성공한 것처럼</b> 보인다",
+        log:"<b>Flow Log에는 나가는 요청의 <code>ACCEPT</code> 뒤에 돌아오는 응답의 <code>REJECT</code>가 짝으로 남는다</b> — SG는 이 조합을 만들 수 없으므로 <b>NACL 확정 신호</b>다. 체감상으로는 <b>편도만 성공한 것처럼</b> 보이지만, 로그에는 막힌 흔적이 그대로 남아 있다",
         fix:"NACL 인바운드에 ephemeral 범위를 연다 (<a class='link' href='#nacl'>5장</a>)" } } },
     rtVpce: { t:"라우팅 테이블 (S3 prefix list → Gateway Endpoint)", c:"var(--g-route)", kill:{
       nonat:{ why:"Gateway Endpoint도 없고 NAT 경로도 없습니다. S3로 갈 길이 아예 없어요.",
