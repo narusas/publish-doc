@@ -625,9 +625,83 @@ button:focus-visible, .pick:focus-visible, .term:focus-visible, a:focus-visible,
   <!-- ============ 본문 ============ -->
   <main id="content">
 
-    <section id="intro" data-title="개요" class="hero" style="min-height:70vh">
-      <h2 class="sec-title">뼈대 확인용 자리표시자</h2>
-      <p class="dim">Task 4에서 실제 개요 콘텐츠로 전면 교체될 임시 섹션입니다. 스크롤스파이가 화면 중앙의 관찰 밴드에 걸릴 수 있도록 높이만 임시로 확보해 두었습니다.</p>
+    <section id="intro" data-title="개요" class="hero">
+      <div class="kicker">네트워크를 아는 개발자 → 클라우드 경계 설계자</div>
+      <h2 class="sec-title">다 열었는데<br>왜 timeout인가</h2>
+      <p class="lead">
+        EC2에 웹서버를 하나 올렸습니다. 보안 그룹 인바운드에 <code>0.0.0.0/0</code>의 80번을 열어 뒀어요.
+        <code>curl</code>을 날리면 60초를 꼬박 채우고서야 죽습니다. connection refused가 아니라 그냥 무응답이에요.
+        SG 규칙을 다시 열어 확인해도 80번은 분명히 거기 있습니다.
+      </p>
+      <p class="lead">버그가 아닙니다. <strong>패킷이 SG 앞에 도착조차 못 한 것</strong>일 수 있어요.</p>
+      <p>
+        SG 규칙 하나만 들여다보는 습관이 여기서 무너집니다. 요청 하나가 서버에 닿으려면 SG 말고도 통과해야 하는 관문이 몇 개 더 있고,
+        그 순서를 모르면 어디서 막혔는지 짐작조차 할 수 없어요. IAM 튜토리얼이 API 호출 하나가 통과해야 하는 관문의 목록과 순서를 그렸다면,
+        이 문서는 같은 그림을 패킷 하나에 대해 그립니다.
+      </p>
+
+      <div class="chips">
+        <span class="chip">🧱 <b>관문의 순서</b> — 1부 7장</span>
+        <span class="chip">🔗 신원과 네트워크가 <b>만나는 지점</b> — 2부 8장</span>
+        <span class="chip">🖱️ 관문 체인을 <b>눌러가며</b> 추적</span>
+        <span class="chip">⚖️ 6장 — <b>시나리오별</b> 관문 체인 클라이맥스</span>
+        <span class="chip">🟢 <b>필수</b> / 🔵 <b>심화</b> 경로 표시</span>
+      </div>
+
+      <div class="callout why">
+        <h4>🧭 이 튜토리얼의 한 문장</h4>
+        <p>네트워크 보안을 안다는 것은 SG 규칙을 쓸 줄 안다는 뜻이 아닙니다.
+        <strong>패킷 하나가 통과해야 하는 관문의 목록과 그 순서</strong>, 그리고
+        <strong>각 관문이 막았을 때 내가 보게 되는 증상</strong>을 짝지을 수 있다는 뜻이에요.</p>
+      </div>
+
+      <h3>🩺 시작 전 30초 자가진단</h3>
+      <p>지금 운영 중인 VPC를 떠올리며 눌러보세요. 해당되면 클릭.</p>
+      <div class="diag" id="diag">
+        <div class="d-item"><div class="d-txt">접속이 안 될 때 일단 <b>SG를 <code>0.0.0.0/0</code>으로 넓혀</b> 본 적이 있다</div><button class="pick d-yes" data-w="3">그렇다</button></div>
+        <div class="d-item"><div class="d-txt"><b>timeout과 connection refused</b>가 각각 무엇을 뜻하는지 구분해 말하기 어렵다</div><button class="pick d-yes" data-w="3">그렇다</button></div>
+        <div class="d-item"><div class="d-txt">NACL을 <b>직접 만들어 본 적이 없다</b> (기본값 그대로 쓴다)</div><button class="pick d-yes" data-w="2">그렇다</button></div>
+        <div class="d-item"><div class="d-txt">SG 규칙의 source에 <b>다른 SG를 넣을 수 있다</b>는 걸 몰랐다</div><button class="pick d-yes" data-w="2">그렇다</button></div>
+        <div class="d-item"><div class="d-txt">"<b>퍼블릭 서브넷</b>"이 무엇으로 결정되는지 한 문장으로 답하기 어렵다</div><button class="pick d-yes" data-w="2">그렇다</button></div>
+        <div class="d-item"><div class="d-txt">운영 중인 VPC의 <b>아웃바운드를 제한해 본 적이 없다</b></div><button class="pick d-yes" data-w="1">그렇다</button></div>
+        <div class="diag-result" id="diagResult"></div>
+      </div>
+
+      <h3>☁️ 우리의 무대 — 나루 클라우드 주문 서비스</h3>
+      <p><a class="link" href="iam_tutorial.html">IAM 튜토리얼</a>의 나루 클라우드, 그 prod 계정 3-tier 주문 서비스를 그대로 씁니다. 이번엔 API 호출이 아니라 패킷이 주인공이에요.</p>
+      <div class="kv">
+        <dt>ALB</dt><dd>퍼블릭 서브넷 2개(AZ-a·AZ-c)에 걸쳐 있고, 인터넷에서 443을 받습니다.</dd>
+        <dt>앱 EC2</dt><dd>프라이빗 서브넷에 있고, 8080은 ALB에서만 열려 있어요.</dd>
+        <dt>RDS</dt><dd>격리 서브넷에 있고, 5432는 앱에서만 받습니다.</dd>
+        <dt>NAT GW</dt><dd>앱이 외부 API를 부를 때만 쓰는, 나가는 문입니다.</dd>
+      </div>
+
+      <h3>무엇을 다루나</h3>
+      <div class="map-grid">
+        <a class="map-card" href="#outside"><div class="ic">🧱</div><div class="tt">1 · 서버 밖의 방화벽</div><div class="dd">tcpdump에 안 잡힌다</div></a>
+        <a class="map-card" href="#vpc"><div class="ic">🗺️</div><div class="tt">2 · VPC 기초</div><div class="dd">발판 · 건너뛰기 가능</div></a>
+        <a class="map-card" href="#route"><div class="ic">🧭</div><div class="tt">3 · 경로가 곧 통제</div><div class="dd">라우팅·IGW·NAT</div></a>
+        <a class="map-card" href="#sg"><div class="ic">🛡️</div><div class="tt">4 · Security Group</div><div class="dd">상태 유지 검문소</div></a>
+        <a class="map-card" href="#nacl"><div class="ic">🧊</div><div class="tt">5 · NACL</div><div class="dd">무상태 검문소</div></a>
+        <a class="map-card" href="#order"><div class="ic">⚖️</div><div class="tt">6 · 관문의 순서</div><div class="dd">전체 체인</div></a>
+        <a class="map-card" href="#trace"><div class="ic">🔍</div><div class="tt">7 · 어디서 막혔나</div><div class="dd">Flow Logs·증상</div></a>
+        <a class="map-card" href="#ref"><div class="ic">🔗</div><div class="tt">8 · SG 참조</div><div class="dd">IP가 아니라 신원으로</div></a>
+        <a class="map-card" href="#nfw"><div class="ic">🚧</div><div class="tt">9 · Network Firewall</div><div class="dd">경유시키는 통제</div></a>
+        <a class="map-card" href="#waf"><div class="ic">🌊</div><div class="tt">10 · WAF</div><div class="dd">연결된 뒤에 보는 관문</div></a>
+        <a class="map-card" href="#endpoint"><div class="ic">🔒</div><div class="tt">11 · VPC Endpoint</div><div class="dd">IAM과 만나는 지점</div></a>
+        <a class="map-card" href="#peering"><div class="ic">🕸️</div><div class="tt">12 · VPC 잇기</div><div class="dd">Peering·TGW</div></a>
+        <a class="map-card" href="#blueprint"><div class="ic">🏗️</div><div class="tt">13 · 3-tier 레퍼런스</div><div class="dd">전부 합치기</div></a>
+        <a class="map-card" href="#pitfall"><div class="ic">🧨</div><div class="tt">14 · 함정과 원칙</div><div class="dd">아웃바운드·SSH</div></a>
+        <a class="map-card" href="#wrap"><div class="ic">🏁</div><div class="tt">15 · 마무리</div><div class="dd">체크리스트</div></a>
+        <a class="map-card" href="#appendix-cli"><div class="ic">⌨️</div><div class="tt">부록 A</div><div class="dd">진짜 명령어</div></a>
+        <a class="map-card" href="#appendix-map"><div class="ic">🗺️</div><div class="tt">부록 B</div><div class="dd">GCP·Azure·온프렘</div></a>
+      </div>
+
+      <div class="callout tip">
+        <h4>👋 읽는 법</h4>
+        <p>제목 옆 <span class="lvl must">🟢 필수</span>는 실무에 바로 쓰는 부분, <span class="lvl adv">🔵 심화</span>는 규모가 커지면 필요해지는 부분입니다.
+        <a class="link" href="#vpc">2장(VPC 기초)</a>은 발판일 뿐이라 VPC를 이미 다뤄봤다면 건너뛰어도 좋아요. 진행률과 퀴즈 결과는 브라우저에 자동 저장됩니다.</p>
+      </div>
     </section>
 
   </main>
@@ -834,6 +908,26 @@ if(location.hash){
   const el = document.querySelector(location.hash);
   if(el) setTimeout(()=>el.scrollIntoView(), 60);
 }
+
+/* ============================================================
+   데모 1 — 히어로 자가진단
+   ============================================================ */
+(function(){
+  const diag = $('#diag'); if(!diag) return;
+  const res = $('#diagResult');
+  function update(){
+    const on = $$('.d-yes.on', diag);
+    const score = on.reduce((s,x)=>s+(+x.dataset.w), 0);
+    let msg;
+    if(score===0) msg = "해당하는 항목을 눌러보세요. 하나도 없다면 이미 감각이 잡혀 있는 겁니다 — <b>6장(관문의 순서)</b>과 <b>11장(Endpoint)</b>부터 골라 읽어도 좋아요.";
+    else if(score>=9) msg = "<b>🟢 처음부터 순서대로 가는 게 빠릅니다.</b> 지금은 '되게 만드는 법'만 있고 '왜 안 되는지 아는 법'이 없는 상태예요. <b>3장(경로) → 4·5장(SG·NACL) → 6장(순서)</b>이 이 문서의 심장입니다.";
+    else if(score>=5) msg = "<b>🟢 구조를 잡을 때입니다.</b> 개별 규칙은 쓰지만 순서가 안 잡힌 단계예요. <b>5장(NACL의 함정)·6장(관문의 순서)·7장(진단)</b>이 특히 도움이 됩니다.";
+    else msg = "<b>🔵 기초는 갖춰져 있네요.</b> <b>8장(SG 참조)·9장(Network Firewall)·11장(Endpoint)</b> 같은 연동 쪽부터 보셔도 좋습니다.";
+    res.innerHTML = msg + ` <span class="dim">(체크 ${on.length}개 · 가중치 ${score})</span>`;
+    res.classList.add('show');
+  }
+  $$('.d-yes', diag).forEach(b => b.addEventListener('click', () => { b.classList.toggle('on'); update(); }));
+})();
 </script>
 </body>
 </html>
