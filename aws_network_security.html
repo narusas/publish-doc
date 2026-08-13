@@ -1067,6 +1067,76 @@ button:focus-visible, .pick:focus-visible, .term:focus-visible, a:focus-visible,
       </div>
     </section>
 
+    <section id="order" data-title="관문의 순서">
+      <div class="sec-head">
+        <div class="kicker">06 · 순서</div>
+        <h2 class="sec-title">⚖️ 하나의 패킷이 통과하는 <span style="color:var(--accent)">관문의 순서</span> <span class="lvl must">🟢 핵심</span></h2>
+      </div>
+      <p class="lead">여기까지 관문을 하나씩 봤습니다. 이제 순서를 세울 차례예요. <strong>순서를 모르면 증상을 못 읽습니다.</strong></p>
+
+      <h3>➡️ 들어올 때</h3>
+      <p>따로따로 뜯어봤던 관문들을 이제 한 줄에 세워 보죠. 인터넷에서 앱까지, 패킷 하나가 실제로 밟는 순서는 이렇습니다.</p>
+      <p><span class="mono">인터넷 → IGW → 라우팅 테이블 → NACL 인바운드 → SG 인바운드 → ENI → OS(iptables) → 앱의 바인딩 주소</span></p>
+      <p>여덟 단계입니다. 앞 네 단계는 <a class="link" href="#route">3장</a>에서, 뒤 네 단계는 <a class="link" href="#attach">1장</a>과 <a class="link" href="#sg">4장</a>에서 이미 지나왔어요. 새로 배울 개념은 없습니다 — 다만 한 줄에 세워 놓고 보니 순서 자체가 뭔가를 말합니다. <b>경로가 통제보다 먼저</b>이고, <b>서브넷 경계(NACL)가 ENI 경계(SG)보다 먼저</b>예요. 둘 다 우연이 아닙니다. 바깥 담이 뚫려야 안쪽 담을 따질 자격이 생기는 순서인 거죠.</p>
+
+      <h3>⬅️ 나갈 때 (응답)</h3>
+      <p>그럼 응답은 이 여덟 단계를 거꾸로 되짚어 갈까요. 되짚긴 하는데, 한 칸이 비어 있습니다.</p>
+      <p><span class="mono">앱 → SG(상태로 자동 통과) → NACL 아웃바운드 → 라우팅 테이블 → IGW/NAT → 인터넷</span></p>
+      <p>SG 옆에 붙은 괄호를 보세요. <a class="link" href="#sg">4장</a>에서 본 <span class="term" data-t="상태 유지">상태 유지</span>가 여기서 결과로 드러납니다 — 들어올 때 SG 인바운드를 통과한 연결이면, 나갈 때는 SG가 규칙을 다시 안 봐요. 반면 NACL은 아웃바운드에서도 똑같이 규칙을 봅니다. <a class="link" href="#nacl">5장</a>의 <span class="term" data-t="무상태">무상태</span>가 이 자리에서 다시 나타나는 거예요.</p>
+
+      <div class="kv">
+        <dt>SG · 가는 길(요청)</dt><dd><span class="badge ok">검사한다</span></dd>
+        <dt>SG · 오는 길(응답)</dt><dd><span class="badge bad">검사하지 않는다</span> — 상태로 그냥 통과시킨다</dd>
+        <dt>NACL · 가는 길(요청)</dt><dd><span class="badge ok">검사한다</span></dd>
+        <dt>NACL · 오는 길(응답)</dt><dd><span class="badge ok">검사한다</span></dd>
+      </div>
+
+      <p>표 하나로 정리되는 비대칭이지만, 함정 하나가 통째로 여기서 태어납니다. NACL 아웃바운드가 ephemeral 범위를 막아도 SG는 알 도리가 없어요. <b>자기 몫은 이미 끝났다고 여기고 있으니까요.</b> <a class="link" href="#nacl">5장</a>에서 본 "서버 로그엔 200 OK인데 클라이언트는 timeout"이라는 조합은, 사실 이 비대칭 하나로 전부 설명됩니다.</p>
+
+      <div class="callout key">
+        <h4>🔑 증상은 관문마다 다르게 남는다</h4>
+        <p>관문마다 <b>막았을 때의 증상이 다릅니다.</b> 경로가 없으면 조용히 사라지고, SG가 막으면 <span class="term" data-t="Flow Logs">Flow Log</span>에 <code>REJECT</code>가 남고, OS가 REJECT하면 즉시 <b>connection refused</b>가 돌아옵니다. <b>증상 → 관문을 역으로 읽을 수 있게 되는 것</b>이 이 장의 목표예요.</p>
+      </div>
+
+      <p>말로는 그럴듯한데, 실제로 손에 잡히려면 직접 눌러 봐야 합니다.</p>
+
+      <div class="demo" id="chain">
+        <span class="demo-tag">관문 체인 시뮬레이터</span>
+        <p style="margin:0 0 4px">시나리오를 고르고, 고장을 하나 주입해 보세요. 어느 관문에서 죽는지와 그때 <b>내가 실제로 보게 되는 것</b>이 함께 나옵니다.</p>
+        <div class="picker" id="chainScenario">
+          <button class="pick on" data-k="in">🌐 인터넷 → 웹서버:443</button>
+          <button class="pick" data-k="db">🗄️ 앱 → RDS:5432</button>
+          <button class="pick" data-k="out">📤 앱 → 외부 API:443</button>
+          <button class="pick" data-k="s3">🪣 앱 → S3</button>
+        </div>
+        <div class="picker" id="chainFault" style="margin-top:10px">
+          <button class="pick on" data-k="none">✅ 고장 없음</button>
+          <button class="pick" data-k="nortigw">🧭 라우팅에 IGW 없음</button>
+          <button class="pick" data-k="nopubip">🏷️ 퍼블릭 IP 없음</button>
+          <button class="pick" data-k="sgdir">🛡️ SG 방향 착각</button>
+          <button class="pick" data-k="naclout">🧊 NACL이 ephemeral 차단</button>
+          <button class="pick" data-k="nonat">🚧 NAT 경로 없음</button>
+        </div>
+        <div id="chainStage"></div>
+        <div id="chainOut"></div>
+      </div>
+
+      <div class="oneline">
+        <div class="ol-ic">⚖️</div>
+        <div><div class="ol-t">6장 한 줄 요약</div><div class="ol-b">관문은 여덟 개고 순서가 있다. 그리고 <b>증상은 관문마다 다르다</b> — 이 둘을 짝지으면 진단이 검색이 아니라 추론이 된다.</div></div>
+      </div>
+
+      <div class="quiz" data-qid="q-order" data-answer="c">
+        <div class="q-head">✅ 체크포인트</div>
+        <div class="q">서버의 애플리케이션 로그에는 <code>200 OK</code>가 정상적으로 찍히는데, 클라이언트는 계속 timeout된다. 가장 유력한 원인은?</div>
+        <button class="opt" data-opt="a"><span class="mk">A</span> SG 인바운드에 해당 포트가 없다</button>
+        <button class="opt" data-opt="b"><span class="mk">B</span> 라우팅 테이블에 IGW가 없다</button>
+        <button class="opt" data-opt="c"><span class="mk">C</span> NACL 아웃바운드가 ephemeral 포트 범위를 열지 않았다</button>
+        <button class="opt" data-opt="d"><span class="mk">D</span> 인스턴스에 퍼블릭 IP가 없다</button>
+        <div class="explain"><b>정답 C.</b> 서버가 <code>200 OK</code>를 만들었다는 건 <b>요청이 앱까지 도달했다</b>는 뜻입니다. 그러면 들어오는 길의 관문(A·B·D)은 전부 통과한 거예요. 남은 건 <b>나가는 길</b>이고, 거기서 SG는 상태 유지라 통과시키므로 유일하게 남는 용의자가 NACL 아웃바운드입니다. <b>"어디까지 갔는지"를 먼저 확정하면 용의자가 절반으로 줄어듭니다</b> — 이게 관문의 순서를 아는 이유예요.</div>
+      </div>
+    </section>
+
   </main>
 </div>
 
@@ -1698,6 +1768,142 @@ if(location.hash){
   }
   wirePicker('#naclPicker', render);
   render('default');
+})();
+
+/* ============================================================
+   데모 8 — 관문 체인 시뮬레이터 (6장) · 이 문서의 핵심
+   ============================================================ */
+(function(){
+  const stage = $('#chainStage'), out = $('#chainOut'); if(!stage || !out) return;
+
+  // kill 값: { why, client, log, fix }
+  const G = {
+    rtIgw:  { t:"라우팅 테이블 (0.0.0.0/0 → IGW)", c:"var(--g-route)", kill:{
+      nortigw:{ why:"이 서브넷의 라우팅 테이블에 IGW로 가는 줄이 없습니다.",
+        client:"<b>timeout</b> — 60초쯤 기다리다 죽는다",
+        log:"<b>아무 데도 남지 않는다.</b> 패킷이 ENI에 닿지도 못했다",
+        fix:"라우팅 테이블에 <code>0.0.0.0/0 → igw-xxx</code> 추가. 이게 '퍼블릭 서브넷'의 실체다 (<a class='link' href='#vpc'>2장</a>)" } } },
+    igw:    { t:"IGW (퍼블릭 IP 변환)", c:"var(--g-route)", kill:{
+      nopubip:{ why:"인스턴스에 퍼블릭 IP가 없어 IGW가 변환해 줄 대상이 없습니다.",
+        client:"<b>timeout</b>",
+        log:"남지 않는다",
+        fix:"퍼블릭 IP를 할당하거나 Elastic IP를 붙인다. 경로가 있어도 <b>주소가 없으면 소용없다</b> (<a class='link' href='#route'>3장</a>)" } } },
+    naclIn: { t:"NACL 인바운드", c:"var(--g-nacl)", kill:{} },
+    sgIn:   { t:"SG 인바운드", c:"var(--g-sg)", kill:{
+      sgdir:{ why:"열어야 할 방향을 반대로 걸었습니다. 아웃바운드에 443을 넣고 인바운드는 비어 있어요.",
+        client:"<b>timeout</b>",
+        log:"<b>Flow Log에 단독 <code>REJECT</code> 한 줄.</b> ENI까지는 왔다는 뜻이라 라우팅 문제와는 갈리지만, <b>NACL이 막았을 때와는 구별되지 않는다</b>",
+        fix:"인바운드 규칙을 추가한다. SG는 <b>방향별로 완전히 별개</b>다 (<a class='link' href='#sg'>4장</a>)" } } },
+    os:     { t:"OS · 앱 바인딩", c:"var(--g-os)", kill:{} },
+    sgResp: { t:"응답 — SG (상태로 자동 통과)", c:"var(--g-sg)", kill:{} },
+    naclOut:{ t:"응답 — NACL 아웃바운드 (목적지 = ephemeral)", c:"var(--g-nacl)", kill:{
+      naclout:{ why:"NACL 아웃바운드가 <code>1024-65535</code>를 열지 않았습니다. 응답의 목적지 포트가 거기입니다.",
+        client:"<b>timeout</b>",
+        log:"<b>서버 로그에는 200 OK.</b> Flow Log에는 <code>ACCEPT</code> 뒤에 <code>REJECT</code>가 <b>짝으로</b> 남는다 — SG는 상태 저장이라 이 조합을 만들 수 없으므로 <b>NACL 확정 신호</b>다",
+        fix:"NACL 아웃바운드에 ephemeral 범위를 연다. 또는 커스텀 NACL을 걷어낸다 (<a class='link' href='#nacl'>5장</a>)" } } },
+    rtLocal:{ t:"라우팅 테이블 (local — 지울 수 없음)", c:"var(--g-route)", kill:{} },
+    naclOutReq:{ t:"NACL 아웃바운드 (요청)", c:"var(--g-nacl)", kill:{} },
+    sgOut:  { t:"SG 아웃바운드", c:"var(--g-sg)", kill:{
+      sgdir:{ why:"아웃바운드 규칙을 지워 둔 상태에서 <b>앱이 먼저 거는 연결</b>을 시도했습니다.",
+        client:"<b>timeout</b> (또는 SDK의 연결 오류)",
+        log:"Flow Log에 <code>REJECT</code>",
+        fix:"아웃바운드 규칙을 추가한다. 응답 트래픽과 <b>새 연결</b>은 다르다 (<a class='link' href='#sg'>4장</a>)" } } },
+    naclInPeer:{ t:"상대 서브넷 NACL 인바운드", c:"var(--g-nacl)", kill:{} },
+    sgInPeer:{ t:"상대 SG 인바운드 (source = app-sg)", c:"var(--g-sg)", kill:{} },
+    rtNat:  { t:"라우팅 테이블 (0.0.0.0/0 → NAT GW)", c:"var(--g-route)", kill:{
+      nonat:{ why:"프라이빗 서브넷에 NAT로 가는 경로가 없습니다.",
+        client:"<b>timeout</b>",
+        log:"남지 않는다",
+        fix:"NAT GW를 만들고 <code>0.0.0.0/0 → nat-xxx</code>를 넣는다. 또는 나갈 필요가 없는 트래픽이라면 <b>VPC Endpoint</b>를 쓴다 (<a class='link' href='#endpoint'>11장</a>)" } } },
+    nat:    { t:"NAT GW (매핑 기록)", c:"var(--g-route)", kill:{} },
+    naclInResp:{ t:"응답 — NACL 인바운드 (목적지 = ephemeral)", c:"var(--g-nacl)", kill:{
+      naclout:{ why:"나가는 건 됐는데 <b>돌아오는 응답</b>이 NACL 인바운드에 막혔습니다. 응답의 목적지 포트는 앱의 ephemeral 포트예요.",
+        client:"<b>timeout</b>",
+        log:"나가는 방향만 Flow Log에 남아 <b>편도만 성공한 것처럼</b> 보인다",
+        fix:"NACL 인바운드에 ephemeral 범위를 연다 (<a class='link' href='#nacl'>5장</a>)" } } },
+    rtVpce: { t:"라우팅 테이블 (S3 prefix list → Gateway Endpoint)", c:"var(--g-route)", kill:{
+      nonat:{ why:"Gateway Endpoint도 없고 NAT 경로도 없습니다. S3로 갈 길이 아예 없어요.",
+        client:"<b>timeout</b> 또는 SDK의 연결 오류",
+        log:"남지 않는다",
+        fix:"Gateway Endpoint를 만들어 라우팅 테이블에 연결한다. 인터넷을 거치지 않고 <b>요금도 들지 않는다</b> (<a class='link' href='#endpoint'>11장</a>)" } } },
+    vpcePol:{ t:"Endpoint 정책", c:"var(--accent-2)", kill:{} },
+    iam:    { t:"IAM 판정 (s3:GetObject)", c:"var(--accent-2)", kill:{} }
+  };
+
+  const SCEN = {
+    in:  { title:"인터넷 → 퍼블릭 서브넷의 웹서버:443",
+           gates:["rtIgw","igw","naclIn","sgIn","os","sgResp","naclOut"],
+           okMsg:"화면이 뜹니다. 여덟 관문을 왕복으로 다 통과했어요." },
+    db:  { title:"앱(프라이빗) → RDS(격리 서브넷):5432",
+           gates:["rtLocal","naclOutReq","sgOut","naclInPeer","sgInPeer"],
+           okMsg:"쿼리가 나갑니다. <b>인터넷 게이트웨이도 NAT도 등장하지 않았다</b>는 점을 보세요 — VPC 안 통신은 local 경로로 끝납니다." },
+    out: { title:"앱(프라이빗) → 외부 API:443",
+           gates:["rtNat","naclOutReq","sgOut","nat","naclInResp"],
+           okMsg:"외부 호출이 성공합니다. NAT GW가 매핑을 기억해 뒀다가 응답을 되돌려 줬어요." },
+    s3:  { title:"앱(프라이빗) → S3 (Gateway Endpoint 경유)",
+           gates:["rtVpce","sgOut","vpcePol","iam"],
+           okMsg:"객체를 읽습니다. <b>관문이 둘 더 있다는 데 주목하세요</b> — 네트워크를 다 통과해도 Endpoint 정책과 IAM이 남아 있습니다 (<a class='link' href='#endpoint'>11장</a>)." }
+  };
+
+  const FAULT_LABEL = {
+    none:"고장 없음", nortigw:"라우팅에 IGW 없음", nopubip:"퍼블릭 IP 없음",
+    sgdir:"SG 방향 착각", naclout:"NACL이 ephemeral 차단", nonat:"NAT 경로 없음"
+  };
+
+  let scen = 'in', fault = 'none';
+  const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  function render(){
+    const s = SCEN[scen];
+    const ids = s.gates;
+    let deadAt = -1, killInfo = null;
+    for(let i = 0; i < ids.length; i++){
+      const k = G[ids[i]].kill[fault];
+      if(k){ deadAt = i; killInfo = k; break; }
+    }
+
+    stage.innerHTML =
+      `<div class="dim" style="font-size:13px; margin-top:12px">${s.title} &nbsp;·&nbsp; 고장: <b>${esc(FAULT_LABEL[fault])}</b></div>` +
+      `<div id="chainRows" style="margin:8px 0"></div>`;
+    const rows = $('#chainRows');
+
+    ids.forEach((id, i) => {
+      const g = G[id];
+      const state = deadAt < 0 ? 'ok' : (i < deadAt ? 'ok' : i === deadAt ? 'dead' : 'skip');
+      const mark = state === 'ok' ? '<b style="color:var(--ok)">통과</b>'
+                 : state === 'dead' ? '<b style="color:var(--bad)">여기서 죽는다</b>'
+                 : '<span class="dim">평가되지 않음</span>';
+      const el = document.createElement('div');
+      el.className = 'flow-step';
+      el.style.cssText = `border-left:3px solid ${state==='skip'?'var(--border)':g.c}; padding-left:12px; margin:6px 0; opacity:0; transition:opacity .18s`;
+      el.innerHTML = `<div><span style="color:${state==='skip'?'var(--text-mut)':g.c}">${esc(g.t)}</span> &nbsp; ${mark}</div>`;
+      rows.appendChild(el);
+      if(reduce) el.style.opacity = state === 'skip' ? '.35' : '1';
+      else setTimeout(() => { el.style.opacity = state === 'skip' ? '.35' : '1'; }, i * 130);
+    });
+
+    if(killInfo){
+      out.innerHTML =
+        `<div class="verdict"><span class="vres deny">⛔ ${killInfo.why}</span></div>
+         <div class="kv" style="margin-top:10px">
+           <dt>내가 보는 것</dt><dd>${killInfo.client}</dd>
+           <dt>로그에는</dt><dd>${killInfo.log}</dd>
+           <dt>고칠 곳</dt><dd>${killInfo.fix}</dd>
+         </div>`;
+    } else {
+      const na = fault !== 'none';
+      out.innerHTML =
+        `<div class="verdict"><span class="vres allow">✅ ${s.okMsg}</span></div>` +
+        (na ? `<div class="callout why" style="margin-bottom:0"><p style="margin:0">
+                 <b>이 고장은 이 경로에 해당하지 않습니다.</b> “${esc(FAULT_LABEL[fault])}”는 다른 시나리오에서만 문제가 돼요.
+                 같은 고장이 경로에 따라 <b>치명적이거나 무해하다</b>는 게 이 데모의 두 번째 교훈입니다.
+               </p></div>` : '');
+    }
+  }
+
+  wirePicker('#chainScenario', k => { scen = k; render(); });
+  wirePicker('#chainFault',    k => { fault = k; render(); });
+  render();
 })();
 </script>
 </body>
