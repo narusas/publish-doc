@@ -1350,6 +1350,84 @@ button:focus-visible, .pick:focus-visible, .term:focus-visible, a:focus-visible,
       </div>
     </section>
 
+    <section id="waf" data-title="WAF">
+      <div class="sec-head">
+        <div class="kicker">10 · L7</div>
+        <h2 class="sec-title">🌊 WAF — <span style="color:var(--accent)">연결된 뒤에</span> 보는 관문 <span class="lvl adv">🔵 심화</span></h2>
+      </div>
+      <p class="lead">"WAF를 붙였으니 SG는 좀 느슨해도 되겠지" — 아닙니다. 둘은 <strong>경쟁 관계가 아니라 축이 다른</strong> 통제예요.</p>
+
+      <h3>📐 축이 다르다</h3>
+      <p>둘 중 뭐가 더 강력한 방화벽이냐고 물으면 질문 자체가 어긋나 있습니다. SG와 WAF는 애초에 같은 걸 보고 있지 않거든요 — 하나는 연결이 열리기 전을 보고, 다른 하나는 그 연결 위로 흐르는 내용을 봅니다.</p>
+
+      <div class="cmp2">
+        <div class="cmp-col" style="--c:var(--g-sg)">
+          <div class="cc-h">🛡️ SG</div>
+          <div class="cc-t">연결 자체를 막는다</div>
+          <ul>
+            <li>IP·포트로 판단한다</li>
+            <li>TCP 핸드셰이크 전에 판정이 끝난다</li>
+            <li>요청 내용은 볼 수 없다</li>
+          </ul>
+        </div>
+        <div class="cmp-col" style="--c:var(--g-waf)">
+          <div class="cc-h">🌊 WAF</div>
+          <div class="cc-t">이미 맺어진 연결 위의 HTTP를 본다</div>
+          <ul>
+            <li>URL·헤더·본문·쿠키로 판단한다</li>
+            <li>포트는 볼 수 없다 — 이미 443으로 들어온 뒤다</li>
+          </ul>
+        </div>
+      </div>
+
+      <p>그러니 결론은 우열이 아니라 분업입니다. <strong>SG가 못 보는 것을 WAF가 보고, WAF가 못 하는 것을 SG가 합니다.</strong> 하나가 다른 하나를 대신할 수 있는 관계가 아니에요.</p>
+      <p>말로는 그럴듯한데, 같은 요청 다섯 개를 SG와 WAF 앞에 나란히 놓아 보면 이 축이 갈라지는 지점이 훨씬 손에 잡힙니다.</p>
+
+      <div class="demo" id="wafTest">
+        <span class="demo-tag">누가 무엇을 막나</span>
+        <p style="margin:0 0 4px">다섯 가지 요청을 던져 SG와 WAF가 각각 어떻게 반응하는지 봅니다. 한쪽만으로는 안 되는 이유가 드러납니다.</p>
+        <div class="picker" id="wafPicker">
+          <button class="pick on" data-k="normal">🙂 정상 GET /products</button>
+          <button class="pick" data-k="sqli">💉 본문에 SQL 인젝션</button>
+          <button class="pick" data-k="flood">🌊 초당 5,000회 요청</button>
+          <button class="pick" data-k="ssh">🔑 22번 포트 스캔</button>
+          <button class="pick" data-k="bypass">🕳️ ALB 직접 접근 (CloudFront 우회)</button>
+        </div>
+        <div id="wafOut"></div>
+      </div>
+
+      <h3>📦 어디에 붙는가</h3>
+      <p>방금 본 다섯 가지 반응은 전부 WAF가 이미 붙어 있다는 전제 위에서 나온 겁니다. 그런데 WAF는 SG처럼 아무 리소스에나 걸 수 있는 게 아니에요. 독립적으로 서 있는 장비가 아니라 <b>CloudFront·ALB·API Gateway·AppSync</b>, 이 넷 중 하나에 붙어야만 존재하는 부착물입니다. 붙을 자리가 없으면 WAF도 없어요 — NLB는 L4에서 IP와 포트만 다룰 뿐 HTTP라는 개념 자체가 없으니, WAF를 걸 자리가 애초에 생기지 않습니다.</p>
+
+      <h3>🕳️ 가장 흔한 구멍 — 우회</h3>
+      <p>CloudFront에 WAF를 걸었습니다. SQL 인젝션 규칙도, 봇 차단도 넣었어요. 방금 데모에서 본 그대로 잘 작동합니다.</p>
+      <p>그런데 ALB에는 생성되는 순간부터 퍼블릭 DNS 이름이 붙습니다. 딱히 숨겨져 있지 않아서, 조금만 뒤지면 알아낼 수 있어요. 공격자가 CloudFront를 건너뛰고 그 주소로 <b>직접</b> 요청을 쏘면 무슨 일이 벌어질까요.</p>
+      <p>아무 일도 벌어지지 않습니다. WAF는 CloudFront에 붙어 있을 뿐이라, 이 경로에서는 애초에 존재하지 않는 것과 같아요. <a class="link" href="#nfw">9장</a>에서 본 원리가 여기서 그대로 되풀이됩니다 — <b>붙어 있지 않은 통제는 실행되지 않습니다.</b></p>
+      <p>답은 L7이 아니라 L3/L4에 있습니다. <a class="link" href="#ref">8장</a>에서 세운 <code>alb-sg</code>의 인바운드 source를 <span class="mono">0.0.0.0/0</span> 대신 CloudFront가 쓰는 <span class="term" data-t="prefix list">prefix list</span> 하나로 좁히는 거예요 — IPv4는 <code>com.amazonaws.global.cloudfront.origin-facing</code>, IPv6는 <code>com.amazonaws.global.ipv6.cloudfront.origin-facing</code>입니다. 이렇게 걸어 두면 ALB는 CloudFront가 보낸 트래픽 말고는 아예 받지 않아요. 우회로 자체가 사라지는 겁니다.</p>
+      <p>다만 이 한 줄에는 대가가 있습니다. 이 prefix list의 weight는 55예요. SG 규칙의 기본 한도가 60개인데, 이 한 줄이 이미 55개 슬롯을 차지하고 들어와서 다른 규칙에 남는 자리는 5개뿐입니다. "규칙 몇 줄 추가했을 뿐인데 SG 한도에 걸린다"는 사고의 실제 원인이 종종 이거예요.</p>
+      <p><a class="link" href="#ref">8장</a>이 여기서 회수됩니다. IP 대신 이름표로 source를 좁히던 그 발상이, CloudFront라는 AWS가 관리하는 이름표에도 똑같이 적용되는 거예요.</p>
+
+      <div class="callout std">
+        <h4>📐 업계 표준 — Count 모드로 먼저 관찰한다</h4>
+        <p>Managed rule group(공통 취약점·봇·평판 IP 같은 카테고리)을 켜는 순서에도 관례가 있어요. 처음부터 Block으로 켜지 않습니다. 먼저 <span class="term" data-t="Count 모드">Count 모드</span>로 두고 며칠 지켜보면서 오탐이 얼마나 나는지 확인한 다음, 그제야 Block으로 바꿔요. 곧바로 Block부터 켜면 정상 트래픽이 이유도 없이 막히고, 막힌 이유를 나중에 되짚기가 훨씬 어렵습니다.</p>
+      </div>
+
+      <div class="oneline">
+        <div class="ol-ic">🌊</div>
+        <div><div class="ol-t">10장 한 줄 요약</div><div class="ol-b">WAF는 SG를 대체하지 않는다. <b>L7 통제는 L3/L4로 경로를 하나로 좁혀 둘 때만 의미가 있다</b> — 우회로가 열려 있으면 규칙은 장식이다.</div></div>
+      </div>
+
+      <div class="quiz" data-qid="q-waf" data-answer="d">
+        <div class="q-head">✅ 체크포인트</div>
+        <div class="q">CloudFront 앞단에 WAF를 붙여 SQL 인젝션과 봇을 차단하고 있다. 그런데 공격이 계속 앱에 도달한다. 확인해야 할 것은?</div>
+        <button class="opt" data-opt="a"><span class="mk">A</span> WAF 규칙을 Count 모드에서 Block 모드로 바꿨는지</button>
+        <button class="opt" data-opt="b"><span class="mk">B</span> ALB에도 별도의 WAF를 붙였는지</button>
+        <button class="opt" data-opt="c"><span class="mk">C</span> NACL이 공격자 IP를 차단하는지</button>
+        <button class="opt" data-opt="d"><span class="mk">D</span> ALB의 SG가 CloudFront에서 오는 트래픽만 받도록 좁혀져 있는지</button>
+        <div class="explain"><b>정답 D.</b> WAF는 자기가 붙은 리소스로 오는 요청만 검사합니다. <code>alb-sg</code>가 <span class="mono">0.0.0.0/0</span>이면 공격자는 <b>CloudFront를 건너뛰고 ALB를 직접</b> 때릴 수 있고, 그 경로에는 WAF가 없어요. A도 실무에서 흔한 실수지만 이 상황(우회)의 답은 아니고, B는 비용이 두 배가 될 뿐 우회로 자체는 남습니다. <b>L7 통제는 경로가 하나로 좁혀져 있을 때만 유효합니다.</b></div>
+      </div>
+    </section>
+
   </main>
 </div>
 
@@ -1396,6 +1474,8 @@ const GLOSSARY = {
   "횡이동": "lateral movement. 공격자가 침해한 한 대를 발판 삼아 내부의 다른 시스템으로 옮겨 다니는 것. 계층 간 통신을 좁게 제한하면 이 이동이 어려워집니다.",
   "Suricata": "오픈소스 침입 탐지 규칙 문법. AWS Network Firewall이 이 문법을 그대로 받아들여, 패킷 내용에 기반한 탐지·차단 규칙을 쓸 수 있습니다.",
   "SNI": "Server Name Indication. TLS 핸드셰이크 초반에 평문으로 오가는 접속 대상 도메인 이름. 암호화 전이라 중간 장비가 읽을 수 있어서 도메인 단위 필터링의 근거가 됩니다.",
+  "WAF": "Web Application Firewall. HTTP 요청의 URL·헤더·본문·쿠키를 검사해 차단하는 L7 통제. CloudFront·ALB·API Gateway 등에 붙여서 씁니다.",
+  "Count 모드": "WAF 규칙을 차단하지 않고 매치 횟수만 세는 모드. 새 규칙을 켤 때 오탐을 먼저 관찰하려고 씁니다.",
   // @GLOSSARY_END
 };
 
@@ -2295,6 +2375,44 @@ if(location.hash){
   }
   wirePicker('#nfwPicker', render);
   render('none');
+})();
+
+/* ============================================================
+   데모 14 — 누가 무엇을 막나 (10장)
+   ============================================================ */
+(function(){
+  const out = $('#wafOut'); if(!out) return;
+  const D = {
+    normal: { sg:[true,"443이 열려 있으니 통과"], waf:[true,"규칙에 걸리지 않음"],
+      n:"둘 다 통과합니다. 정상 요청이 이렇게 흘러요." },
+    sqli: { sg:[true,"443으로 온 정상 TCP 연결. <b>본문을 볼 수 없다</b>"],
+      waf:[false,"SQL 인젝션 패턴을 탐지하는 관리형 규칙에 매치"],
+      n:"<b>SG는 이걸 절대 막을 수 없습니다.</b> 포트도 IP도 정상이고, 페이로드는 SG의 관측 범위 밖이에요. L7을 보는 통제가 없으면 이 요청은 그대로 앱까지 갑니다." },
+    flood: { sg:[true,"각 연결이 개별적으로는 정상"],
+      waf:[false,"Rate-based 규칙이 해당 IP를 일시 차단"],
+      n:"SG에는 <b>\"초당 몇 번\"이라는 개념이 없습니다.</b> 규칙은 매칭이지 계수가 아니에요. 빈도 기반 통제는 WAF(또는 Shield)의 몫입니다." },
+    ssh: { sg:[false,"22가 열려 있지 않아 <b>연결 자체가 성립 안 됨</b>"],
+      waf:[null,"평가되지 않음 — HTTP 요청이 아니다"],
+      n:"방향이 반대입니다. <b>WAF는 이걸 볼 수조차 없어요.</b> WAF는 ALB·CloudFront에 붙어 <b>HTTP 요청</b>을 검사하는데, 22번 포트 스캔은 애초에 그 앞까지 오지 않습니다. 이게 \"WAF가 있으니 SG는 느슨해도 된다\"가 틀린 이유예요." },
+    bypass: { sg:[true,"<b><code>alb-sg</code>가 <code>0.0.0.0/0</code>이면 통과</b>"],
+      waf:[null,"평가되지 않음 — WAF는 CloudFront에 붙어 있다"],
+      n:"<b>이 장의 핵심입니다.</b> CloudFront에 아무리 정교한 WAF를 걸어도, 공격자가 ALB 주소로 직접 오면 그 규칙들은 <b>실행되지 않습니다</b>. <br><br>답은 L7이 아니라 <b>L3/L4</b>에 있어요 — <code>alb-sg</code>의 인바운드 source를 <b>CloudFront origin-facing prefix list</b>로 좁혀서, ALB가 CloudFront 외의 어디서도 연결을 받지 않게 만듭니다. <a class='link' href='#ref'>8장의 SG 참조</a>가 여기서 회수됩니다." }
+  };
+  function cell(v){
+    if(v[0] === null) return `<span class="dim">— ${v[1]}</span>`;
+    return `${v[0] ? '<b style="color:var(--ok)">통과</b>' : '<b style="color:var(--bad)">차단</b>'} <span class="dim">— ${v[1]}</span>`;
+  }
+  function render(k){
+    const d = D[k];
+    out.innerHTML =
+      `<div class="kv" style="margin-top:12px">
+         <dt>🛡️ Security Group</dt><dd>${cell(d.sg)}</dd>
+         <dt>🌊 WAF</dt><dd>${cell(d.waf)}</dd>
+       </div>
+       <div class="callout ${k==='normal'?'why':'warn'}" style="margin-bottom:0"><p style="margin:0">${d.n}</p></div>`;
+  }
+  wirePicker('#wafPicker', render);
+  render('normal');
 })();
 </script>
 </body>
