@@ -3,15 +3,15 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>인터랙티브 개발 튜토리얼 모음 — 네트워크 · 인증 · 권한 · HTTPS</title>
-<meta name="description" content="주니어 개발자를 위한 인터랙티브 HTML 튜토리얼 모음. 네트워크, OAuth2/OIDC, 권한 관리, HTTPS·TLS.">
+<title>인터랙티브 개발 튜토리얼 모음 — 네트워크 · HTTPS · 인증 · 권한 · 클라우드</title>
+<meta name="description" content="주니어 개발자를 위한 인터랙티브 HTML 튜토리얼 모음. 네트워크 기초, HTTPS·TLS, OAuth2/OIDC, 권한 관리, AWS IAM, AWS 네트워크 보안.">
 <style>
 :root{
   --bg:#070b12; --bg-soft:#0c1320; --panel:#111a28; --panel-2:#172133;
   --border:#233046; --border-2:#32425e;
   --text:#e8eef7; --text-dim:#9fb0c6; --text-mut:#8698b3;
   --accent:#2dd4bf; --accent-2:#a78bfa;
-  --net:#38bdf8; --auth:#fbbf24; --authz:#c084fc; --https:#2dd4bf; --iam:#ff9f43;
+  --net:#38bdf8; --auth:#fbbf24; --authz:#c084fc; --https:#2dd4bf; --iam:#ff9f43; --awsnet:#fb7185;
   --radius:16px;
   --mono:"JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
   --sans:"Pretendard Variable","Pretendard",-apple-system,BlinkMacSystemFont,system-ui,"Apple SD Gothic Neo","Malgun Gothic","Noto Sans KR",sans-serif;
@@ -130,7 +130,7 @@ footer .mono{font-family:var(--mono); font-size:12.5px}
   </p>
 
   <div class="meta">
-    <span>🗂️ <b>5개 문서</b></span>
+    <span>🗂️ <b>6개 문서</b></span>
     <span>🖱️ <b>클릭·슬라이더</b>로 확인하는 데모</span>
     <span>📦 <b>단일 HTML</b> · 외부 의존성 0</span>
     <span>💾 진행률 <b>자동 저장</b></span>
@@ -172,7 +172,7 @@ footer .mono{font-family:var(--mono); font-size:12.5px}
       <h2>AWS IAM 튜토리얼 — 권한 관리체계로 이해하기</h2>
       <p>"<code>Action: *</code>인데 왜 거부되나"에서 출발합니다. IAM을 정책 문법이 아니라 <b>권한이 붙는 일곱 자리와 그 평가 순서</b>로 다시 세우고,
       ARN·정책 JSON·평가 엔진·조직 SCP·권한 상승 경로를 직접 눌러 가며 확인합니다. 앞의 권한 관리 튜토리얼의 클라우드 후속편입니다.</p>
-      <div class="tags"><i>Principal · ARN</i><i>STS · AssumeRole</i><i>정책 7종</i><i>평가 로직</i><i>Organizations · SCP</i><i>최소권한 프로세스</i><i>PassRole 상승</i></div>
+      <div class="tags"><i>Principal · ARN</i><i>STS · AssumeRole</i><i>정책 7종</i><i>평가 로직</i><i>Organizations · SCP</i><i>최소권한 프로세스</i><i>권한 요청·승인</i><i>PassRole 상승</i><i>EC2 Role</i></div>
       <span class="go">열어 보기 <span class="ar">→</span></span>
     </a>
 
