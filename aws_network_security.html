@@ -1224,6 +1224,73 @@ button:focus-visible, .pick:focus-visible, .term:focus-visible, a:focus-visible,
       </div>
     </section>
 
+    <section id="ref" data-title="SG 참조">
+      <div class="sec-head">
+        <div class="kicker">08 · 연동</div>
+        <h2 class="sec-title">🔗 IP가 아니라 <span style="color:var(--accent)">신원</span>으로 <span class="lvl must">🟢 필수</span></h2>
+      </div>
+      <p class="lead">여기서부터 2부입니다. 관문을 하나씩 아는 것과, 그것들을 엮어서 구성하는 것은 다른 기술이에요. 첫 번째 도구가 이겁니다.</p>
+
+      <h3>🏷️ SG 규칙의 source에 SG를 넣을 수 있다</h3>
+      <p>source 자리에는 지금까지 늘 CIDR을 썼습니다. <span class="mono">0.0.0.0/0</span>이든 <span class="mono">10.0.1.42/32</span>든, 결국 숫자 몇 자리였어요. 그런데 그 자리에 IP 대신 다른 SG의 id를 넣을 수 있습니다.</p>
+      <p>바뀌는 건 문법이 아니라 뜻입니다. source가 CIDR일 때는 "이 대역에서 오는 트래픽"을 가리켰는데, source가 SG일 때는 <b>"그 SG가 붙은 ENI에서 오는 트래픽"</b>을 가리키게 돼요. 지금 그 SG가 몇 개의 ENI에 붙어 있는지, 그 ENI들의 IP가 각각 몇인지는 규칙을 쓰는 사람이 알 필요가 없습니다. 계산은 AWS 쪽이 매 순간 다시 하거든요.</p>
+      <p>IP는 한 글자도 등장하지 않아요.</p>
+      <p>지금까지는 전부 같은 VPC 안 얘기입니다. VPC를 넘어가면 조건이 붙는데, 그건 <a class="link" href="#peering">12장</a>에서 다뤄요.</p>
+
+      <h3>💥 CIDR 기반 규칙이 무너지는 지점</h3>
+      <p>CIDR로 쓴 규칙은 인스턴스가 살아 있는 동안은 멀쩡한 것처럼 보여요. 문제는 그다음이에요 — 대상이 조금만 움직여도 깨지기 시작하죠.</p>
+      <p>오토스케일링 그룹의 인스턴스가 교체되면 IP가 바뀝니다. Fargate 태스크는 뜰 때마다 새 IP를 받고요. ALB 노드의 IP는 AWS가 예고 없이 바꿉니다 — 셋 다 사용자가 손댈 자리가 아예 없는 지점이에요.</p>
+      <p><a class="link" href="#trace">7장</a>에서 본 <b>"어제까지 됐는데"</b>의 정체 대부분이 여기서 나옵니다. 구성은 그대로인데 대상의 IP만 조용히 바뀐 거예요. 규칙에 박아 둔 옛 IP는 그대로 남고, 새 인스턴스는 거부당하고, 그 IP를 나중에 받은 다른 무언가는 오히려 통과합니다.</p>
+
+      <div class="callout key">
+        <h4>🔑 라벨로 보면 보이는 것</h4>
+        <p><b>SG를 방화벽 규칙이 아니라 라벨로 보세요.</b> <code>app-sg</code>는 "8080을 여는 규칙 뭉치"가 아니라 <b>"이 워크로드는 앱이다"라는 이름표</b>입니다. 규칙은 그 이름표들 사이의 관계를 적은 것이고요. 이렇게 보면 <a class="link" href="iam_tutorial.html">IAM에서 신원으로 권한을 준 것</a>과 정확히 같은 발상이라는 게 보입니다 — 축만 패킷으로 옮겼을 뿐이에요.</p>
+      </div>
+
+      <p>그 라벨이 실제로 뭘 막아주는지, 지금 확인해보죠. 침해당한 서버 한 대가 옆의 다른 시스템으로 건너뛰는 것 — <span class="term" data-t="횡이동">횡이동(lateral movement)</span> — 을 얼마나 막아주는지가 관건입니다.</p>
+
+      <div class="demo" id="sgRef">
+        <span class="demo-tag">SG 참조 체인</span>
+        <p style="margin:0 0 4px">같은 3-tier를 네 가지 방식으로 잠가봅니다. 오토스케일링으로 앱 인스턴스가 교체되는 순간 무슨 일이 벌어지는지 보세요.</p>
+        <div class="picker" id="sgRefPicker">
+          <button class="pick on" data-k="cidr">📍 IP(CIDR)로 지정</button>
+          <button class="pick" data-k="wide">🕳️ VPC 대역 전체 허용</button>
+          <button class="pick" data-k="ref">🔗 SG 참조</button>
+          <button class="pick" data-k="default">⚠️ 전부 기본 SG 공유</button>
+        </div>
+        <div id="sgRefOut"></div>
+      </div>
+
+      <h3>⛓️ 3-tier를 잠그는 표준형</h3>
+      <p>결과가 손에 잡혔으면 이제 체인 전체를 짜보죠. ALB·앱 서버·RDS, 3-tier 전부를 SG 세 개의 관계만으로 잠급니다.</p>
+      <div class="kv">
+        <dt>alb-sg</dt><dd>인바운드 443 ← <span class="mono">0.0.0.0/0</span> · 아웃바운드 8080 → <span class="mono">app-sg</span></dd>
+        <dt>app-sg</dt><dd>인바운드 8080 ← <span class="mono">alb-sg</span> · 아웃바운드 5432 → <span class="mono">rds-sg</span></dd>
+        <dt>rds-sg</dt><dd>인바운드 5432 ← <span class="mono">app-sg</span> · 아웃바운드 없음</dd>
+      </div>
+      <p>이 세 줄 어디에도 IP가 없습니다. 대역도, 개별 주소도요. 있는 건 SG 세 개의 이름과 그 사이의 관계뿐이에요. 이 <span class="mono">alb-sg → app-sg → rds-sg</span> 체인은 <a class="link" href="#blueprint">13장</a> 레퍼런스 아키텍처에서 그대로 다시 나옵니다.</p>
+
+      <div class="callout warn">
+        <h4>🪤 순환 참조와 Terraform</h4>
+        <p>A가 B를 참조하고 B가 A를 참조하는 구성도 만들 수 있습니다 — AWS는 이걸 막지 않아요. 다만 <b>Terraform으로 관리한다면 얘기가 다릅니다.</b> 두 SG가 서로를 참조하면 생성 순서를 정할 수가 없어서 꼬입니다. 규칙을 SG 리소스 자체에 넣지 않고, <code>aws_vpc_security_group_ingress_rule</code>로 따로 떼어 선언하는 게 그래서 관례예요.</p>
+      </div>
+
+      <div class="oneline">
+        <div class="ol-ic">🔗</div>
+        <div><div class="ol-t">8장 한 줄 요약</div><div class="ol-b">source에 SG를 쓰면 규칙이 <b>IP 변화에 면역</b>이 된다. 3-tier 잠그기는 IP 없이 SG 세 개의 관계만으로 끝난다.</div></div>
+      </div>
+
+      <div class="quiz" data-qid="q-ref" data-answer="c">
+        <div class="q-head">✅ 체크포인트</div>
+        <div class="q">오토스케일링 그룹의 앱 서버들이 RDS에 접속해야 한다. 가장 적절한 <span class="mono">rds-sg</span> 인바운드 규칙은?</div>
+        <button class="opt" data-opt="a"><span class="mk">A</span> <code>5432 ← 10.0.0.0/16</code> (VPC 대역 전체)</button>
+        <button class="opt" data-opt="b"><span class="mk">B</span> <code>5432 ← 10.0.1.42/32</code> (현재 앱 서버 IP)</button>
+        <button class="opt" data-opt="c"><span class="mk">C</span> <code>5432 ← app-sg</code></button>
+        <button class="opt" data-opt="d"><span class="mk">D</span> <code>5432 ← 0.0.0.0/0</code> (SG는 VPC 밖에서 오는 트래픽을 어차피 못 받으므로)</button>
+        <div class="explain"><b>정답 C.</b> B는 인스턴스가 교체되는 순간 깨지고, 심지어 그 IP를 나중에 받은 다른 워크로드가 DB에 접근하게 됩니다. A는 안정적이지만 VPC 안 아무나 DB에 붙을 수 있어 횡이동 방어가 사라져요. D는 위험하기도 하고 전제도 틀렸습니다 — 프라이빗 서브넷이라 실제로 인터넷에서 못 오는 것뿐이지, 라우팅이 바뀌면 그대로 노출됩니다. <b>경로에 의존한 보안은 보안이 아닙니다.</b></div>
+      </div>
+    </section>
+
   </main>
 </div>
 
@@ -1267,6 +1334,7 @@ const GLOSSARY = {
   "ephemeral 포트": "클라이언트가 연결을 걸 때 OS가 임시로 골라 쓰는 출발지 포트. 보통 1024~65535 범위입니다. 응답 패킷의 목적지 포트가 되므로, 무상태 방화벽에서는 이 범위를 열어야 응답이 돌아갑니다.",
   "Hyperplane ENI": "Lambda가 VPC에 연결될 때 쓰는 공유형 ENI입니다. 동시 실행 수가 아니라 서브넷과 SG의 조합마다 하나가 만들어지고, 같은 조합을 쓰는 계정 안의 다른 함수와 공유됩니다.",
   "Reachability Analyzer": "출발지와 목적지를 지정하면 실제 패킷을 보내지 않고 라우팅·SG·NACL을 정적으로 분석해 도달 가능 여부를 알려주는 VPC 기능. OS 방화벽이나 앱 바인딩 문제는 볼 수 없습니다.",
+  "횡이동": "lateral movement. 공격자가 침해한 한 대를 발판 삼아 내부의 다른 시스템으로 옮겨 다니는 것. 계층 간 통신을 좁게 제한하면 이 이동이 어려워집니다.",
   // @GLOSSARY_END
 };
 
@@ -2073,6 +2141,46 @@ if(location.hash){
   }
   wirePicker('#triagePicker', render);
   render('timeout');
+})();
+
+/* ============================================================
+   데모 12 — SG 참조 체인 (8장)
+   ============================================================ */
+(function(){
+  const out = $('#sgRefOut'); if(!out) return;
+  const D = {
+    cidr: { rule:"rds-sg 인바운드 5432 ← <span class='mono'>10.0.1.42/32</span>",
+      scale:{ ok:false, t:"앱이 교체되면 <b>끊긴다</b>" },
+      lateral:{ ok:true, t:"횡이동은 막힌다" },
+      n:"의도는 맞았는데 <b>수명이 짧습니다</b>. 인스턴스가 교체되면 IP가 바뀌고 규칙은 그대로 남아요. 새 인스턴스는 거부되고, 게다가 <b>그 IP를 나중에 받은 다른 워크로드가 DB에 접근</b>하게 됩니다 — 조용히 생기는 구멍이에요." },
+    wide: { rule:"rds-sg 인바운드 5432 ← <span class='mono'>10.0.0.0/16</span>",
+      scale:{ ok:true, t:"교체돼도 유지된다" },
+      lateral:{ ok:false, t:"<b>VPC 안 아무나 DB에 붙는다</b>" },
+      n:"\"IP가 자꾸 바뀌니 대역을 열자\"는 가장 흔한 후퇴입니다. 안정적이긴 한데 <b>격리가 사라집니다</b>. 침해당한 배치 서버 하나가 곧바로 DB에 붙을 수 있어요. 편의를 위해 <b>횡이동 방어를 통째로 포기</b>한 겁니다." },
+    ref: { rule:"rds-sg 인바운드 5432 ← <span class='mono'>app-sg</span>",
+      scale:{ ok:true, t:"교체돼도 유지된다" },
+      lateral:{ ok:true, t:"app-sg가 붙은 것만 통과" },
+      n:"<b>둘 다 얻습니다.</b> IP를 안 쓰니 교체에 면역이고, 범위는 <code>app-sg</code>가 붙은 ENI로 정확히 한정됩니다. 새 인스턴스는 <b>SG를 달고 뜨는 순간</b> 자동으로 통과해요 — 규칙을 고칠 일이 없습니다. 이게 표준형입니다." },
+    default: { rule:"세 계층이 모두 <span class='mono'>default</span> SG 하나를 공유",
+      scale:{ ok:true, t:"교체돼도 유지된다" },
+      lateral:{ ok:false, t:"<b>세 계층이 서로 완전히 열려 있다</b>" },
+      n:"기본 SG에는 <b>자기 자신을 source로 하는 인바운드 규칙</b>이 들어 있습니다. 그래서 같은 기본 SG를 쓰는 리소스끼리는 <b>모든 포트가 열립니다</b>. 아무것도 설정하지 않았는데 통신이 되길래 그냥 두는 경우가 많은데, 계층 분리가 처음부터 없었던 셈이에요 — <a class='link' href='#pitfall'>14장</a>에서 다시 봅니다." }
+  };
+  function badge(o){
+    return `<span class="badge ${o.ok?'ok':'bad'}">${o.ok?'✅':'⛔'} ${o.t}</span>`;
+  }
+  function render(k){
+    const d = D[k];
+    out.innerHTML =
+      `<div class="mono" style="margin-top:12px; font-size:13px">${d.rule}</div>
+       <div class="kv" style="margin-top:10px">
+         <dt>인스턴스 교체 후</dt><dd>${badge(d.scale)}</dd>
+         <dt>횡이동(lateral) 방어</dt><dd>${badge(d.lateral)}</dd>
+       </div>
+       <div class="callout ${d.scale.ok && d.lateral.ok ? 'why' : 'warn'}" style="margin-bottom:0"><p style="margin:0">${d.n}</p></div>`;
+  }
+  wirePicker('#sgRefPicker', render);
+  render('cidr');
 })();
 </script>
 </body>
