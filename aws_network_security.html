@@ -1577,6 +1577,63 @@ button:focus-visible, .pick:focus-visible, .term:focus-visible, a:focus-visible,
       </div>
     </section>
 
+    <section id="blueprint" data-title="3-tier 레퍼런스">
+      <div class="sec-head">
+        <div class="kicker">13 · 종합</div>
+        <h2 class="sec-title">🏗️ 전부 합친 <span style="color:var(--accent)">3-tier</span> 레퍼런스 <span class="lvl must">🟢 필수</span></h2>
+      </div>
+      <p class="lead">열두 장에 걸쳐 통제를 하나씩 봤습니다. 이제 하나의 그림에 전부 얹고, 요청 하나가 겪는 일을 처음부터 끝까지 따라가 봅니다.</p>
+
+      <h3>📐 구성</h3>
+      <p>번호도 이름도 전부 앞 장에서 나온 것들입니다. 하나의 VPC 위에 그대로 얹어 보죠.</p>
+      <div class="kv">
+        <dt>서브넷</dt><dd>퍼블릭 ×2(ALB) · 프라이빗 ×2(앱) · 격리 ×2(RDS), 각 AZ에 하나씩</dd>
+        <dt>라우팅</dt><dd>퍼블릭은 <span class="mono">0.0.0.0/0 → IGW</span>, 프라이빗은 <span class="mono">→ NAT GW</span>, 격리는 <span class="mono">local</span>만 (<a class="link" href="#route">3장</a>)</dd>
+        <dt>NACL</dt><dd>전부 기본값 (<a class="link" href="#nacl">5장</a>의 결론)</dd>
+        <dt>SG</dt><dd><span class="mono">alb-sg → app-sg → rds-sg</span> 참조 체인 (<a class="link" href="#ref">8장</a>)</dd>
+        <dt>엣지</dt><dd>CloudFront + WAF, <span class="mono">alb-sg</span>는 CloudFront prefix list만 허용 (<a class="link" href="#waf">10장</a>)</dd>
+        <dt>Endpoint</dt><dd>S3 Gateway Endpoint, 프라이빗·격리 서브넷 라우팅 테이블에 연결 (<a class="link" href="#endpoint">11장</a>)</dd>
+        <dt>아웃바운드</dt><dd>앱은 NAT을 통해 필요한 도메인만. Network Firewall이 SNI로 필터링 (<a class="link" href="#nfw">9장</a>)</dd>
+      </div>
+      <p>구성은 말로 다 됐으니, 이제 요청 하나를 실제로 태워 봅니다.</p>
+
+      <div class="demo" id="journey">
+        <span class="demo-tag">요청 하나의 전체 여정</span>
+        <p style="margin:0 0 4px">사용자가 <span class="mono">https://shop.naru.example/products</span>를 열었습니다. 구간을 골라 그 안에서 무슨 일이 일어나는지 보세요.</p>
+        <div class="picker" id="journeyPicker">
+          <button class="pick on" data-k="edge">① 엣지</button>
+          <button class="pick" data-k="in">② VPC 진입</button>
+          <button class="pick" data-k="app">③ 앱 → DB</button>
+          <button class="pick" data-k="s3">④ 앱 → S3</button>
+          <button class="pick" data-k="back">⑤ 응답</button>
+        </div>
+        <div id="journeyStage"></div>
+        <div id="journeyOut"></div>
+      </div>
+
+      <p>다섯 구간을 오가다 보면 규칙 하나가 계속 반복해서 보입니다.</p>
+
+      <div class="callout key">
+        <h4>🔑 계층은 바로 위 계층만 신뢰한다</h4>
+        <p><b>각 계층은 자기 바로 위 계층에서만 트래픽을 받습니다.</b> 이 한 문장이 위 구성 전체를 설명해요. 인터넷은 CloudFront만, CloudFront는 ALB만, ALB는 앱만, 앱은 DB만.</p>
+      </div>
+
+      <div class="oneline">
+        <div class="ol-ic">🏗️</div>
+        <div><div class="ol-t">13장 한 줄 요약</div><div class="ol-b">열세 장의 통제가 실제로는 <b>여섯 줄의 SG 규칙과 세 개의 라우팅 테이블</b>로 압축된다. 복잡해 보이는 건 개념이지 구성이 아니다.</div></div>
+      </div>
+
+      <div class="quiz" data-qid="q-blueprint" data-answer="c">
+        <div class="q-head">✅ 체크포인트</div>
+        <div class="q">이 레퍼런스 구성에서 RDS가 있는 격리 서브넷의 라우팅 테이블에는 무엇이 있어야 하나?</div>
+        <button class="opt" data-opt="a"><span class="mk">A</span> <code>0.0.0.0/0 → NAT GW</code> — DB도 패치를 받아야 하니까</button>
+        <button class="opt" data-opt="b"><span class="mk">B</span> <code>0.0.0.0/0 → IGW</code> — 관리 접속을 위해</button>
+        <button class="opt" data-opt="c"><span class="mk">C</span> <b><code>local</code> 하나뿐. <code>0.0.0.0/0</code> 항목을 아예 만들지 않는다</b></button>
+        <button class="opt" data-opt="d"><span class="mk">D</span> <code>0.0.0.0/0 → Network Firewall</code></button>
+        <div class="explain"><b>정답 C.</b> RDS는 관리형 서비스라 패치를 AWS가 처리하므로 인터넷으로 나갈 이유가 없습니다. 그러면 <b>경로 자체를 만들지 않는 것</b>이 가장 강한 통제예요 — SG를 잘못 열어도, NACL을 실수해도, 갈 길이 없으면 나가지 못합니다. <b>통제를 거는 것보다 경로를 없애는 게 낫다</b>는 게 이 구성의 설계 원칙입니다.</div>
+      </div>
+    </section>
+
   </main>
 </div>
 
@@ -2612,6 +2669,62 @@ if(location.hash){
   wirePicker('#vpcePicker', k => { ep = k; render(); });
   wirePicker('#iamPicker',  k => { iam = k; render(); });
   render();
+})();
+
+/* ============================================================
+   데모 16 — 종합 여정 재생기 (13장)
+   ============================================================ */
+(function(){
+  const stage = $('#journeyStage'), out = $('#journeyOut'); if(!stage || !out) return;
+  const LEG = {
+    edge: { steps:[
+        ["Route 53", "var(--g-route)", "<code>shop.naru.example</code> → CloudFront 배포의 도메인"],
+        ["CloudFront", "var(--accent-2)", "가장 가까운 엣지에서 캐시 확인. 히트면 여기서 끝난다"],
+        ["AWS Shield", "var(--g-waf)", "L3/L4 DDoS 흡수 — 기본으로 켜져 있다"],
+        ["WAF", "var(--g-waf)", "관리형 규칙 + rate limit. SQLi·봇·과도한 빈도를 여기서 끊는다 (<a class='link' href='#waf'>10장</a>)"]
+      ],
+      n:"운이 좋으면 <b>여정이 여기서 끝납니다.</b> 캐시 히트면 VPC까지 오지도 않아요. 그리고 WAF가 여기 있다는 건, 뒤의 ALB가 <b>이 경로로만</b> 트래픽을 받아야 의미가 있다는 뜻입니다." },
+    in: { steps:[
+        ["IGW", "var(--g-route)", "퍼블릭 서브넷 라우팅 테이블에 <code>0.0.0.0/0 → igw</code>가 있어서 들어온다 (<a class='link' href='#route'>3장</a>)"],
+        ["NACL 인바운드", "var(--g-nacl)", "기본값이라 전부 허용 — 사실상 통과 (<a class='link' href='#nacl'>5장</a>)"],
+        ["alb-sg 인바운드", "var(--g-sg)", "443 ← <b>CloudFront prefix list</b>. 직접 접근은 여기서 죽는다 (<a class='link' href='#waf'>10장</a>)"],
+        ["ALB", "var(--accent)", "대상 그룹의 앱 인스턴스로 8080 전달"],
+        ["app-sg 인바운드", "var(--g-sg)", "8080 ← <b>alb-sg</b>. IP가 아니라 신원으로 (<a class='link' href='#ref'>8장</a>)"]
+      ],
+      n:"ALB가 <b>연결을 한 번 끊고 새로 맺는다</b>는 점에 주목하세요. 앱이 보는 출발지 IP는 사용자가 아니라 ALB 노드입니다. 그래서 <code>app-sg</code>의 source가 <code>alb-sg</code>인 거고, 실제 사용자 IP는 <code>X-Forwarded-For</code> 헤더로 따로 전달됩니다." },
+    app: { steps:[
+        ["라우팅 (local)", "var(--g-route)", "격리 서브넷도 VPC 안이라 local로 간다. IGW·NAT 등장 안 함"],
+        ["app-sg 아웃바운드", "var(--g-sg)", "5432 → rds-sg"],
+        ["NACL", "var(--g-nacl)", "기본값 통과"],
+        ["rds-sg 인바운드", "var(--g-sg)", "5432 ← <b>app-sg</b>. 오토스케일링으로 앱이 교체돼도 유효하다"]
+      ],
+      n:"격리 서브넷의 라우팅 테이블에는 <b><code>0.0.0.0/0</code> 항목이 아예 없습니다.</b> NAT도 IGW도 없어요. DB가 인터넷으로 나갈 이유가 없으니 <b>경로 자체를 만들지 않는</b> 겁니다 — 통제보다 강력한 건 경로의 부재입니다." },
+    s3: { steps:[
+        ["라우팅 (prefix list → vpce)", "var(--g-route)", "S3 대역은 Gateway Endpoint로. NAT을 타지 않는다 (<a class='link' href='#endpoint'>11장</a>)"],
+        ["app-sg 아웃바운드", "var(--g-sg)", "443 허용"],
+        ["Endpoint 정책", "var(--accent-2)", "우리 계정 버킷으로 범위 제한"],
+        ["IAM 판정", "var(--accent-2)", "인스턴스 프로파일의 역할이 <code>s3:GetObject</code>를 갖는가"]
+      ],
+      n:"<b>네트워크를 다 통과하고도 관문이 둘 남아 있습니다.</b> 여기가 이 문서와 <a class='link' href='iam_tutorial.html'>IAM 튜토리얼</a>이 만나는 지점이에요. 버킷 정책에 <code>aws:SourceVpce</code>를 걸어 두면 <b>이 VPC 밖에서는 같은 역할로도 못 읽습니다.</b>" },
+    back: { steps:[
+        ["app-sg", "var(--g-sg)", "<b>검사하지 않는다</b> — 상태 유지라 응답은 자동 통과 (<a class='link' href='#sg'>4장</a>)"],
+        ["NACL 아웃바운드", "var(--g-nacl)", "<b>다시 검사한다</b> — 목적지는 ALB의 ephemeral 포트 (<a class='link' href='#nacl'>5장</a>)"],
+        ["ALB → CloudFront", "var(--accent)", "ALB가 자기 쪽 연결로 응답을 실어 보낸다"],
+        ["CloudFront", "var(--accent-2)", "<code>Cache-Control</code>이 붙어 있으면 캐시에 저장 — 다음 요청은 ①에서 끝난다"]
+      ],
+      n:"가는 길과 오는 길의 <b>비대칭</b>이 마지막으로 한 번 더 나옵니다. SG는 응답을 검사하지 않고 NACL은 검사해요. 이 문서에서 다룬 가장 흔한 장애가 바로 여기, 이 한 칸에서 생깁니다." }
+  };
+  function render(k){
+    const l = LEG[k];
+    stage.innerHTML = '<div style="margin:12px 0">' + l.steps.map(([t,c,d]) =>
+      `<div class="flow-step" style="border-left:3px solid ${c}; padding-left:12px; margin:6px 0">
+         <div><b style="color:${c}">${esc(t)}</b></div>
+         <div class="dim" style="font-size:13px">${d}</div>
+       </div>`).join('') + '</div>';
+    out.innerHTML = `<div class="callout why" style="margin-bottom:0"><p style="margin:0">${l.n}</p></div>`;
+  }
+  wirePicker('#journeyPicker', render);
+  render('edge');
 })();
 </script>
 </body>
