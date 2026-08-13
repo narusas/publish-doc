@@ -898,6 +898,67 @@ button:focus-visible, .pick:focus-visible, .term:focus-visible, a:focus-visible,
       </div>
     </section>
 
+    <section id="sg" data-title="Security Group">
+      <div class="sec-head">
+        <div class="kicker">04 · ENI</div>
+        <h2 class="sec-title">🛡️ Security Group — <span style="color:var(--accent)">상태를 기억하는</span> 검문소 <span class="lvl must">🟢 필수</span></h2>
+      </div>
+      <p class="lead">SG는 규칙이 몇 줄 안 되는데도 오해가 많습니다. 대부분은 <strong><code>iptables</code>처럼 생각해서</strong> 생깁니다.</p>
+
+      <h3>🔌 인스턴스가 아니라 ENI에 붙는다</h3>
+      <p><span class="term" data-t="ENI">ENI</span> 얘기는 <a class="link" href="#vpc">2장</a>에서 이미 나왔죠 — SG가 실제로 붙는 자리는 인스턴스가 아니라 그 ENI라고요. 그러니 인스턴스에 ENI가 두 개면 SG도 두 벌입니다. 하나를 아무리 넓게 열어도, 다른 ENI의 SG가 닫혀 있으면 그 경로는 그대로 막혀 있어요.</p>
+
+      <h3>✅ allow만 있다</h3>
+      <p>SG 규칙 목록을 열어 보면 전부 허용(allow) 줄뿐입니다. 차단(deny) 규칙이라는 선택지 자체가 없어요. 그런데 기본값이 이미 전부 차단이니, 이 목록이 하는 일은 사실 구멍을 뚫는 것 하나뿐입니다. 문을 잠그는 규칙이 아니라, 문에 뚫을 구멍의 목록인 셈이죠.</p>
+      <p>그래서 못 하는 일이 하나 생깁니다. "이 IP만 빼고 다 허용"은 SG로 표현할 방법이 없어요. deny 자체가 없으니까요. 특정 IP 하나를 콕 집어 막고 싶을 때 SG 대신 다른 관문을 찾아야 하는 이유가 여기서 나옵니다 — <a class="link" href="#nacl">5장</a>에서 그 관문을 만납니다.</p>
+
+      <h3>🔀 규칙 사이에 순서가 없다</h3>
+      <p><code>iptables</code>에 익숙하면 규칙 순서부터 신경 쓰게 됩니다. 위에서부터 훑다가 처음 걸리는 줄이 이기니까요. SG에는 그 순서가 없습니다. 규칙을 표의 어느 자리에 넣든, 심지어 순서를 통째로 뒤섞어도 결과는 똑같아요. SG는 규칙을 전부 OR로 평가하거든요 — 하나라도 걸리면 통과입니다.</p>
+      <p>ENI 하나에 SG를 여러 개 붙일 수도 있는데, 이때도 셈법은 그대로입니다. 붙어 있는 SG들의 규칙을 전부 모아 합집합으로 보는 거예요. 어느 SG가 먼저 적용되는지는 물을 필요가 없습니다. 그런 순서 자체가 없거든요.</p>
+
+      <h3>🧠 상태를 기억한다</h3>
+      <p><a class="link" href="#route">3장</a>에서 NAT GW가 나간 연결을 표에 남겨 뒀다가, 돌아오는 응답만 그 표를 보고 돌려준다고 했죠. SG도 같은 종류의 기억을 합니다. 인바운드 규칙에 걸려 일단 들어온 연결이면, 그 응답이 나갈 때는 <span class="term" data-t="상태 유지">상태 유지</span> — 아웃바운드 규칙을 다시 검사하지 않습니다. 이미 허용된 대화의 뒷부분이라고 보는 거예요.</p>
+      <p>그래서 이상하게 들리는 조합이 실제로 성립합니다. 아웃바운드를 통째로 잠근 웹서버도, 443 요청에는 여전히 정상 응답을 돌려줘요. 응답은 애초에 아웃바운드 규칙을 볼 필요가 없었으니까요. 진짜로 아웃바운드 규칙이 필요한 건 서버가 스스로 먼저 거는 연결, 그러니까 새 연결일 때뿐입니다. 이 구분을 아래에서 직접 눌러 확인해 보세요.</p>
+
+      <div class="demo" id="sgEditor">
+        <span class="demo-tag">SG 규칙 편집기</span>
+        <p style="margin:0 0 4px">앱 서버 ENI에 붙은 <span class="mono">app-sg</span>입니다. 규칙을 켜고 끈 다음, 아래에서 패킷을 던져 보세요.</p>
+        <div class="picker" id="sgRules">
+          <button class="tog on" data-k="in443">IN tcp 443 ← 0.0.0.0/0</button>
+          <button class="tog" data-k="in8080">IN tcp 8080 ← sg-alb</button>
+          <button class="tog" data-k="in22">IN tcp 22 ← 0.0.0.0/0</button>
+          <button class="tog on" data-k="outall">OUT 전체 허용</button>
+        </div>
+        <div class="picker" id="sgProbe" style="margin-top:10px">
+          <button class="pick on" data-k="p443">🌐 인터넷 → 443</button>
+          <button class="pick" data-k="p8080">⚖️ ALB → 8080</button>
+          <button class="pick" data-k="p22">🔑 인터넷 → 22</button>
+          <button class="pick" data-k="presp">↩️ 443 요청의 응답 나가기</button>
+          <button class="pick" data-k="pout">📤 앱 → 외부 API 443</button>
+        </div>
+        <div id="sgOut"></div>
+      </div>
+
+      <div class="callout warn">
+        <h4>🪤 기본 SG(default)라는 함정</h4>
+        <p>VPC를 새로 만들면 <code>default</code>라는 이름의 SG가 자동으로 하나 딸려 옵니다. 이 SG의 인바운드 규칙을 열어 보면 source가 IP 대역이 아니라 <b>자기 자신</b>으로 되어 있어요. 같은 <code>default</code> SG를 붙인 리소스끼리는 그래서 전부 통합니다. 별생각 없이 EC2를 띄울 때마다 이 SG를 그대로 쓰다 보면, 애초에 의도한 적 없는 리소스 사이에서도 격리가 조용히 사라져 있어요. <a class="link" href="#pitfall">14장</a>에서 이 함정을 다시 짚습니다.</p>
+      </div>
+
+      <div class="oneline">
+        <div class="ol-ic">🛡️</div>
+        <div><div class="ol-t">4장 한 줄 요약</div><div class="ol-b">SG는 <b>ENI에 붙는 allow-only·순서없음·상태유지</b> 검문소다. 이 네 단어가 SG의 전부다.</div></div>
+      </div>
+
+      <div class="quiz" data-qid="q-sg" data-answer="b">
+        <div class="q-head">✅ 체크포인트</div>
+        <div class="q">웹서버 SG의 <b>아웃바운드 규칙을 전부 삭제</b>했다. 인바운드에는 443이 열려 있다. 무슨 일이 벌어지나?</div>
+        <button class="opt" data-opt="a"><span class="mk">A</span> 웹서버가 응답을 보내지 못해 모든 요청이 timeout된다</button>
+        <button class="opt" data-opt="b"><span class="mk">B</span> 웹 응답은 정상이지만, 서버가 먼저 거는 연결(외부 API 호출·패키지 설치)은 전부 막힌다</button>
+        <button class="opt" data-opt="c"><span class="mk">C</span> 아무 변화도 없다. 아웃바운드 규칙은 무시된다</button>
+        <button class="opt" data-opt="d"><span class="mk">D</span> SG는 아웃바운드 규칙을 삭제할 수 없다</button>
+        <div class="explain"><b>정답 B.</b> SG는 상태 유지라, 인바운드로 허용된 연결의 <b>응답</b>은 아웃바운드 규칙을 보지 않고 나갑니다(A 오답). 하지만 서버가 <b>먼저 거는 새 연결</b>은 명백한 아웃바운드라 규칙이 필요해요. 이 구분이 "아웃바운드를 잠가도 서비스는 멀쩡한데 배포만 깨지는" 현상의 정체입니다.</div>
+      </div>
+    </section>
 
   </main>
 </div>
@@ -937,6 +998,7 @@ const GLOSSARY = {
   "IGW": "Internet Gateway. VPC와 인터넷을 잇는 문. 퍼블릭 IP를 가진 리소스에 대해 1:1로 주소를 변환합니다. 퍼블릭 IP가 없으면 해 줄 일이 없어 패킷을 버립니다.",
   "NAT GW": "NAT Gateway. 프라이빗 서브넷의 리소스가 밖으로 나갈 때만 쓰는 단방향 문. 나간 연결을 기억했다가 그 응답만 돌려보냅니다.",
   "prefix list": "여러 CIDR을 묶어 이름 하나로 참조하는 목록. AWS가 관리하는 것(S3·CloudFront 대역 등)과 직접 만드는 것이 있고, 라우팅 테이블과 SG 규칙에서 쓸 수 있습니다.",
+  "Security Group": "ENI에 붙는 상태 유지 방화벽. allow 규칙만 가질 수 있고 규칙 사이에 순서가 없으며, 허용된 연결의 응답은 반대 방향 규칙 없이 통과합니다.",
   // @GLOSSARY_END
 };
 
@@ -1337,6 +1399,58 @@ if(location.hash){
   }
   wirePicker('#routePicker', render);
   render('same');
+})();
+
+/* ============================================================
+   데모 6 — SG 규칙 편집기 (4장)
+   ============================================================ */
+(function(){
+  const out = $('#sgOut'); if(!out) return;
+  let rules = null, probe = 'p443';
+
+  const PROBE = {
+    p443:  { dir:'in',  label:'인터넷(203.0.113.9) → app:443', need:'in443',
+             deny:"인바운드에 443을 여는 규칙이 없습니다. SG는 <b>기본이 전부 차단</b>이라, 명시적으로 열지 않으면 막힙니다.",
+             allow:"인바운드 443 규칙에 매치. 이 연결은 <b>상태로 기억</b>되므로 응답은 아웃바운드 규칙과 무관하게 나갑니다." },
+    p8080: { dir:'in',  label:'ALB(sg-alb) → app:8080', need:'in8080',
+             deny:"8080 규칙이 꺼져 있습니다. ALB가 정상이어도 <b>대상 쪽 SG</b>가 닫혀 있으면 헬스체크부터 실패해요.",
+             allow:"source가 IP가 아니라 <b>sg-alb</b>라는 점을 보세요. ALB 노드의 IP가 바뀌어도 이 규칙은 그대로 유효합니다 — <a class='link' href='#ref'>8장</a>의 주제입니다." },
+    p22:   { dir:'in',  label:'인터넷(203.0.113.9) → app:22', need:'in22',
+             deny:"22가 닫혀 있습니다. <b>이게 정상입니다.</b>",
+             allow:"<b style='color:var(--bad)'>열렸습니다. 그리고 이건 사고입니다.</b> 전 세계에서 SSH 무차별 대입이 들어옵니다. 필요하다면 SSM Session Manager를 쓰세요 — <a class='link' href='#pitfall'>14장</a>." },
+    presp: { dir:'resp', label:'app:443 → 인터넷(203.0.113.9) [응답]', need:null,
+             deny:"", allow:"" },
+    pout:  { dir:'out', label:'app → api.example.com:443 [새 연결]', need:'outall',
+             deny:"아웃바운드가 잠겨 있어 <b>앱이 먼저 거는 연결</b>이 막힙니다. 외부 API 호출·패키지 설치·SDK 호출이 전부 실패해요. 응답 트래픽과는 완전히 다른 이야기입니다.",
+             allow:"아웃바운드 전체 허용은 <b>기본값이자 대부분의 계정이 그대로 두는 설정</b>입니다. 편하지만, 침해당했을 때 데이터가 나가는 문이기도 해요 — <a class='link' href='#pitfall'>14장</a>." }
+  };
+
+  function render(){
+    if(!rules) return;
+    const p = PROBE[probe];
+    let ok, why;
+    if(p.dir === 'resp'){
+      ok = !!rules.in443;
+      why = ok
+        ? "<b>아웃바운드 규칙을 보지 않았습니다.</b> 인바운드로 허용된 연결의 응답이라 SG가 상태로 기억해 두었다가 그냥 통과시킵니다. <code>OUT 전체 허용</code>을 꺼도 결과가 같은지 직접 눌러 확인해 보세요."
+        : "애초에 인바운드 443이 닫혀 있어 <b>기억할 연결 자체가 없습니다</b>. 응답할 요청이 없으니 이 패킷은 존재하지 않아요.";
+    } else {
+      ok = !!rules[p.need];
+      why = ok ? p.allow : p.deny;
+    }
+    const on = Object.entries(rules).filter(([,v])=>v).map(([k])=>k);
+    out.innerHTML =
+      `<div class="verdict" style="margin-top:12px">
+         <span class="vmodel">${esc(p.label)}</span>
+         <span class="vres ${ok?'allow':'deny'}">${ok?'✅ 통과':'⛔ 차단'}</span>
+       </div>
+       <div class="callout ${ok?'why':'warn'}" style="margin-bottom:0"><p style="margin:0">${why}</p></div>
+       <div class="dim" style="font-size:12.5px; margin-top:8px">켜진 규칙 ${on.length}개 · SG는 이 규칙들을 <b>순서 없이 OR</b>로 평가합니다.</div>`;
+  }
+
+  rules = wireTogs('#sgRules', s => { rules = s; render(); });
+  wirePicker('#sgProbe', k => { probe = k; render(); });
+  render();
 })();
 </script>
 </body>
