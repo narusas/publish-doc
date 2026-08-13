@@ -29,11 +29,53 @@ ID_ATTR = re.compile(r'\bid\s*=\s*"([^"]+)"')
 SECTION_TAG = re.compile(r'<section\b([^>]*)>', re.I)
 DATA_TITLE = re.compile(r'\bdata-title\s*=\s*"([^"]*)"')
 ANCHOR_HREF = re.compile(r'\bhref\s*=\s*"#([^"]+)"')
-TERM_KEY = re.compile(r'class="term"[^>]*\bdata-t\s*=\s*"([^"]+)"')
+# 태그 하나를 통째로 잡은 뒤 class/data-t 속성을 순서와 무관하게 찾는다.
+# (class="term" ... data-t="..." 순서를 강제하면 속성 순서가 뒤집힌 경우를 놓친다)
+TAG_OPEN = re.compile(r'<[a-zA-Z][\w-]*\b[^>]*>')
+CLASS_ATTR = re.compile(r'\bclass\s*=\s*"([^"]*)"')
+DATA_T_ATTR = re.compile(r'\bdata-t\s*=\s*"([^"]*)"')
 GLOSSARY_BLOCK = re.compile(r'const\s+GLOSSARY\s*=\s*\{(.*?)//\s*@GLOSSARY_END', re.S)
 GLOSSARY_KEY = re.compile(r'"([^"]+)"\s*:')
-QUIZ_BLOCK = re.compile(r'<div\s+class="quiz"([^>]*)>(.*?)</div>\s*</section>', re.S)
+# 여는 태그만 정규식으로 찾고, 짝이 맞는 </div>는 중첩 깊이를 세어 직접 찾는다.
+# (이전 버전은 `</div>\s*</section>` 인접을 요구해서, 퀴즈 뒤에 다른 형제 요소가
+#  하나라도 더 있으면 그 섹션의 퀴즈 전체를 조용히 건너뛰었다)
+QUIZ_OPEN = re.compile(r'<div\s+class="quiz"([^>]*)>', re.I)
+DIV_TAG = re.compile(r'<(/?)div\b[^>]*>', re.I)
 DEMO_TAG = re.compile(r'class="demo"')
+
+
+def find_term_keys(src):
+    """class="term" 이 붙은 태그의 data-t 값을 속성 순서와 무관하게 모은다."""
+    keys = []
+    for m in TAG_OPEN.finditer(src):
+        tag = m.group(0)
+        cm = CLASS_ATTR.search(tag)
+        if not cm or 'term' not in cm.group(1).split():
+            continue
+        dm = DATA_T_ATTR.search(tag)
+        if dm:
+            keys.append(dm.group(1))
+    return keys
+
+
+def iter_quiz_blocks(src):
+    """<div class="quiz" ...>...</div> 를 </section> 인접 여부와 상관없이,
+    div 중첩 깊이를 세어 짝이 맞는 닫는 태그까지 (attrs, body) 로 내놓는다."""
+    for m in QUIZ_OPEN.finditer(src):
+        attrs = m.group(1)
+        pos = m.end()
+        depth = 1
+        end = None
+        for dm in DIV_TAG.finditer(src, pos):
+            if dm.group(1):  # </div>
+                depth -= 1
+                if depth == 0:
+                    end = dm.start()
+                    break
+            else:  # <div ...>
+                depth += 1
+        if end is not None:
+            yield attrs, src[pos:end]
 
 
 def check(path, allow_missing_anchors=False):
@@ -83,15 +125,16 @@ def check(path, allow_missing_anchors=False):
     # 6. 용어 ↔ 사전
     gm = GLOSSARY_BLOCK.search(src)
     gkeys = set(GLOSSARY_KEY.findall(gm.group(1))) if gm else set()
-    if not gm and TERM_KEY.search(src):
+    term_keys = find_term_keys(src)
+    if not gm and term_keys:
         problems.append('[glossary] GLOSSARY 블록(… // @GLOSSARY_END)을 찾을 수 없음')
-    for t in sorted(set(TERM_KEY.findall(src))):
+    for t in sorted(set(term_keys)):
         if t not in gkeys:
             problems.append(f'[glossary] GLOSSARY에 없는 용어: {t}')
 
     # 7. 퀴즈 정합성
     qids = []
-    for attrs, body in QUIZ_BLOCK.findall(src):
+    for attrs, body in iter_quiz_blocks(src):
         qid = re.search(r'data-qid\s*=\s*"([^"]+)"', attrs)
         ans = re.search(r'data-answer\s*=\s*"([^"]+)"', attrs)
         if not qid:

@@ -10,6 +10,16 @@
     <button class="opt" data-opt="a">A</button>
   </div>
 </section>
+<section id="s-quiz-not-last" data-title="퀴즈가 섹션의 마지막 요소가 아님">
+  <div class="quiz" data-qid="q2" data-answer="z">
+    <button class="opt" data-opt="a">A</button>
+    <div class="explain">설명</div>
+  </div>
+  <p>퀴즈 다음에 오는 문단입니다.</p>
+</section>
+<section id="s-term-reversed" data-title="용어 속성 순서 반전">
+  <span data-t="없는용어2" class="term">역순 용어</span>
+</section>
 <script>const GLOSSARY = { "있는용어": "설명" };
 // @GLOSSARY_END
 fetch('/x');
