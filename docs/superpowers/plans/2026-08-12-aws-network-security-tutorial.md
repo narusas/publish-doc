@@ -18,7 +18,11 @@
 - **언어는 한국어.** 시리즈 톤 — 존댓말 서술, 짧은 단정문, 오해를 먼저 깨고 사실을 세우는 순서.
 - **접근성:** 모든 인터랙티브 요소에 `:focus-visible` 아웃라인, `prefers-reduced-motion: reduce` 시 트랜지션 무력화, 토글에 `aria-pressed`, 드로어에 `aria-expanded`.
 - **시리즈 색상:** 이 문서의 강조색은 `--vpc:#fb7185` (로즈). `index.html` 카드에도 같은 값을 쓴다.
-- **커밋 규칙:** 태스크마다 1커밋. 커밋 전 반드시 `python3 tools/check_tutorial.py aws_network_security.html`이 통과해야 한다.
+- **커밋 규칙:** 태스크마다 1커밋. 커밋 전 반드시 검사 스크립트가 **exit 0**으로 통과해야 한다.
+  - Task 4~18 (문서를 증분으로 채우는 동안): `python3 tools/check_tutorial.py --allow-missing-anchors aws_network_security.html`
+    히어로의 `.map-grid`가 아직 만들지 않은 섹션을 가리키므로 앵커 검사만 유예한다. **다른 검사는 전부 적용된다.**
+  - Task 19 이후 (모든 섹션이 존재): 플래그 없이 `python3 tools/check_tutorial.py aws_network_security.html`
+  - 어느 경우든 **exit 0이 게이트다.** `grep`으로 출력을 걸러 통과한 척하지 않는다.
 - **건드리지 않을 것:** `index.html`과 `network_tutorial.html`에 이미 커밋되지 않은 작업 중 변경이 있다. `index.html`은 Task 20에서 **카드 추가만** 얹고, `network_tutorial.html`은 어떤 태스크에서도 열지 않는다.
 
 ## 파일 구조
@@ -194,7 +198,8 @@ git commit -m "AWS 동작 사실 검증(V1~V5) 결과 기록"
 
 **Interfaces:**
 - Consumes: 없음
-- Produces: CLI `python3 tools/check_tutorial.py <파일...>`. 위반이 없으면 stdout에 `OK <파일> (섹션 N · 퀴즈 N · 데모 N)`을 찍고 exit 0. 위반이 있으면 `FAIL <파일>:` 아래에 `  - [검사이름] 설명` 줄을 나열하고 exit 1. Task 3~20의 모든 커밋 직전 단계가 이 명령을 호출한다.
+- Produces: CLI `python3 tools/check_tutorial.py [--allow-missing-anchors] <파일...>`. 위반이 없으면 stdout에 `OK <파일> (섹션 N · 퀴즈 N · 데모 N)`을 찍고 exit 0. 위반이 있으면 `FAIL <파일>:` 아래에 `  - [검사이름] 설명` 줄을 나열하고 exit 1. Task 3~20의 모든 커밋 직전 단계가 이 명령을 호출한다.
+- `--allow-missing-anchors`: 내부 앵커 검사만 건너뛴다. 문서를 장별로 증분 작성하는 동안 히어로의 목차가 아직 없는 섹션을 가리키기 때문이며, **이 플래그로도 나머지 검사는 전부 적용된다.** 플래그를 쓰면 OK 줄 끝에 `[앵커 검사 유예]`가 붙어 유예 사실이 출력에 남는다.
 
 - [ ] **Step 1: 실패하는 테스트를 먼저 만든다**
 
@@ -265,7 +270,7 @@ QUIZ_BLOCK = re.compile(r'<div\s+class="quiz"([^>]*)>(.*?)</div>\s*</section>', 
 DEMO_TAG = re.compile(r'class="demo"')
 
 
-def check(path):
+def check(path, allow_missing_anchors=False):
     problems = []
     try:
         src = open(path, encoding='utf-8').read()
@@ -302,9 +307,12 @@ def check(path):
             problems.append(f'[section] id 없음: <section{attrs[:60]}>')
 
     # 5. 내부 앵커 해석
-    for a in sorted(set(ANCHOR_HREF.findall(src))):
-        if a not in idset:
-            problems.append(f'[anchor] 가리키는 id가 없음: #{a}')
+    # 문서를 장별로 증분 작성하는 동안에는 목차가 아직 없는 섹션을 가리키므로
+    # --allow-missing-anchors 로 이 검사만 유예할 수 있다. 나머지는 그대로 적용된다.
+    if not allow_missing_anchors:
+        for a in sorted(set(ANCHOR_HREF.findall(src))):
+            if a not in idset:
+                problems.append(f'[anchor] 가리키는 id가 없음: #{a}')
 
     # 6. 용어 ↔ 사전
     gm = GLOSSARY_BLOCK.search(src)
@@ -341,20 +349,26 @@ def check(path):
 
 
 def main(argv):
-    paths = argv[1:]
+    allow = '--allow-missing-anchors' in argv[1:]
+    paths = [a for a in argv[1:] if not a.startswith('-')]
+    unknown = [a for a in argv[1:] if a.startswith('-') and a != '--allow-missing-anchors']
+    if unknown:
+        print(f'알 수 없는 옵션: {" ".join(unknown)}', file=sys.stderr)
+        return 2
     if not paths:
-        print('사용법: python3 tools/check_tutorial.py <파일...>', file=sys.stderr)
+        print('사용법: python3 tools/check_tutorial.py [--allow-missing-anchors] <파일...>', file=sys.stderr)
         return 2
     failed = False
+    note = ' [앵커 검사 유예]' if allow else ''
     for p in paths:
-        problems, (ns, nq, nd) = check(p)
+        problems, (ns, nq, nd) = check(p, allow)
         if problems:
             failed = True
             print(f'FAIL {p}:')
             for msg in problems:
                 print(f'  - {msg}')
         else:
-            print(f'OK {p} (섹션 {ns} · 퀴즈 {nq} · 데모 {nd})')
+            print(f'OK {p} (섹션 {ns} · 퀴즈 {nq} · 데모 {nd}){note}')
     return 1 if failed else 0
 
 
@@ -366,6 +380,16 @@ if __name__ == '__main__':
 
 Run: `python3 tools/check_tutorial.py tools/testdata/bad.html`
 Expected: exit 1. 출력에 `[external]`, `[meta]`, `[id]`, `[section]`, `[anchor]`, `[glossary]`, `[quiz]` 태그가 **각각 최소 1줄씩** 나타나야 한다. 하나라도 빠지면 해당 검사가 동작하지 않는 것이므로 정규식을 고친다.
+
+- [ ] **Step 3-1: 플래그가 앵커 검사만 유예하는지 확인**
+
+Run: `python3 tools/check_tutorial.py --allow-missing-anchors tools/testdata/bad.html`
+Expected: 여전히 exit 1이고, `[anchor]` 줄은 **사라지되** `[external]`·`[meta]`·`[id]`·`[section]`·`[glossary]`·`[quiz]`는 **그대로 남는다.**
+
+이 플래그가 다른 검사까지 무력화하면 15개 태스크의 커밋 게이트가 통째로 무의미해진다. 반드시 확인한다.
+
+Run: `python3 tools/check_tutorial.py --bogus tools/testdata/bad.html`
+Expected: exit 2, `알 수 없는 옵션: --bogus`. 오타 난 플래그가 조용히 무시되면 안 된다.
 
 - [ ] **Step 4: 기존 7개 파일에 돌려 오탐이 없는지 확인**
 
@@ -641,18 +665,14 @@ git commit -m "AWS 네트워크 보안 튜토리얼: 문서 뼈대"
 })();
 ```
 
-- [ ] **Step 5: 검사 실행 — 앵커 위반이 예상된다**
+- [ ] **Step 5: 검사 실행**
 
-Run: `python3 tools/check_tutorial.py aws_network_security.html`
-Expected: **FAIL**. `.map-grid`가 아직 없는 섹션 16개를 가리키므로 `[anchor] 가리키는 id가 없음: #outside` 같은 줄이 나온다. 이건 정상이다.
+`.map-grid`가 아직 만들지 않은 섹션 17개를 가리키므로, 이 태스크부터 Task 18까지는 앵커 검사를 유예한다.
 
-이 태스크에서는 **`[anchor]` 이외의 위반이 0건인지만** 확인한다:
+Run: `python3 tools/check_tutorial.py --allow-missing-anchors aws_network_security.html`
+Expected: **exit 0**, `OK aws_network_security.html (섹션 1 · 퀴즈 0 · 데모 0) [앵커 검사 유예]`
 
-```bash
-python3 tools/check_tutorial.py aws_network_security.html | grep -v '\[anchor\]'
-```
-
-`FAIL` 줄 말고 다른 `- [...]` 줄이 하나도 없어야 한다. Task 19가 끝나면 `[anchor]`도 사라진다.
+플래그 없이 돌리면 FAIL이 나오는 게 정상이다 — Task 19에서 모든 섹션이 생기면 플래그 없이도 통과한다.
 
 - [ ] **Step 6: 브라우저 확인**
 
@@ -677,7 +697,7 @@ Task 5부터 19까지는 전부 같은 모양이다. 각 태스크의 Step은 �
 1. `<section>` HTML을 `<main>` 안 지정된 위치에 추가
 2. 데모 IIFE를 `<script>` 끝에 추가 (데모가 있는 장만)
 3. 새 용어를 `GLOSSARY`에 추가 (`// @GLOSSARY_END` 앞)
-4. 검사: `python3 tools/check_tutorial.py aws_network_security.html | grep -v '\[anchor\]'` → `- [` 로 시작하는 줄이 0개
+4. 검사: `python3 tools/check_tutorial.py --allow-missing-anchors aws_network_security.html` → **exit 0** (`OK … [앵커 검사 유예]`)
 5. 브라우저 확인: 해당 장의 데모를 전부 눌러보고 콘솔 오류 0건
 6. 커밋: `git add aws_network_security.html && git commit -m "AWS 네트워크 보안 튜토리얼: N장 <제목>"`
 
@@ -2555,7 +2575,7 @@ IAM 거부가 Endpoint 거부보다 **우선 표시**된다(코드의 `else if(!
 체크리스트를 3개 켜고 새로고침해 **상태가 유지되는지**, `↺ 초기화` 후 전부 꺼지는지 확인한다.
 
 ```bash
-python3 tools/check_tutorial.py aws_network_security.html | grep -v '\[anchor\]'
+python3 tools/check_tutorial.py --allow-missing-anchors aws_network_security.html
 git add aws_network_security.html
 git commit -m "AWS 네트워크 보안 튜토리얼: 14장 함정과 원칙, 15장 마무리"
 ```

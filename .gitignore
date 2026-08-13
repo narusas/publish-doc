@@ -1,0 +1,5 @@
+# 에이전트 작업용 스크래치 (원장·브리프·리뷰 패키지)
+.superpowers/
+
+# macOS
+.DS_Store
