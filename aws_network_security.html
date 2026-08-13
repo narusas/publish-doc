@@ -175,6 +175,7 @@ pre[class*="language-"]{
 code:not([class*="language-"]){
   font-family:var(--mono); font-size:.86em; background:var(--panel-2);
   border:1px solid var(--border); border-radius:6px; padding:1px 6px; color:#ffd9a8;
+  overflow-wrap:anywhere;
 }
 pre .hl-line{display:block; background:rgba(56,189,248,.14); box-shadow:inset 3px 0 0 var(--accent); margin:0 -1em; padding:0 1em}
 
@@ -630,13 +631,13 @@ button:focus-visible, .pick:focus-visible, .term:focus-visible, a:focus-visible,
       <h2 class="sec-title">다 열었는데<br>왜 timeout인가</h2>
       <p class="lead">
         EC2에 웹서버를 하나 올렸습니다. 보안 그룹 인바운드에 <code>0.0.0.0/0</code>의 80번을 열어 뒀어요.
-        <code>curl</code>을 날리면 60초를 꼬박 채우고서야 죽습니다. connection refused가 아니라 그냥 무응답이에요.
+        <code>curl</code>을 날리면 60초쯤 꼬박 채우고서야 죽습니다. connection refused가 아니라 그냥 무응답이에요.
         SG 규칙을 다시 열어 확인해도 80번은 분명히 거기 있습니다.
       </p>
       <p class="lead">버그가 아닙니다. <strong>패킷이 SG 앞에 도착조차 못 한 것</strong>일 수 있어요.</p>
       <p>
-        SG 규칙 하나만 들여다보는 습관이 여기서 무너집니다. 요청 하나가 서버에 닿으려면 SG 말고도 통과해야 하는 관문이 몇 개 더 있고,
-        그 순서를 모르면 어디서 막혔는지 짐작조차 할 수 없어요. IAM 튜토리얼이 API 호출 하나가 통과해야 하는 관문의 목록과 순서를 그렸다면,
+        SG 규칙 하나만 들여다보는 습관이 여기서 무너집니다. 지금 이 요청은 SG에 닿기도 전에 라우팅 테이블과 NACL을 이미 거쳐 왔어야 했어요.
+        그 순서를 모르면 어디서 막혔는지는 짐작에 그칩니다. IAM 튜토리얼이 API 호출 하나가 통과해야 하는 관문의 목록과 순서를 그렸듯,
         이 문서는 같은 그림을 패킷 하나에 대해 그립니다.
       </p>
 
@@ -933,7 +934,7 @@ button:focus-visible, .pick:focus-visible, .term:focus-visible, a:focus-visible,
       <p class="lead">SG는 규칙이 몇 줄 안 되는데도 오해가 많습니다. 대부분은 <strong><code>iptables</code>처럼 생각해서</strong> 생깁니다.</p>
 
       <h3>🔌 인스턴스가 아니라 ENI에 붙는다</h3>
-      <p><span class="term" data-t="ENI">ENI</span> 얘기는 <a class="link" href="#vpc">2장</a>에서 이미 나왔죠 — SG가 실제로 붙는 자리는 인스턴스가 아니라 그 ENI라고요. 그러니 인스턴스에 ENI가 두 개면 SG도 두 벌입니다. 하나를 아무리 넓게 열어도, 다른 ENI의 SG가 닫혀 있으면 그 경로는 그대로 막혀 있어요.</p>
+      <p><span class="term" data-t="ENI">ENI</span> 얘기는 <a class="link" href="#attach">1장</a>에서 이미 나왔죠 — SG가 실제로 붙는 자리는 인스턴스가 아니라 그 ENI라고요. 그러니 인스턴스에 ENI가 두 개면 SG도 두 벌입니다. 하나를 아무리 넓게 열어도, 다른 ENI의 SG가 닫혀 있으면 그 경로는 그대로 막혀 있어요.</p>
 
       <h3>✅ allow만 있다</h3>
       <p>SG 규칙 목록을 열어 보면 전부 허용(allow) 줄뿐입니다. 차단(deny) 규칙이라는 선택지 자체가 없어요. 그런데 기본값이 이미 전부 차단이니, 이 목록이 하는 일은 사실 구멍을 뚫는 것 하나뿐입니다. 문을 잠그는 규칙이 아니라, 문에 뚫을 구멍의 목록인 셈이죠.</p>
@@ -973,7 +974,7 @@ button:focus-visible, .pick:focus-visible, .term:focus-visible, a:focus-visible,
 
       <div class="oneline">
         <div class="ol-ic">🛡️</div>
-        <div><div class="ol-t">4장 한 줄 요약</div><div class="ol-b">SG는 <b>ENI에 붙는 allow-only·순서없음·상태유지</b> 검문소다. 이 네 단어가 SG의 전부다.</div></div>
+        <div><div class="ol-t">4장 한 줄 요약</div><div class="ol-b">SG는 <b>ENI에 붙는 allow-only·순서없음·상태유지</b> 검문소다. 규칙이 이해 안 될 때는 이 넷 중 하나를 놓친 것이다.</div></div>
       </div>
 
       <div class="quiz" data-qid="q-sg" data-answer="b">
@@ -1004,7 +1005,7 @@ button:focus-visible, .pick:focus-visible, .term:focus-visible, a:focus-visible,
       <h3>🧠 기억하지 않는다 — 함정의 원천</h3>
       <p><a class="link" href="#sg">4장</a>에서 SG는 나간 연결을 기억해 뒀다가, 그 응답은 규칙 검사 없이 통과시킨다고 했습니다. NACL에는 그 기억이 없어요. 패킷 하나하나를 매번 처음 보는 것처럼 독립적으로 판정합니다 — <span class="term" data-t="무상태">무상태</span>. 그래서 요청이 통과했다고 해서 그 응답까지 자동으로 따라 나가는 게 아닙니다. <b>응답 패킷도 신규 패킷과 똑같이 규칙 검사를 다시 받아요.</b></p>
       <p>이게 왜 함정인지는 순서를 그대로 따라가 보면 드러납니다. 클라이언트가 <span class="mono">203.0.113.9:51514 → 서버:443</span>으로 요청을 겁니다. 서버는 응답을 만들어 돌려보내는데, 이 패킷은 방향이 뒤집혀 있어요 — <span class="mono">서버:443 → 203.0.113.9:51514</span>. NACL 아웃바운드 규칙은 <b>목적지 포트</b>로 매치하니, 이 패킷에서 매치 대상이 되는 건 443이 아니라 클라이언트가 그때그때 골라 쓰는 <span class="term" data-t="ephemeral 포트">ephemeral 포트</span>예요. 보통 1024~65535 범위에서 고르는 포트입니다.</p>
-      <p>그러니 "아웃바운드는 443만 허용해 뒀다"는 설정은 이 응답을 알아보지 못합니다. 요청은 인바운드 443을 타고 멀쩡히 들어오는데, 응답은 나갈 문이 없어요. <b>서버 로그에는 200 OK가 남아 있는데, 클라이언트는 timeout으로 끝나는 조합</b>이 바로 이렇게 만들어집니다. 이 어긋남은 여기서 끝나지 않아요. <a class="link" href="#order">6장</a>이 관문 전체를 잇는 체인에서 이 자리를 다시 짚고, <a class="link" href="#trace">7장</a>은 이런 timeout을 실제로 진단하는 법을 다룹니다. <a class="link" href="#blueprint">13장</a>의 3-tier 레퍼런스에도 이 함정이 그대로 남아 있어요.</p>
+      <p>그러니 "아웃바운드는 443만 허용해 뒀다"는 설정은 이 응답을 알아보지 못합니다. 요청은 인바운드 443을 타고 멀쩡히 들어오는데, 응답은 나갈 문이 없어요. <b>서버 로그에는 200 OK가 남아 있는데, 클라이언트는 timeout으로 끝나는 조합</b>이 바로 이렇게 만들어집니다. 이 어긋남은 여기서 끝나지 않아요. <a class="link" href="#order">6장</a>이 관문 전체를 잇는 체인에서 이 자리를 다시 짚고, <a class="link" href="#trace">7장</a>은 이런 timeout을 실제로 진단하는 법을 다룹니다. <a class="link" href="#blueprint">13장</a>의 3-tier 레퍼런스에서도 이 비대칭이 응답 구간에서 마지막으로 한 번 더 드러납니다.</p>
       <p>요청과 응답이 네 관문을 실제로 통과하는지, 직접 눌러 확인해 보세요.</p>
 
       <div class="demo" id="naclCmp">
@@ -1179,7 +1180,7 @@ button:focus-visible, .pick:focus-visible, .term:focus-visible, a:focus-visible,
       <p>그럴듯한 추론이 하나 있습니다. NACL은 서브넷 경계에서 검문하니, 거기서 막힌 패킷은 ENI 근처에도 못 갔을 거라고, 그러니 로그도 안 남을 거라고 짐작하기 쉽습니다.</p>
       <p>틀렸습니다. Flow Logs의 <code>action</code> 필드 정의는 <code>REJECT</code>의 원인으로 <b>보안 그룹과 네트워크 ACL을 나란히</b> 열거합니다. 둘 중 어느 쪽이 막았든, 남는 값은 똑같이 <code>REJECT</code>예요.</p>
       <p>그래서 단독 <code>REJECT</code> 한 줄만 보고는 SG와 NACL을 가릴 수 없습니다. 인바운드가 어느 쪽에 막히든 패킷은 인스턴스에 닿지 못하고, 응답도 만들어지지 않으니 로그는 딱 한 줄뿐이에요. 원인은 다른데 흔적은 같습니다.</p>
-      <p>그럼 진짜 신호는 어디 있을까요. 한 줄이 아니라 <b>짝</b>에 있습니다. 같은 5-tuple에 대해 <code>ACCEPT</code> 다음에 <code>REJECT</code>가 따라붙는다면 — 요청은 인스턴스까지 갔고(<code>ACCEPT</code>), 그 응답이 막혔다(<code>REJECT</code>)는 뜻입니다.</p>
+      <p>그럼 진짜 신호는 어디 있을까요. 한 줄이 아니라 <b>짝</b>에 있습니다. 같은 연결이 오가는 두 기록에서 <code>ACCEPT</code> 다음에 <code>REJECT</code>가 따라붙는다면 — 요청은 인스턴스까지 갔고(<code>ACCEPT</code>), 그 응답이 막혔다(<code>REJECT</code>)는 뜻입니다.</p>
       <p>이 조합은 SG가 절대 만들 수 없습니다. <a class="link" href="#sg">4장</a>에서 본 <span class="term" data-t="상태 유지">상태 유지</span>가 여기서 결정적으로 작용해요. SG는 허용된 인바운드의 응답을 아웃바운드 규칙과 무관하게 무조건 통과시키니까요. <code>ACCEPT</code> 뒤에 오는 <code>REJECT</code>는 그러니 SG의 산물일 수가 없는, 원리상 불가능한 조합입니다. 남는 건 하나 — <span class="term" data-t="NACL">NACL</span>이 응답을 막았다는 확정 신호.</p>
       <p>로그가 아예 한 줄도 없을 때는 또 다른 이야기입니다. SG든 NACL이든 인바운드를 막았다면 최소한 <code>REJECT</code> 한 줄은 남기니까요. 기록 자체가 없다는 건 패킷이 ENI 근처에도 오지 못했다는 뜻이고, 그때 볼 곳은 로그가 아니라 <span class="term" data-t="라우팅 테이블">라우팅 테이블</span>·퍼블릭 IP·서브넷입니다.</p>
 
@@ -1397,7 +1398,7 @@ button:focus-visible, .pick:focus-visible, .term:focus-visible, a:focus-visible,
       </div>
 
       <h3>📦 어디에 붙는가</h3>
-      <p>방금 본 다섯 가지 반응은 전부 WAF가 이미 붙어 있다는 전제 위에서 나온 겁니다. 그런데 WAF는 SG처럼 아무 리소스에나 걸 수 있는 게 아니에요. 독립적으로 서 있는 장비가 아니라 <b>CloudFront·ALB·API Gateway·AppSync</b>, 이 넷 중 하나에 붙어야만 존재하는 부착물입니다. 붙을 자리가 없으면 WAF도 없어요 — NLB는 L4에서 IP와 포트만 다룰 뿐 HTTP라는 개념 자체가 없으니, WAF를 걸 자리가 애초에 생기지 않습니다.</p>
+      <p>방금 본 다섯 가지 반응은 전부 WAF가 이미 붙어 있다는 전제 위에서 나온 겁니다. 그런데 WAF는 SG처럼 아무 리소스에나 걸 수 있는 게 아니에요. 독립적으로 서 있는 장비가 아니라, 정해진 리소스에만 붙어야 존재하는 부착물입니다 — 대표적으로 <b>CloudFront·ALB·API Gateway·AppSync</b>이고, Cognito 사용자 풀이나 App Runner처럼 이후 지원이 추가된 자리도 여럿 있어요. 붙을 자리가 없으면 WAF도 없습니다 — NLB는 L4에서 IP와 포트만 다룰 뿐 HTTP라는 개념 자체가 없으니, WAF를 걸 자리가 애초에 생기지 않습니다.</p>
 
       <h3>🕳️ 가장 흔한 구멍 — 우회</h3>
       <p>CloudFront에 WAF를 걸었습니다. SQL 인젝션 규칙도, 봇 차단도 넣었어요. 방금 데모에서 본 그대로 잘 작동합니다.</p>
@@ -1436,7 +1437,7 @@ button:focus-visible, .pick:focus-visible, .term:focus-visible, a:focus-visible,
 
       <h3>🚪 두 가지 Endpoint</h3>
       <p>이상하게 들리지만 사실입니다. S3는 VPC 안에 사는 리소스가 아니라, AWS가 VPC 바깥에서 운영하는 별도의 서비스거든요. "같은 리전"과 "같은 네트워크"는 다른 말입니다. 왕복을 줄이는 길을 따로 뚫지 않는 한, 프라이빗 서브넷의 앱은 <a class="link" href="#route">3장</a>에서 본 NAT GW를 거쳐 인터넷으로 나갔다가 S3의 퍼블릭 엔드포인트를 찾아 돌아오는 수밖에 없습니다.</p>
-      <p><span class="term" data-t="VPC Endpoint">VPC Endpoint</span>는 그 왕복 자체를 없앱니다. VPC 안에 AWS 서비스로 가는 진입점을 직접 심어 두는 방식이에요. 다만 이 진입점, 하나로 통일되어 있지 않습니다.</p>
+      <p><span class="term" data-t="VPC Endpoint">VPC Endpoint</span>는 그 왕복 자체를 없앱니다. VPC 안에 AWS 서비스로 가는 진입점을 직접 심어 두는 방식이에요. 다만 이 진입점은 하나로 통일되어 있지 않습니다.</p>
 
       <div class="cmp2">
         <div class="cmp-col" style="--c:var(--g-route)">
@@ -1495,7 +1496,7 @@ button:focus-visible, .pick:focus-visible, .term:focus-visible, a:focus-visible,
       </div>
 
       <p><span class="mono">logs/*</span> 접두어 정책에 <span class="mono">GetObject만 허용</span>을 같이 골라 보면 흥미로운 조합이 나옵니다. IAM은 이 요청을 허용했는데도 막혀요 — 권한은 충분한데 <b>이 통로로는 못 지나가는</b> 경우입니다. 같은 역할이 인터넷을 경유해서 왔다면 결과가 달랐을 수도 있어요. Endpoint 정책이 IAM과 별개로 존재하는 이유가 정확히 이겁니다.</p>
-      <p>그런데 이 관계, 뒤집을 수도 있습니다. Endpoint 정책이 "어떤 요청을 들여보낼까"를 정한다면, IAM 쪽에서도 "어떤 요청만 인정할까"를 정할 수 있거든요. 그 조건절에 넣을 수 있는 것 중 하나가, 바로 이 요청이 어떤 Endpoint를 거쳐 왔는지입니다.</p>
+      <p>그런데 이 관계는 거꾸로도 성립합니다. Endpoint 정책이 "어떤 요청을 들여보낼까"를 정한다면, IAM 쪽에서도 "어떤 요청만 인정할까"를 정할 수 있거든요. 그 조건절에 넣을 수 있는 것 중 하나가, 바로 이 요청이 어떤 Endpoint를 거쳐 왔는지입니다.</p>
 
       <div class="callout key">
         <h4>🔑 두 축이 곱해지는 자리</h4>
@@ -1544,7 +1545,7 @@ button:focus-visible, .pick:focus-visible, .term:focus-visible, a:focus-visible,
 
       <h3>🚇 Transit Gateway — 허브를 둔다</h3>
       <p>VPC가 셋을 넘어가면 Peering만으로 버티기 시작합니다. 넷이면 여섯 개, 다섯이면 열 개 — 늘어나는 속도가 VPC 개수보다 훨씬 빠릅니다. 조합의 개수는 <span class="mono">N×(N−1)/2</span>거든요. VPC가 열 개면 벌써 마흔다섯 개의 Peering을 각각 만들고 각각의 라우팅 테이블을 관리해야 합니다.</p>
-      <p><span class="term" data-t="Transit Gateway">Transit Gateway</span>는 이 조합을 없애 버립니다. VPC마다 Peering을 여러 번 맺는 대신, 허브 하나에 딱 한 번씩만 붙이면 끝이에요. 라우팅 테이블도 각 VPC가 아니라 <b>허브 쪽이 갖습니다.</b></p>
+      <p><span class="term" data-t="Transit Gateway">Transit Gateway</span>는 이 조합을 없애 버립니다. VPC마다 Peering을 여러 번 맺는 대신, 허브 하나에 딱 한 번씩만 붙이면 끝이에요. 다만 라우팅까지 허브가 대신 떠안는 건 아닙니다 — <b>각 VPC는 여전히 자기 서브넷 라우팅 테이블에 TGW로 가는 경로를 직접 넣어야 합니다.</b> 이 줄을 빠뜨리면 방금 본 편도 통행, 그 timeout이 TGW에서도 똑같이 재현돼요. 바뀌는 건 <span class="mono">N×(N−1)/2</span>개였던 조합별 경로 관리가 각 VPC가 아니라 <b>허브의 라우팅 테이블 쪽</b>으로 옮겨 간다는 점입니다.</p>
       <p>8장에서 미뤄 둔 이야기가 여기서도 한 번 더 나옵니다. TGW로 이은 VPC 사이에도 SG 참조가 되는 것으로 알려져 있는데, 조건이 Peering보다 좁습니다. <b>인바운드 규칙에서만</b> 쓸 수 있고, 트랜짓 게이트웨이와 각 VPC의 연결(attachment) 양쪽에서 이 기능을 따로 켜야 동작하며, 리전 조건도 그대로 남아 있는 것으로 보여요. 이 조합을 실제로 쓸 계획이라면 AWS 공식 문서에서 최신 제약을 다시 확인하는 편이 낫습니다.</p>
       <p>허브를 두고 나면 <a class="link" href="#nfw">9장</a>에서 그림으로만 그려 뒀던 인스펙션 VPC 구성이 실제로 설 자리를 얻습니다. 방화벽을 VPC마다 두는 대신 인스펙션 전용 VPC 하나를 TGW에 함께 붙이고, TGW 라우팅으로 다른 VPC 간 트래픽을 그 VPC로 몰아 전부 지나가게 만드는 구성이에요. 방화벽 한 대가 자기 VPC 안의 트래픽만 보던 자리에서, 허브에 모인 VPC 전체의 트래픽을 보는 자리로 옮겨 가는 셈입니다.</p>
 
@@ -1775,9 +1776,9 @@ button:focus-visible, .pick:focus-visible, .term:focus-visible, a:focus-visible,
       <h3>2️⃣ 인터넷에 열린 위험한 포트 찾기</h3>
       <pre><code class="language-bash">aws ec2 describe-security-groups \
   --filters Name=ip-permission.cidr,Values=0.0.0.0/0 \
-  --query 'SecurityGroups[].{Id:GroupId,Name:GroupName}' \
-  --output table</code></pre>
-      <p><a class="link" href="#pitfall">14장</a> 첫 항목 — <code>0.0.0.0/0</code>에 열린 22번 — 을 실제로 점검하는 명령입니다. 결과에 22나 3389가 섞여 있다면, 지금 이 순간에도 스캔을 받고 있다고 봐도 좋습니다.</p>
+  --query 'SecurityGroups[].{Id:GroupId,Name:GroupName,OpenPorts:IpPermissions[?contains(IpRanges[].CidrIp, `0.0.0.0/0`)].[FromPort,ToPort]}' \
+  --output json</code></pre>
+      <p><a class="link" href="#pitfall">14장</a> 첫 항목 — <code>0.0.0.0/0</code>에 열린 22번 — 을 실제로 점검하는 명령입니다. <code>OpenPorts</code> 배열에 22나 3389가 보인다면, 지금 이 순간에도 스캔을 받고 있다고 봐도 좋습니다. 다만 이 필터는 <code>0.0.0.0/0</code> 규칙이 하나라도 있는 SG를 전부 잡으므로, 443처럼 의도한 규칙을 쓰는 <code>alb-sg</code> 같은 것도 함께 나올 수 있어요 — <code>OpenPorts</code> 안의 실제 값을 보고 판단하세요.</p>
 
       <h3>3️⃣ 라우팅 테이블 확인</h3>
       <pre><code class="language-bash">aws ec2 describe-route-tables \
@@ -2124,7 +2125,7 @@ if(location.hash){
       sgClass: "allow", sgLabel: "가능",
       where: "서브넷+SG <b>조합</b>당 1개가 만들어지고, 같은 조합을 쓰는 계정 내 다른 함수와 공유됩니다.",
       trap: "동시 실행이 늘어도 ENI는 늘지 않습니다. 늘어나는 건 서로 다른 서브넷·SG 조합의 개수뿐이에요.",
-      note: "<span class='term' data-t='Hyperplane ENI'>Hyperplane ENI</span>라는 이름부터가 힌트입니다. \"동시 실행 1000개 = ENI 1000개\"라는 흔한 계산은 이 공유 모델과 맞지 않아요."
+      note: "<b>Hyperplane ENI</b>라는 이름부터가 힌트입니다 — 함수 하나가 독점하는 게 아니라 조합 단위로 나눠 쓰는 자원이라는 뜻이에요. \"동시 실행 1000개 = ENI 1000개\"라는 흔한 계산은 이 공유 모델과 맞지 않습니다."
     },
     vpce: {
       eni: "O — 지정한 서브넷마다",
@@ -2636,7 +2637,7 @@ if(location.hash){
         ["2","111122223333","eni-0a1b2c3d","203.0.113.9","10.0.1.42","51514","443","6","10","1420","1690000000","1690000060","ACCEPT","OK"],
         ["2","111122223333","eni-0a1b2c3d","10.0.1.42","203.0.113.9","443","51514","6","8","1180","1690000000","1690000060","REJECT","OK"]
       ],
-      n:"<b>여기가 진짜 단서입니다.</b> 같은 5-tuple에 대해 <code>ACCEPT</code> 한 줄과 <code>REJECT</code> 한 줄이 <b>짝으로</b> 남았습니다. 요청은 인스턴스까지 갔고(<code>ACCEPT</code>), <b>응답이 막혔다</b>(<code>REJECT</code>)는 뜻이에요. <br><br><b>SG는 이 조합을 원리상 만들 수 없습니다.</b> 상태 저장이라 허용된 인바운드의 응답을 아웃바운드 규칙과 무관하게 무조건 통과시키니까요. 그러니 이 짝이 보이면 <b>NACL이 응답을 막은 것으로 확정</b>입니다." },
+      n:"<b>여기가 진짜 단서입니다.</b> 같은 연결의 왕복에서 <code>ACCEPT</code> 한 줄과 <code>REJECT</code> 한 줄이 <b>짝으로</b> 남았습니다. 요청은 인스턴스까지 갔고(<code>ACCEPT</code>), <b>응답이 막혔다</b>(<code>REJECT</code>)는 뜻이에요. <br><br><b>SG는 이 조합을 원리상 만들 수 없습니다.</b> 상태 저장이라 허용된 인바운드의 응답을 아웃바운드 규칙과 무관하게 무조건 통과시키니까요. 그러니 이 짝이 보이면 <b>NACL이 응답을 막은 것으로 확정</b>입니다." },
     outdeny: { line:["2","111122223333","eni-0a1b2c3d","10.0.1.42","198.51.100.7","44210","443","6","1","44","1690000000","1690000060","REJECT","OK"],
       n:"방향이 뒤집혀 있죠 — <code>srcaddr</code>가 우리 인스턴스입니다. 앱이 <b>먼저 건 연결</b>이 아웃바운드 규칙에 막힌 경우예요. <a class='link' href='#sg'>4장</a>에서 본 \"응답은 되는데 새 연결은 안 되는\" 상황이 로그로는 이렇게 보입니다." },
     none: { lines:[],
@@ -2682,7 +2683,7 @@ if(location.hash){
     refused: { s:["앱이 떠 있지 않다","앱이 127.0.0.1에만 바인딩했다","포트를 잘못 알고 있다","OS 방화벽이 REJECT했다"],
       next:"<b>네트워크 관문은 전부 통과했습니다.</b> RST가 돌아왔다는 건 목적지에 도달했다는 증거예요. SG·NACL·라우팅을 뒤지지 말고 <b>인스턴스 안</b>을 보세요 — <code>ss -tlnp</code>로 그 포트를 듣는 프로세스가 있는지, 바인딩 주소가 <code>0.0.0.0</code>인지 <code>127.0.0.1</code>인지." },
     oneway: { s:["NACL 아웃바운드가 ephemeral을 막았다","NACL 인바운드가 ephemeral을 막았다","비대칭 라우팅"],
-      next:"거의 항상 <b>무상태 검문소</b>가 범인입니다. SG는 상태를 유지하므로 편도만 되는 상황을 만들지 못해요. <b>Flow Log에서 같은 5-tuple의 <code>ACCEPT</code> 뒤에 <code>REJECT</code>가 붙어 있으면 NACL 확정</b>입니다 — SG는 그 조합을 원리상 만들 수 없으니까요. 그다음 <b>NACL 양방향에 <code>1024-65535</code>가 열려 있는지</b> 확인하세요." },
+      next:"거의 항상 <b>무상태 검문소</b>가 범인입니다. SG는 상태를 유지하므로 편도만 되는 상황을 만들지 못해요. <b>Flow Log에서 같은 연결의 <code>ACCEPT</code> 뒤에 <code>REJECT</code>가 붙어 있으면 NACL 확정</b>입니다 — SG는 그 조합을 원리상 만들 수 없으니까요. 그다음 <b>NACL 양방향에 <code>1024-65535</code>가 열려 있는지</b> 확인하세요." },
     wasok: { s:["SG가 IP를 source로 참조하는데 그 IP가 바뀌었다","오토스케일링으로 인스턴스가 교체됐다","NAT GW의 EIP가 바뀌었다","상대 쪽 IP 허용 목록에서 빠졌다"],
       next:"<b>구성은 안 바뀌었는데 IP가 바뀐 경우</b>가 압도적으로 많습니다. SG 규칙에 <code>10.0.1.42/32</code> 같은 개별 IP가 박혀 있는지 보세요. 있다면 그게 원인이고, 답은 <b>SG 참조</b>입니다 (<a class='link' href='#ref'>8장</a>)." },
     flaky: { s:["다중 AZ 중 한쪽 서브넷만 설정이 다르다","대상 그룹의 일부 인스턴스만 SG가 다르다","NACL 규칙 수 한도","연결 추적 한도"],
@@ -2855,7 +2856,10 @@ if(location.hash){
     let verdict, why;
     if(ok){
       verdict = "✅ 객체를 읽습니다";
-      why = `${e.n} <br><br>두 관문이 <b>모두</b> 허용해야 통과합니다 — 하나라도 거부하면 끝이에요. <a class='link' href='iam_tutorial.html'>IAM 튜토리얼</a>에서 본 <b>명시적 거부 우선</b> 원칙이 여기서도 그대로 적용됩니다.`;
+      why = `${e.n} <br><br>Endpoint 정책과 IAM 정책은 <b>각자 독립적으로 심사하는 두 개의 관문</b>입니다 — 하나가 다른 하나를 대신 통과시켜 주지 않으니, 최종 허용은 둘 다 허용했을 때만 나옵니다. <a class='link' href='iam_tutorial.html'>IAM 튜토리얼</a>에서 본 것과 같은 조건부 정책의 사고방식이 여기서도 그대로 적용돼요.`;
+    } else if(!e.ok && !i.ok){
+      verdict = "⛔ AccessDenied — 두 관문 모두 거부";
+      why = "Endpoint 정책은 <code>logs/*</code> 접두어 밖이라 <code>data/report.csv</code>를 걸러내고, IAM도 이 주체에게 S3 권한을 주지 않았습니다. <b>서로 다른 이유로 각자 거부한 것</b>이라, 어느 한쪽만 고쳐서는 여전히 막힙니다 — 두 관문은 서로의 판정을 모른 채 자기 기준으로만 봅니다.";
     } else if(!i.ok){
       verdict = "⛔ AccessDenied — IAM에서 거부";
       why = "네트워크는 완벽합니다. Endpoint까지 문제없이 도달했고 Endpoint 정책도 통과했어요. 그런데 <b>이 주체에게 권한이 없습니다.</b> <br><br>여기가 두 세계의 경계입니다 — <b>네트워크를 다 열어도 IAM이 막으면 못 합니다.</b> 반대도 마찬가지고요. 두 축은 서로를 대신하지 못합니다.";
@@ -2917,7 +2921,7 @@ if(location.hash){
         ["ALB → CloudFront", "var(--accent)", "ALB가 자기 쪽 연결로 응답을 실어 보낸다"],
         ["CloudFront", "var(--accent-2)", "<code>Cache-Control</code>이 붙어 있으면 캐시에 저장 — 다음 요청은 ①에서 끝난다"]
       ],
-      n:"가는 길과 오는 길의 <b>비대칭</b>이 마지막으로 한 번 더 나옵니다. SG는 응답을 검사하지 않고 NACL은 검사해요. 이 문서에서 다룬 가장 흔한 장애가 바로 여기, 이 한 칸에서 생깁니다." }
+      n:"가는 길과 오는 길의 <b>비대칭</b>이 마지막으로 한 번 더 나옵니다. SG는 응답을 검사하지 않고 NACL은 검사해요. 이 문서에서 다룬 가장 흔한 장애가 원리상 생기는 자리가 바로 이 칸인데, 이 레퍼런스는 NACL을 전부 기본값(<a class='link' href='#nacl'>5장</a>의 결론)으로 뒀기 때문에 정작 여기서는 걸리지 않습니다 — ephemeral 범위가 이미 전부 열려 있으니까요. 커스텀 NACL로 아웃바운드를 좁히는 순간, 이 칸이 그 장애의 발화점이 됩니다." }
   };
   function render(k){
     const l = LEG[k];
