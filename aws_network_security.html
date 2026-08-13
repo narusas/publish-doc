@@ -960,6 +960,86 @@ button:focus-visible, .pick:focus-visible, .term:focus-visible, a:focus-visible,
       </div>
     </section>
 
+    <section id="nacl" data-title="NACL">
+      <div class="sec-head">
+        <div class="kicker">05 · 서브넷</div>
+        <h2 class="sec-title">🧊 NACL — <span style="color:var(--accent)">기억하지 않는</span> 검문소 <span class="lvl must">🟢 필수</span></h2>
+      </div>
+      <p class="lead">NACL은 기본값이 전부 허용이라 평소엔 없는 셈 칩니다. 그런데 누군가 "보안 강화"를 하겠다고 커스텀 NACL을 만드는 순간, 아무도 이유를 모르는 장애가 시작됩니다.</p>
+
+      <h3>🔢 번호 순서대로, 첫 매치가 이긴다</h3>
+      <p><a class="link" href="#sg">4장</a>에서 SG는 규칙 사이에 순서가 없다고 했습니다. NACL은 정확히 반대예요. 규칙 하나하나에 번호가 붙고, 낮은 번호부터 차례로 평가합니다. 그리고 첫 번째로 매치되는 규칙이 그 자리에서 판정을 끝내 버려요 — 뒤에 더 관대한 규칙이 기다리고 있어도 소용없습니다. 목록의 맨 끝에는 지울 수 없는 <code>* DENY</code> 한 줄이 항상 남아 있고요. 앞선 어떤 번호에도 걸리지 않은 패킷은 결국 그 줄에서 막힙니다.</p>
+
+      <h3>🚫 deny를 쓸 수 있다</h3>
+      <p>SG가 하지 못하는 유일한 일이 여기서 가능해집니다. <a class="link" href="#sg">4장</a>에서 "이 IP만 빼고 다 허용"은 SG로 표현할 방법이 없다고 했죠 — deny 규칙 자체가 없으니까요. NACL은 그 규칙을 <code>DENY</code> 한 줄로 씁니다. 특정 대역 하나를 콕 집어 막고 싶을 때, 관문이 바로 여기 있는 거예요.</p>
+      <p>그렇다고 이 목록을 차단 리스트로 키워 갈 생각은 접어 두는 게 좋습니다. NACL의 규칙 수는 넉넉하지 않아서, 막을 IP가 하나둘 늘어나는 용도로는 애초에 맞지 않는 도구거든요. 그 역할은 따로 있습니다 — <a class="link" href="#nfw">9장</a>의 Network Firewall과 <a class="link" href="#waf">10장</a>의 WAF예요.</p>
+
+      <h3>🧠 기억하지 않는다 — 함정의 원천</h3>
+      <p><a class="link" href="#sg">4장</a>에서 SG는 나간 연결을 기억해 뒀다가, 그 응답은 규칙 검사 없이 통과시킨다고 했습니다. NACL에는 그 기억이 없어요. 패킷 하나하나를 매번 처음 보는 것처럼 독립적으로 판정합니다 — <span class="term" data-t="무상태">무상태</span>. 그래서 요청이 통과했다고 해서 그 응답까지 자동으로 따라 나가는 게 아닙니다. <b>응답 패킷도 신규 패킷과 똑같이 규칙 검사를 다시 받아요.</b></p>
+      <p>이게 왜 함정인지는 순서를 그대로 따라가 보면 드러납니다. 클라이언트가 <span class="mono">203.0.113.9:51514 → 서버:443</span>으로 요청을 겁니다. 서버는 응답을 만들어 돌려보내는데, 이 패킷은 방향이 뒤집혀 있어요 — <span class="mono">서버:443 → 203.0.113.9:51514</span>. NACL 아웃바운드 규칙은 <b>목적지 포트</b>로 매치하니, 이 패킷에서 매치 대상이 되는 건 443이 아니라 클라이언트가 그때그때 골라 쓰는 <span class="term" data-t="ephemeral 포트">ephemeral 포트</span>예요. 보통 1024~65535 범위에서 고르는 포트입니다.</p>
+      <p>그러니 "아웃바운드는 443만 허용해 뒀다"는 설정은 이 응답을 알아보지 못합니다. 요청은 인바운드 443을 타고 멀쩡히 들어오는데, 응답은 나갈 문이 없어요. <b>서버 로그에는 200 OK가 남아 있는데, 클라이언트는 timeout으로 끝나는 조합</b>이 바로 이렇게 만들어집니다. 이 어긋남은 여기서 끝나지 않아요. <a class="link" href="#order">6장</a>이 관문 전체를 잇는 체인에서 이 자리를 다시 짚고, <a class="link" href="#trace">7장</a>은 이런 timeout을 실제로 진단하는 법을 다룹니다. <a class="link" href="#blueprint">13장</a>의 3-tier 레퍼런스에도 이 함정이 그대로 남아 있어요.</p>
+      <p>요청과 응답이 네 관문을 실제로 통과하는지, 직접 눌러 확인해 보세요.</p>
+
+      <div class="demo" id="naclCmp">
+        <span class="demo-tag">SG vs NACL — 왕복 검사</span>
+        <p style="margin:0 0 4px">클라이언트가 <span class="mono">203.0.113.9:51514 → 웹서버:443</span>으로 요청합니다. 네 관문을 왕복으로 통과해야 화면이 뜹니다.</p>
+        <div class="picker" id="naclPicker">
+          <button class="pick on" data-k="default">🟢 기본 NACL (전부 허용)</button>
+          <button class="pick" data-k="naive">🪤 커스텀 NACL · 443만 허용</button>
+          <button class="pick" data-k="fixed">✅ 커스텀 NACL · ephemeral 개방</button>
+          <button class="pick" data-k="denyip">🚫 특정 IP만 차단</button>
+        </div>
+        <div id="naclOut"></div>
+      </div>
+
+      <p>네 가지 경우를 오가다 보면 SG와 NACL이 어디서 갈라지는지 손에 잡힙니다.</p>
+
+      <div class="cmp2">
+        <div class="cmp-col" style="--c:var(--g-sg)">
+          <div class="cc-h">🛡️ Security Group</div>
+          <div class="cc-t">ENI에 붙는 상태 유지 검문소</div>
+          <ul>
+            <li>ENI에 붙는다</li>
+            <li>allow만 — deny 없음</li>
+            <li>순서 없음, 전부 OR로 평가</li>
+            <li><b>상태 유지</b> — 응답은 기억으로 통과</li>
+            <li>여러 개를 붙이면 합집합</li>
+          </ul>
+        </div>
+        <div class="cmp-col" style="--c:var(--g-nacl)">
+          <div class="cc-h">🧊 NACL</div>
+          <div class="cc-t">서브넷에 붙는 무상태 검문소</div>
+          <ul>
+            <li>서브넷에 붙는다</li>
+            <li>allow + <b>deny</b></li>
+            <li>번호 순서, 첫 매치가 승</li>
+            <li><b>무상태</b> — 응답도 다시 검사</li>
+            <li>서브넷당 1개</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="callout std">
+        <h4>📐 업계 표준 — NACL은 기본값 그대로</h4>
+        <p>실무에서 굳어진 답은 명확합니다. <b>통제는 SG로 하고, NACL은 기본값 그대로 둡니다.</b> NACL을 꺼내는 건 SG로는 표현할 수 없는 일이 있을 때뿐이에요 — 특정 IP 대역을 통째로 차단하거나, 서브넷 단위로 광범위한 가드레일을 두르고 싶을 때죠. 그래도 커스텀 NACL을 만들 계획이라면, 규칙을 채우기 전에 ephemeral 범위부터 열어 두세요. 안 그러면 이 장에서 본 함정을 그대로 재현하게 됩니다.</p>
+      </div>
+
+      <div class="oneline">
+        <div class="ol-ic">🧊</div>
+        <div><div class="ol-t">5장 한 줄 요약</div><div class="ol-b">NACL의 모든 함정은 <b>무상태</b>라는 한 단어에서 나온다. 응답도 검사받는다는 걸 잊는 순간, 열어 둔 포트로 요청은 들어오고 답이 못 나간다.</div></div>
+      </div>
+
+      <div class="quiz" data-qid="q-nacl" data-answer="d">
+        <div class="q-head">✅ 체크포인트</div>
+        <div class="q">웹서버 서브넷에 커스텀 NACL을 만들어 <b>인바운드 443 허용 / 아웃바운드 443 허용</b>만 넣었다. SG는 443이 열려 있다. 결과는?</div>
+        <button class="opt" data-opt="a"><span class="mk">A</span> 정상 동작한다. 443 서비스니까 443만 열면 된다</button>
+        <button class="opt" data-opt="b"><span class="mk">B</span> 요청이 서버에 도달하지 못해 서버 로그에 아무것도 남지 않는다</button>
+        <button class="opt" data-opt="c"><span class="mk">C</span> SG가 상태를 유지하므로 NACL 설정과 무관하게 정상이다</button>
+        <button class="opt" data-opt="d"><span class="mk">D</span> 서버 로그에는 200 OK가 남지만 클라이언트는 timeout된다</button>
+        <div class="explain"><b>정답 D.</b> 요청은 인바운드 443 규칙을 통과해 서버까지 갑니다(B 오답). 서버는 응답을 만들어 내보내고 SG는 상태 유지라 그냥 통과시켜요. 하지만 <b>NACL 아웃바운드는 무상태라 다시 검사</b>하는데, 응답 패킷의 목적지 포트는 클라이언트의 ephemeral 포트(예: 51514)라서 <code>ALLOW tcp 443</code>에 매치되지 않습니다. SG의 상태 유지는 SG에만 적용되지 NACL을 면제해 주지 않아요(C 오답).</div>
+      </div>
+    </section>
+
   </main>
 </div>
 
@@ -999,6 +1079,8 @@ const GLOSSARY = {
   "NAT GW": "NAT Gateway. 프라이빗 서브넷의 리소스가 밖으로 나갈 때만 쓰는 단방향 문. 나간 연결을 기억했다가 그 응답만 돌려보냅니다.",
   "prefix list": "여러 CIDR을 묶어 이름 하나로 참조하는 목록. AWS가 관리하는 것(S3·CloudFront 대역 등)과 직접 만드는 것이 있고, 라우팅 테이블과 SG 규칙에서 쓸 수 있습니다.",
   "Security Group": "ENI에 붙는 상태 유지 방화벽. allow 규칙만 가질 수 있고 규칙 사이에 순서가 없으며, 허용된 연결의 응답은 반대 방향 규칙 없이 통과합니다.",
+  "NACL": "Network ACL. 서브넷 경계에 붙는 무상태 방화벽. 번호 순서로 평가하고 첫 매치가 이기며, deny 규칙을 쓸 수 있습니다. 무상태라 응답 트래픽도 검사받습니다.",
+  "ephemeral 포트": "클라이언트가 연결을 걸 때 OS가 임시로 골라 쓰는 출발지 포트. 보통 1024~65535 범위입니다. 응답 패킷의 목적지 포트가 되므로, 무상태 방화벽에서는 이 범위를 열어야 응답이 돌아갑니다.",
   // @GLOSSARY_END
 };
 
@@ -1451,6 +1533,65 @@ if(location.hash){
   rules = wireTogs('#sgRules', s => { rules = s; render(); });
   wirePicker('#sgProbe', k => { probe = k; render(); });
   render();
+})();
+
+/* ============================================================
+   데모 7 — SG vs NACL 왕복 검사 (5장)
+   ============================================================ */
+(function(){
+  const out = $('#naclOut'); if(!out) return;
+  // 4단계: 요청이 NACL 인바운드 → SG 인바운드 → (서버) → 응답이 SG 아웃바운드 → NACL 아웃바운드
+  const CASE = {
+    default: {
+      rules: "인바운드 <span class='mono'>100 ALLOW all</span> · 아웃바운드 <span class='mono'>100 ALLOW all</span>",
+      steps: [true, true, true, true],
+      v: "<b style='color:var(--ok)'>화면이 뜹니다.</b>",
+      x: "기본 NACL은 양방향 전부 허용이라 <b>사실상 없는 것과 같습니다</b>. 대부분의 계정이 이 상태고, 그래서 NACL의 존재를 모른 채로도 아무 문제가 없어요." },
+    naive: {
+      rules: "인바운드 <span class='mono'>100 ALLOW tcp 443</span> · 아웃바운드 <span class='mono'>100 ALLOW tcp 443</span>",
+      steps: [true, true, true, false],
+      v: "<b style='color:var(--bad)'>timeout.</b> 요청은 도착했고 서버는 응답까지 만들었는데, 그 응답이 서브넷 밖으로 못 나갑니다.",
+      x: "\"443 서비스니까 443만 열면 되지\"가 정확히 이 함정입니다. <b>응답 패킷의 목적지 포트는 443이 아니라 클라이언트의 ephemeral 포트(51514)</b>예요. NACL 아웃바운드는 목적지 포트로 매치하므로 <code>ALLOW tcp 443</code>에 걸리지 않습니다. <b>서버 로그에는 200 OK가 찍혀 있는데 클라이언트는 timeout</b>인, 가장 헷갈리는 증상이 나옵니다." },
+    fixed: {
+      rules: "인바운드 <span class='mono'>100 ALLOW tcp 443</span> · 아웃바운드 <span class='mono'>100 ALLOW tcp 1024-65535</span>",
+      steps: [true, true, true, true],
+      v: "<b style='color:var(--ok)'>화면이 뜹니다.</b>",
+      x: "아웃바운드에 <b>ephemeral 범위</b>를 열어야 응답이 나갑니다. 그런데 보세요 — 결국 <code>1024-65535</code>를 통째로 연 셈이라, <b>NACL로 아웃바운드를 정교하게 통제하려는 시도는 대개 이렇게 무의미해집니다.</b> 이게 \"통제는 SG로, NACL은 기본값\"이 표준인 이유예요." },
+    denyip: {
+      rules: "인바운드 <span class='mono'>90 DENY 203.0.113.9/32</span> · <span class='mono'>100 ALLOW all</span>",
+      steps: [false, false, false, false],
+      v: "<b style='color:var(--warn)'>이 클라이언트만 차단됩니다.</b> 다른 IP는 그대로 통과해요.",
+      x: "번호가 작은 <code>90 DENY</code>가 먼저 평가되어 <b>첫 매치로 확정</b>됩니다. 뒤의 <code>100 ALLOW all</code>은 보지도 않아요. <b>SG로는 이걸 할 수 없습니다</b> — deny 규칙이 없으니까요. NACL을 꺼내는 거의 유일하게 정당한 이유가 이겁니다." }
+  };
+  const STAGE = [
+    { t:"① NACL 인바운드", d:"요청 <span class='mono'>→ :443</span>", c:"var(--g-nacl)" },
+    { t:"② SG 인바운드",   d:"요청 <span class='mono'>→ :443</span>", c:"var(--g-sg)" },
+    { t:"③ SG 아웃바운드", d:"응답 <span class='mono'>:443 →</span> <b>상태로 자동 통과</b>", c:"var(--g-sg)" },
+    { t:"④ NACL 아웃바운드", d:"응답 <span class='mono'>→ :51514</span> <b>다시 검사받는다</b>", c:"var(--g-nacl)" }
+  ];
+  function render(k){
+    const c = CASE[k];
+    let dead = -1;
+    const rows = STAGE.map((s,i) => {
+      const ok = c.steps[i];
+      const skipped = dead >= 0;
+      if(!ok && dead < 0) dead = i;
+      const mark = skipped ? '<span class="dim">—</span>'
+                 : ok ? '<b style="color:var(--ok)">통과</b>'
+                      : '<b style="color:var(--bad)">차단</b>';
+      return `<div class="flow-step" style="opacity:${skipped?.35:1}; border-left:3px solid ${skipped?'var(--border)':s.c}; padding-left:12px; margin:6px 0">
+                <div><b style="color:${skipped?'var(--text-mut)':s.c}">${s.t}</b> &nbsp; ${mark}</div>
+                <div class="dim" style="font-size:13px">${s.d}</div>
+              </div>`;
+    }).join('');
+    out.innerHTML =
+      `<div class="dim" style="font-size:13px; margin-top:12px">NACL 규칙 — ${c.rules}</div>
+       <div style="margin:8px 0">${rows}</div>
+       <div class="verdict"><span class="vres ${c.steps.every(Boolean)?'allow':'deny'}">${c.v}</span></div>
+       <div class="callout ${c.steps.every(Boolean)?'why':'warn'}" style="margin-bottom:0"><p style="margin:0">${c.x}</p></div>`;
+  }
+  wirePicker('#naclPicker', render);
+  render('default');
 })();
 </script>
 </body>
