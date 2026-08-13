@@ -138,6 +138,20 @@ footer .mono{font-family:var(--mono); font-size:12.5px}
 
   <div class="grid">
 
+    <a class="card" href="network_basics.html" style="--c:var(--net)">
+      <div class="top">
+        <span class="ic">🌐</span>
+        <span class="no">Network</span>
+        <span class="new">NEW</span>
+      </div>
+      <h2>네트워크 기초 — 두 기계가 대화하려면 무엇이 필요할까</h2>
+      <p>계층 순서로도, 요청의 시간 순서로도 가지 않습니다. <b>풀어야 할 문제의 순서</b>로 갑니다.
+      "전선에는 뜻이 흐르지 않는다"에서 출발해, 답 하나가 다음 문제를 만들어 내는 사슬을 열세 번 따라가면
+      소켓·TCP·커널·라우팅·방화벽·DNS·HTTP·TLS·로드밸런싱·CDN이 차례로 필요해진 이유가 드러납니다.</p>
+      <div class="tags"><i>신호·인코딩</i><i>계층·캡슐화</i><i>소켓·포트</i><i>TCP</i><i>커널·시스템콜</i><i>라우팅</i><i>방화벽·NAT</i><i>DNS</i><i>HTTP/0.9→3</i><i>TLS</i><i>프락시·LB</i><i>CDN</i></div>
+      <span class="go">열어 보기 <span class="ar">→</span></span>
+    </a>
+
     <a class="card" href="https_tutorial.html" style="--c:var(--https)">
       <div class="top">
         <span class="ic">🔒</span>
@@ -148,6 +162,18 @@ footer .mono{font-family:var(--mono); font-size:12.5px}
       <p>주소창의 자물쇠 하나가 무엇을 보증하는지에서 출발해, 카이사르 암호부터 TLS 1.3 핸드셰이크까지를 한 흐름으로 잇습니다.
       대칭키·키 교환·해시·서명·인증서 체인을 부품처럼 쌓아 올린 다음, 그 부품이 실제 프로토콜로 조립되는 순서를 한 프레임씩 재생해 봅니다.</p>
       <div class="tags"><i>암호의 역사</i><i>대칭키·AEAD</i><i>디피–헬먼</i><i>RSA·서명</i><i>인증서 체인</i><i>TLS 1.2/1.3</i><i>HTTP/1·2·3</i></div>
+      <span class="go">열어 보기 <span class="ar">→</span></span>
+    </a>
+
+    <a class="card" href="oauth2_tutorial.html" style="--c:var(--auth)">
+      <div class="top">
+        <span class="ic">🔑</span>
+        <span class="no">Authentication</span>
+      </div>
+      <h2>OAuth2 / OIDC 인터랙티브 튜토리얼</h2>
+      <p>"구글로 로그인" 버튼 한 번에 무슨 일이 벌어지는지를 패킷 단위로 따라갑니다.
+      인가 코드 흐름과 PKCE, 토큰의 정체, CLI와 기기 로그인 같은 변종까지 단계별로 짚습니다.</p>
+      <div class="tags"><i>Authorization Code</i><i>PKCE</i><i>Access/ID Token</i><i>Device Flow</i><i>OIDC</i></div>
       <span class="go">열어 보기 <span class="ar">→</span></span>
     </a>
 
@@ -176,29 +202,17 @@ footer .mono{font-family:var(--mono); font-size:12.5px}
       <span class="go">열어 보기 <span class="ar">→</span></span>
     </a>
 
-    <a class="card" href="oauth2_tutorial.html" style="--c:var(--auth)">
+    <a class="card" href="aws_network_security.html" style="--c:var(--awsnet)">
       <div class="top">
-        <span class="ic">🔑</span>
-        <span class="no">Authentication</span>
-      </div>
-      <h2>OAuth2 / OIDC 인터랙티브 튜토리얼</h2>
-      <p>"구글로 로그인" 버튼 한 번에 무슨 일이 벌어지는지를 패킷 단위로 따라갑니다.
-      인가 코드 흐름과 PKCE, 토큰의 정체, CLI와 기기 로그인 같은 변종까지 단계별로 짚습니다.</p>
-      <div class="tags"><i>Authorization Code</i><i>PKCE</i><i>Access/ID Token</i><i>Device Flow</i><i>OIDC</i></div>
-      <span class="go">열어 보기 <span class="ar">→</span></span>
-    </a>
-
-    <a class="card" href="network_basics.html" style="--c:var(--net)">
-      <div class="top">
-        <span class="ic">🌐</span>
-        <span class="no">Network</span>
+        <span class="ic">🛡️</span>
+        <span class="no">Cloud Network</span>
         <span class="new">NEW</span>
       </div>
-      <h2>네트워크 기초 — 두 기계가 대화하려면 무엇이 필요할까</h2>
-      <p>계층 순서로도, 요청의 시간 순서로도 가지 않습니다. <b>풀어야 할 문제의 순서</b>로 갑니다.
-      "전선에는 뜻이 흐르지 않는다"에서 출발해, 답 하나가 다음 문제를 만들어 내는 사슬을 열세 번 따라가면
-      소켓·TCP·커널·라우팅·방화벽·DNS·HTTP·TLS·로드밸런싱·CDN이 차례로 필요해진 이유가 드러납니다.</p>
-      <div class="tags"><i>신호·인코딩</i><i>계층·캡슐화</i><i>소켓·포트</i><i>TCP</i><i>커널·시스템콜</i><i>라우팅</i><i>방화벽·NAT</i><i>DNS</i><i>HTTP/0.9→3</i><i>TLS</i><i>프락시·LB</i><i>CDN</i></div>
+      <h2>AWS 네트워크 보안 튜토리얼 — SG·NACL·방화벽이 엮이는 순서</h2>
+      <p>"<b>SG를 다 열었는데 왜 timeout인가</b>"에서 출발합니다. 패킷 하나가 VPC에 들어와 나갈 때까지
+      라우팅 테이블·NACL·Security Group·Network Firewall·WAF가 어떤 순서로 걸리는지를 관문 단위로 세우고, 직접 눌러 확인합니다.
+      IAM이 "누가 무엇을 할 수 있나"라면 이쪽은 "패킷이 어디까지 갈 수 있나"입니다.</p>
+      <div class="tags"><i>VPC · 서브넷</i><i>라우팅 · IGW/NAT</i><i>NACL</i><i>Security Group</i><i>Network Firewall</i><i>WAF</i><i>VPC Endpoint</i><i>Flow Logs</i></div>
       <span class="go">열어 보기 <span class="ar">→</span></span>
     </a>
 
