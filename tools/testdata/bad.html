@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html lang="ko"><head><meta charset="UTF-8">
+<script src="https://cdn.example.com/x.js"></script>
+</head><body>
+<section id="a">없음</section>
+<section id="a" data-title="중복">
+  <a href="#nowhere">깨진 앵커</a>
+  <span class="term" data-t="없는용어">용어</span>
+  <div class="quiz" data-qid="q1" data-answer="z">
+    <button class="opt" data-opt="a">A</button>
+  </div>
+</section>
+<script>const GLOSSARY = { "있는용어": "설명" };
+// @GLOSSARY_END
+fetch('/x');
+</script>
+</body></html>
