@@ -100,9 +100,14 @@
 #### 7장 · 🔍 어디서 막혔는지 알아내는 법 🟢
 - `timeout` vs `connection refused` — `network_basics.html` 의 RST 이야기 회수.
 - VPC Flow Logs 읽기.
-- **로그의 비대칭**이 핵심이다. Flow Logs는 ENI 단위이므로, SG가 막으면 `REJECT`가 남지만
-  NACL이 인바운드를 막으면 ENI에 닿지도 않아 **아무 줄도 남지 않는다.**
-  "로그가 없다"가 그 자체로 단서가 되는 구조. (→ §8 검증 항목 V1)
+- **로그의 비대칭**이 핵심이다 — 단 "기록 여부"의 비대칭이 아니라 "레코드가 짝을 이루는가"의
+  비대칭이다. SG든 NACL이든 인바운드를 막으면 응답 자체가 생기지 않으므로 똑같이 `REJECT`
+  단독 1건만 남는다 — 이 경우 Flow Log만으로는 SG와 NACL을 구분할 수 없다. 반면 NACL이
+  **응답(아웃바운드 레그)**을 막으면 요청은 이미 인스턴스에 닿았으므로 `ACCEPT`가 먼저
+  남고 그 응답이 막히며 `REJECT`가 뒤따른다 — SG는 상태 저장이라 허용된 인바운드의 응답을
+  아웃바운드 규칙과 무관하게 무조건 통과시키므로 이 조합은 SG가 원리상 만들 수 없다.
+  **"REJECT 앞에 ACCEPT가 있는가"**가 NACL을 확정 짓는 진짜 신호다. (→ §8 검증 항목 V1,
+  근거는 `docs/superpowers/notes/2026-08-12-aws-facts.md` V1 참고)
 - Reachability Analyzer.
 - **데모**: Flow Log 한 줄 해부기 + 증상→범인 판별 트리.
 
@@ -198,15 +203,16 @@
 
 ## 8. 구현 전 검증할 사실
 
-AWS 공식 문서로 확인하고, 어긋나면 해당 장의 서술을 고친다.
+AWS 공식 문서로 확인하고, 어긋나면 해당 장의 서술을 고친다. 검증 결과와 근거는
+`docs/superpowers/notes/2026-08-12-aws-facts.md`에 있다.
 
-| # | 검증 대상 | 영향받는 곳 |
-|---|---|---|
-| V1 | Flow Logs가 NACL 차단 인바운드를 기록하는가. 아웃바운드가 NACL에 막혔을 때 `ACCEPT`로 남는가 | 7장 "로그의 비대칭" 전체 |
-| V2 | SG 참조가 VPC Peering을 넘어 동작하는 조건 (같은 리전 한정 여부) | 12장 |
-| V3 | CloudFront origin-facing managed prefix list의 정확한 이름과 사용법 | 10장 우회 차단 |
-| V4 | Network Firewall 엔드포인트 삽입 라우팅의 정확한 구성 (서브넷 배치·라우팅 테이블 편집 순서) | 9장 데모 |
-| V5 | Gateway Endpoint 지원 서비스의 현재 범위 | 11장 |
+| # | 검증 대상 | 영향받는 곳 | 결과 |
+|---|---|---|---|
+| V1 | Flow Logs가 NACL 차단 인바운드를 기록하는가. 아웃바운드가 NACL에 막혔을 때 `ACCEPT`로 남는가 | 7장 "로그의 비대칭" 전체 | 수정 필요 — NACL이 인바운드를 막아도 `REJECT`가 남는다(무기록 아님). 아웃바운드가 NACL에 막히면 `ACCEPT`가 아니라 `REJECT`로 남는다. 진짜 SG/NACL 구분 신호는 "REJECT 앞에 ACCEPT가 붙어 있는가"다 |
+| V2 | SG 참조가 VPC Peering을 넘어 동작하는 조건 (같은 리전 한정 여부) | 12장 | 확인됨 — 같은 리전 peering에서만 가능, 리전 간은 CIDR로 대체. (부가: TGW 경유 SG 참조도 지원되나 인바운드 전용·활성화 필요·같은 리전 한정 — 이 부분은 원문 직접 인용 실패로 부분 확정) |
+| V3 | CloudFront origin-facing managed prefix list의 정확한 이름과 사용법 | 10장 우회 차단 | 확인됨 — `com.amazonaws.global.cloudfront.origin-facing`(IPv4), weight 55(SG 60개 한도 중 55개 소비) |
+| V4 | Network Firewall 엔드포인트 삽입 라우팅의 정확한 구성 (서브넷 배치·라우팅 테이블 편집 순서) | 9장 데모 | 확인됨 — 방화벽 전용 서브넷 신설 → IGW edge 라우팅 테이블에 워크로드 CIDR→`vpce-` 라우트 추가 → 워크로드 서브넷 `0.0.0.0/0`을 IGW에서 `vpce-`로 교체 |
+| V5 | Gateway Endpoint 지원 서비스의 현재 범위 | 11장 | 확인됨 — 지금도 S3·DynamoDB 두 개뿐. Gateway는 무료, Interface는 시간당+GB당 과금 |
 
 ## 9. 완료 기준
 
