@@ -704,6 +704,68 @@ button:focus-visible, .pick:focus-visible, .term:focus-visible, a:focus-visible,
       </div>
     </section>
 
+    <section id="outside" data-title="방화벽은 서버 밖에">
+      <div class="sec-head">
+        <div class="kicker">01 · 출발</div>
+        <h2 class="sec-title">🧱 클라우드의 방화벽은 <span style="color:var(--accent)">서버 안</span>에 없다 <span class="lvl must">🟢 필수</span></h2>
+      </div>
+      <p class="lead">리눅스에서 방화벽을 다뤄 본 사람이라면 <code>iptables -L</code>이 손에 붙어 있을 겁니다. 클라우드에서 그 습관이 제일 먼저 배신합니다.</p>
+
+      <h3>🔪 검문은 OS 밖에서 끝난다</h3>
+      <p><code>iptables -L</code>을 쳐서 규칙이 죽 뜨는 순간, 전제가 하나 깔립니다. 검사할 패킷이 이미 커널 안까지 들어와 있었다는 전제입니다. <span class="term" data-t="netfilter">netfilter</span>는 리눅스 커널 안에 박힌 후크(hook)이고, 랜카드가 패킷을 받아 커널 네트워크 스택에 올려놓아야 그 후크를 통과하거든요. <code>iptables</code>가 무엇을 판정하든, 판정 대상은 늘 '이미 도착한 패킷'입니다.</p>
+      <p>SG는 그보다 앞에서 끝냅니다. 정확한 자리는 <span class="term" data-t="ENI">ENI</span> — 인스턴스에 붙은 가상 랜카드의 입구예요. 패킷이 랜카드를 통과하기도 전에 판정이 끝나 버리니, 커널은 이 패킷을 구경할 기회조차 없습니다. 같은 '방화벽'이라는 이름으로 뭉뚱그리기 쉽지만, 적용 지점이 이렇게 다릅니다. 이 경로는 <a class="link" href="network_basics.html">network_basics.html의 netfilter 장</a>에서 더 자세히 다뤘어요.</p>
+
+      <div class="callout key">
+        <h4>🔑 tcpdump에 잡히지 않는 차단</h4>
+        <p><b>SG가 버린 패킷은 <code>tcpdump</code>에 잡히지 않습니다.</b> 인스턴스 안에서 아무리 들여다봐도 그 패킷은 오지 않은 것과 구별할 수 없어요. "서버에 들어가서 확인해 보자"가 클라우드에서 통하지 않는 첫 번째 이유입니다.</p>
+      </div>
+
+      <div class="demo" id="fwCmp">
+        <span class="demo-tag">같은 차단, 다른 흔적</span>
+        <p style="margin:0 0 4px">80번 포트로 오는 요청을 네 가지 방법으로 막아봅니다. 클라이언트가 보는 것과, 서버 안에서 보이는 것이 어떻게 달라지는지 확인하세요.</p>
+        <div class="picker" id="fwPicker">
+          <button class="pick on" data-k="iptdrop">🐧 iptables DROP</button>
+          <button class="pick" data-k="iptreject">🐧 iptables REJECT</button>
+          <button class="pick" data-k="sg">🛡️ SG 미허용</button>
+          <button class="pick" data-k="nacl">🧊 NACL deny</button>
+        </div>
+        <div id="fwOut"></div>
+      </div>
+
+      <p>이 표를 보고 나면 오해가 하나 자라기 쉽습니다. SG를 <code>iptables</code>의 클라우드판 정도로 여기는 오해예요.</p>
+
+      <div class="myth">
+        <div class="m-row no"><span class="m-x">✕</span><div class="m-txt">SG는 <code>iptables</code>를 클라우드가 대신 돌려주는 것이다</div></div>
+        <div class="m-row yes"><span class="m-x">✓</span><div class="m-txt"><b>적용 지점이 다르다.</b> <code>iptables</code>는 OS 안, SG는 OS 밖이다. 그래서 둘은 겹쳐서 동작하고, <b>양쪽 다 열려야 통과한다.</b> EC2 안의 <code>firewalld</code>나 <code>ufw</code>를 끄지 않았다면 SG만 열어도 막힌다.</div></div>
+      </div>
+
+      <h3>🧩 통제가 붙을 수 있는 자리</h3>
+      <p>SG와 <code>iptables</code>만 있는 게 아니에요. 패킷 하나가 서버에 닿기까지 지나는 층은 이보다 훨씬 많고, 층마다 통제를 붙일 수 있는 자리가 따로 있습니다.</p>
+      <div class="kv">
+        <dt>엣지</dt><dd>CloudFront·Shield·WAF (<a class="link" href="#waf">10장</a>)</dd>
+        <dt>VPC 경계</dt><dd>IGW·NAT·Network Firewall (<a class="link" href="#route">3장</a>·<a class="link" href="#nfw">9장</a>)</dd>
+        <dt>서브넷</dt><dd>라우팅 테이블·NACL (<a class="link" href="#route">3장</a>·<a class="link" href="#nacl">5장</a>)</dd>
+        <dt>ENI</dt><dd>Security Group (<a class="link" href="#sg">4장</a>)</dd>
+        <dt>서비스 진입점</dt><dd>VPC Endpoint 정책 (<a class="link" href="#endpoint">11장</a>)</dd>
+        <dt>OS·앱</dt><dd><code>iptables</code>·바인딩 주소 (이 장)</dd>
+      </div>
+
+      <div class="oneline">
+        <div class="ol-ic">🧱</div>
+        <div><div class="ol-t">1장 한 줄 요약</div><div class="ol-b">클라우드의 검문소는 <b>내 OS 밖</b>에 있다. 그래서 막혔을 때 서버 안에서는 아무 증거도 나오지 않고, 진단 도구부터 달라져야 한다.</div></div>
+      </div>
+
+      <div class="quiz" data-qid="q-outside" data-answer="c">
+        <div class="q-head">✅ 체크포인트</div>
+        <div class="q">EC2에 접속이 안 되어 인스턴스에 들어가 <code>tcpdump -i any port 80</code>을 걸었더니 아무것도 찍히지 않았다. 이때 <b>배제할 수 있는</b> 원인은?</div>
+        <button class="opt" data-opt="a"><span class="mk">A</span> SG 인바운드에 80이 없다</button>
+        <button class="opt" data-opt="b"><span class="mk">B</span> 서브넷 라우팅 테이블에 IGW가 없다</button>
+        <button class="opt" data-opt="c"><span class="mk">C</span> 인스턴스 안의 <code>iptables</code>가 DROP하고 있다</button>
+        <button class="opt" data-opt="d"><span class="mk">D</span> NACL이 80을 거부하고 있다</button>
+        <div class="explain"><b>정답 C.</b> <code>iptables</code>는 OS 안에서 동작하므로, 그게 막았다면 패킷은 이미 랜카드를 통과해 <code>tcpdump</code>에 <b>찍힌 뒤</b> 버려집니다. 아무것도 안 찍혔다는 건 패킷이 인스턴스 밖에서 사라졌다는 뜻이라 A·B·D가 전부 살아 있어요.</div>
+      </div>
+    </section>
+
   </main>
 </div>
 
@@ -735,6 +797,8 @@ const GLOSSARY = {
   "CIDR": "192.168.0.0/24 처럼 'IP 주소 + 프리픽스 길이'로 주소 범위를 나타내는 표기법. /24는 앞 24비트가 고정이라는 뜻이라 256개 주소를 가리킵니다.",
   "상태 유지": "stateful. 나간 요청을 기억해 두었다가 그 응답은 규칙 검사 없이 통과시키는 방식. Security Group이 이렇게 동작합니다.",
   "무상태": "stateless. 오가는 패킷을 각각 독립적으로 검사하는 방식. NACL이 이렇게 동작해서, 응답 트래픽을 위한 규칙을 따로 열어야 합니다.",
+  "netfilter": "리눅스 커널 안에서 패킷을 검사·변환하는 프레임워크. iptables·nftables는 여기에 규칙을 등록하는 도구입니다. 커널 안이라는 점이 클라우드의 SG와 결정적으로 다릅니다.",
+  "Flow Logs": "VPC Flow Logs. ENI를 오간 트래픽의 요약을 5분(또는 1분) 단위로 남기는 로그. 패킷 내용은 없고 5-tuple과 ACCEPT/REJECT만 남습니다.",
   // @GLOSSARY_END
 };
 
@@ -927,6 +991,56 @@ if(location.hash){
     res.classList.add('show');
   }
   $$('.d-yes', diag).forEach(b => b.addEventListener('click', () => { b.classList.toggle('on'); update(); }));
+})();
+
+/* ============================================================
+   데모 2 — 같은 차단, 다른 흔적 (1장)
+   ============================================================ */
+(function(){
+  const out = $('#fwOut'); if(!out) return;
+  const D = {
+    iptdrop: {
+      where: "OS 안 (커널 netfilter)", c: "var(--g-os)",
+      client: "60초쯤 기다리다 <b>timeout</b>",
+      dump: "<b style='color:var(--ok)'>✅ 보인다</b> — SYN이 랜카드까지 도착했고, 커널이 그걸 버린 것이다",
+      log: "<code>iptables -j LOG</code>를 걸어두면 서버 로그에 남는다",
+      note: "패킷은 <b>서버까지 왔다</b>. 인스턴스에 들어가면 <code>tcpdump -i any port 80</code>으로 SYN이 계속 재전송되는 걸 볼 수 있고, <code>iptables -L -n -v</code>의 카운터도 올라갑니다. 증거가 서버 안에 있어요."
+    },
+    iptreject: {
+      where: "OS 안 (커널 netfilter)", c: "var(--g-os)",
+      client: "즉시 <b>connection refused</b>",
+      dump: "<b style='color:var(--ok)'>✅ 보인다</b> — SYN이 들어오고 RST가 나가는 게 함께 찍힌다",
+      log: "위와 동일",
+      note: "DROP과 REJECT의 차이가 <b>클라이언트가 기다리는 시간</b>을 가릅니다. REJECT는 RST를 돌려주니 즉시 끝나고, DROP은 침묵하니 재전송을 반복하다 타임아웃합니다. 이 구분이 <a class='link' href='#trace'>7장 진단</a>의 첫 갈래가 돼요."
+    },
+    sg: {
+      where: "OS 밖 (ENI 층)", c: "var(--g-sg)",
+      client: "60초쯤 기다리다 <b>timeout</b>",
+      dump: "<b style='color:var(--bad)'>❌ 안 보인다</b> — 패킷이 인스턴스에 도달하지 않았다",
+      log: "서버에는 아무 기록도 없다. <b>VPC Flow Logs</b>에 <code>REJECT</code>로 남는다",
+      note: "여기가 리눅스 감각과 갈라지는 지점입니다. 인스턴스 안에서는 <b>아무 일도 일어나지 않은 것과 구별할 수 없어요</b>. 방화벽이 막았는지, 애초에 요청이 오지 않았는지, 라우팅이 없었는지 — 서버 안의 증거로는 셋을 못 가릅니다. 증거를 <b>VPC 쪽</b>에서 찾아야 합니다."
+    },
+    nacl: {
+      where: "서브넷 경계 (ENI보다 바깥)", c: "var(--g-nacl)",
+      client: "60초쯤 기다리다 <b>timeout</b>",
+      dump: "<b style='color:var(--bad)'>❌ 안 보인다</b>",
+      log: "서버에는 없고, <b>VPC Flow Logs에 <code>REJECT</code></b> — SG가 막았을 때와 <b>똑같이</b> 보인다",
+      note: "여기가 함정입니다. SG가 막든 NACL이 막든 <b>Flow Log에는 똑같이 <code>REJECT</code> 한 줄</b>만 남아요. 로그만 보고 둘을 가릴 수 없습니다. <br><br>구별되는 경우는 따로 있는데, <b>응답이 막힐 때</b>입니다 — 그때만 <code>ACCEPT</code> 다음에 <code>REJECT</code>가 짝으로 남고, <b>SG는 상태 저장이라 그 조합을 원리상 만들 수 없어요.</b> <a class='link' href='#trace'>7장</a>에서 이 신호를 진단 도구로 씁니다."
+    }
+  };
+  function render(k){
+    const d = D[k];
+    out.innerHTML =
+      `<div class="kv" style="margin-top:12px">
+         <dt>적용 지점</dt><dd><b style="color:${d.where && d.c}">${esc(d.where)}</b></dd>
+         <dt>클라이언트가 보는 것</dt><dd>${d.client}</dd>
+         <dt>서버에서 tcpdump</dt><dd>${d.dump}</dd>
+         <dt>어디에 기록되나</dt><dd>${d.log}</dd>
+       </div>
+       <div class="callout why" style="margin-bottom:0"><p style="margin:0">${d.note}</p></div>`;
+  }
+  wirePicker('#fwPicker', render);
+  render('iptdrop');
 })();
 </script>
 </body>
