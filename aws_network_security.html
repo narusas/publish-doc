@@ -766,6 +766,80 @@ button:focus-visible, .pick:focus-visible, .term:focus-visible, a:focus-visible,
       </div>
     </section>
 
+    <section id="vpc" data-title="VPC 기초">
+      <div class="sec-head">
+        <div class="kicker">02 · 발판</div>
+        <h2 class="sec-title">🗺️ VPC 기초 — <span style="color:var(--accent)">발판만</span> 깔고 간다 <span class="lvl must">🟢 필수</span></h2>
+      </div>
+
+      <div class="callout tip">
+        <h4>⏭️ 건너뛰어도 되는 장</h4>
+        <p>이 장은 본론이 아니라 발판입니다. VPC를 만들어 본 적이 있다면 마지막 오해 격파만 읽고 <a class="link" href="#route">3장</a>으로 넘어가세요.</p>
+      </div>
+
+      <h3>📦 VPC는 내가 빌린 주소 공간이다</h3>
+      <p>VPC는 클라우드에 빌려 둔 주소 공간, 그 자체입니다. 만들 때 <span class="term" data-t="CIDR">CIDR</span> 블록 하나를 정하고, VPC 안의 모든 것은 그 대역 안에서만 IP를 받습니다. 이 대역은 대개 <a class="link" href="network_basics.html">network_basics.html에서 다룬 사설 IP</a> 범위에서 고르는데, 인터넷에 그대로 못 나가던 그 주소가 여기서는 오히려 자산이 돼요. 그리고 VPC는 계정 하나, 리전 하나에 묶여 있습니다. 서울 리전의 VPC가 도쿄 리전의 서브넷을 가질 방법은 없어요.</p>
+
+      <h3>🧱 서브넷은 AZ에 갇힌다</h3>
+      <p>VPC의 CIDR을 실제로 쪼개 쓰는 단위가 서브넷입니다. 서브넷 하나는 정확히 하나의 <span class="term" data-t="AZ">AZ</span> 안에 있어요 — 두 AZ에 걸친 서브넷은 애초에 만들 수 없습니다. 그래서 다중 AZ 구성은 언제나 같은 자리에서 출발해요. 서브넷을 AZ 개수만큼 따로 만드는 것, 그게 시작입니다. <span class="term" data-t="라우팅 테이블">라우팅 테이블</span>과 NACL이 붙는 자리도 바로 이 서브넷이고요.</p>
+
+      <h3>🔌 진짜 주체는 인스턴스가 아니라 ENI다</h3>
+      <p>EC2에 Security Group을 붙인다고 다들 말합니다만, 정확히는 그렇지 않습니다. 실제로 SG가 붙는 자리는 인스턴스가 아니라 <span class="term" data-t="ENI">ENI</span>예요. 인스턴스 하나에 ENI가 둘이면 SG도 ENI마다 따로 붙어요. ENI를 만드는 건 EC2만이 아닙니다 — RDS, VPC에 연결된 Lambda, Interface Endpoint까지 전부 뒤에서 ENI를 하나씩 만들고, 그래서 전부 SG를 받습니다. <a class="link" href="#endpoint">11장</a>에서 이 자리를 다시 만납니다.</p>
+
+      <div class="demo" id="vpcMap">
+        <span class="demo-tag">VPC 지도</span>
+        <p style="margin:0 0 4px">VPC를 이루는 조각들입니다. 눌러서 각각이 <b>무엇에 소속되고 무엇이 붙는지</b> 확인하세요.</p>
+        <div class="picker" id="vpcPicker">
+          <button class="pick on" data-k="vpc">📦 VPC</button>
+          <button class="pick" data-k="subnet">🧱 서브넷</button>
+          <button class="pick" data-k="rt">🧭 라우팅 테이블</button>
+          <button class="pick" data-k="eni">🔌 ENI</button>
+          <button class="pick" data-k="nacl">🧊 NACL</button>
+          <button class="pick" data-k="sg">🛡️ SG</button>
+        </div>
+        <div id="vpcOut"></div>
+      </div>
+
+      <p>서브넷 크기는 마음대로 줄여도 될까요? AWS가 서브넷마다 주소를 얼마쯤 가져가기 때문에, 답은 그렇게 간단하지 않습니다.</p>
+
+      <div class="demo" id="cidrCalc">
+        <span class="demo-tag">CIDR 분할기</span>
+        <p style="margin:0 0 4px">서브넷 크기를 골라 보세요. <b>AWS가 가져가는 5개</b>가 작은 서브넷에서 얼마나 아픈지 드러납니다.</p>
+        <div class="picker" id="cidrPicker">
+          <button class="pick" data-k="16">/16</button>
+          <button class="pick" data-k="20">/20</button>
+          <button class="pick on" data-k="24">/24</button>
+          <button class="pick" data-k="26">/26</button>
+          <button class="pick" data-k="28">/28</button>
+        </div>
+        <div id="cidrOut"></div>
+      </div>
+
+      <p>라우팅 테이블 카드는 이미 답을 흘렸습니다 — "퍼블릭 서브넷의 정체가 바로 이 표의 한 줄"이라고요. 그런데도 오해는 좀처럼 사라지지 않습니다. 서브넷 자체에 퍼블릭이라는 딱지가 붙어 있다는 오해요.</p>
+
+      <div class="myth">
+        <div class="m-row no"><span class="m-x">✕</span><div class="m-txt">서브넷에는 "퍼블릭"과 "프라이빗"이라는 <b>속성</b>이 있다</div></div>
+        <div class="m-row yes"><span class="m-x">✓</span><div class="m-txt"><b>그런 속성은 없다.</b> 연결된 라우팅 테이블에 <code>0.0.0.0/0 → IGW</code> 항목이 있으면 관례상 퍼블릭이라 부를 뿐이다. 콘솔 어디에도 그 체크박스는 없다. 라우팅 테이블 하나만 바꾸면 프라이빗 서브넷이 퍼블릭이 되고, 그 반대도 된다. 이 이야기는 <a class="link" href="#route">3장</a>에서 정면으로 풀어낸다.</div></div>
+      </div>
+
+      <div class="oneline">
+        <div class="ol-ic">🗺️</div>
+        <div><div class="ol-t">2장 한 줄 요약</div><div class="ol-b">VPC는 <b>주소 공간</b>, 서브넷은 <b>AZ에 갇힌 조각</b>이다. 통제가 실제로 붙는 자리는 <b>서브넷과 ENI</b> 둘뿐이다.</div></div>
+      </div>
+
+      <div class="quiz" data-qid="q-vpc" data-answer="b">
+        <div class="q-head">✅ 체크포인트</div>
+        <div class="q">프라이빗 서브넷에 있던 EC2를 인터넷에서 접근 가능하게 만들려고 한다. 반드시 필요한 것은?</div>
+        <button class="opt" data-opt="a"><span class="mk">A</span> 서브넷의 "퍼블릭" 속성을 켠다</button>
+        <button class="opt" data-opt="b"><span class="mk">B</span> 라우팅 테이블에 <code>0.0.0.0/0 → IGW</code>를 넣고, 인스턴스에 퍼블릭 IP를 준다</button>
+        <button class="opt" data-opt="c"><span class="mk">C</span> SG 인바운드를 <code>0.0.0.0/0</code>으로 연다</button>
+        <button class="opt" data-opt="d"><span class="mk">D</span> NACL을 기본값으로 되돌린다</button>
+        <div class="explain"><b>정답 B.</b> "퍼블릭 서브넷"이라는 속성은 존재하지 않습니다(A 오답). 라우팅 테이블의 한 줄이 그 정체예요. 그리고 경로가 있어도 <b>인스턴스에 퍼블릭 IP가 없으면</b> IGW가 변환해 줄 대상이 없어 여전히 안 됩니다. C와 D는 통제를 여는 것이지 <b>경로를 만드는 것이 아닙니다</b> — 경로가 없으면 통제를 아무리 열어도 소용없다는 게 <a class="link" href="#route">3장</a>의 주제입니다.</div>
+      </div>
+    </section>
+
+
+
   </main>
 </div>
 
@@ -799,6 +873,8 @@ const GLOSSARY = {
   "무상태": "stateless. 오가는 패킷을 각각 독립적으로 검사하는 방식. NACL이 이렇게 동작해서, 응답 트래픽을 위한 규칙을 따로 열어야 합니다.",
   "netfilter": "리눅스 커널 안에서 패킷을 검사·변환하는 프레임워크. iptables·nftables는 여기에 규칙을 등록하는 도구입니다. 커널 안이라는 점이 클라우드의 SG와 결정적으로 다릅니다.",
   "Flow Logs": "VPC Flow Logs. ENI를 오간 트래픽의 요약을 10분(기본) 또는 1분 단위로 모아 남기는 로그. 패킷 내용은 없고 5-tuple과 ACCEPT/REJECT만 남습니다.",
+  "AZ": "Availability Zone. 리전 안에서 물리적으로 분리된 데이터센터 묶음. 서브넷 하나는 정확히 하나의 AZ 안에만 존재합니다.",
+  "라우팅 테이블": "패킷의 목적지 대역별로 다음에 어디로 보낼지 적어 둔 표. 서브넷마다 하나가 연결되며, 여기에 IGW 항목이 있느냐가 '퍼블릭 서브넷'의 실체입니다.",
   // @GLOSSARY_END
 };
 
@@ -1041,6 +1117,74 @@ if(location.hash){
   }
   wirePicker('#fwPicker', render);
   render('iptdrop');
+})();
+
+/* ============================================================
+   데모 3 — VPC 지도 (2장)
+   ============================================================ */
+(function(){
+  const out = $('#vpcOut'); if(!out) return;
+  const D = {
+    vpc:    { t:"📦 VPC", c:"var(--text-dim)", scope:"리전 하나 · 계정 하나",
+      ex:"10.0.0.0/16 (65,536개 주소)",
+      d:"빌린 주소 공간 그 자체. 만들 때 정한 CIDR은 <b>줄일 수 없고</b>, 나중에 보조 CIDR을 덧붙이는 것만 됩니다. 다른 VPC와는 기본적으로 완전히 격리돼요 — 잇는 방법은 <a class='link' href='#peering'>12장</a>에서 다룹니다." },
+    subnet: { t:"🧱 서브넷", c:"var(--g-nacl)", scope:"AZ 하나에 갇힘",
+      ex:"10.0.1.0/24 (ap-northeast-2a)",
+      d:"VPC의 CIDR을 쪼갠 조각이고 <b>정확히 한 AZ 안에</b> 있습니다. AZ를 넘는 서브넷은 만들 수 없어요. 그래서 다중 AZ는 서브넷을 AZ 수만큼 만드는 데서 시작합니다. <b>라우팅 테이블과 NACL이 붙는 자리</b>가 여기예요." },
+    rt:     { t:"🧭 라우팅 테이블", c:"var(--g-route)", scope:"서브넷에 연결",
+      ex:"10.0.0.0/16 → local · 0.0.0.0/0 → igw-abc",
+      d:"패킷을 어디로 보낼지 정하는 표. 서브넷마다 정확히 하나가 연결됩니다(지정 안 하면 VPC 기본 것). <b>\"퍼블릭 서브넷\"의 정체가 바로 이 표의 한 줄</b>이에요. 통제 이전에 <b>경로</b>라는 걸 <a class='link' href='#route'>3장</a>에서 다룹니다." },
+    eni:    { t:"🔌 ENI", c:"var(--g-sg)", scope:"서브넷 하나에 소속",
+      ex:"eni-0a1b · 사설 IP 10.0.1.42",
+      d:"가상 랜카드. EC2·RDS·Lambda(VPC 연결)·Interface Endpoint·ALB 노드가 전부 이걸 만듭니다. <b>Security Group이 실제로 붙는 자리</b>가 인스턴스가 아니라 여기예요. 인스턴스에 ENI가 둘이면 SG도 따로 붙습니다." },
+    nacl:   { t:"🧊 NACL", c:"var(--g-nacl)", scope:"서브넷에 연결",
+      ex:"100 ALLOW tcp 443 · * DENY",
+      d:"서브넷 경계의 무상태 검문소. 번호 순서대로 평가하고 <b>deny를 쓸 수 있습니다</b>. 서브넷 하나에 하나만 연결되고, 지정 안 하면 기본 NACL(전부 허용)이 붙어요. 함정은 <a class='link' href='#nacl'>5장</a>에서." },
+    sg:     { t:"🛡️ Security Group", c:"var(--g-sg)", scope:"ENI에 붙음 (여러 개 가능)",
+      ex:"inbound tcp 443 from 0.0.0.0/0",
+      d:"상태 유지 검문소. <b>allow만 있고 deny가 없습니다.</b> ENI 하나에 여러 개를 붙일 수 있고 그때는 합집합이에요. VPC 안에서 움직이므로 리전을 넘지 못합니다. <a class='link' href='#sg'>4장</a>에서 해부합니다." }
+  };
+  function render(k){
+    const d = D[k];
+    out.innerHTML =
+      `<div class="verdict" style="margin-top:12px">
+         <span class="vmodel" style="color:${d.c}">${esc(d.t)}</span>
+         <span class="vwhy">${esc(d.scope)} · <span class="mono">${esc(d.ex)}</span></span>
+       </div>
+       <div class="callout why" style="margin-bottom:0"><p style="margin:0">${d.d}</p></div>`;
+  }
+  wirePicker('#vpcPicker', render);
+  render('vpc');
+})();
+
+/* ============================================================
+   데모 4 — CIDR 분할기 (2장)
+   ============================================================ */
+(function(){
+  const out = $('#cidrOut'); if(!out) return;
+  // AWS는 서브넷마다 5개 주소를 예약한다: 네트워크 주소, VPC 라우터,
+  // DNS(+2), 미래 예약(+3), 브로드캐스트 주소.
+  const RESERVED = 5;
+  function render(k){
+    const p = +k;
+    const total = Math.pow(2, 32 - p);
+    const usable = Math.max(0, total - RESERVED);
+    const perVpc = Math.pow(2, p - 16); // 10.0.0.0/16 을 이 크기로 쪼갤 때의 개수
+    out.innerHTML =
+      `<div class="kv" style="margin-top:12px">
+         <dt>예시</dt><dd><span class="mono">10.0.0.0/${p}</span></dd>
+         <dt>전체 주소</dt><dd>${total.toLocaleString()}개</dd>
+         <dt>실제 쓸 수 있는 주소</dt><dd><b>${usable.toLocaleString()}개</b> <span class="dim">(AWS가 서브넷마다 5개를 예약합니다)</span></dd>
+         <dt>10.0.0.0/16 하나를 이 크기로 쪼개면</dt><dd>${perVpc.toLocaleString()}개의 서브넷</dd>
+       </div>
+       <div class="callout why" style="margin-bottom:0"><p style="margin:0">
+         AWS가 가져가는 5개는 <b>네트워크 주소 · VPC 라우터(.1) · DNS(.2) · 미래 예약(.3) · 브로드캐스트 주소</b>입니다.
+         그래서 <code>/28</code>은 16개 중 <b>11개만</b> 쓸 수 있어요 — 실무에서 서브넷을 <code>/28</code>보다 작게 만들지 않는 이유입니다.
+         Interface Endpoint나 ALB 노드도 여기서 IP를 하나씩 가져간다는 걸 잊으면 <b>확장할 때 주소가 모자랍니다.</b>
+       </p></div>`;
+  }
+  wirePicker('#cidrPicker', render);
+  render('24');
 })();
 </script>
 </body>
