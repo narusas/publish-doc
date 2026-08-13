@@ -1758,6 +1758,87 @@ button:focus-visible, .pick:focus-visible, .term:focus-visible, a:focus-visible,
       </div>
     </section>
 
+    <section id="appendix-cli" data-title="부록 A · 진짜 명령어">
+      <div class="sec-head">
+        <div class="kicker">부록 A</div>
+        <h2 class="sec-title">⌨️ 진짜 명령어로 확인해 보기 <span class="lvl adv">🔵 심화</span></h2>
+      </div>
+      <p class="lead">15장 체크리스트에 표시는 했습니다. 그런데 그 표시는 무엇을 근거로 한 건가요? 기억이라면 못 믿습니다 — SG 규칙은 스스로 편집한 지 몇 달만 지나도 낯설어져요.</p>
+      <p>여기서부터는 이 문서가 아니라 당신의 계정이 답합니다. AWS CLI와 자격 증명만 있으면, 아래 여섯 개로 충분해요. 순서는 앞 장에서 짚었던 관문 순서 그대로입니다.</p>
+
+      <h3>1️⃣ 내 SG 규칙 전부 보기</h3>
+      <pre><code class="language-bash">aws ec2 describe-security-groups \
+  --query 'SecurityGroups[].{Name:GroupName,Id:GroupId,In:IpPermissions}' \
+  --output json</code></pre>
+      <p><code>In</code> 배열 안의 <code>IpRanges</code>가 CIDR이고 <code>UserIdGroupPairs</code>가 SG 참조입니다. <a class="link" href="#ref">8장</a>에서 본 그 구분이 여기서 실물로 나옵니다 — <code>UserIdGroupPairs</code>가 비어 있는 규칙이 많다면, 아직 IP로 짜여 있다는 뜻이에요.</p>
+
+      <h3>2️⃣ 인터넷에 열린 위험한 포트 찾기</h3>
+      <pre><code class="language-bash">aws ec2 describe-security-groups \
+  --filters Name=ip-permission.cidr,Values=0.0.0.0/0 \
+  --query 'SecurityGroups[].{Id:GroupId,Name:GroupName}' \
+  --output table</code></pre>
+      <p><a class="link" href="#pitfall">14장</a> 첫 항목 — <code>0.0.0.0/0</code>에 열린 22번 — 을 실제로 점검하는 명령입니다. 결과에 22나 3389가 섞여 있다면, 지금 이 순간에도 스캔을 받고 있다고 봐도 좋습니다.</p>
+
+      <h3>3️⃣ 라우팅 테이블 확인</h3>
+      <pre><code class="language-bash">aws ec2 describe-route-tables \
+  --query 'RouteTables[].{Id:RouteTableId,Subnets:Associations[].SubnetId,Routes:Routes[].[DestinationCidrBlock,GatewayId,NatGatewayId]}' \
+  --output json</code></pre>
+      <p>"퍼블릭 서브넷"이라는 말은 <a class="link" href="#route">3장</a>에서 정의로만 봤습니다. 여기서는 눈으로 봐요 — 어떤 서브넷의 라우팅 항목에 <code>igw-</code>로 시작하는 <code>GatewayId</code>가 있는지, 그게 실체입니다. 없다면 태그가 뭐라 붙어 있든 프라이빗이에요.</p>
+
+      <h3>4️⃣ Reachability Analyzer 실행</h3>
+      <pre><code class="language-bash">aws ec2 create-network-insights-path \
+  --source eni-0a1b2c3d --destination eni-0e5f6g7h \
+  --protocol tcp --destination-port 5432
+
+aws ec2 start-network-insights-analysis \
+  --network-insights-path-id nip-xxxxxxxx</code></pre>
+      <p><a class="link" href="#trace">7장</a>에서 이름만 나왔던 <span class="term" data-t="Reachability Analyzer">Reachability Analyzer</span>입니다. 경로를 만들고 분석을 돌리면, 도달 가능 여부와 함께 정확히 어느 관문이 막았는지가 함께 돌아와요. 결과는 콘솔에서 보는 편이 표보다 훨씬 읽기 편합니다.</p>
+
+      <h3>5️⃣ Flow Logs 조회 (CloudWatch Logs Insights)</h3>
+      <p>이 블록은 bash가 아닙니다. 콘솔의 쿼리 입력창에 그대로 붙여 넣으세요.</p>
+      <pre style="border-radius:12px; border:1px solid var(--border); margin:16px 0; padding:1em; overflow:auto; font-size:13px; box-shadow:var(--shadow); background:#2d2d2d; color:#ccc; font-family:var(--mono); line-height:1.5"><code>fields @timestamp, srcAddr, dstAddr, dstPort, action
+| filter action = "REJECT"
+| stats count(*) by dstPort, srcAddr
+| sort by count(*) desc
+| limit 20</code></pre>
+      <p><a class="link" href="#trace">7장</a>에서 본 그 필드들 — <code>srcAddr</code>, <code>dstAddr</code>, <code>action</code> — 이 실제 로그 한 줄에 그대로 있습니다. 결과가 비어 있다면 REJECT가 없다는 뜻이니 오히려 좋은 소식이고, 특정 <code>dstPort</code> 하나에 몰려 있다면 그 포트의 SG나 NACL부터 보세요.</p>
+
+      <h3>6️⃣ 인스턴스 안에서 확인할 것</h3>
+      <pre><code class="language-bash">ss -tlnp                 # 어떤 포트를 누가 듣고 있나, 바인딩이 0.0.0.0인가 127.0.0.1인가
+sudo iptables -L -n -v   # OS 방화벽이 걸려 있나 (SG와는 별개다)
+curl -v --max-time 5 http://10.0.2.10:5432   # 옆 계층까지 닿는지</code></pre>
+      <p><a class="link" href="#trace">7장</a>의 <code>refused</code> 분기, 그 안쪽입니다. Flow Logs와 Reachability Analyzer는 여기서 손을 떼요 — 둘 다 네트워크 계층에서 끝나는 도구니까요. 남은 용의자는 전부 인스턴스 안에 있습니다.</p>
+
+      <div class="callout warn">
+        <h4>🪤 전부 읽기 전용입니다</h4>
+        <p>위 여섯 개는 하나도 상태를 바꾸지 않습니다. <code>authorize-security-group-ingress</code> 같은 변경 명령은 일부러 넣지 않았어요. 확인은 CLI로 하고 변경은 코드로 합니다 — <a class="link" href="#pitfall">14장</a>의 권고를 여기서도 그대로 지킨 거예요.</p>
+      </div>
+    </section>
+
+    <section id="appendix-map" data-title="부록 B · 다른 이름">
+      <div class="sec-head">
+        <div class="kicker">부록 B</div>
+        <h2 class="sec-title">🗺️ 다른 이름, 같은 이야기 <span class="lvl adv">🔵 심화</span></h2>
+      </div>
+      <p class="lead">이 계정이 AWS가 아니라면 지금까지 배운 게 다 쓸모없어지나요? 아닙니다. 이름표만 바뀔 뿐, 물어야 할 질문은 그대로예요.</p>
+      <p>SG·NACL이 나오는 자리에 다른 클라우드는 다른 이름을 붙였습니다. 넷을 짚어 봅니다.</p>
+
+      <h3>🗂️ 같은 자리, 다른 이름</h3>
+      <div class="kv">
+        <dt>GCP</dt><dd>VPC Firewall Rules. 대상을 IP가 아니라 <b>네트워크 태그</b>나 서비스 계정으로 지정합니다 — <a class="link" href="#ref">8장</a>의 SG 참조와 같은 발상이에요. SG와 달리 <b>우선순위와 deny가 있습니다.</b> 서브넷 단위 NACL에 해당하는 별도 계층은 없고, 방화벽 규칙 하나로 통합돼 있어요.</dd>
+        <dt>Azure</dt><dd>Network Security Group(NSG). 이름은 AWS의 SG와 같지만 동작은 <b>중간</b>입니다 — 우선순위가 있고 deny도 쓸 수 있는데, 상태는 유지해요. 서브넷과 NIC 양쪽에 붙일 수 있어서, AWS라면 SG와 NACL로 나뉘어 있는 두 계층이 하나로 합쳐진 모양에 가깝습니다.</dd>
+        <dt>온프레미스 DMZ</dt><dd>존(zone) 모델. <a class="link" href="#route">3장</a>에서 쓴 퍼블릭·프라이빗·격리 3계층은 사실 <b>DMZ·내부망·데이터존</b>을 클라우드 어휘로 옮긴 것뿐이에요. 달라진 건 방화벽의 위치입니다 — 물리 장비 한 대가 아니라 <b>모든 ENI 앞에 분산</b>돼 있어서, "내부망은 믿는다"는 전제가 더 이상 성립하지 않고 계층 사이에도 통제가 걸립니다.</dd>
+        <dt>Kubernetes</dt><dd>NetworkPolicy. <b>라벨 셀렉터</b>로 대상을 지정하는데, 이게 SG 참조와 정확히 같은 아이디어입니다. 반대인 건 기본값 하나뿐이에요 — 기본은 전부 허용이고, 정책을 하나라도 붙이는 순간 그 파드는 화이트리스트 모드로 바뀝니다.</dd>
+      </div>
+
+      <p>넷을 다 보고 나면, 남는 질문은 하나입니다.</p>
+
+      <div class="callout key">
+        <h4>🔑 질문은 하나, 이름만 다르다</h4>
+        <p>이름은 다 다르지만 질문은 하나입니다. <b>"이 트래픽을, 어디서 온 무엇으로 식별하고, 어느 지점에서 판정할 것인가."</b> IP로 식별하면 관리가 무너지고, <b>신원(태그·SG·라벨)으로 식별하면 살아남습니다.</b> 어느 클라우드로 옮기든 이 감각은 그대로 갑니다.</p>
+      </div>
+    </section>
+
   </main>
 </div>
 
