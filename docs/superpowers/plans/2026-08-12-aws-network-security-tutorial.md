@@ -67,7 +67,7 @@
 | # | id | data-title | 태스크 |
 |---|---|---|---|
 | · | `intro` | 개요 | 4 |
-| 1 | `outside` | 방화벽은 서버 밖에 | 5 |
+| 1 | `attach` | SG는 어디에 붙나 | 5R |
 | 2 | `vpc` | VPC 기초 | 6 |
 | 3 | `route` | 경로가 곧 통제 | 7 |
 | 4 | `sg` | Security Group | 8 |
@@ -88,10 +88,11 @@
 **퀴즈 id** — 장마다 정확히 1개, 총 15개:
 `q-outside` `q-vpc` `q-route` `q-sg` `q-nacl` `q-order` `q-trace` `q-ref` `q-nfw` `q-waf` `q-endpoint` `q-peering` `q-blueprint` `q-pitfall` `q-wrap`
 
-**데모 컨테이너 id** — 총 14종:
+**데모 컨테이너 id** — 총 15종:
 
 | 장 | 데모 | 루트 id | 입력 id | 출력 id |
 |---|---|---|---|---|
+| 1 | 리소스별 부착 지도 | `sgAttach` | `attachPicker` | `attachOut` |
 | 1 | iptables vs SG | `fwCmp` | `fwPicker` | `fwOut` |
 | 2 | VPC 지도 | `vpcMap` | `vpcPicker` | `vpcOut` |
 | 2 | CIDR 분할기 | `cidrCalc` | `cidrPicker` | `cidrOut` |
@@ -619,7 +620,7 @@ git commit -m "AWS 네트워크 보안 튜토리얼: 문서 뼈대"
 
 ```html
       <div class="map-grid">
-        <a class="map-card" href="#outside"><div class="ic">🧱</div><div class="tt">1 · 서버 밖의 방화벽</div><div class="dd">tcpdump에 안 잡힌다</div></a>
+        <a class="map-card" href="#attach"><div class="ic">🛡️</div><div class="tt">1 · SG는 어디에 붙나</div><div class="dd">EC2·ALB·Endpoint 부착 지도</div></a>
         <a class="map-card" href="#vpc"><div class="ic">🗺️</div><div class="tt">2 · VPC 기초</div><div class="dd">발판 · 건너뛰기 가능</div></a>
         <a class="map-card" href="#route"><div class="ic">🧭</div><div class="tt">3 · 경로가 곧 통제</div><div class="dd">라우팅·IGW·NAT</div></a>
         <a class="map-card" href="#sg"><div class="ic">🛡️</div><div class="tt">4 · Security Group</div><div class="dd">상태 유지 검문소</div></a>
@@ -868,7 +869,7 @@ JS:
 ## Task 6: 2장 — VPC 기초 (발판)
 
 **Files:**
-- Modify: `aws_network_security.html` (`#outside` 뒤에 `<section id="vpc">` 추가)
+- Modify: `aws_network_security.html` (`#attach` 뒤에 `<section id="vpc">` 추가)
 
 **Interfaces:**
 - Consumes: Task 3의 `wirePicker`, `esc`
@@ -2702,9 +2703,9 @@ curl -v --max-time 5 http://10.0.2.10:5432   # 옆 계층까지 닿는지
 - [ ] **Step 3: 전체 검사 — 이번엔 `[anchor]`까지 통과해야 한다**
 
 Run: `python3 tools/check_tutorial.py aws_network_security.html`
-Expected: `OK aws_network_security.html (섹션 18 · 퀴즈 15 · 데모 14)`
+Expected: `OK aws_network_security.html (섹션 18 · 퀴즈 15 · 데모 15)`
 
-숫자가 다르면 빠진 게 있다. 섹션 18 = 히어로 1 + 본문 15 + 부록 2. 퀴즈 15 = 본문 장마다 1개(부록에는 없음). 데모 14 = 파일 구조 표의 목록.
+숫자가 다르면 빠진 게 있다. 섹션 18 = 히어로 1 + 본문 15 + 부록 2. 퀴즈 15 = 본문 장마다 1개(부록에는 없음). 데모 15 = 파일 구조 표의 목록.
 
 - [ ] **Step 4: 커밋**
 
@@ -2773,7 +2774,7 @@ Expected: 둘 다 `OK`.
 - [ ] 인덱스에 카드 6장이 보이고, 새 카드가 로즈 색으로 강조된다
 - [ ] 카드를 눌러 튜토리얼이 열린다
 - [ ] 목차에 18개 항목이 있고 스크롤하면 현재 위치가 따라온다
-- [ ] 데모 14종을 전부 눌러 본다. 콘솔 오류 0건
+- [ ] 데모 15종을 전부 눌러 본다. 콘솔 오류 0건
 - [ ] 퀴즈 15개를 풀면 진행률이 100%에 도달한다
 - [ ] 용어사전 드로어에 항목이 20개 이상 있고 검색이 동작한다
 - [ ] `↺ 초기화` 후 새로고침하면 진행률·체크리스트가 초기화된다
