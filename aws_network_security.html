@@ -1371,7 +1371,7 @@ if(location.hash){
     out.innerHTML =
       `<div class="kv" style="margin-top:12px">
          <dt>ENI를 만드나</dt><dd>${d.eni}</dd>
-         <dt>SG를 붙일 수 있나</dt><dd class="verdict" style="display:inline-flex; padding:3px 0; margin:0; border:none; background:transparent"><span class="vres ${d.sgClass}">${d.sgLabel}</span></dd>
+         <dt>SG를 붙일 수 있나</dt><dd><span class="badge ${d.sgClass==='deny'?'bad':'ok'}">${d.sgLabel}</span></dd>
          <dt>몇 개, 어디에</dt><dd>${d.where}</dd>
          <dt>함정</dt><dd>${d.trap}</dd>
        </div>
