@@ -1799,7 +1799,7 @@ aws ec2 start-network-insights-analysis \
       <pre style="border-radius:12px; border:1px solid var(--border); margin:16px 0; padding:1em; overflow:auto; font-size:13px; box-shadow:var(--shadow); background:#2d2d2d; color:#ccc; font-family:var(--mono); line-height:1.5"><code>fields @timestamp, srcAddr, dstAddr, dstPort, action
 | filter action = "REJECT"
 | stats count(*) by dstPort, srcAddr
-| sort by count(*) desc
+| sort count(*) desc
 | limit 20</code></pre>
       <p><a class="link" href="#trace">7장</a>에서 본 그 필드들 — <code>srcAddr</code>, <code>dstAddr</code>, <code>action</code> — 이 실제 로그 한 줄에 그대로 있습니다. 결과가 비어 있다면 REJECT가 없다는 뜻이니 오히려 좋은 소식이고, 특정 <code>dstPort</code> 하나에 몰려 있다면 그 포트의 SG나 NACL부터 보세요.</p>
 
@@ -1810,8 +1810,8 @@ curl -v --max-time 5 http://10.0.2.10:5432   # 옆 계층까지 닿는지</code>
       <p><a class="link" href="#trace">7장</a>의 <code>refused</code> 분기, 그 안쪽입니다. Flow Logs와 Reachability Analyzer는 여기서 손을 떼요 — 둘 다 네트워크 계층에서 끝나는 도구니까요. 남은 용의자는 전부 인스턴스 안에 있습니다.</p>
 
       <div class="callout warn">
-        <h4>🪤 전부 읽기 전용입니다</h4>
-        <p>위 여섯 개는 하나도 상태를 바꾸지 않습니다. <code>authorize-security-group-ingress</code> 같은 변경 명령은 일부러 넣지 않았어요. 확인은 CLI로 하고 변경은 코드로 합니다 — <a class="link" href="#pitfall">14장</a>의 권고를 여기서도 그대로 지킨 거예요.</p>
+        <h4>🪤 보안 그룹은 건드리지 않습니다</h4>
+        <p>SG·라우팅·Flow Logs를 읽는 명령은 상태를 하나도 바꾸지 않습니다. Reachability Analyzer 두 줄만 예외로 과금되는 분석 리소스(Path·Analysis)를 새로 만들지만, 보안 그룹이나 라우팅은 건드리지 않고 다 쓴 뒤엔 지울 수 있습니다. <code>authorize-security-group-ingress</code> 같은 변경 명령은 아예 넣지 않았습니다 — <a class="link" href="#pitfall">14장</a>의 권고를 여기서도 지킨 거예요.</p>
       </div>
     </section>
 
