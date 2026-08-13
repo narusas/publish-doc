@@ -1634,6 +1634,130 @@ button:focus-visible, .pick:focus-visible, .term:focus-visible, a:focus-visible,
       </div>
     </section>
 
+    <section id="pitfall" data-title="함정과 원칙">
+      <div class="sec-head">
+        <div class="kicker">14 · 실무</div>
+        <h2 class="sec-title">🧨 실제로 사고가 나는 <span style="color:var(--accent)">여섯 자리</span> <span class="lvl must">🟢 필수</span></h2>
+      </div>
+      <p class="lead">여기까지 본 함정은 대부분 <b>무언가를 바꾸다가</b> 생겼습니다. NACL 아웃바운드를 잠그다가, WAF를 CloudFront에만 걸다가, 라우팅 테이블에서 줄 하나를 지우다가요. 그런데 실제 침해 사고의 시작점을 들여다보면 다릅니다. 대개는 <b>아무도 건드리지 않은 자리</b>예요 — 계정을 막 만들었을 때 AWS가 깔아 둔 기본값을 그대로 둔 자리.</p>
+      <p>여섯 곳을 모았습니다. 새로 배울 기법은 하나도 없어요. 전부 이 문서 어딘가에서 이미 한 번 짚었던 자리이고, 그때는 몰랐던 게 아니라 "나중에 고치면 되지"로 넘어갔을 뿐입니다.</p>
+
+      <h3>🔑 <code>0.0.0.0/0</code>으로 열린 22번</h3>
+      <div class="myth">
+        <div class="m-row no"><span class="m-x">✕</span><div class="m-txt">SG 인바운드를 사무실 IP만으로 좁히면 22번은 열어 둬도 괜찮다</div></div>
+        <div class="m-row yes"><span class="m-x">✓</span><div class="m-txt"><b>SSH는 아예 열지 않는 게 답이다.</b> 계정을 만들자마자 <code>0.0.0.0/0</code>의 22번에는 전 세계에서 스캔이 들어오고, 오래지 않아 무차별 대입으로 이어진다 — <a class="link" href="#sg">4장</a>에서 그 토글을 켜 보면 뜨던 경고 그대로다. SSM Session Manager를 쓰면 인바운드 포트를 하나도 열지 않고 셸에 붙을 수 있고, 그 접속 기록은 CloudTrail에 남는다.</div></div>
+      </div>
+
+      <h3>⚠️ 기본 SG를 그냥 쓰기</h3>
+      <div class="myth">
+        <div class="m-row no"><span class="m-x">✕</span><div class="m-txt">아무것도 설정하지 않았으니 기본값은 안전한 쪽으로 닫혀 있을 것이다</div></div>
+        <div class="m-row yes"><span class="m-x">✓</span><div class="m-txt"><b>기본 SG의 인바운드 규칙은 자기 자신을 source로 한다.</b> 같은 <code>default</code>를 붙인 리소스끼리는 그래서 전부 통한다 — <a class="link" href="#ref">8장</a>에서 "전부 기본 SG 공유"를 눌러 봤다면 그 결과가 이거다. 계층 분리는 처음부터 없었던 셈이다.</div></div>
+      </div>
+
+      <h3>📤 아웃바운드 무제한</h3>
+      <div class="callout warn">
+        <h4>🪤 나가는 문은 대개 그대로 열려 있다</h4>
+        <p>SG 아웃바운드 전체 허용은 기본값이고, <a class="link" href="#sg">4장</a>에서 본 것처럼 대부분의 계정이 그대로 둡니다. 평소엔 문제가 없어요 — 문제는 침해당한 다음입니다. 그 문은 데이터가 빠져나가는 문이자 공격자가 툴을 내려받는 문이 됩니다. 전부 잠글 필요는 없어요. 최소한 <b>DB 계층만이라도</b> 잠그세요. 도메인 단위로 더 정교하게 통제하고 싶다면 <a class="link" href="#nfw">9장</a>의 Network Firewall이 그 자리입니다.</p>
+      </div>
+
+      <h3>🧊 NACL을 보안 도구로 쓰기</h3>
+      <div class="myth">
+        <div class="m-row no"><span class="m-x">✕</span><div class="m-txt">커스텀 NACL에 알려진 악성 IP 목록을 채워 넣으면 SG보다 강한 방어선이 된다</div></div>
+        <div class="m-row yes"><span class="m-x">✓</span><div class="m-txt">NACL의 규칙 수는 넉넉하지 않고, 무상태라 관리 비용이 크다 — <a class="link" href="#nacl">5장</a>에서 본 것과 같다. 목록 기반 차단은 NACL이 아니라 WAF나 Network Firewall의 일이다.</div></div>
+      </div>
+
+      <h3>🎲 다중 AZ 중 한쪽만 다른 설정</h3>
+      <div class="callout warn">
+        <h4>🪤 "될 때도 있고 안 될 때도 있다"의 최다 원인</h4>
+        <p>서브넷은 AZ마다 별개 리소스이고, 라우팅 테이블 연결도 별개입니다. AZ-a에서 맞춰 둔 설정을 AZ-c에도 똑같이 했는지는 아무도 자동으로 확인해 주지 않아요. <a class="link" href="#trace">7장</a>의 증상 판별 트리에서 "될 때도 있고 안 될 때도 있다"를 골랐을 때 나온 원인 목록의 맨 앞이 바로 이거였습니다.</p>
+      </div>
+
+      <h3>✍️ SG 규칙을 콘솔에서 손으로 고치기</h3>
+      <div class="callout warn">
+        <h4>🪤 고친 사람도, 이유도 남지 않는다</h4>
+        <p>급할 때 콘솔에서 규칙 한 줄 여는 건 쉽습니다. 그런데 그 한 줄이 나중에 왜 거기 있는지는 아무도 기억하지 못해요. Terraform 같은 코드로 관리하고, <a class="link" href="#ref">8장</a>에서처럼 규칙 선언을 SG 리소스 자체와 분리해 두세요. 그리고 규칙마다 <code>description</code>에 <b>티켓 번호와 이유</b>를 적어 두면, 나중에 되돌릴 때도 왜 열렸는지 추적할 때도 그 한 줄이 유일한 단서가 됩니다.</p>
+      </div>
+
+      <div class="callout std">
+        <h4>📐 업계 표준 요약</h4>
+        <p><b>인바운드는 좁게 시작해 필요할 때 엽니다.</b> <b>아웃바운드는 DB 계층부터</b> 잠그고, SSH는 아예 열지 않아요. NACL은 기본값 그대로 두고, 모든 규칙은 <b>코드로 관리</b>합니다.</p>
+      </div>
+
+      <div class="oneline">
+        <div class="ol-ic">🧨</div>
+        <div><div class="ol-t">14장 한 줄 요약</div><div class="ol-b">사고는 정교한 공격보다 <b>기본값을 그대로 둔 자리</b>에서 난다.</div></div>
+      </div>
+
+      <div class="quiz" data-qid="q-pitfall" data-answer="b">
+        <div class="q-head">✅ 체크포인트</div>
+        <div class="q">운영 계정의 보안을 점검한다. 하나만 고칠 수 있다면?</div>
+        <button class="opt" data-opt="a"><span class="mk">A</span> NACL에 알려진 악성 IP 목록을 넣는다</button>
+        <button class="opt" data-opt="b"><span class="mk">B</span> <code>0.0.0.0/0</code>에서 22번이 열린 SG를 찾아 닫고 SSM Session Manager로 전환한다</button>
+        <button class="opt" data-opt="c"><span class="mk">C</span> 모든 서브넷에 커스텀 NACL을 만든다</button>
+        <button class="opt" data-opt="d"><span class="mk">D</span> VPC Flow Logs를 켠다</button>
+        <div class="explain"><b>정답 B.</b> 인터넷에 열린 SSH는 지금 이 순간에도 무차별 대입을 받고 있는 <b>현재진행형 노출</b>입니다. A는 목록 관리 비용에 비해 효과가 적고 NACL의 규칙 수 한도에 금방 걸려요. C는 오히려 ephemeral 함정으로 장애를 만들 가능성이 큽니다. D는 좋은 일이지만 <b>탐지</b>이지 <b>차단</b>이 아닙니다 — 열린 문을 닫는 게 먼저예요.</div>
+      </div>
+    </section>
+
+    <section id="wrap" data-title="마무리">
+      <div class="sec-head">
+        <div class="kicker">15 · 마무리</div>
+        <h2 class="sec-title">🏁 내 VPC에는 <span style="color:var(--accent)">몇 개가 열려</span> 있나 <span class="lvl must">🟢 필수</span></h2>
+      </div>
+      <p class="lead">처음 <a class="link" href="#intro">개요</a>에서 여섯 문장을 눌러 보셨죠. 그중 몇 개는 "그렇다"였을 거예요. 이제 다시 떠올려 보세요 — 이번엔 검색하지 않고도 몇 장의 이야기였는지 말할 수 있을 겁니다. SG를 <code>0.0.0.0/0</code>으로 넓혀 본 적이 있다는 대답은 <a class="link" href="#order">6장</a>이 짚었고, timeout과 refused를 구분하기 어렵다는 대답은 <a class="link" href="#trace">7장</a> 전체가 그 하나를 위한 장이었어요. source에 SG를 넣을 수 있다는 걸 몰랐다는 대답은 <a class="link" href="#ref">8장</a>이 답했고요.</p>
+      <p>이 문서는 그 질문 하나로 시작했습니다 — SG를 다 열었는데 왜 timeout인가. 답은 검색이 아니라, <b>관문의 목록과 순서</b>였습니다.</p>
+
+      <h3>🧭 한 장으로 줄이면</h3>
+      <div class="kv">
+        <dt>경로</dt><dd>통제 이전에 <b>경로</b>가 있는지 본다. 경로 없음과 차단은 증상이 같다.</dd>
+        <dt>SG</dt><dd>ENI에 붙고, allow만 있고, 순서가 없고, 상태를 <b>기억한다.</b></dd>
+        <dt>NACL</dt><dd>서브넷에 붙고, deny를 쓸 수 있고, 번호 순이고, <b>기억하지 않는다.</b></dd>
+        <dt>순서</dt><dd>인바운드는 라우팅 → NACL → SG → OS, 응답은 SG를 건너뛰고 NACL만 다시 본다.</dd>
+        <dt>진단</dt><dd><code>refused</code>면 네트워크를 그만 본다. <code>timeout</code>이면 어디까지 갔는지부터 확정한다.</dd>
+        <dt>연동</dt><dd>IP가 아니라 <b>SG</b>를 참조한다. 경로를 없앨 수 있으면 통제보다 낫다.</dd>
+      </div>
+
+      <p>정리는 여기까지입니다. 이제 내 계정에 적용해 볼 차례예요.</p>
+
+      <h3>✅ 내 계정에 적용해 볼 것</h3>
+      <div class="ckl" id="ckl">
+        <div class="ck" data-k="ssh"><span class="cb">✓</span><span class="ct"><code>0.0.0.0/0</code>에서 <b>22·3389</b>가 열린 SG가 있는지 찾아본다</span></div>
+        <div class="ck" data-k="default"><span class="cb">✓</span><span class="ct"><b>기본 SG</b>를 그대로 쓰는 리소스가 있는지 확인한다</span></div>
+        <div class="ck" data-k="egress"><span class="cb">✓</span><span class="ct"><b>DB 계층</b>의 아웃바운드를 잠근다</span></div>
+        <div class="ck" data-k="ref"><span class="cb">✓</span><span class="ct">SG 규칙에 박힌 <b>개별 IP</b>를 SG 참조로 바꾼다</span></div>
+        <div class="ck" data-k="nacl"><span class="cb">✓</span><span class="ct">커스텀 NACL이 있다면 <b>ephemeral 범위</b>가 열려 있는지 확인한다</span></div>
+        <div class="ck" data-k="rt"><span class="cb">✓</span><span class="ct">AZ별 서브넷의 <b>라우팅 테이블 연결</b>이 정말 같은지 대조한다</span></div>
+        <div class="ck" data-k="vpce"><span class="cb">✓</span><span class="ct">S3·DynamoDB 트래픽이 NAT을 타고 있다면 <b>Gateway Endpoint</b>를 만든다</span></div>
+        <div class="ck" data-k="flow"><span class="cb">✓</span><span class="ct"><b>VPC Flow Logs</b>를 켜고 한 줄을 직접 읽어 본다</span></div>
+        <div class="ck-score" id="cklScore"></div>
+      </div>
+
+      <p>네트워크 밖의 이야기도 남아 있습니다. 계속 읽고 싶다면 이 시리즈의 나머지가 여기 있어요.</p>
+
+      <h3>📚 다음에 읽을 것</h3>
+      <div class="kv">
+        <dt>iam_tutorial.html</dt><dd>같은 계정의 <b>API 층</b> 통제. <a class="link" href="#endpoint">11장</a>에서 만난 그 축입니다.</dd>
+        <dt>rbac_tutorial.html</dt><dd>애플리케이션 안의 <b>인가</b>.</dd>
+        <dt>network_basics.html</dt><dd>이 문서가 전제한 <b>네트워크 원리</b>.</dd>
+        <dt>https_tutorial.html</dt><dd><a class="link" href="#nfw">9장</a>의 <b>SNI</b>가 왜 평문인지.</dd>
+      </div>
+
+      <div class="oneline">
+        <div class="ol-ic">🏁</div>
+        <div><div class="ol-t">15장 한 줄 요약</div><div class="ol-b">관문의 순서를 알면 "왜 안 되지"가 검색이 아니라 <b>추론</b>이 된다.</div></div>
+      </div>
+
+      <div class="quiz" data-qid="q-wrap" data-answer="a">
+        <div class="q-head">✅ 체크포인트</div>
+        <div class="q">이 문서 전체를 한 문장으로 줄이면?</div>
+        <button class="opt" data-opt="a"><span class="mk">A</span> 패킷 하나가 통과하는 관문의 목록과 순서를 알면, 증상에서 원인을 역추적할 수 있다</button>
+        <button class="opt" data-opt="b"><span class="mk">B</span> SG를 좁게 쓰고 NACL로 이중 방어를 하면 안전하다</button>
+        <button class="opt" data-opt="c"><span class="mk">C</span> WAF와 Network Firewall을 도입하면 대부분의 공격을 막을 수 있다</button>
+        <button class="opt" data-opt="d"><span class="mk">D</span> 모든 서브넷을 프라이빗으로 만들고 NAT을 쓰면 된다</button>
+        <div class="explain"><b>정답 A.</b> B의 "NACL 이중 방어"는 이 문서가 계속 반박한 것이고(5장), C는 도구를 늘리는 게 구조를 대신하지 못한다는 10장의 논지와 어긋나며, D는 구성 하나를 정답처럼 외우는 태도라 이 문서가 피하려던 바로 그것입니다. <b>순서를 아는 것</b>이 도구를 아는 것보다 오래 갑니다.</div>
+      </div>
+    </section>
+
   </main>
 </div>
 
@@ -2725,6 +2849,39 @@ if(location.hash){
   }
   wirePicker('#journeyPicker', render);
   render('edge');
+})();
+
+/* ============================================================
+   데모 17 — 마무리 체크리스트 (15장)
+   ============================================================ */
+(function(){
+  const ckl = $('#ckl'); if(!ckl) return;
+  const done = new Set(LS.get('ckl', []));
+  const items = $$('.ck', ckl);
+  const score = $('#cklScore');
+  function upd(){
+    score.textContent = `${done.size} / ${items.length} 확인함`;
+    LS.set('ckl', [...done]);
+  }
+  items.forEach(el => {
+    const k = el.dataset.k;
+    if(done.has(k)) el.classList.add('on');
+    el.setAttribute('tabindex', '0');
+    el.setAttribute('role', 'checkbox');
+    el.setAttribute('aria-checked', done.has(k) ? 'true' : 'false');
+    const toggle = () => {
+      el.classList.toggle('on');
+      const on = el.classList.contains('on');
+      el.setAttribute('aria-checked', on ? 'true' : 'false');
+      if(on) done.add(k); else done.delete(k);
+      upd();
+    };
+    el.addEventListener('click', toggle);
+    el.addEventListener('keydown', e => {
+      if(e.key === 'Enter' || e.key === ' '){ e.preventDefault(); toggle(); }
+    });
+  });
+  upd();
 })();
 </script>
 </body>
