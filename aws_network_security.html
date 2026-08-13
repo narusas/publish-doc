@@ -1139,6 +1139,91 @@ button:focus-visible, .pick:focus-visible, .term:focus-visible, a:focus-visible,
       </div>
     </section>
 
+    <section id="trace" data-title="어디서 막혔나">
+      <div class="sec-head">
+        <div class="kicker">07 · 진단</div>
+        <h2 class="sec-title">🔍 <span style="color:var(--accent)">증상</span>에서 관문을 역추적하기 <span class="lvl must">🟢 필수</span></h2>
+      </div>
+      <p class="lead">지금까지는 '어디서 막히는가'를 봤습니다. 실무에서는 반대 방향이 필요해요 — <strong>증상만 보고 관문을 좁히는 것.</strong></p>
+
+      <h3>⏱️ timeout과 refused는 다른 이야기다</h3>
+      <p><code>curl</code>이 실패하는 방식은 딱 둘로 갈립니다. 그런데 그 둘이 가리키는 원인의 세계는 완전히 다릅니다.</p>
+      <p><b>connection refused</b>는 상대가 이미 답을 했다는 뜻입니다. <a class="link" href="network_basics.html">network_basics.html에서 본 RST</a> 패킷이 돌아온 거예요. RST가 오려면 그 패킷이 먼저 목적지 서버까지 도달해 있어야 하고, 그 말은 곧 경로 위의 관문 — 라우팅, NACL, SG — 을 전부 통과했다는 뜻입니다. 남은 원인은 그 안쪽뿐이에요. 그 포트를 듣는 프로세스가 없거나, OS가 명시적으로 거절한 겁니다. 네트워크 문제가 아닙니다.</p>
+      <p><b>timeout</b>은 다릅니다. 아무 답도 없어요. 어딘가에서 패킷이 조용히 버려졌다는 뜻인데, 그 '어딘가'가 아직 정해지지 않았습니다. 관문 전체가 여전히 용의선상입니다.</p>
+
+      <div class="callout key">
+        <h4>🔑 refused는 이미 결승선을 통과했다</h4>
+        <p><code>connection refused</code>를 보고 SG를 뒤지는 건 시간 낭비입니다. 그 메시지는 이미 <b>"관문을 다 통과했다"는 증거</b>예요. 앱이 안 떠 있거나, <code>127.0.0.1</code>에만 바인딩했거나, 포트를 잘못 안 겁니다.</p>
+      </div>
+
+      <h3>📋 Flow Logs — ENI가 남기는 영수증</h3>
+      <p>timeout이라면 이야기가 다릅니다. 용의자가 여럿 남아 있으니, 흔적부터 찾아야 해요.</p>
+      <p><a class="link" href="#attach">1장</a>에서 SG가 실제로 붙는 자리는 인스턴스가 아니라 <span class="term" data-t="ENI">ENI</span>라고 했죠. <span class="term" data-t="Flow Logs">Flow Logs</span>는 그 ENI가 남기는 기록입니다. 패킷의 내용은 없어요 — 누가 누구에게 몇 바이트를 보냈고, 그 판정이 <code>ACCEPT</code>였는지 <code>REJECT</code>였는지, 딱 그 영수증만 남습니다.</p>
+      <p>그 영수증이 정확히 무엇을 기록하는지, 상황을 하나씩 넣어 보면 드러납니다.</p>
+
+      <div class="demo" id="flowLog">
+        <span class="demo-tag">Flow Log 한 줄 해부기</span>
+        <p style="margin:0 0 4px">기본 형식(version 2)의 로그 한 줄입니다. 상황을 골라 무엇이 남고 무엇이 안 남는지 보세요.</p>
+        <div class="picker" id="flowPicker">
+          <button class="pick on" data-k="ok">✅ 정상 요청</button>
+          <button class="pick" data-k="sgreject">🛡️ SG가 인바운드 차단</button>
+          <button class="pick" data-k="nacl">🧊 NACL이 인바운드 차단</button>
+          <button class="pick" data-k="naclresp">🧊 NACL이 <b>응답</b> 차단</button>
+          <button class="pick" data-k="outdeny">📤 아웃바운드 차단</button>
+          <button class="pick" data-k="none">🚫 기록이 아예 없음</button>
+        </div>
+        <div id="flowOut"></div>
+      </div>
+
+      <h3>🧩 REJECT 앞에 ACCEPT가 있는가</h3>
+      <p>그럴듯한 추론이 하나 있습니다. NACL은 서브넷 경계에서 검문하니, 거기서 막힌 패킷은 ENI 근처에도 못 갔을 거라고, 그러니 로그도 안 남을 거라고 짐작하기 쉽습니다.</p>
+      <p>틀렸습니다. Flow Logs의 <code>action</code> 필드 정의는 <code>REJECT</code>의 원인으로 <b>보안 그룹과 네트워크 ACL을 나란히</b> 열거합니다. 둘 중 어느 쪽이 막았든, 남는 값은 똑같이 <code>REJECT</code>예요.</p>
+      <p>그래서 단독 <code>REJECT</code> 한 줄만 보고는 SG와 NACL을 가릴 수 없습니다. 인바운드가 어느 쪽에 막히든 패킷은 인스턴스에 닿지 못하고, 응답도 만들어지지 않으니 로그는 딱 한 줄뿐이에요. 원인은 다른데 흔적은 같습니다.</p>
+      <p>그럼 진짜 신호는 어디 있을까요. 한 줄이 아니라 <b>짝</b>에 있습니다. 같은 5-tuple에 대해 <code>ACCEPT</code> 다음에 <code>REJECT</code>가 따라붙는다면 — 요청은 인스턴스까지 갔고(<code>ACCEPT</code>), 그 응답이 막혔다(<code>REJECT</code>)는 뜻입니다.</p>
+      <p>이 조합은 SG가 절대 만들 수 없습니다. <a class="link" href="#sg">4장</a>에서 본 <span class="term" data-t="상태 유지">상태 유지</span>가 여기서 결정적으로 작용해요. SG는 허용된 인바운드의 응답을 아웃바운드 규칙과 무관하게 무조건 통과시키니까요. <code>ACCEPT</code> 뒤에 오는 <code>REJECT</code>는 그러니 SG의 산물일 수가 없는, 원리상 불가능한 조합입니다. 남는 건 하나 — <span class="term" data-t="NACL">NACL</span>이 응답을 막았다는 확정 신호.</p>
+      <p>로그가 아예 한 줄도 없을 때는 또 다른 이야기입니다. SG든 NACL이든 인바운드를 막았다면 최소한 <code>REJECT</code> 한 줄은 남기니까요. 기록 자체가 없다는 건 패킷이 ENI 근처에도 오지 못했다는 뜻이고, 그때 볼 곳은 로그가 아니라 <span class="term" data-t="라우팅 테이블">라우팅 테이블</span>·퍼블릭 IP·서브넷입니다.</p>
+
+      <div class="kv">
+        <dt>기록 없음</dt><dd>경로 문제 — 라우팅·퍼블릭 IP·서브넷을 본다</dd>
+        <dt>단독 REJECT</dt><dd>SG 또는 NACL <span class="badge warn">구별 불가</span></dd>
+        <dt>ACCEPT+REJECT 짝</dt><dd>NACL이 응답을 막음 <span class="badge ok">확정</span></dd>
+      </div>
+
+      <h3>🧪 Reachability Analyzer — 패킷을 안 보내고 경로를 검사한다</h3>
+      <p>REJECT 한 줄로 못 가른다면, 확정은 뭘로 할까요.</p>
+      <p><span class="term" data-t="Reachability Analyzer">Reachability Analyzer</span>가 그 자리를 채웁니다. 출발 ENI와 목적지를 지정하면 라우팅 테이블·SG·NACL을 정적으로 분석해서 정확히 어느 관문에서 막히는지 짚어 줘요.</p>
+      <p>실제 패킷을 보내지 않는다는 게 핵심입니다. 그래서 앱이 아직 안 떠 있어도 쓸 수 있어요. 대신 딱 거기까지입니다 — 분석은 네트워크 계층에서 끝나요. OS 방화벽이 거절하는지, 앱이 <code>127.0.0.1</code>에만 바인딩했는지는 시야 밖입니다. 여기서 통과라는 판정이 나오면, 남는 용의자는 다시 그 안쪽 — 앞서 본 <b>refused</b>의 세계입니다.</p>
+      <p>지금 겪고 있는 증상 하나를 고르면 용의자가 이렇게 좁혀져요.</p>
+
+      <div class="demo" id="triage">
+        <span class="demo-tag">증상 → 용의자</span>
+        <p style="margin:0 0 4px">지금 보고 있는 증상을 고르세요. 용의자와 다음에 확인할 것이 나옵니다.</p>
+        <div class="picker" id="triagePicker">
+          <button class="pick on" data-k="timeout">⏱️ timeout</button>
+          <button class="pick" data-k="refused">🚪 connection refused</button>
+          <button class="pick" data-k="oneway">↔️ 편도만 된다</button>
+          <button class="pick" data-k="wasok">📅 어제까지는 됐다</button>
+          <button class="pick" data-k="flaky">🎲 될 때도 있고 안 될 때도 있다</button>
+        </div>
+        <div id="triageOut"></div>
+      </div>
+
+      <div class="oneline">
+        <div class="ol-ic">🔍</div>
+        <div><div class="ol-t">7장 한 줄 요약</div><div class="ol-b">증상은 관문을 가리킨다. <b>refused</b>면 네트워크를 그만 보고, <b>timeout</b>이면 어디까지 갔는지부터 확정한다.</div></div>
+      </div>
+
+      <div class="quiz" data-qid="q-trace" data-answer="a">
+        <div class="q-head">✅ 체크포인트</div>
+        <div class="q"><code>curl</code>이 즉시 <code>connection refused</code>를 반환한다. 가장 먼저 확인할 것은?</div>
+        <button class="opt" data-opt="a"><span class="mk">A</span> 인스턴스 안에서 그 포트를 듣는 프로세스가 있는지, 바인딩 주소가 <code>127.0.0.1</code>은 아닌지</button>
+        <button class="opt" data-opt="b"><span class="mk">B</span> SG 인바운드 규칙</button>
+        <button class="opt" data-opt="c"><span class="mk">C</span> 서브넷의 라우팅 테이블</button>
+        <button class="opt" data-opt="d"><span class="mk">D</span> NACL 아웃바운드의 ephemeral 범위</button>
+        <div class="explain"><b>정답 A.</b> <code>refused</code>는 <b>RST가 돌아왔다</b>는 뜻이고, RST가 왔다는 건 패킷이 목적지까지 도달했다는 증거입니다. 네트워크 관문(B·C·D)은 이미 전부 통과한 거예요. 이 한 가지 구분만으로 용의자 절반이 사라집니다.</div>
+      </div>
+    </section>
+
   </main>
 </div>
 
@@ -1181,6 +1266,7 @@ const GLOSSARY = {
   "NACL": "Network ACL. 서브넷 경계에 붙는 무상태 방화벽. 번호 순서로 평가하고 첫 매치가 이기며, deny 규칙을 쓸 수 있습니다. 무상태라 응답 트래픽도 검사받습니다.",
   "ephemeral 포트": "클라이언트가 연결을 걸 때 OS가 임시로 골라 쓰는 출발지 포트. 보통 1024~65535 범위입니다. 응답 패킷의 목적지 포트가 되므로, 무상태 방화벽에서는 이 범위를 열어야 응답이 돌아갑니다.",
   "Hyperplane ENI": "Lambda가 VPC에 연결될 때 쓰는 공유형 ENI입니다. 동시 실행 수가 아니라 서브넷과 SG의 조합마다 하나가 만들어지고, 같은 조합을 쓰는 계정 안의 다른 함수와 공유됩니다.",
+  "Reachability Analyzer": "출발지와 목적지를 지정하면 실제 패킷을 보내지 않고 라우팅·SG·NACL을 정적으로 분석해 도달 가능 여부를 알려주는 VPC 기능. OS 방화벽이나 앱 바인딩 문제는 볼 수 없습니다.",
   // @GLOSSARY_END
 };
 
@@ -1906,6 +1992,87 @@ if(location.hash){
   wirePicker('#chainScenario', k => { scen = k; render(); });
   wirePicker('#chainFault',    k => { fault = k; render(); });
   render();
+})();
+
+/* ============================================================
+   데모 10 — Flow Log 한 줄 해부기 (7장)
+   ============================================================ */
+(function(){
+  const out = $('#flowOut'); if(!out) return;
+  const FIELDS = ["version","account-id","interface-id","srcaddr","dstaddr","srcport","dstport",
+                  "protocol","packets","bytes","start","end","action","log-status"];
+  const D = {
+    ok: { line:["2","111122223333","eni-0a1b2c3d","203.0.113.9","10.0.1.42","51514","443","6","12","1842","1690000000","1690000060","ACCEPT","OK"],
+      n:"평범한 성공입니다. <code>protocol 6</code>은 TCP고, <code>srcport</code>가 <b>51514</b>인 데 주목하세요 — 클라이언트의 ephemeral 포트입니다. <a class='link' href='#nacl'>5장</a>에서 NACL 아웃바운드가 열어야 했던 그 번호예요." },
+    sgreject: { line:["2","111122223333","eni-0a1b2c3d","203.0.113.9","10.0.1.42","51514","22","6","1","44","1690000000","1690000060","REJECT","OK"],
+      n:"<b><code>REJECT</code>가 남았다는 건 패킷이 ENI까지 도달했다는 뜻입니다.</b> 즉 라우팅은 정상이고, SG(또는 ENI 층의 판정)에서 걸린 거예요. <code>packets 1</code>·<code>bytes 44</code>는 SYN 하나만 왔다는 뜻이라 연결이 성립조차 안 했음을 보여줍니다. 여기서는 22번 포트 스캔이 들어온 흔적이네요." },
+    nacl: { line:["2","111122223333","eni-0a1b2c3d","203.0.113.9","10.0.1.42","51514","443","6","1","44","1690000000","1690000060","REJECT","OK"],
+      n:"<b>SG가 막았을 때와 글자 하나 다르지 않습니다.</b> <code>action</code> 필드의 공식 정의는 <code>REJECT</code>의 원인으로 <b>보안 그룹과 네트워크 ACL을 함께</b> 열거해요. 로그만 보고는 둘을 가릴 수 없습니다. <br><br>\"NACL이 막으면 로그가 안 남는다\"는 널리 퍼진 오해입니다. <b>로그가 정말 한 줄도 없다면</b> 그건 SG도 NACL도 아니라 <b>패킷이 ENI 근처에도 못 왔다</b>는 뜻 — 라우팅·퍼블릭 IP·서브넷을 보세요." },
+    naclresp: { lines:[
+        ["2","111122223333","eni-0a1b2c3d","203.0.113.9","10.0.1.42","51514","443","6","10","1420","1690000000","1690000060","ACCEPT","OK"],
+        ["2","111122223333","eni-0a1b2c3d","10.0.1.42","203.0.113.9","443","51514","6","8","1180","1690000000","1690000060","REJECT","OK"]
+      ],
+      n:"<b>여기가 진짜 단서입니다.</b> 같은 5-tuple에 대해 <code>ACCEPT</code> 한 줄과 <code>REJECT</code> 한 줄이 <b>짝으로</b> 남았습니다. 요청은 인스턴스까지 갔고(<code>ACCEPT</code>), <b>응답이 막혔다</b>(<code>REJECT</code>)는 뜻이에요. <br><br><b>SG는 이 조합을 원리상 만들 수 없습니다.</b> 상태 저장이라 허용된 인바운드의 응답을 아웃바운드 규칙과 무관하게 무조건 통과시키니까요. 그러니 이 짝이 보이면 <b>NACL이 응답을 막은 것으로 확정</b>입니다." },
+    outdeny: { line:["2","111122223333","eni-0a1b2c3d","10.0.1.42","198.51.100.7","44210","443","6","1","44","1690000000","1690000060","REJECT","OK"],
+      n:"방향이 뒤집혀 있죠 — <code>srcaddr</code>가 우리 인스턴스입니다. 앱이 <b>먼저 건 연결</b>이 아웃바운드 규칙에 막힌 경우예요. <a class='link' href='#sg'>4장</a>에서 본 \"응답은 되는데 새 연결은 안 되는\" 상황이 로그로는 이렇게 보입니다." },
+    none: { lines:[],
+      n:"<b>한 줄도 없습니다.</b> 이건 SG도 NACL도 아니에요 — 둘 다 막으면 최소한 <code>REJECT</code>는 남기니까요. <br><br>기록이 아예 없다는 건 <b>패킷이 ENI 근처에도 오지 못했다</b>는 뜻입니다. 라우팅 테이블에 경로가 없거나, 퍼블릭 IP가 없거나, 엉뚱한 서브넷을 보고 있거나, 애초에 요청이 오지 않은 거예요. <b>여기서부터는 Flow Log가 아니라 Reachability Analyzer의 영역</b>입니다." }
+  };
+  function render(k){
+    const d = D[k];
+    const rows = d.lines !== undefined ? d.lines : [d.line];
+    if(rows.length === 0){
+      out.innerHTML =
+        `<div class="verdict" style="margin-top:12px"><span class="vres deny">기록 없음</span></div>
+         <div class="callout warn" style="margin-bottom:0"><p style="margin:0">${d.n}</p></div>`;
+      return;
+    }
+    const blocks = rows.map(line => {
+      const cells = line.map((v,i) => {
+        const hot = ["srcport","dstport","action","srcaddr"].includes(FIELDS[i]);
+        const isAction = FIELDS[i] === 'action';
+        const col = isAction ? (v === 'ACCEPT' ? 'var(--ok)' : 'var(--bad)')
+                             : (hot ? 'var(--accent)' : 'var(--text)');
+        return `<div style="display:inline-block; margin:0 10px 8px 0">
+                  <div class="dim" style="font-size:11px">${esc(FIELDS[i])}</div>
+                  <div class="mono" style="font-size:13.5px; color:${col}"><b>${esc(v)}</b></div>
+                </div>`;
+      }).join('');
+      return `<div style="margin-top:10px; padding:12px; background:var(--bg); border:1px solid var(--border); border-radius:9px">${cells}</div>`;
+    }).join('');
+    out.innerHTML = blocks +
+      `<div class="callout ${rows.length > 1 ? 'key' : 'why'}" style="margin-bottom:0"><p style="margin:0">${d.n}</p></div>`;
+  }
+  wirePicker('#flowPicker', render);
+  render('ok');
+})();
+
+/* ============================================================
+   데모 11 — 증상 판별 트리 (7장)
+   ============================================================ */
+(function(){
+  const out = $('#triageOut'); if(!out) return;
+  const D = {
+    timeout: { s:["라우팅 테이블에 경로가 없다","퍼블릭 IP가 없다","SG 인바운드가 닫혀 있다","NACL이 막았다","OS 방화벽이 DROP했다","보안그룹은 맞는데 서브넷을 잘못 골랐다"],
+      next:"<b>① Flow Log에 줄이 있는지</b> 먼저 본다. <b>한 줄도 없으면</b> 패킷이 ENI 근처에도 못 온 것 — <b>라우팅·퍼블릭 IP·서브넷</b>으로 좁혀진다. <b>단독 <code>REJECT</code>가 있으면</b> ENI까지는 왔다는 뜻이지만, 여기서 <b>SG와 NACL은 구별되지 않는다</b>(둘 다 <code>REJECT</code>로 남는다). <br><b>② Reachability Analyzer</b>를 돌리면 라우팅·SG·NACL을 한 번에 판정해 준다. 그래도 통과라고 나오면 남은 건 <b>OS와 앱</b>이다." },
+    refused: { s:["앱이 떠 있지 않다","앱이 127.0.0.1에만 바인딩했다","포트를 잘못 알고 있다","OS 방화벽이 REJECT했다"],
+      next:"<b>네트워크 관문은 전부 통과했습니다.</b> RST가 돌아왔다는 건 목적지에 도달했다는 증거예요. SG·NACL·라우팅을 뒤지지 말고 <b>인스턴스 안</b>을 보세요 — <code>ss -tlnp</code>로 그 포트를 듣는 프로세스가 있는지, 바인딩 주소가 <code>0.0.0.0</code>인지 <code>127.0.0.1</code>인지." },
+    oneway: { s:["NACL 아웃바운드가 ephemeral을 막았다","NACL 인바운드가 ephemeral을 막았다","비대칭 라우팅"],
+      next:"거의 항상 <b>무상태 검문소</b>가 범인입니다. SG는 상태를 유지하므로 편도만 되는 상황을 만들지 못해요. <b>Flow Log에서 같은 5-tuple의 <code>ACCEPT</code> 뒤에 <code>REJECT</code>가 붙어 있으면 NACL 확정</b>입니다 — SG는 그 조합을 원리상 만들 수 없으니까요. 그다음 <b>NACL 양방향에 <code>1024-65535</code>가 열려 있는지</b> 확인하세요." },
+    wasok: { s:["SG가 IP를 source로 참조하는데 그 IP가 바뀌었다","오토스케일링으로 인스턴스가 교체됐다","NAT GW의 EIP가 바뀌었다","상대 쪽 IP 허용 목록에서 빠졌다"],
+      next:"<b>구성은 안 바뀌었는데 IP가 바뀐 경우</b>가 압도적으로 많습니다. SG 규칙에 <code>10.0.1.42/32</code> 같은 개별 IP가 박혀 있는지 보세요. 있다면 그게 원인이고, 답은 <b>SG 참조</b>입니다 (<a class='link' href='#ref'>8장</a>)." },
+    flaky: { s:["다중 AZ 중 한쪽 서브넷만 설정이 다르다","대상 그룹의 일부 인스턴스만 SG가 다르다","NACL 규칙 수 한도","연결 추적 한도"],
+      next:"<b>\"어떤 요청은 되고 어떤 요청은 안 된다\"는 대개 대상이 여러 개</b>라는 뜻입니다. AZ별 서브넷의 라우팅 테이블과 NACL이 <b>정말 같은지</b> 하나씩 대조하세요. 다중 AZ 구성에서 한쪽 서브넷만 라우팅 테이블 연결을 빠뜨리는 게 전형적입니다." }
+  };
+  function render(k){
+    const d = D[k];
+    out.innerHTML =
+      `<div style="margin-top:12px"><div class="dim" style="font-size:12.5px; margin-bottom:6px">용의자</div>` +
+      d.s.map(x => `<span class="chip" style="margin:0 6px 6px 0; display:inline-block">${esc(x)}</span>`).join('') +
+      `</div><div class="callout why" style="margin-bottom:0"><h4>다음에 확인할 것</h4><p style="margin:0">${d.next}</p></div>`;
+  }
+  wirePicker('#triagePicker', render);
+  render('timeout');
 })();
 </script>
 </body>
