@@ -272,8 +272,8 @@ button.sm{padding:6px 11px; font-size:12.5px}
   background:var(--panel); border:1.5px solid var(--accent); color:var(--accent);
   box-shadow:0 6px 18px rgba(0,0,0,.4); transition:left .7s cubic-bezier(.4,0,.2,1), opacity .25s, transform .25s;}
 .hs-packet.show{opacity:1; transform:translate(-50%,-50%) scale(1)}
-.hs-packet.syn{border-color:var(--client); color:var(--client)}
-.hs-packet.synack{border-color:var(--router); color:var(--router)}
+.hs-packet.syn{border-color:var(--g-nacl); color:var(--g-nacl)}
+.hs-packet.synack{border-color:var(--g-route); color:var(--g-route)}
 .hs-packet.ack{border-color:var(--ok); color:var(--ok)}
 
 /* 세그먼트 칩 */
@@ -293,7 +293,7 @@ button.sm{padding:6px 11px; font-size:12.5px}
 .badge.ok{color:var(--ok); border-color:rgba(52,211,153,.4)}
 .badge.bad{color:var(--bad); border-color:rgba(248,113,113,.4)}
 .badge.warn{color:var(--warn); border-color:rgba(251,191,36,.4)}
-.badge.cli{color:var(--client); border-color:rgba(56,189,248,.4)}
+.badge.cli{color:var(--g-nacl); border-color:rgba(56,189,248,.4)}
 
 /* 퀴즈 */
 .quiz{border:1px solid var(--border-2); border-radius:var(--radius); padding:18px 20px; margin:22px 0; background:var(--panel)}
@@ -625,8 +625,9 @@ button:focus-visible, .pick:focus-visible, .term:focus-visible, a:focus-visible,
   <!-- ============ 본문 ============ -->
   <main id="content">
 
-    <section id="intro" data-title="개요" class="hero">
+    <section id="intro" data-title="개요" class="hero" style="min-height:70vh">
       <h2 class="sec-title">뼈대 확인용 자리표시자</h2>
+      <p class="dim">Task 4에서 실제 개요 콘텐츠로 전면 교체될 임시 섹션입니다. 스크롤스파이가 화면 중앙의 관찰 밴드에 걸릴 수 있도록 높이만 임시로 확보해 두었습니다.</p>
     </section>
 
   </main>
