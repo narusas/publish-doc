@@ -678,7 +678,7 @@ button:focus-visible, .pick:focus-visible, .term:focus-visible, a:focus-visible,
 
       <h3>무엇을 다루나</h3>
       <div class="map-grid">
-        <a class="map-card" href="#outside"><div class="ic">🧱</div><div class="tt">1 · 서버 밖의 방화벽</div><div class="dd">tcpdump에 안 잡힌다</div></a>
+        <a class="map-card" href="#attach"><div class="ic">🛡️</div><div class="tt">1 · SG는 어디에 붙나</div><div class="dd">EC2·ALB·Endpoint 부착 지도</div></a>
         <a class="map-card" href="#vpc"><div class="ic">🗺️</div><div class="tt">2 · VPC 기초</div><div class="dd">발판 · 건너뛰기 가능</div></a>
         <a class="map-card" href="#route"><div class="ic">🧭</div><div class="tt">3 · 경로가 곧 통제</div><div class="dd">라우팅·IGW·NAT</div></a>
         <a class="map-card" href="#sg"><div class="ic">🛡️</div><div class="tt">4 · Security Group</div><div class="dd">상태 유지 검문소</div></a>
@@ -704,16 +704,46 @@ button:focus-visible, .pick:focus-visible, .term:focus-visible, a:focus-visible,
       </div>
     </section>
 
-    <section id="outside" data-title="방화벽은 서버 밖에">
+    <section id="attach" data-title="SG는 어디에 붙나">
       <div class="sec-head">
-        <div class="kicker">01 · 출발</div>
-        <h2 class="sec-title">🧱 클라우드의 방화벽은 <span style="color:var(--accent)">서버 안</span>에 없다 <span class="lvl must">🟢 필수</span></h2>
+        <div class="kicker">01 · 부착</div>
+        <h2 class="sec-title">🛡️ Security Group은 <span style="color:var(--accent)">어디에</span> 붙는가 <span class="lvl must">🟢 필수</span></h2>
       </div>
-      <p class="lead">리눅스에서 방화벽을 다뤄 본 사람이라면 <code>iptables -L</code>이 손에 붙어 있을 겁니다. 클라우드에서 그 습관이 제일 먼저 배신합니다.</p>
+      <p class="lead">SG 인바운드는 분명히 열려 있었죠. 규칙을 몇 번을 다시 읽어도 80번은 그 자리에 그대로 있고요. 그런데도 timeout입니다. 규칙을 또 들여다보기 전에 먼저 물어야 할 게 있어요 — 그 SG, 지금 대체 <b>어디에</b> 붙어 있나요?</p>
 
-      <h3>🔪 검문은 OS 밖에서 끝난다</h3>
-      <p><code>iptables -L</code>을 쳐서 규칙이 죽 뜨는 순간, 전제가 하나 깔립니다. 검사할 패킷이 이미 커널 안까지 들어와 있었다는 전제입니다. <span class="term" data-t="netfilter">netfilter</span>는 리눅스 커널 안에 박힌 후크(hook)이고, 랜카드가 패킷을 받아 커널 네트워크 스택에 올려놓아야 그 후크를 통과하거든요. <code>iptables</code>가 무엇을 판정하든, 판정 대상은 늘 '이미 도착한 패킷'입니다.</p>
-      <p>SG는 그보다 앞에서 끝냅니다. 정확한 자리는 <span class="term" data-t="ENI">ENI</span> — 인스턴스에 붙은 가상 랜카드의 입구예요. 패킷이 랜카드를 통과하기도 전에 판정이 끝나 버리니, 커널은 이 패킷을 구경할 기회조차 없습니다. 같은 '방화벽'이라는 이름으로 뭉뚱그리기 쉽지만, 적용 지점이 이렇게 다릅니다. 이 경로는 <a class="link" href="network_basics.html">network_basics.html의 netfilter 장</a>에서 더 자세히 다뤘어요.</p>
+      <h3>🏷️ SG는 규칙에 붙인 이름표다</h3>
+      <p>SG는 장비가 아닙니다. 스위치도 어플라이언스도 아니고, 심지어 리소스도 아니에요. 정체는 그보다 가볍습니다 — <b>이름이 붙은 allow 규칙의 묶음</b>, 그게 전부입니다. <span class="mono">sg-0a1b2c3d</span> 같은 이름표 하나를 만들고, 그 안에 규칙을 채운 다음, 그 이름표를 리소스에 달아 주는 방식으로 적용돼요. 이 '이름표'라는 프레임은 <a class="link" href="#ref">8장</a>에서 다시 씁니다 — 그 이름표 자체를 다른 SG의 규칙 안, source 자리에 그대로 써넣게 되거든요.</p>
+
+      <h3>🔌 붙는 자리는 언제나 ENI다</h3>
+      <p>"EC2에 SG를 붙인다"는 말, 다들 씁니다. 편한 표현일 뿐이에요 — 실제로 이름표가 걸리는 자리는 인스턴스가 아니라 <span class="term" data-t="ENI">ENI</span>, 인스턴스가 달고 있는 가상 랜카드입니다. 인스턴스에 ENI가 두 개면 이름표도 각각 따로 붙어요. 하나를 아무리 넓게 열어도, 다른 ENI가 닫혀 있으면 그 경로는 그대로 막힙니다.</p>
+      <p>서브넷에는 못 붙입니다. 서브넷 단위 통제가 필요하면 그건 SG가 아니라 NACL의 일이에요 — <a class="link" href="#nacl">5장</a>에서 다룹니다.</p>
+      <p>그러니 질문은 결국 하나로 좁혀집니다. "이 리소스에 SG를 붙일 수 있나"는 곧 "<b>이 리소스가 내 VPC 안에 ENI를 만드나</b>"와 같은 질문이에요.</p>
+
+      <div class="demo" id="sgAttach">
+        <span class="demo-tag">리소스별 부착 지도</span>
+        <p style="margin:0 0 4px">SG를 붙일 수 있는지는 <b>그 리소스가 ENI를 만드는지</b>로 결정됩니다. 하나씩 눌러 확인하세요.</p>
+        <div class="picker" id="attachPicker">
+          <button class="pick on" data-k="ec2">🖥️ EC2</button>
+          <button class="pick" data-k="alb">⚖️ ALB</button>
+          <button class="pick" data-k="nlb">🔀 NLB</button>
+          <button class="pick" data-k="rds">🗄️ RDS</button>
+          <button class="pick" data-k="lambda">λ Lambda(VPC)</button>
+          <button class="pick" data-k="vpce">🔒 Interface Endpoint</button>
+          <button class="pick" data-k="gwe">🪣 Gateway Endpoint</button>
+          <button class="pick" data-k="fargate">📦 Fargate</button>
+        </div>
+        <div id="attachOut"></div>
+      </div>
+
+      <div class="callout warn">
+        <h4>🪤 NLB는 창이 한 번만 열린다</h4>
+        <p>NLB는 2023년 8월부터 SG를 지원합니다. 그 전엔 정말 안 됐어요 — "NLB엔 SG를 못 붙인다"는 지식이 아직 남아 있다면 그건 낡은 지식이에요. 대신 훨씬 뾰족한 함정이 새로 생겼습니다. <b>로드밸런서를 만드는 순간 SG를 하나도 지정하지 않으면, 그 뒤로는 영원히 SG를 붙일 수 없습니다.</b> 반대로 생성 시 하나라도 지정해 두면 이후 자유롭게 추가·변경할 수 있어요. "나중에 필요해지면 그때 붙이자"는 전략이 통하지 않는, 생성 시점에만 열려 있는 창인 셈이죠. 그래서 실무 조언은 단순합니다 — 지금 당장 규칙이 없어도 <b>빈 SG라도 하나 붙여서 만드세요.</b> 그 창을 다시 여는 방법은 없습니다.</p>
+      </div>
+
+      <h3>🧱 그래서 검문이 OS 밖에서 끝난다</h3>
+      <p>부착 지점이 ENI라는 사실에는 귀결이 하나 딸려 있습니다. 검문소가 정확히 어디 서 있는지가 그걸로 정해지거든요.</p>
+      <p>리눅스에서 방화벽을 다뤄 본 사람이라면 <code>iptables -L</code>이 손에 붙어 있을 겁니다. 규칙이 죽 뜨는 순간, 전제가 하나 깔려요. 검사할 패킷이 이미 커널 안까지 들어와 있었다는 전제입니다. <span class="term" data-t="netfilter">netfilter</span>는 리눅스 커널 안에 박힌 후크(hook)이고, 랜카드가 패킷을 받아 커널 네트워크 스택에 올려놓아야 그 후크를 통과하거든요. <code>iptables</code>가 무엇을 판정하든, 판정 대상은 늘 '이미 도착한 패킷'입니다.</p>
+      <p>SG는 그보다 앞에서 끝냅니다. 방금 본 그 ENI, 정확히는 그 입구에서요. 패킷이 랜카드를 통과하기도 전에 판정이 끝나 버리니, 커널은 이 패킷을 구경할 기회조차 없습니다. 같은 '방화벽'이라는 이름으로 뭉뚱그리기 쉽지만, 적용 지점이 이렇게 다릅니다. 이 경로는 <a class="link" href="network_basics.html">network_basics.html의 netfilter 장</a>에서 더 자세히 다뤘어요.</p>
 
       <div class="callout key">
         <h4>🔑 tcpdump에 잡히지 않는 차단</h4>
@@ -751,18 +781,18 @@ button:focus-visible, .pick:focus-visible, .term:focus-visible, a:focus-visible,
       </div>
 
       <div class="oneline">
-        <div class="ol-ic">🧱</div>
-        <div><div class="ol-t">1장 한 줄 요약</div><div class="ol-b">클라우드의 검문소는 <b>내 OS 밖</b>에 있다. 그래서 막혔을 때 서버 안에서는 아무 증거도 나오지 않고, 진단 도구부터 달라져야 한다.</div></div>
+        <div class="ol-ic">🛡️</div>
+        <div><div class="ol-t">1장 한 줄 요약</div><div class="ol-b">SG는 <b>ENI에 붙는다</b>. "붙일 수 있나"는 결국 "그 리소스가 ENI를 만드나"와 같은 질문이고, 검문이 OS 밖에서 끝나기 때문에 서버 안에는 증거가 남지 않는다.</div></div>
       </div>
 
       <div class="quiz" data-qid="q-outside" data-answer="c">
         <div class="q-head">✅ 체크포인트</div>
-        <div class="q">EC2에 접속이 안 되어 인스턴스에 들어가 <code>tcpdump -i any port 80</code>을 걸었더니 아무것도 찍히지 않았다. 이때 <b>배제할 수 있는</b> 원인은?</div>
-        <button class="opt" data-opt="a"><span class="mk">A</span> SG 인바운드에 80이 없다</button>
-        <button class="opt" data-opt="b"><span class="mk">B</span> 서브넷 라우팅 테이블에 IGW가 없다</button>
-        <button class="opt" data-opt="c"><span class="mk">C</span> 인스턴스 안의 <code>iptables</code>가 DROP하고 있다</button>
-        <button class="opt" data-opt="d"><span class="mk">D</span> NACL이 80을 거부하고 있다</button>
-        <div class="explain"><b>정답 C.</b> <code>iptables</code>는 OS 안에서 동작하므로, 그게 막았다면 패킷은 이미 랜카드를 통과해 <code>tcpdump</code>에 <b>찍힌 뒤</b> 버려집니다. 아무것도 안 찍혔다는 건 패킷이 인스턴스 밖에서 사라졌다는 뜻이라 A·B·D가 전부 살아 있어요.</div>
+        <div class="q">다음 중 <b>Security Group을 붙일 수 없는</b> 것은?</div>
+        <button class="opt" data-opt="a"><span class="mk">A</span> VPC에 연결한 Lambda 함수</button>
+        <button class="opt" data-opt="b"><span class="mk">B</span> Fargate로 띄운 ECS 태스크</button>
+        <button class="opt" data-opt="c"><span class="mk">C</span> S3용 Gateway VPC Endpoint</button>
+        <button class="opt" data-opt="d"><span class="mk">D</span> RDS DB 인스턴스</button>
+        <div class="explain"><b>정답 C.</b> SG는 <b>ENI에 붙는 것</b>이라, ENI를 만들지 않는 리소스에는 붙일 자리가 없습니다. Gateway Endpoint는 라우팅 테이블의 경로 한 줄로 동작할 뿐 ENI를 만들지 않아요. 그래서 이쪽 통제는 SG가 아니라 <b>엔드포인트 정책과 버킷 정책</b>의 몫이에요(<a class="link" href="#endpoint">11장</a>). A·B·D는 전부 VPC 안에 ENI를 만들고, 따라서 SG를 받습니다 — Lambda는 동시성과 무관하게 서브넷+SG 조합당 하나를 공유하는 형태이긴 하지만, SG가 붙는다는 사실 자체는 같습니다.</div>
       </div>
     </section>
 
@@ -782,9 +812,6 @@ button:focus-visible, .pick:focus-visible, .term:focus-visible, a:focus-visible,
 
       <h3>🧱 서브넷은 AZ에 갇힌다</h3>
       <p>VPC의 CIDR을 실제로 쪼개 쓰는 단위가 서브넷입니다. 서브넷 하나는 정확히 하나의 <span class="term" data-t="AZ">AZ</span> 안에 있어요 — 두 AZ에 걸친 서브넷은 애초에 만들 수 없습니다. 그래서 다중 AZ 구성은 언제나 같은 자리에서 출발해요. 서브넷을 AZ 개수만큼 따로 만드는 것, 그게 시작입니다. <span class="term" data-t="라우팅 테이블">라우팅 테이블</span>과 NACL이 붙는 자리도 바로 이 서브넷이고요.</p>
-
-      <h3>🔌 진짜 주체는 인스턴스가 아니라 ENI다</h3>
-      <p>EC2에 Security Group을 붙인다고 다들 말합니다만, 정확히는 그렇지 않습니다. 실제로 SG가 붙는 자리는 인스턴스가 아니라 <span class="term" data-t="ENI">ENI</span>예요. 인스턴스 하나에 ENI가 둘이면 SG도 ENI마다 따로 붙어요. ENI를 만드는 건 EC2만이 아닙니다 — RDS, VPC에 연결된 Lambda, Interface Endpoint까지 전부 뒤에서 ENI를 하나씩 만들고, 그래서 전부 SG를 받습니다. <a class="link" href="#endpoint">11장</a>에서 이 자리를 다시 만납니다.</p>
 
       <div class="demo" id="vpcMap">
         <span class="demo-tag">VPC 지도</span>
@@ -1081,6 +1108,7 @@ const GLOSSARY = {
   "Security Group": "ENI에 붙는 상태 유지 방화벽. allow 규칙만 가질 수 있고 규칙 사이에 순서가 없으며, 허용된 연결의 응답은 반대 방향 규칙 없이 통과합니다.",
   "NACL": "Network ACL. 서브넷 경계에 붙는 무상태 방화벽. 번호 순서로 평가하고 첫 매치가 이기며, deny 규칙을 쓸 수 있습니다. 무상태라 응답 트래픽도 검사받습니다.",
   "ephemeral 포트": "클라이언트가 연결을 걸 때 OS가 임시로 골라 쓰는 출발지 포트. 보통 1024~65535 범위입니다. 응답 패킷의 목적지 포트가 되므로, 무상태 방화벽에서는 이 범위를 열어야 응답이 돌아갑니다.",
+  "Hyperplane ENI": "Lambda가 VPC에 연결될 때 쓰는 공유형 ENI입니다. 동시 실행 수가 아니라 서브넷과 SG의 조합마다 하나가 만들어지고, 같은 조합을 쓰는 계정 안의 다른 함수와 공유됩니다.",
   // @GLOSSARY_END
 };
 
@@ -1276,7 +1304,85 @@ if(location.hash){
 })();
 
 /* ============================================================
-   데모 2 — 같은 차단, 다른 흔적 (1장)
+   데모 2 — 리소스별 부착 지도 (1장)
+   ============================================================ */
+(function(){
+  const out = $('#attachOut'); if(!out) return;
+  const D = {
+    ec2: {
+      eni: "O — 기본 ENI 1개 + 보조 ENI 가능",
+      sgClass: "allow", sgLabel: "가능",
+      where: "ENI마다 하나씩 부착됩니다. 인스턴스 유형별 ENI 상한 안에는 기본 ENI도 포함돼요.",
+      trap: "다중 ENI를 단 인스턴스라면, ENI마다 서로 다른 SG 조합을 지정할 수 있습니다.",
+      note: "대부분의 인스턴스는 ENI가 딱 하나뿐이라 \"인스턴스에 SG를 붙인다\"는 관용 표현도 실무에서는 틀리지 않습니다. 예외는 NAT 어플라이언스나 듀얼호밍처럼 보조 ENI를 추가로 단 경우뿐이에요."
+    },
+    alb: {
+      eni: "O — 지정한 서브넷(AZ)마다",
+      sgClass: "allow", sgLabel: "가능",
+      where: "서브넷마다 ENI를 만듭니다. 콘솔에는 \"ENI reserved by ELB for subnet\"이라는 설명으로 보여요. 정확히 몇 개인지는 ALB 공식 문서에 나오지 않습니다.",
+      trap: "SG는 인스턴스가 아니라 <b>로드밸런서 자체</b>에 붙습니다. 타깃(EC2) 쪽 SG의 인바운드 Source에 <b>로드밸런서 SG</b>를 지정하는 게 표준 패턴이에요 — <a class='link' href='#ref'>8장</a>에서 이 패턴을 정면으로 다룹니다.",
+      note: "타깃 SG의 source에 로드밸런서 SG를 참조해 두면, 로드밸런서를 거치지 않은 직접 트래픽은 자동으로 막힙니다. IP 대역을 따로 관리할 필요가 없어지는 셈이에요."
+    },
+    nlb: {
+      eni: "O — 서브넷당 1개",
+      sgClass: "allow", sgLabel: "가능 (2023-08부터)",
+      where: "서브넷당 ENI 1개입니다.",
+      trap: "생성 시점에 SG를 하나도 지정하지 않으면, 그 뒤로는 <b>영원히</b> SG를 붙일 수 없습니다. 바로 위 경고를 보세요.",
+      note: "SG를 붙여 두면, 클라이언트 IP 보존을 켠 상태에서도 타깃 SG가 NLB의 SG를 source로 그대로 참조할 수 있습니다."
+    },
+    rds: {
+      eni: "O — EC2와 같은 메커니즘",
+      sgClass: "allow", sgLabel: "가능",
+      where: "DB 서브넷 그룹에서 고른 서브넷 한 곳에 ENI를 만들어 DB 인스턴스에 연결합니다.",
+      trap: "표준 패턴은 반대 방향이에요 — RDS SG의 인바운드 Source에 <b>앱(EC2) SG</b>를 참조로 넣습니다.",
+      note: "IP 대역이 아니라 <b>다른 SG를 source로</b> 지정할 수 있다는 게 핵심입니다. 앱 서버가 늘어나 IP가 바뀌어도 RDS SG 규칙은 그대로 유효해요."
+    },
+    lambda: {
+      eni: "O — Hyperplane ENI(공유형)",
+      sgClass: "allow", sgLabel: "가능",
+      where: "서브넷+SG <b>조합</b>당 1개가 만들어지고, 같은 조합을 쓰는 계정 내 다른 함수와 공유됩니다.",
+      trap: "동시 실행이 늘어도 ENI는 늘지 않습니다. 늘어나는 건 서로 다른 서브넷·SG 조합의 개수뿐이에요.",
+      note: "<span class='term' data-t='Hyperplane ENI'>Hyperplane ENI</span>라는 이름부터가 힌트입니다. \"동시 실행 1000개 = ENI 1000개\"라는 흔한 계산은 이 공유 모델과 맞지 않아요."
+    },
+    vpce: {
+      eni: "O — 지정한 서브넷마다",
+      sgClass: "allow", sgLabel: "가능",
+      where: "AZ당 1개까지만 고를 수 있고, requester-managed ENI라 콘솔엔 보여도 직접 수정은 못 합니다.",
+      trap: "SG는 이 엔드포인트 ENI에 붙습니다. <a class='link' href='#endpoint'>11장</a>에서 이 자리를 실제로 씁니다.",
+      note: "생성할 때 SG를 지정하지 않으면 VPC의 default SG가 기본으로 붙습니다. default SG가 정확히 무엇을 여는지는 <a class='link' href='#sg'>4장</a>에서 다시 봅니다."
+    },
+    gwe: {
+      eni: "X — ENI 자체가 없음",
+      sgClass: "deny", sgLabel: "불가",
+      where: "라우팅 테이블의 prefix list 경로로만 존재합니다.",
+      trap: "SG를 붙일 대상 자체가 없으니, 통제는 <b>엔드포인트 정책</b>과 <b>버킷 정책</b>이 대신합니다 — <a class='link' href='#endpoint'>11장</a>.",
+      note: "여기가 이 장의 모델을 뒤집어 증명하는 자리입니다. ENI가 없으면 이름표를 걸 자리 자체가 없다는 걸, Gateway Endpoint가 가장 분명하게 보여줘요."
+    },
+    fargate: {
+      eni: "O — 태스크당 정확히 1개",
+      sgClass: "allow", sgLabel: "가능",
+      where: "태스크 실행·서비스 생성 시 지정한 서브넷·SG가 이 ENI에 그대로 적용됩니다.",
+      trap: "타깃 그룹 타입은 반드시 <span class='mono'>ip</span>여야 합니다 — <span class='mono'>instance</span>가 아니에요. awsvpc 모드는 인스턴스가 아니라 ENI에 결부되기 때문입니다.",
+      note: "EC2와 똑같이 ENI 단위로 SG가 붙는 독립 리소스라고 보면 됩니다. 다른 점은 그 ENI를 ECS가 전적으로 관리해서, 계정에서 직접 떼거나 고칠 수 없다는 것뿐이에요."
+    }
+  };
+  function render(k){
+    const d = D[k];
+    out.innerHTML =
+      `<div class="kv" style="margin-top:12px">
+         <dt>ENI를 만드나</dt><dd>${d.eni}</dd>
+         <dt>SG를 붙일 수 있나</dt><dd class="verdict" style="display:inline-flex; padding:3px 0; margin:0; border:none; background:transparent"><span class="vres ${d.sgClass}">${d.sgLabel}</span></dd>
+         <dt>몇 개, 어디에</dt><dd>${d.where}</dd>
+         <dt>함정</dt><dd>${d.trap}</dd>
+       </div>
+       <div class="callout ${d.sgClass==='deny'?'key':'why'}" style="margin-bottom:0"><p style="margin:0">${d.note}</p></div>`;
+  }
+  wirePicker('#attachPicker', render);
+  render('ec2');
+})();
+
+/* ============================================================
+   데모 3 — 같은 차단, 다른 흔적 (1장)
    ============================================================ */
 (function(){
   const out = $('#fwOut'); if(!out) return;
@@ -1326,7 +1432,7 @@ if(location.hash){
 })();
 
 /* ============================================================
-   데모 3 — VPC 지도 (2장)
+   데모 4 — VPC 지도 (2장)
    ============================================================ */
 (function(){
   const out = $('#vpcOut'); if(!out) return;
@@ -1342,7 +1448,7 @@ if(location.hash){
       d:"패킷을 어디로 보낼지 정하는 표. 서브넷마다 정확히 하나가 연결됩니다(지정 안 하면 VPC 기본 것). <b>\"퍼블릭 서브넷\"의 정체가 바로 이 표의 한 줄</b>이에요. 통제 이전에 <b>경로</b>라는 걸 <a class='link' href='#route'>3장</a>에서 다룹니다." },
     eni:    { t:"🔌 ENI", c:"var(--g-sg)", scope:"서브넷 하나에 소속",
       ex:"eni-0a1b · 사설 IP 10.0.1.42",
-      d:"가상 랜카드. EC2·RDS·Lambda(VPC 연결)·Interface Endpoint·ALB 노드가 전부 이걸 만듭니다. <b>Security Group이 실제로 붙는 자리</b>가 인스턴스가 아니라 여기예요. 인스턴스에 ENI가 둘이면 SG도 따로 붙습니다." },
+      d:"가상 랜카드. EC2·RDS·Lambda(VPC 연결)·Interface Endpoint·ALB 노드가 전부 이걸 만듭니다. SG가 붙는 자리가 정확히 여기라는 건 <a class='link' href='#attach'>1장</a>에서 이미 봤죠 — 어떤 리소스가 ENI를 만드느냐가 SG를 붙일 수 있느냐를 가른다는 이야기였습니다." },
     nacl:   { t:"🧊 NACL", c:"var(--g-nacl)", scope:"서브넷에 연결",
       ex:"100 ALLOW tcp 443 · * DENY",
       d:"서브넷 경계의 무상태 검문소. 번호 순서대로 평가하고 <b>deny를 쓸 수 있습니다</b>. 서브넷 하나에 하나만 연결되고, 지정 안 하면 기본 NACL(전부 허용)이 붙어요. 함정은 <a class='link' href='#nacl'>5장</a>에서." },
@@ -1364,7 +1470,7 @@ if(location.hash){
 })();
 
 /* ============================================================
-   데모 4 — CIDR 분할기 (2장)
+   데모 5 — CIDR 분할기 (2장)
    ============================================================ */
 (function(){
   const out = $('#cidrOut'); if(!out) return;
@@ -1394,7 +1500,7 @@ if(location.hash){
 })();
 
 /* ============================================================
-   데모 5 — 라우팅 시뮬레이터 (3장)
+   데모 6 — 라우팅 시뮬레이터 (3장)
    ============================================================ */
 (function(){
   const out = $('#routeOut'); if(!out) return;
@@ -1484,7 +1590,7 @@ if(location.hash){
 })();
 
 /* ============================================================
-   데모 6 — SG 규칙 편집기 (4장)
+   데모 7 — SG 규칙 편집기 (4장)
    ============================================================ */
 (function(){
   const out = $('#sgOut'); if(!out) return;
@@ -1536,7 +1642,7 @@ if(location.hash){
 })();
 
 /* ============================================================
-   데모 7 — SG vs NACL 왕복 검사 (5장)
+   데모 8 — SG vs NACL 왕복 검사 (5장)
    ============================================================ */
 (function(){
   const out = $('#naclOut'); if(!out) return;
