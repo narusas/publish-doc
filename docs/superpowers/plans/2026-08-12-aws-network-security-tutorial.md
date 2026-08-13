@@ -843,7 +843,7 @@ JS:
 
 ```js
   "netfilter": "리눅스 커널 안에서 패킷을 검사·변환하는 프레임워크. iptables·nftables는 여기에 규칙을 등록하는 도구입니다. 커널 안이라는 점이 클라우드의 SG와 결정적으로 다릅니다.",
-  "Flow Logs": "VPC Flow Logs. ENI를 오간 트래픽의 요약을 5분(또는 1분) 단위로 남기는 로그. 패킷 내용은 없고 5-tuple과 ACCEPT/REJECT만 남습니다.",
+  "Flow Logs": "VPC Flow Logs. ENI를 오간 트래픽의 요약을 10분(기본) 또는 1분 단위로 모아 남기는 로그. 패킷 내용은 없고 5-tuple과 ACCEPT/REJECT만 남습니다.",
 ```
 
 - [ ] **Step 4: 퀴즈**
