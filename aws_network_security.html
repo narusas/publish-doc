@@ -1405,7 +1405,6 @@ button:focus-visible, .pick:focus-visible, .term:focus-visible, a:focus-visible,
       <p>아무 일도 벌어지지 않습니다. WAF는 CloudFront에 붙어 있을 뿐이라, 이 경로에서는 애초에 존재하지 않는 것과 같아요. <a class="link" href="#nfw">9장</a>에서 본 원리가 여기서 그대로 되풀이됩니다 — <b>붙어 있지 않은 통제는 실행되지 않습니다.</b></p>
       <p>답은 L7이 아니라 L3/L4에 있습니다. <a class="link" href="#ref">8장</a>에서 세운 <code>alb-sg</code>의 인바운드 source를 <span class="mono">0.0.0.0/0</span> 대신 CloudFront가 쓰는 <span class="term" data-t="prefix list">prefix list</span> 하나로 좁히는 거예요 — IPv4는 <code>com.amazonaws.global.cloudfront.origin-facing</code>, IPv6는 <code>com.amazonaws.global.ipv6.cloudfront.origin-facing</code>입니다. 이렇게 걸어 두면 ALB는 CloudFront가 보낸 트래픽 말고는 아예 받지 않아요. 우회로 자체가 사라지는 겁니다.</p>
       <p>다만 이 한 줄에는 대가가 있습니다. 이 prefix list의 weight는 55예요. SG 규칙의 기본 한도가 60개인데, 이 한 줄이 이미 55개 슬롯을 차지하고 들어와서 다른 규칙에 남는 자리는 5개뿐입니다. "규칙 몇 줄 추가했을 뿐인데 SG 한도에 걸린다"는 사고의 실제 원인이 종종 이거예요.</p>
-      <p><a class="link" href="#ref">8장</a>이 여기서 회수됩니다. IP 대신 이름표로 source를 좁히던 그 발상이, CloudFront라는 AWS가 관리하는 이름표에도 똑같이 적용되는 거예요.</p>
 
       <div class="callout std">
         <h4>📐 업계 표준 — Count 모드로 먼저 관찰한다</h4>
@@ -2386,7 +2385,7 @@ if(location.hash){
     normal: { sg:[true,"443이 열려 있으니 통과"], waf:[true,"규칙에 걸리지 않음"],
       n:"둘 다 통과합니다. 정상 요청이 이렇게 흘러요." },
     sqli: { sg:[true,"443으로 온 정상 TCP 연결. <b>본문을 볼 수 없다</b>"],
-      waf:[false,"SQL 인젝션 패턴을 탐지하는 관리형 규칙에 매치"],
+      waf:[false,"<code>SQLi_BODY</code> 관리형 규칙에 매치"],
       n:"<b>SG는 이걸 절대 막을 수 없습니다.</b> 포트도 IP도 정상이고, 페이로드는 SG의 관측 범위 밖이에요. L7을 보는 통제가 없으면 이 요청은 그대로 앱까지 갑니다." },
     flood: { sg:[true,"각 연결이 개별적으로는 정상"],
       waf:[false,"Rate-based 규칙이 해당 IP를 일시 차단"],
