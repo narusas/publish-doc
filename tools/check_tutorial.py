@@ -25,15 +25,18 @@ NET_CALL = re.compile(
 )
 CSS_REMOTE = re.compile(r'(?:@import\s+["\']?(?:https?:)?//|url\(\s*["\']?(?:https?:)?//)', re.I)
 
-ID_ATTR = re.compile(r'\bid\s*=\s*"([^"]+)"')
+# 속성값은 큰따옴표뿐 아니라 작은따옴표로도 나타난다 — 이 문서들은 JS 템플릿 리터럴
+# 안에서 `href='#...'` `class='term'` 같은 작은따옴표 속성을 대량으로 내보낸다.
+# 따옴표 한쪽만 잡으면 그 속성들은 전부 검사망을 조용히 빠져나간다.
+ID_ATTR = re.compile(r'''\bid\s*=\s*["']([^"']+)["']''')
 SECTION_TAG = re.compile(r'<section\b([^>]*)>', re.I)
 DATA_TITLE = re.compile(r'\bdata-title\s*=\s*"([^"]*)"')
-ANCHOR_HREF = re.compile(r'\bhref\s*=\s*"#([^"]+)"')
+ANCHOR_HREF = re.compile(r'''\bhref\s*=\s*["']#([^"']+)["']''')
 # 태그 하나를 통째로 잡은 뒤 class/data-t 속성을 순서와 무관하게 찾는다.
 # (class="term" ... data-t="..." 순서를 강제하면 속성 순서가 뒤집힌 경우를 놓친다)
 TAG_OPEN = re.compile(r'<[a-zA-Z][\w-]*\b[^>]*>')
-CLASS_ATTR = re.compile(r'\bclass\s*=\s*"([^"]*)"')
-DATA_T_ATTR = re.compile(r'\bdata-t\s*=\s*"([^"]*)"')
+CLASS_ATTR = re.compile(r'''\bclass\s*=\s*["']([^"']*)["']''')
+DATA_T_ATTR = re.compile(r'''\bdata-t\s*=\s*["']([^"']*)["']''')
 GLOSSARY_BLOCK = re.compile(r'const\s+GLOSSARY\s*=\s*\{(.*?)//\s*@GLOSSARY_END', re.S)
 GLOSSARY_KEY = re.compile(r'"([^"]+)"\s*:')
 # 여는 태그만 정규식으로 찾고, 짝이 맞는 </div>는 중첩 깊이를 세어 직접 찾는다.
