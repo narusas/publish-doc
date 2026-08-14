@@ -38,6 +38,39 @@
 **→ 13장 서술 제한**: "직접 `SecurityContextHolder`에 값을 넣는 커스텀 코드는 명시적으로
 저장해야 한다"까지만 쓴다. 내장 필터의 내부 동작은 서술하지 않는다.
 
+### V1 보강 — 저장 API의 정확한 모양, 그리고 설계 의도 (2026-08-15, 13장 구현 중)
+
+13장 구현자가 `.spring` 블록에 쓸 **저장 코드의 API 모양**이 V1 인용문에 없다는 것을 발견하고,
+직접 확인한 뒤 **facts 파일은 리드의 장부라며 고치지 않고 보고만 했다.** 옳은 처신이라
+교차 확인해서 싣는다.
+
+출처: [Persisting Authentication](https://docs.spring.io/spring-security/reference/6.5/servlet/authentication/persistence.html),
+[SecurityContextHolderFilter 자바독](https://docs.spring.io/spring-security/reference/6.5/api/java/org/springframework/security/web/context/SecurityContextHolderFilter.html)
+
+**API는 정확히 이 모양이다** (Java·Kotlin 동일):
+
+```java
+SecurityContextHolder.setContext(securityContext);
+securityContextRepository.saveContext(securityContext, httpServletRequest, httpServletResponse);
+```
+
+> "any code that sets the `SecurityContextHolder` with a `SecurityContext` **must also save** the
+> `SecurityContext` to the `SecurityContextRepository` if it should be persisted between requests."
+
+**덤으로 나온 것 — 설계 의도:**
+
+> "Unlike older persistence filters, this component requires explicit invocation of the repository
+> to save the context. This design enhances efficiency and provides greater flexibility, as it
+> **allows individual authentication mechanisms to determine whether authentication state should
+> be persisted.**"
+
+**⚠️ 이것으로 서술 금지가 풀리지는 않는다.** 이 문장은 "인증 메커니즘들이 **각자 정할 수 있게**
+됐다"는 설계 의도를 말할 뿐, **내장 폼 로그인 필터가 실제로 저장하는지, 어떤 경로로 하는지는
+여전히 말하지 않는다.** 13장의 서술 제한은 그대로 유지한다.
+
+쓸 수 있게 된 것은 **저장 API의 모양**과, 필요하다면 **"왜 자동 저장을 걷어냈나"**(효율과
+유연성 — 매번 쓰지 않고 필요할 때만)까지다.
+
 ---
 
 ## V2 · 비밀번호 인코더 — **확인됨**
