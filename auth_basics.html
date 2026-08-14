@@ -26,7 +26,8 @@ code[class*=language-],pre[class*=language-]{color:#ccc;background:0 0;font-fami
   --accent:    #fb7185;   /* 메인(로즈) */
   --accent-2:  #f472b6;   /* 보조(핑크) */
 
-  /* 판정 색 — 초록은 의도대로 막힌 것, 빨강은 막았어야 할 것이 뚫린 것,
+  /* 판정 색 — 축은 "의도대로 됐나" 하나다. 초록은 시킨 대로 된 것(막으라고 해서 막힘),
+     빨강은 의도와 어긋난 것(막았어야 할 것이 뚫렸거나, 아무도 시키지 않은 로그아웃이 남),
      노랑은 판정이 아니라 상황 라벨. 이 축을 데모마다 흔들지 않는다. */
   --ok:        #34d399;
   --warn:      #fbbf24;
@@ -41,6 +42,11 @@ code[class*=language-],pre[class*=language-]{color:#ccc;background:0 0;font-fami
 }
 
 *{box-sizing:border-box}
+/* `hidden`이 정말 감추게 한다. 브라우저 기본 시트의 [hidden]{display:none}은 작성자
+   규칙에 지므로, display를 지정한 요소(.lb-row{display:grid} 등)에 el.hidden=true를
+   걸어도 그대로 보인다 — 7장 #lbSim의 중앙 저장소 칸이 라운드로빈 모드에서 계속
+   보이던 것이 그 경우다. */
+[hidden]{display:none !important}
 html{scroll-behavior:smooth; scroll-padding-top:24px}
 body{
   margin:0; background:var(--bg); color:var(--text);
@@ -195,6 +201,12 @@ button.sm{padding:6px 11px; font-size:12.5px}
 .badge.ok{color:var(--ok); border-color:rgba(52,211,153,.4)}
 .badge.bad{color:var(--bad); border-color:rgba(248,113,113,.4)}
 .badge.warn{color:var(--warn); border-color:rgba(251,191,36,.4)}
+/* 범위 밖. 상태가 아니라 경계라서 판정 색을 쓰지 않는다 — 빨강은 "막았어야 할 것이
+   뚫렸다"는 뜻이고 이 칸은 "이 문서가 확인하지 않았다"는 뜻이다.
+   맨 배지(예: `꺼짐`)와도 갈려야 한다. 그쪽은 프레임워크가 그렇게 정해 둔 실제 상태고
+   이쪽은 칸 자체가 비어 있다는 표시다. #replCost의 `?`와 같은 표기를 쓴다 — 점선은
+   이 문서가 값을 적지 않은 자리라는 뜻이고, 색이 아니라 획으로 갈라서 관행을 안 흔든다. */
+.badge.na{color:var(--text-mut); border-style:dashed; border-color:var(--border-2)}
 
 /* 퀴즈 */
 .quiz{border:1px solid var(--border-2); border-radius:var(--radius); padding:18px 20px; margin:22px 0; background:var(--panel)}
@@ -533,8 +545,17 @@ pre.language-java{background:var(--bg); border-color:var(--border-2)}
 .rc-num.zero{color:var(--text-mut)}
 .rc-num.hot{color:var(--warn)}
 /* 구조가 정해 주지 않는 칸. 수를 지어내지 않고 물음표를 세운다 — 다른 줄이 전부 확정 수인
-   만큼, 이 칸 하나가 "정해지지 않음"인 것 자체가 정보다 */
-.rc-num.na{color:var(--text-mut); font-size:17px}
+   만큼, 이 칸 하나가 "정해지지 않음"인 것 자체가 정보다.
+   0과 갈라 보여야 한다. 둘 다 --text-mut이라 색으로는 못 가르고, 색을 더 주는 것도 답이
+   아니다 — 경고색을 붙이면 "잘못됨"으로 읽히는데 이 칸은 틀린 것이 아니라 안 정해진 것이다.
+   그래서 색 말고 활자로 가른다: 0은 수라서 고정폭 굵은 글씨, ?는 수가 아니라서 본문 활자에
+   가는 획, 그리고 점선 밑줄로 "채워지지 않은 칸"임을 표시한다.
+   밑줄은 칸이 아니라 물음표에만 걸어야 한다 — 좁은 화면에서 칸이 ::before로 열 이름을
+   달고 나오는데, 칸에 걸면 그 이름까지 밑줄이 그어진다(밑줄은 자손으로 번지고 자손이
+   지울 수 없다). 그래서 물음표를 .rc-open으로 한 겹 싼다. */
+.rc-num.na{color:var(--text-mut)}
+.rc-open{font-family:var(--sans); font-size:17px; font-weight:400;
+  text-decoration:underline dashed; text-underline-offset:4px; text-decoration-thickness:1px}
 .rc-why{font-size:13px; color:var(--text-dim); line-height:1.6}
 .rc-foot{margin-top:12px; padding:10px 13px; border-radius:9px; background:var(--bg);
   border:1px solid var(--border); font-size:12.5px; color:var(--text-mut); line-height:1.75}
@@ -1176,7 +1197,7 @@ Authorization: Basic YWxpY2U6cEBzc3cwcmQh</code></pre>
           저장 문자열의 모양도 실제 bcrypt 형식이 아니라, 무엇이 함께 저장되는지 보이려고 만든 표기입니다.
           SHA-256 자체는 이 페이지에서 진짜로 계산합니다 — 그래서 같은 비밀번호가 같은 값이 되는 것도 진짜예요.</div>
         </div>
-        <div class="verdict" style="align-items:flex-start">
+        <div class="verdict" style="align-items:flex-start" id="hlTimeNote">
           <span class="badge">⏱ 잰 값</span>
           <div class="dim" style="font-size:13.2px; line-height:1.6">위에 뜨는 밀리초는 이 브라우저가 <b>벽시계로 잰 값</b>입니다.
           같은 설정으로 두 번 재도 몇 %씩 다르게 나와요 — 다른 탭, 가비지 컬렉션, CPU 상태가 함께 섞여 들거든요.
@@ -2148,7 +2169,9 @@ Content-Type: application/x-www-form-urlencoded
         받은 서버가 그 사람을 알아보는지 따라가 보세요.
         <b>앞의 두 모드에서는 서버가 하는 일이 같습니다</b> — 자기 표를 한 번 찾는 것.
         달라지는 건 LB가 목적지를 고르는 규칙뿐이에요.
-        뒤의 두 모드는 <b>세션이 놓인 자리 자체</b>를 바꾸는데, 그쪽은 <a class="link" href="#sharing">8장</a>에서 눌러 봅니다.</p>
+        뒤의 두 모드는 <b>세션이 놓인 자리 자체</b>를 바꾸는데, 그쪽은 <a class="link" href="#sharing">8장</a>에서 눌러 봅니다.
+        <br>판정 배지는 <b>의도대로 됐느냐</b>만 봅니다 — 여기서 빨강은 <b>아무도 시키지 않은 로그아웃</b>이에요.
+        시켜서 일어난 로그아웃은 빨강이 아닙니다.</p>
         <div class="picker" id="lbMode"></div>
         <div class="ss-ctl" id="lbCtl">
           <button id="lbLogin">🔑 셋 다 로그인</button>
@@ -3970,6 +3993,20 @@ securityContextRepository.saveContext(securityContext, httpServletRequest, httpS
         <div class="ck-score" id="cklScore"></div>
       </div>
 
+      <!-- 줄 안의 `N장`은 링크가 아니다. .ck 전체가 토글이라 안쪽 앵커는 이동과 토글을
+           동시에 일으키고, role="checkbox" 안에 링크를 넣는 것도 맞지 않는다. 그래서
+           앵커는 줄 밖에 한 줄로 모아 둔다 — 아래 자가진단 회수 표가 4·6·8·11·12·13장을
+           맡고 있어서, 그 표가 닿지 않는 2·5·10장이 여기서만 눌리는 자리다. -->
+      <p class="dim" style="font-size:13.2px; margin:6px 0 0">일곱 줄이 나온 자리로 곧장 —
+      <a class="link" href="#credentials">2장</a> ·
+      <a class="link" href="#cookie">4장</a> ·
+      <a class="link" href="#session">5장</a> ·
+      <a class="link" href="#csrf">6장</a> ·
+      <a class="link" href="#twoservers">7장</a> ·
+      <a class="link" href="#sharing">8장</a> ·
+      <a class="link" href="#jwt">10장</a> ·
+      <a class="link" href="#revocation">11장</a></p>
+
       <p>안 눌린 줄이 곧 결함이라는 뜻은 아닙니다. 넷째 줄은 껐다는 것 자체가 아니라 <b>이유를 말할 수 있느냐</b>를 묻고,
       여섯째 줄은 몇 초여야 한다가 아니라 <b>몇 초인지 아느냐</b>를 물어요.
       12장이 저울에 답을 안 적어 둔 것과 같은 이유입니다 — 값은 서비스마다 다르고,
@@ -4190,7 +4227,7 @@ public class ResourceServerConfig {
         </div>
         <div class="ap-r">
           <div class="ap-k">토큰 발급</div>
-          <div class="ap-c" data-h="상태"><span class="badge">밖</span></div>
+          <div class="ap-c" data-h="상태"><span class="badge na">범위 밖</span></div>
           <div class="ap-c" data-h="근거">위 설정은 받은 토큰을 검증하는 쪽, 즉 <span class="term" data-t="리소스 서버">리소스 서버</span>의 것입니다.
           발급하는 쪽을 어떻게 세우는지는 확인하지 않았습니다.</div>
         </div>
@@ -4827,7 +4864,8 @@ if(location.hash){
         out    = $('#hlOut'),
         costRow= $('#hlCostRow'),
         costEl = $('#hlCost'),
-        costVal= $('#hlCostVal');
+        costVal= $('#hlCostVal'),
+        timeNote = $('#hlTimeNote');   // 잰 시간에 붙는 각주 — 시간이 뜨는 모드에서만 보인다
   let mode = 'plain', timer = null;
   let prev = null;   // 직전 bcrypt 실측 {cost, ms, pw} — 눈금 한 칸이 두 배임을 눈으로 보이려고 들고 있는다
 
@@ -4948,6 +4986,9 @@ if(location.hash){
   function schedule(){
     const cost = Number(costEl.value);
     costRow.hidden = (mode !== 'bcrypt');
+    // `해시 없음`에는 잰 시간이 아예 안 뜬다(draw의 mode !== 'plain'). 가리킬 값이
+    // 없는 각주는 내려 둔다.
+    timeNote.hidden = (mode === 'plain');
     if(mode === 'bcrypt' && cost >= 11){
       // 무거운 계산 전에 화면을 한 번 그려 준다. 안 그러면 그냥 멎은 것처럼 보인다.
       out.innerHTML = '<div class="verdict"><span class="badge warn">계산 중</span>'
@@ -6108,7 +6149,7 @@ if(location.hash){
          + '<div class="rc-name">' + esc(w.name)
          + (hot ? ' <span class="badge warn">권장 밖</span>' : '') + '</div>'
          + cCell + w.copies(n) + '</div>'
-         + lCell + lk + '</div>'
+         + lCell + (lk === '?' ? '<span class="rc-open">?</span>' : lk) + '</div>'
          + '<div class="rc-why">' + w.why(n) + '</div>'
          + '</div>';
   }
@@ -6163,6 +6204,8 @@ if(location.hash){
    빨강이다(막으라고 했는데 통과한다). 기한이 끝나 무상태가 `차단`되는 것도 초록이다 —
    같은 낱말에 같은 색을 준다. 7장 #lbSim이 로그아웃을 빨강으로 쓰는 것과 어긋나 보이지만
    그쪽 로그아웃은 아무도 시키지 않은 사고이고, 여기 차단은 시켜서 일어난 일이다.
+   두 데모를 붙여 읽는 독자에게 그 구분이 저절로 서지는 않아서, #lbSim 머리말에
+   "여기서 빨강은 아무도 시키지 않은 로그아웃"이라고 독자에게도 적어 두었다.
 
    판정 문구에 .term을 쓰지 않는다 — 툴팁 배선은 페이지 로드 시 한 번뿐이다.
    클래스는 분기마다 통째로 적는다 — 이어 붙이면 사장 CSS 검사기가 못 본다.
