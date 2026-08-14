@@ -282,6 +282,58 @@ sticky 라우팅이 백업형의 숨은 전제라는 것까지 드러난다.
 
 ---
 
+## V9 · Spring Security의 JWT 검증 — **확인됨** (2026-08-14, 부록 A 준비 중 추가)
+
+10·11장 구현자가 **`.spring` 블록을 아예 넣지 않았다.** facts에 JVM 쪽 JWT 근거가 하나도
+없어서였고, 올바른 판단이었다. 그런데 부록 A가 "Spring Security 최소 설정 **두 벌** —
+세션형 / JWT형"을 요구하므로 근거가 필요해 확인했다.
+
+출처: [OAuth 2.0 Resource Server — JWT](https://docs.spring.io/spring-security/reference/6.5/servlet/oauth2/resource-server/jwt.html),
+[OAuth2 개요](https://docs.spring.io/spring-security/reference/6.5/servlet/oauth2/index.html)
+
+### 최소 설정
+
+```java
+http
+  .authorizeHttpRequests((authorize) -> authorize.anyRequest().authenticated())
+  .oauth2ResourceServer((oauth2) -> oauth2.jwt(Customizer.withDefaults()));
+```
+그리고 `JwtDecoder` 빈. `JwtDecoders.fromIssuerLocation("https://…")` 또는
+`NimbusJwtDecoder.withPublicKey(key).build()`.
+
+### 10장의 방어 원칙이 여기서 코드가 된다 — 가장 중요한 발견
+
+10장은 `alg: none`의 방어를 **"서버가 기대 알고리즘을 고정한다"**로 썼다. Spring이 정확히
+그렇게 한다:
+
+```java
+NimbusJwtDecoder jwtDecoder = NimbusJwtDecoder.withIssuerLocation(this.issuer)
+        .jwsAlgorithm(RS512).jwsAlgorithm(ES512).build();
+```
+
+> "When the required dependencies and `issuer-uri` are configured, Spring Security's Resource
+> Server automatically sets up JWT validation. This process involves discovering the `jwks_url`,
+> **identifying supported algorithms**, and configuring the validation strategy to use public keys
+> from the `jwks_url` to validate JWT signatures and claims like `iss`."
+
+즉 **검증자가 토큰의 `alg`를 믿는 것이 아니라, 신뢰할 알고리즘 목록을 자기가 정한다.**
+`jwsAlgorithm()`을 여러 번 불러 여럿을 신뢰할 수 있다.
+
+→ **부록 A의 JWT형 설정을 이 근거로 쓸 수 있다.** 그리고 10장의 원리가 추상론이 아니라
+실제 API의 모양이라는 것을 부록이 보여 줄 수 있다.
+
+### 서술 제한 (V8과 함께 지킬 것)
+
+- **`NimbusJwtDecoder`는 Spring Security 레퍼런스 자신의 예제에 나오는 이름이므로 써도 된다.**
+  V8이 금지한 것은 *취약점 사례로 지목하는 라이브러리 이름*이지 설정 예제의 클래스명이 아니다.
+- 다만 **어느 라이브러리가 `alg:none`을 어떻게 처리하는지는 여전히 미확인**이다. 부록에서도
+  "이 디코더는 `none`을 거부한다" 같은 주장을 하지 않는다. 쓸 수 있는 것은
+  **"신뢰할 알고리즘을 설정에서 정한다"**는 구조뿐이다.
+- 이 설정은 **리소스 서버**(발급받은 토큰을 검증하는 쪽)의 것이다. 직접 토큰을 발급하는
+  구성은 확인하지 않았다. 부록에서 발급 쪽을 다루려면 별도 확인이 필요하다.
+
+---
+
 ## 이번 검증에서 얻은 것
 
 1. **요약본과 원문이 정반대일 수 있다** (V1). 결론이 문서의 다른 서술과 어긋나 보이면
