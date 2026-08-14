@@ -355,6 +355,48 @@ button:focus-visible, .pick:focus-visible, .term:focus-visible, a:focus-visible,
 .spring .sp-body>*:first-child{margin-top:0}
 .spring .sp-body>*:last-child{margin-bottom:0}
 .spring code{font-family:var(--mono); font-size:.88em}
+
+/* 오개념 교정 블록의 행 — ✗ 줄과 ✓ 줄을 위아래로 붙여 대조한다 */
+.myth .m-row{display:flex; gap:12px; padding:14px 16px; align-items:flex-start}
+.myth .m-row+.m-row{border-top:1px solid var(--border)}
+.myth .m-x{flex:0 0 auto; font-weight:800; line-height:1.6}
+.myth .m-row.no{background:rgba(248,113,113,.06)}
+.myth .m-row.no .m-x{color:var(--bad)}
+.myth .m-row.yes{background:rgba(52,211,153,.06)}
+.myth .m-row.yes .m-x{color:var(--ok)}
+.myth .m-row .m-txt{font-size:14.5px; color:var(--text-dim)}
+.myth .m-row .m-txt b{color:#fff}
+
+/* 프로토콜 메시지 예시 — Prism에 http 문법이 없어 강조가 붙지 않으므로
+   이 문서의 색으로 직접 칠한다(기본 Prism 테마의 회색 배경을 덮는다). */
+pre.language-http{background:var(--bg); border-color:var(--border-2)}
+pre.language-http code{color:#cfe9fb}
+
+/* 데모 안의 입력 요소 — 지금까지 입력칸은 용어 사전 검색뿐이었다 */
+.demo input[type="text"]{
+  background:var(--panel-2); border:1px solid var(--border); color:var(--text);
+  border-radius:9px; padding:9px 12px; font-family:var(--mono); font-size:13.5px;
+  width:250px; max-width:100%;
+}
+/* 폭은 %가 아니라 고정값으로 준다 — inline-flex 안에서 %는 줄바꿈을 부른다 */
+.demo input[type="range"]{accent-color:var(--accent); width:220px; max-width:100%; vertical-align:middle}
+.demo label{font-size:13.5px; color:var(--text-dim); display:inline-flex; align-items:center;
+  gap:10px; flex-wrap:wrap; margin:2px 0 6px}
+
+/* 요청 뷰어·해시 실험실의 값 칸은 길고, 접혀도 읽혀야 한다 */
+#reqView .kv dd, #hashLab .kv dd{
+  font-family:var(--mono); font-size:12.5px; color:var(--text); overflow-wrap:anywhere; line-height:1.55;
+}
+#hashLab .kv dt{font-size:13px}
+
+/* 판정 줄의 배지는 줄어들지 않는다 — flex 안에서 눌리면 두 줄로 접힌다 */
+.verdict .badge{flex:0 0 auto; white-space:nowrap}
+
+/* 좁은 화면에서는 데모 이름표가 절대 위치로 떠 있으면 첫 문장을 덮는다.
+   흐름 안으로 내려 제목처럼 놓는다. */
+@media(max-width:640px){
+  .demo .demo-tag{position:static; display:inline-block; margin:0 0 10px}
+}
 </style>
 </head>
 <body>
@@ -497,6 +539,326 @@ button:focus-visible, .pick:focus-visible, .term:focus-visible, a:focus-visible,
       </div>
     </section>
 
+    <!-- ============================================================
+         1장 · 무상태
+         ============================================================ -->
+    <section id="stateless" data-title="HTTP는 기억하지 못한다">
+      <div class="sec-head">
+        <div class="kicker">01 · 제약</div>
+        <h2 class="sec-title">🕳️ HTTP는 방금 그 사람을 기억하지 못한다 <span class="lvl must">🟢 필수</span></h2>
+      </div>
+
+      <p class="lead">로그인을 한 번 하고 나면 그 뒤로는 어느 페이지를 눌러도 오른쪽 위에 내 이름이 떠 있습니다.
+      서버가 나를 알아보고 있는 것처럼 보여요. 그런데 그 알아봄이 정확히 어디에 들어 있느냐고 물으면, 답이 바로 나오지 않습니다.</p>
+
+      <p>찾기 전에 없는 것부터 확인해 두는 편이 빠릅니다. HTTP 요청 하나가 도착하고 응답이 나가면 그것으로 끝이에요.
+      서버는 그 요청을 처리하며 알게 된 것을 다음 요청까지 들고 가지 않습니다.
+      같은 브라우저가 0.2초 뒤에 다음 요청을 보내도, 서버가 보기에 그것은 처음 보는 요청입니다.</p>
+
+      <p>말로만 들으면 과장 같습니다. 요청 하나가 도착했을 때 서버가 실제로 손에 쥐는 값을 전부 펼쳐 보죠.</p>
+
+      <div class="demo" id="reqView">
+        <span class="demo-tag">서버가 보는 것 전부</span>
+        <p style="margin:0 0 8px">쇼핑몰의 장바구니 화면에 요청 세 개가 차례로 도착했습니다. 하나씩 눌러 무엇이 달라지는지 보세요.</p>
+        <div class="picker" id="reqPicker">
+          <button class="pick on" data-k="r1">① 첫 번째 요청</button>
+          <button class="pick" data-k="r2">② 두 번째 요청 · 같은 사람</button>
+          <button class="pick" data-k="r3">③ 세 번째 요청 · 다른 사람</button>
+        </div>
+        <div id="reqOut" aria-live="polite"></div>
+        <div class="oneline" style="margin-bottom:0">
+          <span style="font-size:19px">🔍</span>
+          <div>이 중에 <strong>누구인가</strong>를 말해 주는 것은 없습니다.</div>
+        </div>
+      </div>
+
+      <h3>🔌 커넥션이 같다는 것과 사람이 같다는 것</h3>
+
+      <p>포트 번호 하나만 다르다는 결과가 좀 허탈했다면, 반문이 하나 떠올랐을 겁니다.
+      요즘 브라우저는 요청마다 커넥션을 새로 열지 않는다고. 한 번 맺은 TCP 커넥션으로 요청을 여러 개 흘려보내는
+      <span class="term" data-t="keep-alive">keep-alive</span>가 기본이니, 커넥션이 같으면 보낸 사람도 같은 것 아니냐고요.</p>
+
+      <p>커넥션이 같은 건 맞습니다. 그것으로 얻는 것도 분명해요 — 핸드셰이크를 다시 하지 않으니 왕복이 줄고,
+      TLS를 다시 맺지 않으니 CPU도 덜 듭니다. 다만 그 이득은 전부 <b>나르는 쪽</b>에 있습니다.
+      빨리 나르는 문제를 푼 것이지, 누가 보냈는지를 푼 게 아니에요.</p>
+
+      <p>게다가 커넥션은 신원으로 삼기엔 너무 쉽게 갈아 끼워집니다. 브라우저와 서버 사이에 프락시나 로드밸런서가
+      한 대라도 서 있으면, 브라우저가 맺은 커넥션은 거기서 끝나요. 그다음 구간은 프락시가 자기 커넥션 풀에서
+      아무거나 하나 꺼내 씁니다. 서버가 보는 커넥션은 브라우저의 것이 아니라 프락시의 것이고,
+      방금 그 커넥션으로 다른 사람의 요청이 지나갔을 수도 있어요.
+      유휴 시간이 조금만 길어져도 커넥션은 조용히 끊기고, HTTP/2에서는 한 커넥션 안에 스트림이 여러 개 겹쳐 흐릅니다.</p>
+
+      <p>방향을 뒤집으면 더 이상해집니다. 방금 데모에서 두 번째 요청이 첫 번째와 달랐던 값은 출발지 포트 하나뿐이었죠.
+      keep-alive로 같은 커넥션을 탔다면 그 포트마저 같았을 겁니다. 두 요청이 <b>글자 하나까지 완전히 같아진다</b>는 뜻이에요.
+      구별할 값이 하나도 남지 않은 상태에서 같은 사람이라고 말할 근거는 커넥션이 같다는 사실뿐이고,
+      그 사실은 방금 본 대로 프락시 한 대에 무너집니다.</p>
+
+      <h3>🏠 그럼 IP로 구분하면</h3>
+
+      <p>남은 값 중에 그나마 사람을 가리키는 것처럼 보이는 건 출발지 IP입니다.
+      실제로 이 방법을 떠올린 서비스가 적지 않았어요. 요청이 오면 IP를 키로 잡아 두고,
+      같은 IP에서 온 요청은 같은 사람으로 치는 겁니다. 한 사무실에서 시연하면 잘 됩니다.</p>
+
+      <p>문제는 그 사무실이에요. 회사·학교·카페의 공유기 뒤에서는 수십 수백 대가 공인 IP 하나를 나눠 쓰고,
+      통신사 단위로 NAT을 한 번 더 거치면 그 수는 훨씬 커집니다.
+      서버가 보는 <code>203.0.113.7</code>은 사람 하나가 아니라 건물 하나인 셈이죠.</p>
+
+      <p>반대 방향도 무너집니다. 지하철에서 기사를 읽는 사람의 IP는 몇 분 사이에 몇 번씩 바뀌어요.
+      기지국을 옮겨도 바뀌고, 와이파이에 붙었다 떨어져도 바뀝니다. 같은 사람인데 서버는 매번 새 사람으로 봅니다.</p>
+
+      <p>앞의 데모가 두 방향을 다 보여 줬습니다. 두 번째 요청은 같은 사람인데 서버가 알아보지 못했고,
+      세 번째 요청은 다른 사람인데 IP가 같았어요 — 옆자리에서 같은 공유기를 쓰고 있었으니까요.
+      IP를 신원으로 삼는 서비스라면 alice의 장바구니를 bob이 열어 보게 됩니다.</p>
+
+      <p>User-Agent는 어떨까요. 이건 더 간단합니다. 그 값은 브라우저가 <b>적어서 보내는</b> 문자열이고,
+      적어서 보낸다는 건 아무렇게나 적을 수도 있다는 뜻이에요. <code>curl</code> 한 줄이면 alice의 브라우저를 그대로 흉내 냅니다.
+      신원의 근거가 상대가 스스로 주장한 값이라면, 그건 근거가 아닙니다.</p>
+
+      <p>여기까지 오면 지금 보고 있는 성질에 이름을 붙일 수 있습니다.
+      HTTP는 <span class="term" data-t="무상태">무상태</span> 프로토콜입니다. 요청과 요청 사이에 아무것도 이어 두지 않는다는 뜻이에요.</p>
+
+      <div class="callout why">
+        <h4>🧭 무상태는 사고가 아니라 설계다</h4>
+        <p>서버가 아무것도 기억하지 않으니 어느 서버가 요청을 받아도 결과가 같습니다.
+        그래서 서버를 몇 대로든 늘릴 수 있고, 한 대가 죽어도 나머지가 그대로 받아 냅니다.
+        웹이 이만큼 커진 이유의 상당 부분이 여기 있어요. 그런데 로그인은 정확히 그 반대를 요구합니다 —
+        <strong>이 요청을 보낸 사람이 아까 그 사람인지</strong>를 알아야 하니까요.
+        로그인이란 결국 무상태 위에 상태를 얹는 일이고, 그렇게 얹은 것이 어떻게 무너지는지가
+        <a class="link" href="#twoservers">7장</a>에서 마주칠 증상입니다.</p>
+      </div>
+
+      <div class="oneline">
+        <span style="font-size:20px">🧷</span>
+        <div><strong>매 요청이 스스로 신원을 증명해야 합니다.</strong>
+        앞 요청이 무엇이었든 상관없이, 요청 하나만 떼어 놓고 봐도 누가 보냈는지가 그 안에 들어 있어야 해요.
+        쿠키도 세션도 토큰도 이 제약을 피해 가는 물건이 아니라, 이 제약 안에서 사는 방법들입니다.</div>
+      </div>
+
+      <div class="quiz" data-qid="q-stateless" data-answer="c">
+        <div class="q-head">✅ 체크포인트</div>
+        <div class="q">같은 브라우저가 keep-alive 커넥션 하나로 요청을 연달아 두 번 보냈다. 서버가 두 요청을 같은 사람의 것으로 <b>확신</b>할 수 있는 근거는?</div>
+        <button class="opt" data-opt="a"><span class="mk">A</span> 출발지 IP가 같다</button>
+        <button class="opt" data-opt="b"><span class="mk">B</span> 같은 TCP 커넥션을 썼다</button>
+        <button class="opt" data-opt="c"><span class="mk">C</span> 없다 — 요청 스스로가 신원을 담아야 한다</button>
+        <button class="opt" data-opt="d"><span class="mk">D</span> User-Agent가 같다</button>
+        <div class="explain"><b>정답 C.</b> 서버가 손에 쥔 값 중에 사람을 가리키는 것은 하나도 없습니다.
+        <b>A</b>는 NAT 뒤에서 무너져요. 공인 IP 하나 뒤에 수백 명이 앉아 있고, 반대로 모바일에서는 같은 사람의 IP가 몇 분 사이에 바뀝니다.
+        <b>B가 가장 그럴듯해서 가장 위험합니다.</b> 커넥션 재사용은 왕복과 핸드셰이크를 아끼려는 전송 계층의 최적화일 뿐이에요.
+        중간에 프락시나 로드밸런서가 한 대만 서 있어도 서버가 보는 커넥션은 브라우저의 것이 아니라 프락시가 커넥션 풀에서 꺼낸 것이 되고,
+        방금 그 커넥션으로 다른 사람의 요청이 지나갔을 수 있습니다. 커넥션은 성능의 문제고 신원은 별개예요.
+        <b>D</b>는 브라우저가 스스로 적어 보내는 문자열이라 위조가 자유롭습니다.
+        남는 답은 하나뿐입니다 — 요청 자신이 신원을 담아 오지 않으면 서버가 알아낼 방법은 없습니다.</div>
+      </div>
+    </section>
+
+    <!-- ============================================================
+         2장 · 자격 증명과 비밀번호 저장
+         ============================================================ -->
+    <section id="credentials" data-title="자격 증명을 확인한다">
+      <div class="sec-head">
+        <div class="kicker">02 · 첫 시도</div>
+        <h2 class="sec-title">🔐 그럼 매 요청에 아이디·비번을 보내면 안 되나 <span class="lvl must">🟢 필수</span></h2>
+      </div>
+
+      <p class="lead">매 요청이 스스로 신원을 증명해야 한다면, 매 요청에 아이디와 비밀번호를 같이 보내면 되지 않나.
+      무식해 보이지만 제약을 이보다 곧이곧대로 지키는 방법도 없습니다.
+      그리고 실제로 그렇게 하는 방식이 HTTP 규격 안에 있어요. 이름도 붙어 있습니다 — HTTP Basic 인증입니다.</p>
+
+      <p>브라우저가 보내는 요청은 이렇게 생겼습니다.</p>
+
+      <pre class="language-http"><code class="language-http">GET /cart HTTP/1.1
+Host: shop.example.com
+Authorization: Basic YWxpY2U6cEBzc3cwcmQh</code></pre>
+
+      <p>서버는 마지막 줄을 풀어 아이디와 비밀번호를 꺼내고, 저장된 값과 맞춰 보고, 맞으면 응답을 내줍니다.
+      서버가 들고 있어야 할 상태는 없고, 서버가 몇 대든 상관없어요. 1장의 제약이 아주 깔끔하게 지켜집니다.</p>
+
+      <p>문제는 저 <code>YWxpY2U6cEBzc3cwcmQh</code>가 무엇인가입니다. 암호문처럼 생겼는데 암호문이 아니에요.</p>
+
+      <div class="myth">
+        <div class="m-row no">
+          <div class="m-x">✗</div>
+          <div class="m-txt"><b>"base64로 감쌌으니 중간에서 봐도 모른다"</b> — 되돌리는 데 열쇠가 필요 없습니다.
+          개발자 도구 콘솔에서 <code>atob()</code> 한 번이면 <code>alice:p@ssw0rd!</code>가 그대로 나옵니다.</div>
+        </div>
+        <div class="m-row yes">
+          <div class="m-x">✓</div>
+          <div class="m-txt"><b>base64는 인코딩입니다.</b> 아무 바이트나 헤더에 실을 수 있는 글자로 바꿔 주는 변환일 뿐이고,
+          비밀을 지키는 일은 하지 않아요. 그 일은 다른 계층이 합니다.</div>
+        </div>
+      </div>
+
+      <p>해시·서명·대칭키·비대칭키가 각각 무엇을 보장하고 무엇을 보장하지 않는지는
+      <a class="link" href="https_tutorial.html">HTTPS 문서</a>에서 이미 갈라 뒀습니다. base64는 그 넷 중 어디에도 들어가지 않아요.
+      열쇠가 없으니 암호가 아니고, 되돌릴 수 있으니 해시도 아닙니다.
+      그러니 Basic 인증을 쓰겠다는 결정은 <b>TLS를 쓰겠다는 결정과 한 몸</b>입니다.
+      평문 HTTP 위에 이 헤더를 얹는 건 비밀번호를 엽서에 적어 부치는 것과 같아요.</p>
+
+      <h3>🧾 그런데 세 가지가 걸린다</h3>
+
+      <p>규격에 있고, 서버 쪽 구현도 몇 줄이면 끝납니다.
+      그런데도 사람이 쓰는 웹 서비스에서 Basic 인증으로 로그인을 만드는 경우는 거의 없어요. 걸리는 것이 셋 있습니다.</p>
+
+      <ol>
+        <li><b>비밀번호가 매 요청마다 네트워크에 흐른다.</b> TLS가 도청은 막아 줍니다. 다만 TLS가 끝나는 지점마다 그 값은 평문으로 돌아와요.</li>
+        <li><b>서버가 매 요청마다 비밀번호를 검증해야 한다.</b> 검증이 무슨 일인지 정하고 나면 이 항목의 무게가 달라집니다.</li>
+        <li><b>로그아웃이라는 개념이 아예 없다.</b> 브라우저가 기억하는 것을 지우라고 말할 방법이 규격에 없습니다.</li>
+      </ol>
+
+      <p>첫째는 노출면의 문제입니다. 한 번만 지나가면 될 값이 만 번 지나가요.
+      TLS를 종단하는 로드밸런서, 그 뒤의 리버스 프락시, 요청을 통째로 남기는 디버그 로그, 예외가 났을 때 뜨는 스택 덤프 —
+      그 값이 스치는 지점이 요청 수만큼 늘어납니다.
+      유출 확률을 낮추는 가장 확실한 방법은 애초에 덜 흘려보내는 것인데, Basic 인증은 정확히 반대로 합니다.</p>
+
+      <p>셋째는 더 이상합니다. 브라우저는 한 번 입력받은 자격 증명을 기억해 뒀다가 같은 영역의 요청에 알아서 다시 붙여 줘요. 편하죠.
+      그런데 그 기억을 지우라고 서버가 말할 방법이 규격에 없습니다.
+      로그아웃 버튼을 눌렀을 때 서버가 할 수 있는 일이라곤 브라우저를 닫아 달라고 안내하는 것뿐이에요.
+      로그인을 만드는 사람에게 이건 사소한 결함이 아닙니다.</p>
+
+      <p>둘째는 성능 이야기처럼 들리지만 사실은 저장 이야기입니다.
+      매 요청마다 검증한다는 건 매 요청마다 <b>저장해 둔 값과 맞춰 본다</b>는 뜻이고,
+      그러면 그 저장해 둔 값이 무엇이냐를 먼저 정해야 하니까요.</p>
+
+      <h3>🗄️ 무엇을 저장할 것인가</h3>
+
+      <p>가장 단순한 답은 비밀번호를 그대로 저장하는 겁니다. 맞춰 보기도 쉬워요. 문자열 비교 한 번이면 끝나니까요.
+      이 방식의 문제는 잘 돌아갈 때는 전혀 드러나지 않는다는 점입니다. 데이터베이스가 한 번 새어 나가는 그 순간 전부 드러나요.
+      그것도 우리 서비스만 끝나는 게 아닙니다. 사람들은 비밀번호를 돌려 쓰니까,
+      우리 테이블 하나가 다른 서비스 수십 개의 열쇠 꾸러미가 됩니다.</p>
+
+      <p>그래서 해시를 씁니다. 비밀번호를 그대로 두지 않고 되돌릴 수 없는 값으로 바꿔 저장하는 거예요.
+      로그인할 때는 들어온 비밀번호를 같은 함수에 넣어 저장된 값과 비교합니다.
+      서버조차 원래 비밀번호를 모르게 되니, 유출돼도 나가는 건 해시값뿐입니다.</p>
+
+      <p>여기까지가 오래 통했던 답입니다. 그런데 <b>되돌릴 수 없다</b>는 성질에는 함정이 하나 있어요.
+      되돌릴 수 없다는 건 해시값에서 원문을 계산해 낼 수 없다는 뜻이지, 원문을 <b>알아맞힐 수 없다</b>는 뜻이 아닙니다.
+      흔한 비밀번호를 잔뜩 모아 미리 해시해 두고 표로 만들어 두면, 유출된 해시값을 그 표에서 찾기만 하면 돼요.
+      <span class="term" data-t="레인보우 테이블">레인보우 테이블</span>이라고 부르는 물건이 이겁니다.</p>
+
+      <p>표가 통하는 이유는 하나입니다. 같은 비밀번호는 언제 어디서 해시해도 같은 값이 나오니까요.
+      그렇다면 그 성질을 깨면 됩니다. 계정마다 다른 무작위 값을 하나씩 붙여서 해시하는 거예요.
+      이 값이 <span class="term" data-t="salt">salt</span>입니다.</p>
+
+      <p>salt는 비밀이 아닙니다. 해시값 옆에 나란히 저장해 두고 로그인할 때 꺼내 써요.
+      감춰서 얻는 게 아니라 <b>달라서</b> 얻는 값이거든요.
+      alice의 salt와 bob의 salt가 다르면 두 사람이 같은 비밀번호를 써도 저장값이 갈라지고,
+      공격자는 계정 하나하나마다 표를 새로 만들어야 합니다. 미리 만들어 둔다는 전제가 그 순간 무너져요.</p>
+
+      <p>그런데 표를 못 쓰게 만든 것이지, 대입 자체를 막은 건 아닙니다.
+      공격자는 유출된 salt를 그대로 들고 와서 후보 비밀번호를 하나씩 넣어 가며 같은 계산을 반복하면 돼요.
+      그 반복이 얼마나 빠른가가 남은 문제입니다.</p>
+
+      <p>여기서 SHA-256 같은 함수의 미덕이 그대로 약점이 됩니다. 이런 함수는 빠르라고 만들어졌어요.
+      파일 무결성을 검사하고 서명을 만드는 데 쓰려면 빨라야 하니까요. 그런데 빠른 검증은 빠른 대입이기도 합니다.
+      그래픽카드를 붙이면 초당 수십억 번대의 시도가 나와요.
+      여덟 글자짜리 비밀번호의 경우의 수는 그 속도 앞에서 생각보다 빨리 바닥납니다.</p>
+
+      <p>그래서 나온 답은 뒤집혀 있습니다. <b>일부러 느린 해시 함수를 쓰는 것</b>이에요. bcrypt와 argon2가 그런 함수입니다.
+      얼마나 느리게 할지는 <span class="term" data-t="work factor">work factor</span>라는 값으로 정해요.
+      이 값을 올리면 한 번 검증하는 데 걸리는 시간이 길어지고, 공격자가 후보 하나를 시도하는 데 걸리는 시간도 똑같이 길어집니다.</p>
+
+      <p>평문에서 여기까지 네 단계를 말로 따라왔는데, 저장값이 실제로 어떻게 달라지는지는 눈으로 보는 편이 빠릅니다.
+      alice와 bob이 하필 같은 비밀번호를 쓰고 있는 상황을 놓고 네 방식을 갈아 끼워 보죠.</p>
+
+      <div class="demo" id="hashLab">
+        <span class="demo-tag">느린 것이 기능이다</span>
+        <p style="margin:0 0 8px">두 계정이 <b>같은 비밀번호</b>를 씁니다. 저장 방식을 바꿔 가며 저장값이 어떻게 되는지 보세요.</p>
+        <label>두 사람의 비밀번호
+          <input type="text" id="hlPw" value="p@ssw0rd!" spellcheck="false" autocomplete="off" aria-label="두 계정이 함께 쓰는 비밀번호">
+        </label>
+        <div class="picker" id="hlMode">
+          <button class="pick on" data-k="plain">🚫 해시 없음</button>
+          <button class="pick" data-k="sha">🔢 SHA-256</button>
+          <button class="pick" data-k="salt">🧂 SHA-256 + salt</button>
+          <button class="pick" data-k="bcrypt">🐢 bcrypt(흉내)</button>
+        </div>
+        <div id="hlCostRow" hidden>
+          <label>work factor
+            <input type="range" id="hlCost" min="4" max="14" step="1" value="10" aria-label="work factor">
+            <span class="mono" id="hlCostVal">10</span>
+          </label>
+        </div>
+        <div id="hlOut" aria-live="polite"></div>
+        <div class="verdict" style="align-items:flex-start">
+          <span class="badge warn">흉내</span>
+          <div class="dim" style="font-size:13.2px; line-height:1.6">여기의 bcrypt는 <strong>실제 암호 구현이 아닙니다.</strong>
+          work factor를 올릴수록 계산이 오래 걸린다는 <strong>비용 곡선만</strong> 흉내 내려고 SHA-256을 반복해 돌릴 뿐이에요.
+          저장 문자열의 모양도 실제 bcrypt 형식이 아니라, 무엇이 함께 저장되는지 보이려고 만든 표기입니다.
+          SHA-256 자체는 이 페이지에서 진짜로 계산합니다 — 그래서 같은 비밀번호가 같은 값이 되는 것도 진짜예요.</div>
+        </div>
+      </div>
+
+      <div class="callout why">
+        <h4>🐢 느린 것이 버그가 아니라 기능이다</h4>
+        <p>bcrypt 검증이 오래 걸린다는 프로파일링 결과를 들고 최적화 대상으로 삼는 일이 종종 있습니다.
+        그건 잠금장치가 뻑뻑하다고 기름을 치는 것과 같아요. <strong>느림이 이 함수가 파는 상품입니다.</strong>
+        work factor를 낮추면 우리 서버의 검증도 빨라지지만, 공격자의 대입도 정확히 같은 비율로 빨라집니다.</p>
+      </div>
+
+      <p>느림을 상품으로 파는 물건에는 곤란한 점이 하나 따라옵니다. 하드웨어는 계속 빨라지니까
+      오늘 적당한 강도가 3년 뒤에는 헐거워져요. 그래서 강도는 언젠가 올려야 하는데,
+      이미 저장된 비밀번호는 원문을 모르니 다시 해시할 수가 없습니다.</p>
+
+      <p>bcrypt는 이 문제를 저장 형식으로 풉니다. 만들어 내는 문자열 안에 해시값만 들어 있는 게 아니라,
+      <b>그 해시를 만들 때 쓴 강도와 salt가 함께</b> 들어 있어요. 그래서 강도를 올려도 예전 값이 깨지지 않습니다.
+      저장된 문자열에서 그때의 강도를 읽어 그대로 검증하면 되고, 검증에 성공한 김에 새 강도로 다시 해시해 덮어써 두면
+      그 계정만 조용히 올라가요. 느림을 운영 가능하게 만드는 건 느림 자체가 아니라 이 저장 형식입니다.</p>
+
+      <details class="spring">
+        <summary>Spring에서는 이 이름이다</summary>
+        <div class="sp-body">
+          <p>비밀번호를 저장 형태로 바꾸고 다시 맞춰 보는 일은 <code>PasswordEncoder</code> 인터페이스 뒤에 있습니다.
+          <code>encode()</code>로 저장할 값을 만들고 <code>matches()</code>로 대조해요.</p>
+          <p>구현을 직접 골라 넣는 대신 <code>PasswordEncoderFactories.createDelegatingPasswordEncoder()</code>로 만드는 것이 권장됩니다.
+          이름 그대로 실제 인코딩을 다른 구현에 위임하는 인코더예요.</p>
+          <p><code>BCryptPasswordEncoder</code>의 기본 강도는 <b>10</b>이고 <b>4~31</b> 사이로 지정할 수 있습니다.
+          salt는 <b>16바이트</b> 무작위 값을 인코더가 스스로 만들어 넣으므로 따로 컬럼을 만들어 보관할 필요가 없어요.
+          강도 값도 해시 문자열 안에 저장되기 때문에, 나중에 강도를 바꿔도 기존 비밀번호가 깨지지 않습니다.</p>
+          <p>레퍼런스는 이 느림을 두고 <code>intentionally slow to hinder password crackers</code>라고 적어 뒀습니다.
+          튜닝해서 걷어낼 대상이 아니라 설계 의도라는 뜻이에요.</p>
+        </div>
+      </details>
+
+      <h3>🎟️ 다만 그 느림을 매 요청마다 치를 수는 없다</h3>
+
+      <p>방금 데모에서 work factor를 12나 14로 올렸을 때 나온 밀리초를 그대로 떠올려 보세요.
+      로그인 화면에서 딱 한 번 겪는 지연이라면 아무도 눈치채지 못합니다.
+      문제는 Basic 인증이 그 검증을 <b>매 요청마다</b> 하자는 방식이라는 점이에요.
+      화면 하나 그리는 데 API를 여섯 번 부른다면 여섯 번을 전부 그 비용으로 치릅니다.
+      그것도 서버 한 대가 동시에 받는 요청 전부에 대해서요.</p>
+
+      <p>두 요구가 정면으로 부딪칩니다. 비밀번호 검증은 느려야 하고, 요청 처리는 빨라야 해요.
+      어느 쪽도 양보할 수 없다면 남는 길은 하나뿐입니다 — <b>검증하는 횟수를 줄이는 것</b>입니다.</p>
+
+      <p>1장의 제약은 그대로 살아 있습니다. 매 요청은 여전히 스스로 신원을 증명해야 해요.
+      다만 그 증명이 <b>비밀번호일 필요는 없습니다.</b>
+      비밀번호는 로그인할 때 딱 한 번 맞춰 보고, 그 뒤로는 이 사람이 아까 확인됐다는 사실만 들고 다니게 하면 됩니다.
+      그 들고 다니는 것을 무엇으로 만들어야 남이 흉내 낼 수 없을까요.</p>
+
+      <div class="oneline">
+        <span style="font-size:20px">🎫</span>
+        <div><strong>비밀번호는 한 번만 확인하고, 그다음부터는 확인했다는 사실을 대신 들고 다닌다.</strong>
+        그 사실을 무엇에 담을 것인가에서 웹 인증의 갈래가 전부 갈라집니다.</div>
+      </div>
+
+      <div class="quiz" data-qid="q-credentials" data-answer="b">
+        <div class="q-head">✅ 체크포인트</div>
+        <div class="q">로그인 API가 느려 프로파일링을 했더니 비밀번호 검증 한 번에 <code>bcrypt</code>가 100ms 가까이 쓰고 있었다. 팀에서 나온 의견 중 <b>사실에 맞는</b> 것은?</div>
+        <button class="opt" data-opt="a"><span class="mk">A</span> 구현의 성능 문제다. 더 빠른 라이브러리로 바꾸면 된다</button>
+        <button class="opt" data-opt="b"><span class="mk">B</span> 느린 것이 이 함수의 목적이다. 강도를 낮추는 건 공격자의 대입 비용도 같이 낮추는 결정이다</button>
+        <button class="opt" data-opt="c"><span class="mk">C</span> salt를 빼면 빨라진다. salt가 계산량을 늘리는 값이다</button>
+        <button class="opt" data-opt="d"><span class="mk">D</span> 이미 저장된 비밀번호가 있으니 강도는 이제 바꿀 수 없다</button>
+        <div class="explain"><b>정답 B.</b> 느림은 이 함수가 파는 상품입니다. 강도를 낮추면 우리 서버의 검증도 빨라지지만
+        공격자가 후보 하나를 시도하는 비용도 같은 비율로 싸져요. 그래서 <b>A</b>처럼 더 빠른 구현을 찾는 것은 방향이 반대입니다 —
+        빠른 bcrypt는 고장 난 bcrypt예요.
+        <b>C</b>는 salt의 역할을 잘못 짚었습니다. salt는 계산을 무겁게 하는 값이 아니라
+        같은 비밀번호가 같은 저장값이 되는 것을 막아, 미리 만들어 둔 표를 못 쓰게 하는 값입니다. 빼도 빨라지지 않고 표만 되살아나요.
+        <b>D</b>가 틀린 이유가 이 장에서 가장 실용적인 사실입니다. bcrypt는 <b>그때 쓴 강도를 해시 문자열 안에 함께 저장</b>합니다.
+        그래서 설정의 강도를 올려도 예전 값은 자기 안에 적힌 강도로 그대로 검증되고, 기존 비밀번호가 깨지지 않아요.
+        강도를 나중에 올릴 수 있게 만든 것이 바로 이 저장 형식입니다.</div>
+      </div>
+    </section>
+
   </main>
 </div>
 
@@ -524,6 +886,11 @@ Prism.languages.clike={comment:[{pattern:/(^|[^\\])\/\*[\s\S]*?(?:\*\/|$)/,lookb
    용어 사전 (웹 애플리케이션 인증 기초)
    ============================================================ */
 const GLOSSARY = {
+  "무상태": "요청과 요청 사이에 서버가 아무것도 이어 두지 않는 성질. HTTP는 요청 하나를 처리하고 나면 그 요청을 보낸 상대에 대해 아무것도 기억하지 않는다. 덕분에 어느 서버가 요청을 받아도 결과가 같지만, 대신 매 요청이 스스로 신원을 담아야 한다.",
+  "keep-alive": "응답을 보낸 뒤에도 TCP 커넥션을 끊지 않고 다음 요청에 재사용하는 것. 핸드셰이크를 아끼는 전송 계층의 최적화이며, 커넥션이 같다는 사실은 보낸 사람이 같다는 보장이 아니다. 프락시가 한 대만 끼어도 서버가 보는 커넥션은 브라우저의 것이 아니게 된다.",
+  "레인보우 테이블": "흔히 쓰이는 비밀번호와 그 해시값을 미리 계산해 둔 표. 해시는 되돌릴 수 없지만, 표에서 같은 해시값을 찾으면 원문을 알아낼 수 있다. 계정마다 다른 salt를 붙이면 표를 미리 만들어 둔다는 전제가 무너진다.",
+  "salt": "계정마다 다르게 붙이는 무작위 값. 같은 비밀번호라도 salt가 다르면 저장되는 해시가 갈라져, 미리 만들어 둔 표를 쓸 수 없게 만든다. 감춰야 하는 값이 아니라 해시와 나란히 저장하는 값이다.",
+  "work factor": "일부러 느리게 만든 해시 함수의 계산 비용을 정하는 값. 강도(strength)라고도 부른다. 값을 올리면 검증 한 번에 걸리는 시간이 길어지고, 공격자가 후보 하나를 시도하는 시간도 같이 길어진다. bcrypt는 이 값을 해시 문자열 안에 함께 저장해서, 나중에 값을 올려도 이미 저장된 비밀번호를 그대로 검증할 수 있다.",
   // @GLOSSARY_END
 };
 
@@ -738,6 +1105,264 @@ if(location.hash){
     });
   });
   update();
+})();
+
+/* ============================================================
+   데모 1 — 서버가 보는 것 전부 (1장 · 무상태)
+   요청 세 개를 첫 번째 요청과 대조해 보인다. ②는 같은 사람인데 포트만 다르고,
+   ③은 다른 사람인데 같은 NAT 뒤라 공인 IP가 같다. 양쪽 방향으로 다 무너진다.
+   ============================================================ */
+(function(){
+  const root = $('#reqView'); if(!root) return;
+  const out = $('#reqOut');
+
+  const UA_MAC = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36';
+  const UA_WIN = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36';
+  const FIELDS = ['요청 줄','Host','User-Agent','Accept','Accept-Language','Accept-Encoding','출발지','도착지','TLS'];
+
+  function base(ua, src){
+    return {
+      '요청 줄': 'GET /cart HTTP/1.1',
+      'Host': 'shop.example.com',
+      'User-Agent': ua,
+      'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+      'Accept-Language': 'ko-KR,ko;q=0.9,en;q=0.8',
+      'Accept-Encoding': 'gzip, deflate, br',
+      '출발지': src,
+      '도착지': '10.0.1.20:443',
+      'TLS': 'TLSv1.3 · TLS_AES_128_GCM_SHA256'
+    };
+  }
+
+  const REQ = {
+    r1: {
+      v: base(UA_MAC, '203.0.113.7:51344'),
+      badge: '<span class="badge">기준</span>',
+      note: 'alice가 장바구니를 연 첫 요청입니다. 아홉 줄이 서버가 가진 전부예요. 이 안에서 alice를 찾아보세요 — 없습니다.'
+    },
+    r2: {
+      v: base(UA_MAC, '203.0.113.7:51902'),
+      badge: '<span class="badge bad">구별 불가</span>',
+      note: '잠시 뒤 <b>같은 alice</b>가 보낸 요청입니다. 달라진 값은 출발지 포트 하나뿐이고, 그 번호는 커넥션을 새로 열 때마다 운영체제가 남는 번호로 아무거나 골라 줍니다. 다음 요청에서는 또 다른 번호가 돼요.'
+    },
+    r3: {
+      v: base(UA_WIN, '203.0.113.7:49820'),
+      badge: '<span class="badge bad">구별 불가</span>',
+      note: '이번엔 <b>bob</b>입니다. 옆자리에서 같은 공유기를 쓰고 있어서 공인 IP가 alice와 같아요. 달라진 값은 User-Agent 하나인데, 그건 브라우저가 스스로 적어 보내는 문자열입니다.'
+    }
+  };
+
+  function render(k){
+    const cur = REQ[k], b = REQ.r1.v;
+    let html = '<dl class="kv">';
+    FIELDS.forEach(f => {
+      const diff = (k !== 'r1') && (cur.v[f] !== b[f]);
+      html += '<dt>' + esc(f) + '</dt><dd>' + esc(cur.v[f])
+            + (diff ? ' <span class="badge warn">①과 다름</span>' : '') + '</dd>';
+    });
+    html += '</dl>';
+    html += '<div class="verdict">' + cur.badge + '<div>' + cur.note + '</div></div>';
+    out.innerHTML = html;
+  }
+
+  wirePicker('#reqPicker', k => render(k));
+  render('r1');
+})();
+
+/* ============================================================
+   데모 2 — 무엇을 저장할 것인가 (2장 · 비밀번호 저장)
+
+   SHA-256은 순수 JS로 실제 계산한다(외부 의존성 0). 그래서 "같은 비밀번호는
+   같은 해시가 된다"와 "salt를 넣으면 갈라진다"는 진짜 결과다.
+   bcrypt 모드는 실제 bcrypt가 아니다 — work factor에 따라 비용이 늘어나는
+   곡선만 SHA-256 반복으로 흉내 낸다. 그 사실을 화면에도 적어 뒀다.
+   ============================================================ */
+(function(){
+  const root = $('#hashLab'); if(!root) return;
+
+  /* --- SHA-256 (FIPS 180-4). 표준 테스트 벡터로 대조해 두었다. --- */
+  const SHA256 = (function(){
+    const K = new Uint32Array([
+      0x428a2f98,0x71374491,0xb5c0fbcf,0xe9b5dba5,0x3956c25b,0x59f111f1,0x923f82a4,0xab1c5ed5,
+      0xd807aa98,0x12835b01,0x243185be,0x550c7dc3,0x72be5d74,0x80deb1fe,0x9bdc06a7,0xc19bf174,
+      0xe49b69c1,0xefbe4786,0x0fc19dc6,0x240ca1cc,0x2de92c6f,0x4a7484aa,0x5cb0a9dc,0x76f988da,
+      0x983e5152,0xa831c66d,0xb00327c8,0xbf597fc7,0xc6e00bf3,0xd5a79147,0x06ca6351,0x14292967,
+      0x27b70a85,0x2e1b2138,0x4d2c6dfc,0x53380d13,0x650a7354,0x766a0abb,0x81c2c92e,0x92722c85,
+      0xa2bfe8a1,0xa81a664b,0xc24b8b70,0xc76c51a3,0xd192e819,0xd6990624,0xf40e3585,0x106aa070,
+      0x19a4c116,0x1e376c08,0x2748774c,0x34b0bcb5,0x391c0cb3,0x4ed8aa4a,0x5b9cca4f,0x682e6ff3,
+      0x748f82ee,0x78a5636f,0x84c87814,0x8cc70208,0x90befffa,0xa4506ceb,0xbef9a3f7,0xc67178f2]);
+    const w = new Uint32Array(64);
+    function utf8(str){
+      const o = [];
+      for(let i=0;i<str.length;i++){
+        let c = str.codePointAt(i);
+        if(c > 0xffff) i++;
+        if(c < 0x80) o.push(c);
+        else if(c < 0x800) o.push(0xc0|(c>>6), 0x80|(c&63));
+        else if(c < 0x10000) o.push(0xe0|(c>>12), 0x80|((c>>6)&63), 0x80|(c&63));
+        else o.push(0xf0|(c>>18), 0x80|((c>>12)&63), 0x80|((c>>6)&63), 0x80|(c&63));
+      }
+      return o;
+    }
+    return function(msg){
+      const bytes = utf8(msg), l = bytes.length, bits = l * 8;
+      const size = Math.ceil((l + 9) / 64) * 64;
+      const buf = new Uint8Array(size);
+      buf.set(bytes); buf[l] = 0x80;
+      const dv = new DataView(buf.buffer);
+      dv.setUint32(size - 8, Math.floor(bits / 4294967296));
+      dv.setUint32(size - 4, bits >>> 0);
+      let h0=0x6a09e667,h1=0xbb67ae85,h2=0x3c6ef372,h3=0xa54ff53a,
+          h4=0x510e527f,h5=0x9b05688c,h6=0x1f83d9ab,h7=0x5be0cd19;
+      for(let off=0; off<size; off+=64){
+        for(let i=0;i<16;i++) w[i] = dv.getUint32(off + i*4);
+        for(let i=16;i<64;i++){
+          const x = w[i-15], y = w[i-2];
+          const s0 = ((x>>>7)|(x<<25)) ^ ((x>>>18)|(x<<14)) ^ (x>>>3);
+          const s1 = ((y>>>17)|(y<<15)) ^ ((y>>>19)|(y<<13)) ^ (y>>>10);
+          w[i] = (w[i-16] + s0 + w[i-7] + s1) >>> 0;
+        }
+        let a=h0,b=h1,c=h2,d=h3,e=h4,f=h5,g=h6,h=h7;
+        for(let i=0;i<64;i++){
+          const S1 = ((e>>>6)|(e<<26)) ^ ((e>>>11)|(e<<21)) ^ ((e>>>25)|(e<<7));
+          const t1 = (h + S1 + ((e & f) ^ (~e & g)) + K[i] + w[i]) >>> 0;
+          const S0 = ((a>>>2)|(a<<30)) ^ ((a>>>13)|(a<<19)) ^ ((a>>>22)|(a<<10));
+          const t2 = (S0 + ((a & b) ^ (a & c) ^ (b & c))) >>> 0;
+          h=g; g=f; f=e; e=(d + t1)>>>0; d=c; c=b; b=a; a=(t1 + t2)>>>0;
+        }
+        h0=(h0+a)>>>0; h1=(h1+b)>>>0; h2=(h2+c)>>>0; h3=(h3+d)>>>0;
+        h4=(h4+e)>>>0; h5=(h5+f)>>>0; h6=(h6+g)>>>0; h7=(h7+h)>>>0;
+      }
+      const hs = [h0,h1,h2,h3,h4,h5,h6,h7];
+      let hex = '';
+      for(let i=0;i<8;i++) hex += hs[i].toString(16).padStart(8,'0');
+      return hex;
+    };
+  })();
+
+  /* 계정마다 고정된 salt를 쓴다 — 새로고침해도 같은 값이 나오게 하려는 것이고,
+     실제로는 계정을 만들 때마다 새 무작위 값을 뽑는다. */
+  const ACCOUNTS = [
+    { name:'alice', salt:'a3f1c9d2e40b7856bd2e91f0c47a3d68' },
+    { name:'bob',   salt:'7c05e8b1493da6f20e7b5c8a1d93f042' }
+  ];
+  const BASE_ROUNDS = 300;   // work factor 4에서의 반복 횟수. 위로 갈수록 두 배씩 늘어난다.
+
+  const pwEl   = $('#hlPw'),
+        out    = $('#hlOut'),
+        costRow= $('#hlCostRow'),
+        costEl = $('#hlCost'),
+        costVal= $('#hlCostVal');
+  let mode = 'plain', timer = null;
+
+  function stored(acc, pw, m, cost){
+    if(m === 'plain') return pw;
+    if(m === 'sha')   return SHA256(pw);
+    if(m === 'salt')  return acc.salt + '$' + SHA256(acc.salt + ':' + pw);
+    let h = SHA256(acc.salt + ':' + pw);
+    const rounds = BASE_ROUNDS * Math.pow(2, cost - 4);
+    for(let i=0;i<rounds;i++) h = SHA256(h);
+    return '$demo$' + cost + '$' + acc.salt + '$' + h;
+  }
+
+  function fmtMs(t){
+    if(t >= 100)  return Math.round(t) + ' ms';
+    if(t >= 1)    return t.toFixed(1) + ' ms';
+    if(t >= 0.01) return t.toFixed(3) + ' ms';
+    return t.toFixed(5) + ' ms';
+  }
+
+  const VERDICT = {
+    plain: ['bad', '그대로 저장됨',
+      '저장된 값이 곧 비밀번호입니다. 테이블이 한 번 새어 나가면 그것으로 끝이고, 비밀번호를 돌려 쓰는 사람들의 다른 서비스까지 함께 열립니다.'],
+    sha: ['bad', '두 값이 같다',
+      '같은 비밀번호는 언제 해시해도 같은 값이 됩니다. alice의 값을 알아내면 bob의 값도 같이 알아낸 셈이고, 미리 만들어 둔 표에 이 해시가 들어 있으면 표를 뒤지는 것만으로 원문이 나와요.'],
+    salt: ['ok', '두 값이 갈라졌다',
+      '같은 비밀번호인데 저장값이 다릅니다. salt가 다르니까요. 미리 만들어 둔 표는 이제 쓸모가 없어요 — salt 하나마다 표를 새로 만들어야 합니다.'],
+    bcrypt: ['ok', '두 값이 갈라졌다',
+      'salt가 갈라놓는 효과는 그대로이고, 여기에 비용이 얹혔습니다. 슬라이더를 4에서 14까지 옮겨 보세요.']
+  };
+
+  const LEGEND = {
+    salt: '<span class="mono">salt$해시</span> — salt는 감추는 값이 아니라 <strong>해시 옆에 함께 저장하는</strong> 값입니다.',
+    bcrypt: '<span class="mono">$demo$<strong>강도</strong>$<strong>salt</strong>$<strong>해시</strong></span> — 알고리즘·강도·salt·해시가 <strong>한 칸에 함께</strong> 들어갑니다. 나중에 강도를 올려도 예전 값이 깨지지 않는 이유가 이 형식이에요.'
+  };
+
+  function draw(){
+    const pw = pwEl.value;
+    const cost = Number(costEl.value);
+    costVal.textContent = cost;
+
+    if(!pw){
+      out.innerHTML = '<div class="verdict"><span class="badge warn">비어 있음</span>'
+                    + '<div>비밀번호를 한 글자라도 넣어 주세요.</div></div>';
+      return;
+    }
+
+    // 첫 계정 계산에 시간을 재고, 너무 빨라 측정이 안 되면 반복해서 평균을 낸다.
+    let t0 = performance.now();
+    const v0 = stored(ACCOUNTS[0], pw, mode, cost);
+    let dt = performance.now() - t0;
+    const v1 = stored(ACCOUNTS[1], pw, mode, cost);
+    if(dt < 5){
+      const n = 2000;
+      t0 = performance.now();
+      for(let i=0;i<n;i++) stored(ACCOUNTS[0], pw, mode, cost);
+      dt = (performance.now() - t0) / n;
+    }
+
+    let shaOnce = 0;
+    if(mode === 'bcrypt'){
+      const n = 2000, s0 = performance.now();
+      for(let i=0;i<n;i++) SHA256(pw);
+      shaOnce = (performance.now() - s0) / n;
+    }
+
+    let html = '<dl class="kv">'
+             + '<dt>' + ACCOUNTS[0].name + '</dt><dd>' + esc(v0) + '</dd>'
+             + '<dt>' + ACCOUNTS[1].name + '</dt><dd>' + esc(v1) + '</dd>'
+             + '</dl>';
+
+    if(LEGEND[mode]){
+      html += '<div class="dim" style="font-size:13px; margin:2px 0 6px">' + LEGEND[mode] + '</div>';
+    }
+
+    const vd = VERDICT[mode];
+    html += '<div class="verdict"><span class="badge ' + vd[0] + '">' + vd[1] + '</span><div>' + vd[2] + '</div></div>';
+
+    if(mode !== 'plain'){
+      let tail = '한 계정을 저장 형태로 바꾸는 데 이 브라우저에서 실제로 걸린 시간입니다. 공격자가 후보 하나를 시도하는 데도 같은 시간이 들어요.';
+      if(mode === 'bcrypt' && shaOnce > 0){
+        tail = 'SHA-256 한 번(<span class="mono">' + fmtMs(shaOnce) + '</span>)의 약 '
+             + Math.round(dt / shaOnce).toLocaleString('en-US') + '배입니다. '
+             + '공격자가 후보 하나를 시도하는 비용도 정확히 같은 배수로 올라갑니다.';
+      }
+      html += '<div class="verdict"><span class="badge">⏱ 계산 시간</span>'
+            + '<div><b class="mono">' + fmtMs(dt) + '</b> <span class="dim">— ' + tail + '</span></div></div>';
+    }
+
+    out.innerHTML = html;
+  }
+
+  function schedule(){
+    const cost = Number(costEl.value);
+    costRow.hidden = (mode !== 'bcrypt');
+    if(mode === 'bcrypt' && cost >= 11){
+      // 무거운 계산 전에 화면을 한 번 그려 준다. 안 그러면 그냥 멎은 것처럼 보인다.
+      out.innerHTML = '<div class="verdict"><span class="badge warn">계산 중</span>'
+                    + '<div>work factor ' + cost + '로 두 계정을 계산하고 있습니다…</div></div>';
+      setTimeout(draw, 30);
+    } else {
+      draw();
+    }
+  }
+  function debounced(){ clearTimeout(timer); timer = setTimeout(schedule, 220); }
+
+  wirePicker('#hlMode', k => { mode = k; schedule(); });
+  pwEl.addEventListener('input', debounced);
+  costEl.addEventListener('input', () => { costVal.textContent = costEl.value; });
+  costEl.addEventListener('change', schedule);
+  schedule();
 })();
 </script>
 </body>
