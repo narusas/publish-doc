@@ -184,8 +184,13 @@ button.sm{padding:6px 11px; font-size:12.5px}
   border:1px solid var(--border-2); border-radius:var(--radius);
   padding:20px; margin:20px 0; position:relative; overflow:hidden;
 }
+/* 이름표는 흐름 안의 요소다. 절대 위치로 띄워 두면 아래 콘텐츠와 공간을 나눠 갖지
+   못해서, 도입 문장이나 이름표가 길어지는 순간 글자를 덮는다(폭에 따라 덮기도 하고
+   안 덮기도 하므로 눈으로도 잘 안 잡힌다). 한 줄을 내주고 오른쪽에 붙여 겹침 자체를
+   없앤다 — 문구 길이와 화면 폭에 상관없이 성립한다. */
 .demo .demo-tag{
-  position:absolute; top:12px; right:14px; font-family:var(--mono); font-size:10.5px;
+  display:block; width:fit-content; margin:0 0 10px auto;
+  font-family:var(--mono); font-size:10.5px;
   color:var(--text-mut); letter-spacing:1px; text-transform:uppercase;
   border:1px solid var(--border); padding:3px 8px; border-radius:6px; background:var(--bg)
 }
@@ -391,12 +396,6 @@ pre.language-http code, pre.language-properties code{color:#cfe9fb}
 
 /* 판정 줄의 배지는 줄어들지 않는다 — flex 안에서 눌리면 두 줄로 접힌다 */
 .verdict .badge{flex:0 0 auto; white-space:nowrap}
-
-/* 좁은 화면에서는 데모 이름표가 절대 위치로 떠 있으면 첫 문장을 덮는다.
-   흐름 안으로 내려 제목처럼 놓는다. */
-@media(max-width:640px){
-  .demo .demo-tag{position:static; display:inline-block; margin:0 0 10px}
-}
 
 /* 토글 버튼 — 골격의 wireTogs가 `.tog`를 배선하는데 CSS는 따라오지 않았다.
    여기가 첫 사용처라 이 자리에서 정의한다. 켜짐/꺼짐이 한눈에 갈려야 해서
@@ -1194,8 +1193,8 @@ Cookie: sid=8f2ac31b7d94</code></pre>
 
       <div class="demo" id="cookieLab">
         <span class="demo-tag">이 요청에 쿠키가 붙나</span>
-        <p style="margin:0 0 10px"><code>shop.example.com</code>이 내보낸 쿠키 하나입니다.<br>
-        왼쪽에서 속성을 바꿔 가며, 요청 아홉 개에 각각 붙는지 보세요.</p>
+        <p style="margin:0 0 10px"><code>shop.example.com</code>이 내보낸 쿠키 하나를 놓고, 요청 아홉 개에 각각 붙는지 봅니다.
+        왼쪽 속성을 바꿔 가며 오른쪽이 어떻게 달라지는지 보세요.</p>
         <div class="cl-grid">
           <div>
             <div class="cl-lab">속성 걸기</div>
