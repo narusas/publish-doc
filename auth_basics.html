@@ -3579,7 +3579,7 @@ payload → {"sub":"alice","role":"user","exp":1786000000}</code></pre>
       <p><b>담기</b>에서 걸리는 데가 있습니다. 로그인 안 한 요청은 컨텍스트에 무엇을 담나요.</p>
 
       <p>빈 값을 담는 게 자연스러워 보입니다. 아무도 아니니까요.
-      그런데 그렇게 두면 인가 쪽이 두 종류의 코드를 갖게 돼요.
+      그런데 그렇게 두면 인가 쪽 코드가 두 갈래가 돼요.
       먼저 비었는지 보고, 안 비었으면 그때 권한을 보는 식으로요.
       규칙을 쓸 때마다 두 갈래를 다 챙겨야 하고, 한쪽을 잊으면 그 자리가 조용히 열립니다 —
       방금 컨트롤러에서 올라온 이유가 그것이었는데 같은 모양이 한 칸 안쪽에서 다시 생기는 셈이에요.</p>
@@ -3816,7 +3816,7 @@ securityContextRepository.saveContext(securityContext, httpServletRequest, httpS
       저쪽이 느린 해시를 쓰는지 빠른 해시를 한 번 돌리고 마는지, 그 값이 디버그 로그에 통째로 찍히고 있지는 않은지 —
       확인할 방법이 없어요. 우리가 그 사람 자리에 서도 마찬가지고요.</p>
 
-      <p>게다가 그 사람이 우리 칸에 넣은 값이 그 사람의 메일 계정 비밀번호와 같은지는 <b>우리도 모릅니다.</b>
+      <p>게다가 그 사람이 우리 칸에 넣은 값이 자기 메일 계정 비밀번호와 같은지는 <b>우리도 모릅니다.</b>
       같다면 우리 DB 하나가 우리 것이 아닌 계정까지 들고 있는 셈이에요.</p>
 
       <p>그러니 <b>구글로 로그인</b> 버튼을 누르는 사람은 칸 두 개 채우기가 귀찮아서 그러는 게 아닙니다.
@@ -3841,7 +3841,7 @@ securityContextRepository.saveContext(securityContext, httpServletRequest, httpS
       </ol>
 
       <p>셋이 낯익다면 3장에서 이미 센 것이라 그렇습니다. <b>만료·회수·범위</b> —
-      증표가 갖고 비밀번호가 못 갖는 성질 셋이었죠. 거기서는 그 셋이 <b>우리 서비스의 비밀번호</b>에 대한 이야기였고요.</p>
+      증표가 갖고 비밀번호가 못 갖는 성질 셋이었죠. 거기서는 그 셋이 <b>우리 서비스의 비밀번호</b> 이야기였고요.</p>
 
       <p>여기서 그 세 문장이 방향을 바꿔 우리를 향합니다. 지금 비밀번호를 달라고 하는 쪽이 우리거든요.</p>
 
@@ -3877,7 +3877,7 @@ securityContextRepository.saveContext(securityContext, httpServletRequest, httpS
 
       <p>세 장면의 답이 한 문장으로 겹칩니다. <b>비밀번호 칸을 우리 화면에서 치운다.</b></p>
 
-      <p>사용자는 자기가 이미 계정을 갖고 있는 곳에 — 구글이든, 회사의 인증 서버든 — 비밀번호를 넣습니다.
+      <p>사용자는 이미 자기 계정이 있는 곳에 — 구글이든, 회사의 인증 서버든 — 비밀번호를 넣습니다.
       그 값은 우리 서버를 스치지도 않아요. 그리고 그쪽이 우리에게 <b>"이 사람 맞다"</b>를 알려 줍니다.
       확인하는 일을 우리가 안 하고 남에게 맡기는 것, 이것을 <span class="term" data-t="위임">위임</span>이라고 부릅니다.</p>
 
@@ -4098,7 +4098,7 @@ server.servlet.session.cookie.max-age=30m</code></pre>
         <div class="ap-r">
           <div class="ap-k">세션 고정 방어</div>
           <div class="ap-c" data-h="상태"><span class="badge ok">켜짐</span></div>
-          <div class="ap-c" data-h="근거"><code>changeSessionId</code>가 Servlet 3.1 이상에서의 기본값입니다.
+          <div class="ap-c" data-h="근거"><code>changeSessionId</code>가 Servlet 3.1 이상에서 기본값입니다.
           바꿔 적을 일이 생긴다면 로그인 전에 담아 둔 것들 때문이에요 —
           <code>newSession</code>은 Spring Security가 쓰는 속성만, <code>migrateSession</code>은 모두 옮깁니다.</div>
         </div>
