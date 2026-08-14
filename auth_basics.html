@@ -1810,7 +1810,7 @@ Object cart = session.getAttribute("cart");</code></pre>
         <span style="font-size:20px">🗄️</span>
         <div><strong>세션은 뜻 없는 난수 하나와 서버 안의 표 한 줄로 이뤄집니다.</strong>
         브라우저는 자기가 누구인지 모르고, 아는 것은 서버뿐이에요.
-        그 표가 어디에 놓여 있는지는 아직 물어보지 않았고, 그 열쇠를 남이 대신 쓰게 만드는 길도 아직 열려 있습니다.</div>
+        그 표가 어디에 놓여 있는지는 아직 물어보지 않았고, 그 열쇠를 남이 대신 쓰게 만드는 길도 아무도 막지 않았습니다.</div>
       </div>
 
       <div class="quiz" data-qid="q-session" data-answer="c">
@@ -2270,9 +2270,8 @@ Content-Type: application/x-www-form-urlencoded
       sticky는 그 표를 옮긴 적이 없습니다. 요청을 표 있는 쪽으로 몰아 준 것뿐이에요.
       그러니 <b>프로세스가 사라지는 모든 순간이 그대로 로그아웃</b>입니다. 장애든, 배포든, 축소든.</p>
 
-      <p>그러면 표를 프로세스 밖으로 꺼내야 합니다. 말은 한 줄인데 꺼내서 어디에 두느냐가 남아요.
-      서버들끼리 서로 복사해 갖게 할 수도 있고, 아무도 안 가진 곳에 따로 둘 수도 있습니다.
-      둘 다 <a class="link" href="#sharing">쓰이는 답</a>인데, 무너지는 지점은 같지 않고요.</p>
+      <p>그러면 표를 프로세스 밖으로 꺼내는 수밖에 없습니다.
+      그런데 꺼낸 표를 <a class="link" href="#sharing">어디에 둘지</a>는 아직 아무도 안 정했어요.</p>
 
       <div class="oneline">
         <span style="font-size:20px">💥</span>
@@ -2302,8 +2301,8 @@ Content-Type: application/x-www-form-urlencoded
         한꺼번에 재시작하면 로그아웃이 덜한 게 아니라 <b>전원에게 동시에</b> 옵니다.
         롤링이 지켜 주는 것은 요청이 끊기지 않는 것이지 세션이 살아남는 것이 아니에요 —
         무중단은 요청의 이야기이지 세션의 이야기가 아닙니다.</p>
-        <p style="margin:8px 0 0">그래서 남는 일은 하나입니다. 세션을 프로세스 밖으로 꺼내는 것.
-        꺼낸 다음 어디에 두느냐에서 길이 갈리고, 그 갈래를 <a class="link" href="#sharing">8장</a>에서 나눕니다.</p></div>
+        <p style="margin:8px 0 0">그래서 남는 일은 하나입니다 — 세션을 프로세스 밖으로 꺼내는 것.
+        그 전까지 배포 일정표는 로그아웃 일정표이기도 합니다.</p></div>
       </div>
     </section>
 
@@ -2500,8 +2499,7 @@ Content-Type: application/x-www-form-urlencoded
       아무도 안 기억하는 대신 한 곳이 통째로 기억하게 했거나.
       <b>기억한다는 사실 자체는 그대로입니다.</b></p>
 
-      <p>그래서 요청 하나가 도착할 때마다 여전히 누군가는 표를 한 번 찾아봅니다.
-      서버를 스무 대로 늘리면 그 스무 대가 받는 요청 전부가 같은 한 곳으로 가고요.
+      <p>그러니 서버를 스무 대로 늘려도 그 스무 대가 받는 요청은 전부 같은 한 곳으로 갑니다.
       서버는 무상태가 됐는데 <b>시스템은 아닙니다.</b>
       남은 물음은 하나예요 — <a class="link" href="#stateless-token">그 마지막 한 곳까지 없앨 수 있을까요.</a></p>
 
@@ -2758,8 +2756,8 @@ Content-Type: application/x-www-form-urlencoded
         <h2 class="sec-title">🎫 JWT — 증표 안에 내용을 담는다 <span class="lvl must">🟢 필수</span></h2>
       </div>
 
-      <p class="lead">9장은 이름 하나를 내놓고 닫혔습니다. 내용을 안에 담고 서명으로 위조를 막은 증표,
-      <span class="term" data-t="JWT">JWT</span>라고요. 이름을 아는 것과 값을 아는 것은 다른 일이라는 말도 함께 적어 뒀습니다.
+      <p class="lead">9장은 이름 하나를 내놓고 닫혔습니다. <span class="term" data-t="JWT">JWT</span>라고요.
+      이름을 아는 것과 값을 아는 것은 다른 일이라는 말도 함께 적어 뒀습니다.
       값을 세려면 물건을 손에 올려놓고 봐야 합니다. 하나 뜯어 보죠.</p>
 
       <h3>🧩 점 두 개로 잘린 세 토막</h3>
