@@ -4,6 +4,10 @@
 표준 라이브러리만 사용한다. 단일 HTML 튜토리얼에서 다른 문서의 컴포넌트를
 복제해 올 때 딸려 오는 사장 코드를 막는 것이 목적이다.
 
+--report 모드에서는 역방향 검사도 함께 보여준다: 마크업/스크립트가 참조하지만
+CSS에 정의가 없는 클래스. 이쪽은 오탐(부모 셀렉터로만 스타일되는 클래스 등)이
+나올 수 있어 항상 정보용이다 — 종료 코드에는 영향을 주지 않는다.
+
 사용법:
     python3 tools/check_dead_css.py auth_basics.html
     python3 tools/check_dead_css.py --report *.html   # 종료 코드 0, 목록만 출력
@@ -17,9 +21,18 @@ STYLE_TAG = re.compile(r'<style([^>]*)>(.*?)</style>', re.S)
 CLASS_SELECTOR = re.compile(r'\.([a-zA-Z][\w-]*)')
 CLASS_ATTR = re.compile(r'''\bclass\s*=\s*["']([^"']*)["']''')
 CLASS_LIST = re.compile(r'''classList\.(?:add|remove|toggle|contains)\(\s*["']([^"']+)["']''')
+# `d.className = 'g-item'` 처럼 속성이 아니라 프로퍼티 대입으로 클래스를 붙이는
+# 경우. classList와 달리 여러 클래스를 공백으로 함께 넣을 수 있어 split()한다.
+CLASS_NAME_ASSIGN = re.compile(r'''\.className\s*=\s*["']([^"']*)["']''')
+# `el.setAttribute('class', 'foo bar')` 형태.
+SET_ATTR_CLASS = re.compile(r'''setAttribute\(\s*["']class["']\s*,\s*["']([^"']*)["']\s*\)''')
+# 이 저장소의 전역 헬퍼 `$`/`$$`(querySelector(All) 래퍼)에 넘긴 선택자 문자열.
+# `$$('.tog', root)`처럼 markup 없이 셀렉터만으로 클래스 존재를 가정하는 코드를
+# 잡으려는 것이라, 문자열 안의 `.foo` 토큰을 전부 뽑아낸다(복합 셀렉터 대응).
+QUERY_ARG = re.compile(r'''(?<![\w$])\$\$?\(\s*["']([^"']*)["']''')
 
 
-def dead_classes(src):
+def analyze(src):
     styles = [m.group(2) for m in STYLE_TAG.finditer(src)
               if 'prism-theme' not in m.group(1)]
     css = '\n'.join(styles)
@@ -31,7 +44,16 @@ def dead_classes(src):
         used.update(m.group(1).split())
     for m in CLASS_LIST.finditer(rest):
         used.add(m.group(1))
-    return sorted(defined - used), len(defined), len(used & defined)
+    for m in CLASS_NAME_ASSIGN.finditer(rest):
+        used.update(m.group(1).split())
+    for m in SET_ATTR_CLASS.finditer(rest):
+        used.update(m.group(1).split())
+    for m in QUERY_ARG.finditer(rest):
+        used.update(CLASS_SELECTOR.findall(m.group(1)))
+
+    dead = sorted(defined - used)
+    undefined_used = sorted(used - defined)
+    return dead, undefined_used, len(defined), len(used & defined)
 
 
 def main(argv):
@@ -43,16 +65,23 @@ def main(argv):
     failed = False
     for p in paths:
         src = open(p, encoding='utf-8').read()
-        dead, ndef, nused = dead_classes(src)
+        dead, undefined_used, ndef, nused = analyze(src)
         if dead:
             if not report_only:
                 failed = True
             print(f'{"WARN" if report_only else "FAIL"} {p}: 정의 {ndef} · 사용 {nused} · '
-                  f'미사용 {len(dead)}')
+                  f'미사용(CSS에만 있음) {len(dead)}')
             for c in dead:
                 print(f'  - .{c}')
         else:
             print(f'OK {p} (정의 {ndef} · 전부 사용됨)')
+
+        # 역방향 검사는 --report에서만, 항상 정보용(종료 코드에 영향 없음).
+        if report_only:
+            if undefined_used:
+                print(f'INFO {p}: 정의 없음(마크업/스크립트에만 있음) {len(undefined_used)}')
+                for c in undefined_used:
+                    print(f'  + .{c}')
     return 1 if failed else 0
 
 
