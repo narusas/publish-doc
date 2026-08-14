@@ -754,8 +754,12 @@ Authorization: Basic YWxpY2U6cEBzc3cwcmQh</code></pre>
       여덟 글자짜리 비밀번호의 경우의 수는 그 속도 앞에서 생각보다 빨리 바닥납니다.</p>
 
       <p>그래서 나온 답은 뒤집혀 있습니다. <b>일부러 느린 해시 함수를 쓰는 것</b>이에요. bcrypt와 argon2가 그런 함수입니다.
-      얼마나 느리게 할지는 <span class="term" data-t="work factor">work factor</span>라는 값으로 정해요.
-      이 값을 올리면 한 번 검증하는 데 걸리는 시간이 길어지고, 공격자가 후보 하나를 시도하는 데 걸리는 시간도 똑같이 길어집니다.</p>
+      얼마나 느리게 할지는 <span class="term" data-t="work factor">work factor</span>라는 값으로 정해요.</p>
+
+      <p>이 값이 어떻게 걸리는지가 중요합니다. 더하기가 아니라 <b>지수</b>로 걸리거든요.
+      bcrypt에서 work factor는 반복 횟수의 밑이 2인 로그입니다 — 12라면 2<sup>12</sup>, 그러니까 4,096번을 돌린다는 뜻이에요.
+      <b>1만 올려도 계산량이 정확히 두 배</b>가 됩니다.
+      우리 서버의 검증이 두 배 느려지는 만큼, 공격자가 후보 하나를 시도하는 비용도 정확히 두 배가 되고요.</p>
 
       <p>평문에서 여기까지 네 단계를 말로 따라왔는데, 저장값이 실제로 어떻게 달라지는지는 눈으로 보는 편이 빠릅니다.
       alice와 bob이 하필 같은 비밀번호를 쓰고 있는 상황을 놓고 네 방식을 갈아 끼워 보죠.</p>
@@ -783,6 +787,8 @@ Authorization: Basic YWxpY2U6cEBzc3cwcmQh</code></pre>
           <span class="badge warn">흉내</span>
           <div class="dim" style="font-size:13.2px; line-height:1.6">여기의 bcrypt는 <strong>실제 암호 구현이 아닙니다.</strong>
           work factor를 올릴수록 계산이 오래 걸린다는 <strong>비용 곡선만</strong> 흉내 내려고 SHA-256을 반복해 돌릴 뿐이에요.
+          다만 그 곡선의 기울기는 실제와 같습니다 — 실제 bcrypt의 강도도 반복 횟수의 밑이 2인 로그라서,
+          여기서처럼 한 칸에 두 배가 됩니다.
           저장 문자열의 모양도 실제 bcrypt 형식이 아니라, 무엇이 함께 저장되는지 보이려고 만든 표기입니다.
           SHA-256 자체는 이 페이지에서 진짜로 계산합니다 — 그래서 같은 비밀번호가 같은 값이 되는 것도 진짜예요.</div>
         </div>
@@ -796,8 +802,15 @@ Authorization: Basic YWxpY2U6cEBzc3cwcmQh</code></pre>
       </div>
 
       <p>느림을 상품으로 파는 물건에는 곤란한 점이 하나 따라옵니다. 하드웨어는 계속 빨라지니까
-      오늘 적당한 강도가 3년 뒤에는 헐거워져요. 그래서 강도는 언젠가 올려야 하는데,
-      이미 저장된 비밀번호는 원문을 모르니 다시 해시할 수가 없습니다.</p>
+      오늘 적당한 강도가 몇 년 뒤에는 헐거워져요. 그래서 강도는 언젠가 올려야 합니다.</p>
+
+      <p>얼마나 올려야 하는지는 두 배라는 성질이 알려 줍니다. 눈금 하나가 정확히 두 배니까,
+      장비가 두 배 빨라졌으면 값을 1 올리면 그만이거든요.
+      처음에 적당한 값 하나를 골라 두고 몇 년에 한 칸씩 밀어 올리는 것으로 하드웨어 발전을 따라잡을 수 있고,
+      거꾸로 검증이 버겁다고 값을 1 내리는 결정은 공격자의 대입 비용을 절반으로 깎아 주는 결정과 같은 말입니다.
+      이 값에서는 <b>1이 작은 수가 아니에요.</b></p>
+
+      <p>진짜 곤란한 자리는 다른 데 있습니다. 이미 저장된 비밀번호는 원문을 모르니 다시 해시할 수가 없어요.</p>
 
       <p>bcrypt는 이 문제를 저장 형식으로 풉니다. 만들어 내는 문자열 안에 해시값만 들어 있는 게 아니라,
       <b>그 해시를 만들 때 쓴 강도와 salt가 함께</b> 들어 있어요. 그래서 강도를 올려도 예전 값이 깨지지 않습니다.
@@ -812,6 +825,8 @@ Authorization: Basic YWxpY2U6cEBzc3cwcmQh</code></pre>
           <p>구현을 직접 골라 넣는 대신 <code>PasswordEncoderFactories.createDelegatingPasswordEncoder()</code>로 만드는 것이 권장됩니다.
           이름 그대로 실제 인코딩을 다른 구현에 위임하는 인코더예요.</p>
           <p><code>BCryptPasswordEncoder</code>의 기본 강도는 <b>10</b>이고 <b>4~31</b> 사이로 지정할 수 있습니다.
+          10은 2<sup>10</sup>, 그러니까 1,024번을 뜻해요. 눈금 하나가 두 배이므로 4에서 31까지의 폭은
+          실제로는 2<sup>27</sup>배의 폭입니다 — 한 칸을 조정할 때 그만큼 신중해야 한다는 뜻이기도 하고요.
           salt는 <b>16바이트</b> 무작위 값을 인코더가 스스로 만들어 넣으므로 따로 컬럼을 만들어 보관할 필요가 없어요.
           강도 값도 해시 문자열 안에 저장되기 때문에, 나중에 강도를 바꿔도 기존 비밀번호가 깨지지 않습니다.</p>
           <p>레퍼런스는 이 느림을 두고 <code>intentionally slow to hinder password crackers</code>라고 적어 뒀습니다.
@@ -849,7 +864,8 @@ Authorization: Basic YWxpY2U6cEBzc3cwcmQh</code></pre>
         <button class="opt" data-opt="c"><span class="mk">C</span> salt를 빼면 빨라진다. salt가 계산량을 늘리는 값이다</button>
         <button class="opt" data-opt="d"><span class="mk">D</span> 이미 저장된 비밀번호가 있으니 강도는 이제 바꿀 수 없다</button>
         <div class="explain"><b>정답 B.</b> 느림은 이 함수가 파는 상품입니다. 강도를 낮추면 우리 서버의 검증도 빨라지지만
-        공격자가 후보 하나를 시도하는 비용도 같은 비율로 싸져요. 그래서 <b>A</b>처럼 더 빠른 구현을 찾는 것은 방향이 반대입니다 —
+        공격자가 후보 하나를 시도하는 비용도 같은 배수로 싸져요. 그것도 <b>한 칸에 정확히 절반</b>입니다 —
+        이 값은 반복 횟수의 밑이 2인 로그라서 1이 곧 두 배거든요. 그래서 <b>A</b>처럼 더 빠른 구현을 찾는 것은 방향이 반대입니다 —
         빠른 bcrypt는 고장 난 bcrypt예요.
         <b>C</b>는 salt의 역할을 잘못 짚었습니다. salt는 계산을 무겁게 하는 값이 아니라
         같은 비밀번호가 같은 저장값이 되는 것을 막아, 미리 만들어 둔 표를 못 쓰게 하는 값입니다. 빼도 빨라지지 않고 표만 되살아나요.
@@ -890,7 +906,7 @@ const GLOSSARY = {
   "keep-alive": "응답을 보낸 뒤에도 TCP 커넥션을 끊지 않고 다음 요청에 재사용하는 것. 핸드셰이크를 아끼는 전송 계층의 최적화이며, 커넥션이 같다는 사실은 보낸 사람이 같다는 보장이 아니다. 프락시가 한 대만 끼어도 서버가 보는 커넥션은 브라우저의 것이 아니게 된다.",
   "레인보우 테이블": "흔히 쓰이는 비밀번호와 그 해시값을 미리 계산해 둔 표. 해시는 되돌릴 수 없지만, 표에서 같은 해시값을 찾으면 원문을 알아낼 수 있다. 계정마다 다른 salt를 붙이면 표를 미리 만들어 둔다는 전제가 무너진다.",
   "salt": "계정마다 다르게 붙이는 무작위 값. 같은 비밀번호라도 salt가 다르면 저장되는 해시가 갈라져, 미리 만들어 둔 표를 쓸 수 없게 만든다. 감춰야 하는 값이 아니라 해시와 나란히 저장하는 값이다.",
-  "work factor": "일부러 느리게 만든 해시 함수의 계산 비용을 정하는 값. 강도(strength)라고도 부른다. 값을 올리면 검증 한 번에 걸리는 시간이 길어지고, 공격자가 후보 하나를 시도하는 시간도 같이 길어진다. bcrypt는 이 값을 해시 문자열 안에 함께 저장해서, 나중에 값을 올려도 이미 저장된 비밀번호를 그대로 검증할 수 있다.",
+  "work factor": "일부러 느리게 만든 해시 함수의 계산 비용을 정하는 값. 강도(strength)라고도 부른다. bcrypt에서는 반복 횟수의 밑이 2인 로그라서, 값이 12면 2의 12제곱인 4,096번을 돌린다. 그래서 1만 올려도 계산량이 정확히 두 배가 되고, 우리 서버의 검증 시간과 공격자의 대입 비용이 같은 배수로 함께 움직인다. bcrypt는 이 값을 해시 문자열 안에 함께 저장해서, 나중에 값을 올려도 이미 저장된 비밀번호를 그대로 검증할 수 있다.",
   // @GLOSSARY_END
 };
 
@@ -1254,6 +1270,7 @@ if(location.hash){
         costEl = $('#hlCost'),
         costVal= $('#hlCostVal');
   let mode = 'plain', timer = null;
+  let prev = null;   // 직전 bcrypt 실측 {cost, ms, pw} — 눈금 한 칸이 두 배임을 눈으로 보이려고 들고 있는다
 
   function stored(acc, pw, m, cost){
     if(m === 'plain') return pw;
@@ -1280,7 +1297,7 @@ if(location.hash){
     salt: ['ok', '두 값이 갈라졌다',
       '같은 비밀번호인데 저장값이 다릅니다. salt가 다르니까요. 미리 만들어 둔 표는 이제 쓸모가 없어요 — salt 하나마다 표를 새로 만들어야 합니다.'],
     bcrypt: ['ok', '두 값이 갈라졌다',
-      'salt가 갈라놓는 효과는 그대로이고, 여기에 비용이 얹혔습니다. 슬라이더를 4에서 14까지 옮겨 보세요.']
+      'salt가 갈라놓는 효과는 그대로이고, 여기에 비용이 얹혔습니다. 슬라이더를 <b>한 칸씩</b> 밀어 올리며 계산 시간이 어떻게 되는지 보세요.']
   };
 
   const LEGEND = {
@@ -1298,6 +1315,10 @@ if(location.hash){
                     + '<div>비밀번호를 한 글자라도 넣어 주세요.</div></div>';
       return;
     }
+
+    // 재기 전에 뜨겁게 해 둔다. 첫 호출은 JIT 컴파일 비용이 섞여 들어가는데,
+    // 그러면 낮은 work factor의 실측이 부풀어 "한 칸에 두 배"가 어긋나 보인다.
+    if(mode !== 'plain'){ for(let i=0;i<12000;i++) SHA256(pw); }
 
     // 첫 계정 계산에 시간을 재고, 너무 빨라 측정이 안 되면 반복해서 평균을 낸다.
     let t0 = performance.now();
@@ -1339,6 +1360,22 @@ if(location.hash){
       }
       html += '<div class="verdict"><span class="badge">⏱ 계산 시간</span>'
             + '<div><b class="mono">' + fmtMs(dt) + '</b> <span class="dim">— ' + tail + '</span></div></div>';
+    }
+
+    // 눈금 한 칸 = 두 배. 이론값과 방금 잰 값을 나란히 놓아 독자가 직접 대조하게 한다.
+    if(mode === 'bcrypt'){
+      if(prev && prev.pw === pw && prev.cost !== cost){
+        const d = cost - prev.cost, step = Math.abs(d), factor = Math.pow(2, step);
+        const theory = d > 0
+          ? '한 칸에 두 배씩 ' + step + '칸이니 반복 횟수는 <b class="mono">' + factor.toLocaleString('en-US') + '배</b>'
+          : '한 칸에 절반씩 ' + step + '칸이니 반복 횟수는 <b class="mono">' + factor.toLocaleString('en-US') + '분의 1</b>';
+        const r = dt / prev.ms;
+        html += '<div class="verdict"><span class="badge' + (d > 0 ? ' ok' : '') + '">'
+              + (r >= 1 ? '×' + r.toFixed(2) : '÷' + (1 / r).toFixed(1)) + '</span>'
+              + '<div>work factor <b>' + prev.cost + ' → ' + cost + '</b>. ' + theory
+              + '. 실측은 <span class="mono">' + fmtMs(prev.ms) + ' → ' + fmtMs(dt) + '</span>로 나왔습니다.</div></div>';
+      }
+      prev = { cost: cost, ms: dt, pw: pw };
     }
 
     out.innerHTML = html;
