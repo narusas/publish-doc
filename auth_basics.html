@@ -1777,12 +1777,12 @@ Object cart = session.getAttribute("cart");</code></pre>
           <p>세션 고정 방어는 Spring Security가 로그인 성공 시점에 대신 해 줍니다. 전략이 셋 있어요.</p>
           <dl class="kv">
             <dt>changeSessionId</dt>
-            <dd>서블릿 컨테이너가 제공하는 ID 교체를 그대로 씁니다. <b>Servlet 3.1 이상에서의 기본값</b>이고,
+            <dd>서블릿 컨테이너가 제공하는 ID 교체를 그대로 씁니다. <b>Servlet 3.1 이상에서 기본값</b>이고,
             요즘 쓰는 컨테이너는 전부 3.1 이상이라 사실상 이것이 기본이에요. 아무 설정도 하지 않았다면 이게 돌고 있습니다.</dd>
             <dt>newSession</dt>
             <dd>세션을 새로 만들되 <b>Spring Security가 쓰는 속성만</b> 옮깁니다. 로그인 전에 담아 둔 장바구니는 따라오지 않아요.</dd>
             <dt>migrateSession</dt>
-            <dd>세션을 새로 만들고 <b>모든</b> 속성을 옮깁니다. Servlet 3.0 이하에서의 기본값이었습니다.</dd>
+            <dd>세션을 새로 만들고 <b>모든</b> 속성을 옮깁니다. Servlet 3.0 이하에서 기본값이었습니다.</dd>
           </dl>
           <p>셋 중 무엇을 골라도 ID가 바뀐다는 결과는 같습니다. 갈리는 것은 로그인 전에 담아 둔 것들의 운명이에요.
           비로그인 상태의 장바구니를 로그인 뒤에도 살려 두고 싶다면 <code>newSession</code>은 답이 아닙니다.</p>
@@ -1818,7 +1818,7 @@ Object cart = session.getAttribute("cart");</code></pre>
         <button class="opt" data-opt="a"><span class="mk">A</span> 난수라 그 자체로는 아무 뜻이 없다. 서버가 요청마다 비밀번호를 다시 확인하므로 노출돼도 문제되지 않는다</button>
         <button class="opt" data-opt="b"><span class="mk">B</span> 세션 ID는 발급된 IP·기기와 묶여 있어서 다른 곳에서 그 값을 써도 통하지 않는다</button>
         <button class="opt" data-opt="c"><span class="mk">C</span> 주운 쪽이 비밀번호를 몰라도 그대로 그 사람이 된다. 서버는 열쇠가 맞는지만 볼 뿐, 누가 들고 왔는지는 보지 않는다</button>
-        <button class="opt" data-opt="d"><span class="mk">D</span> 만료가 걸려 있으니 짧은 노출은 위험하지 않다. 만료 시간을 줄이는 것으로 해결된다</button>
+        <button class="opt" data-opt="d"><span class="mk">D</span> 만료가 걸려 있으니 짧은 노출은 위험하지 않다. 만료 시간을 줄이면 해결된다</button>
         <div class="explain"><b>정답 C.</b> 뜻이 없다는 것과 위험하지 않다는 것은 다른 이야기입니다.
         뜻이 없어야 했던 이유는 추측을 막기 위해서였지, 주웠을 때 쓸모없게 만들려는 것이 아니었어요.
         <b>이 값은 그 자체로 로그인된 상태 전부입니다.</b>
@@ -1993,8 +1993,8 @@ Content-Type: application/x-www-form-urlencoded
 
       <div class="demo" id="csrfLab">
         <span class="demo-tag">공격 페이지 재현</span>
-        <p style="margin:0 0 10px">공격 페이지에서 공격을 하나 고르고, 우리 사이트 쪽에서 방어를 켰다 껐다 해 보세요.
-        한 번의 공격을 네 단계로 갈라서 판정합니다 —
+        <p style="margin:0 0 10px">공격 페이지에서 수법을 하나 고르고, 우리 사이트 쪽에서 방어를 켰다 껐다 해 보세요.
+        공격 한 번을 네 단계로 갈라서 판정합니다 —
         <b>쿠키가 붙었나 · 요청이 닿았나 · 서버가 받아들였나 · 공격자가 결과를 읽었나.</b>
         넷을 갈라 두는 이유는 셋째와 넷째가 자주 뒤섞이기 때문이에요.</p>
         <div class="cs-grid">
@@ -2095,7 +2095,7 @@ Content-Type: application/x-www-form-urlencoded
         <code>SameSite</code>는 브라우저가 서 주는 방어예요. 기본값에 기대면 방어의 강도를 브라우저가 정합니다 —
         제한을 아예 두지 않는 브라우저가 있고, 두는 쪽에도 갓 설정된 쿠키에 열어 둔 예외가 있으며, <b>그 예외의 수명조차 우리가 정하지 않아요.</b>
         게다가 서브도메인은 같은 사이트라서, 하위 도메인 하나가 뚫리면 <code>SameSite</code>는 아무것도 막지 않습니다.</p>
-        <p style="margin:8px 0 0"><b>D</b>는 서버가 <b>다른 형식은 절대 안 받는다</b>는 데 방어를 통째로 걸고 있습니다.
+        <p style="margin:8px 0 0"><b>D</b>는 서버가 <b>다른 형식은 절대 안 받는다</b>는 데 방어를 전부 걸고 있습니다.
         프레임워크 기본 설정이 폼 형식도 함께 받아 주는 경우가 흔하고, 설정 한 줄이 바뀌면 방어가 조용히 사라져요.
         막는 물건이 아니라 우연히 막히고 있는 상태에 가깝습니다.</p>
         <p style="margin:8px 0 0">한 가지만 덧붙이면, <b>증표를 <code>Authorization</code> 헤더로 보낸다면 사정이 다릅니다.</b>
@@ -2256,7 +2256,7 @@ Content-Type: application/x-www-form-urlencoded
         <h4>🧰 지금 맡은 서비스가 어디에 서 있는지 확인하는 법</h4>
         <p>세 가지만 보면 됩니다. <b>서버가 몇 대인가</b>, <b>LB에 어피니티가 켜져 있는가</b>,
         <b>배포한 날 로그인 관련 문의가 늘어나는가.</b>
-        마지막 것이 제일 정직한 신호예요 — 앞의 둘을 몰라도 이것 하나로 세션이 프로세스 메모리에 있다는 사실이 드러납니다.
+        마지막이 제일 정직한 신호예요 — 앞의 둘을 몰라도 이것 하나로 세션이 프로세스 메모리에 있다는 사실이 드러납니다.
         문의가 안 는다면 누군가 이미 세션을 프로세스 밖으로 빼 뒀거나, 배포를 사람 없는 시간에 하고 있는 겁니다.</p>
       </div>
 
