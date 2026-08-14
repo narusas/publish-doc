@@ -373,9 +373,14 @@ button:focus-visible, .pick:focus-visible, .term:focus-visible, a:focus-visible,
 .myth .m-row .m-txt b{color:#fff}
 
 /* 프로토콜 메시지·설정 파일 예시 — Prism에 http 문법도 properties 문법도 없어
-   강조가 붙지 않으므로 이 문서의 색으로 직접 칠한다(기본 Prism 테마의 회색 배경을 덮는다). */
-pre.language-http, pre.language-properties{background:var(--bg); border-color:var(--border-2)}
-pre.language-http code, pre.language-properties code{color:#cfe9fb}
+   강조가 붙지 않으므로 이 문서의 색으로 직접 칠한다(기본 Prism 테마의 회색 배경을 덮는다).
+   language-text는 Prism이 아는 이름이라 문법 없이 그대로 출력된다 — 언어를 고르고 싶지
+   않은 예시(자료구조 그림, 폼 조각)를 여기에 얹는다. */
+pre.language-http, pre.language-properties, pre.language-text{background:var(--bg); border-color:var(--border-2)}
+pre.language-http code, pre.language-properties code, pre.language-text code{color:#cfe9fb}
+/* java는 Prism에 문법이 있어 토큰 색이 붙는다. 색은 그대로 두고 바탕만 이 문서의 것으로
+   바꾼다 — Prism 기본 테마의 회색 바탕 하나만 여기서 튀기 때문이다. */
+pre.language-java{background:var(--bg); border-color:var(--border-2)}
 
 /* 데모 안의 입력 요소 — 지금까지 입력칸은 용어 사전 검색뿐이었다 */
 .demo input[type="text"]{
@@ -452,6 +457,43 @@ pre.language-http code, pre.language-properties code{color:#cfe9fb}
 .cl-req{font-family:var(--mono); font-size:11.5px; color:var(--text-mut); overflow-wrap:anywhere; margin:2px 0 3px}
 .cl-why{font-size:13.2px; color:var(--text-dim); line-height:1.6}
 @media(max-width:820px){.cl-grid{grid-template-columns:1fr}}
+
+/* 세션 저장소 들여다보기(5장) — 브라우저·네트워크·서버를 한 줄에 나란히 놓는다.
+   같은 순간에 세 곳이 어떻게 어긋나는지가 이 데모의 전부라(쿠키는 그대로인데 로그인이
+   풀린다), 셋이 한 화면 안에 함께 보이지 않으면 논지가 성립하지 않는다. */
+.ss-ctl{display:flex; flex-wrap:wrap; gap:8px; align-items:center; margin:0 0 12px}
+.ss-grid{display:grid; grid-template-columns:repeat(3,1fr); gap:12px; margin:12px 0}
+.ss-pane{background:var(--bg); border:1px solid var(--border-2); border-radius:11px; padding:11px 13px; min-width:0}
+.ss-h{font-family:var(--mono); font-size:11px; letter-spacing:.5px; color:var(--text-mut); margin:0 0 8px}
+.ss-empty{font-size:13px; color:var(--text-mut); line-height:1.6}
+.ss-key{font-family:var(--mono); font-size:12.5px; color:var(--warn); overflow-wrap:anywhere}
+.ss-val{font-size:13px; color:var(--text-dim); line-height:1.6; margin-top:3px}
+.ss-e+.ss-e{border-top:1px solid var(--border); margin-top:8px; padding-top:8px}
+/* 지나간 줄이 쌓이는 칸. 높이를 묶어 두지 않으면 세 칸의 키가 계속 어긋난다 */
+.ss-wire{max-height:186px; overflow-y:auto; font-family:var(--mono); font-size:11.6px; line-height:1.5}
+.ss-l{padding:3px 0; overflow-wrap:anywhere; color:var(--text-dim)}
+.ss-l.up{color:#93c5fd}
+.ss-l.dn{color:#86efac}
+.ss-l.cred{color:var(--warn)}
+.ss-l.no{color:var(--text-mut)}
+.ss-atk{margin-top:16px; padding:13px 15px; border-radius:11px;
+  border:1px solid rgba(248,113,113,.35); background:rgba(248,113,113,.05)}
+@media(max-width:900px){.ss-grid{grid-template-columns:1fr}}
+
+/* CSRF 실험실(6장) — 공격자의 페이지와 우리 사이트를 나란히 놓는다.
+   한 번의 공격을 네 단계로 갈라 판정하는 것이 이 데모의 논지다:
+   쿠키가 붙었나 · 요청이 닿았나 · 서버가 받아들였나 · 공격자가 읽었나. */
+.cs-grid{display:grid; grid-template-columns:1fr 1fr; gap:12px; margin:12px 0}
+.cs-pane{background:var(--bg); border:1px solid var(--border-2); border-radius:11px; padding:12px 14px; min-width:0}
+.cs-pane.evil{border-color:rgba(248,113,113,.35); background:rgba(248,113,113,.05)}
+.cs-h{font-size:12.5px; color:var(--text-mut); margin:0 0 9px}
+.cs-h b{color:var(--text); font-family:var(--mono); font-size:12px}
+.cs-code{font-family:var(--mono); font-size:11.6px; line-height:1.65; color:#cfe9fb;
+  background:var(--bg); border:1px solid var(--border); border-radius:9px;
+  padding:9px 11px; margin-top:10px; overflow-wrap:anywhere}
+.cs-q{color:#fff; font-weight:700; font-size:13.5px}
+.cs-why{font-size:13.2px; color:var(--text-dim); line-height:1.6; margin-top:2px}
+@media(max-width:820px){.cs-grid{grid-template-columns:1fr}}
 </style>
 </head>
 <body>
@@ -1297,6 +1339,453 @@ server.servlet.session.cookie.max-age=30m</code></pre>
       </div>
     </section>
 
+    <!-- ============================================================
+         5장 · 세션
+         ============================================================ -->
+    <section id="session" data-title="세션">
+      <div class="sec-head">
+        <div class="kicker">05 · 갈래 (a)</div>
+        <h2 class="sec-title">🗄️ 세션 — 서버가 기억하는 방식 <span class="lvl must">🟢 필수</span></h2>
+      </div>
+
+      <p class="lead">4장이 남긴 물음은 하나였습니다 — 그 값이 무엇이냐.
+      예시에 썼던 <code>sid=8f2ac31b7d94</code>를 아무리 들여다봐도 누가 로그인했는지는 안 나와요.
+      안 나오는 게 아니라 <b>나오면 안 되는</b> 값입니다. 뜻이 없다는 것이 이 값의 유일한 설계 조건이에요.</p>
+
+      <p>3장의 갈래 A를 그대로 만들면 이렇게 됩니다. 로그인이 통과하면 서버가 무작위 문자열을 하나 만들어
+      자기 안에 칸을 하나 열고, 그 칸에 이 사람에 대해 아는 것을 넣습니다.
+      브라우저에게는 문자열만 건네고요. 이 짝 — 서버 안의 칸과 그 칸을 여는 문자열 — 을
+      <span class="term" data-t="세션">세션</span>이라고 부릅니다.</p>
+
+      <h3>🎲 뜻이 없어야 하는 이유</h3>
+
+      <p>그럼 그 문자열을 어떻게 만드나. 로그인한 순서대로 1번, 2번, 3번을 주면 안 되나 —
+      안 될 이유가 딱히 없어 보입니다. 서버 안의 칸을 찾는 데 쓰는 값일 뿐이고, 짧으면 로그도 읽기 쉬워요.</p>
+
+      <p>1번을 받은 사람이 <code>sid=2</code>로 요청을 한 번 보내 보기 전까지는 그렇습니다.</p>
+
+      <p>그 요청은 정상 요청과 글자 하나 차이입니다. 서버는 2번 칸을 열고, 거기 든 사람으로 응답해요.
+      비밀번호를 뚫은 것도 아니고 암호를 깬 것도 아닙니다. 옆 번호를 찍었을 뿐이에요.
+      게다가 이건 계정 하나가 뚫리는 사고가 아닙니다 — 지금 로그인해 있는 <b>전원</b>이 반복문 한 줄에 열려요.
+      추측 가능성이 곧 전체 붕괴입니다.</p>
+
+      <p>그래서 조건이 하나로 정리됩니다. 순번이면 안 되고, 사용자 번호를 섞어도 안 되고, 로그인 시각을 넣어도 안 돼요.
+      규칙이 있으면 그 규칙을 알아낸 쪽이 다음 값을 만들 수 있거든요.
+      남는 답은 하나뿐입니다 — <b>충분히 긴 난수.</b></p>
+
+      <h3>🗄️ 그러면 내용은 어디에</h3>
+
+      <p>브라우저가 난수 하나만 들고 있다면 이름도, 등급도, 권한도, 만료 시각도 전부 서버 쪽에 있어야 합니다.
+      그림으로 그리면 표 하나예요.</p>
+
+      <pre class="language-text"><code class="language-text">세션 ID            →   그 사람에 대해 아는 것
+─────────────────────────────────────────────────────────
+"8f2ac31b7d94"     →   { 이름: "가영", 등급: "회원",   만료: "18:40" }
+"c4e19a07bf35"     →   { 이름: "준호", 등급: "관리자", 만료: "19:02" }</code></pre>
+
+      <p>요청이 오면 <code>Cookie: sid=8f2ac31b7d94</code>에서 열쇠를 꺼내 이 표를 한 번 찾습니다.
+      찾히면 그 사람의 요청이고, 없으면 로그인하지 않은 요청이에요. 그게 전부입니다.</p>
+
+      <p>3장에서 셌던 셋이 여기서 전부 표 조작으로 바뀝니다. 만료는 칸에 시각을 적어 두고 지나면 버리는 일이고,
+      회수는 칸 하나를 지우는 일이고, 범위는 칸에 적어 두는 일이에요.
+      브라우저에 나가 있는 난수는 손댈 필요조차 없습니다 — 열쇠는 그대로 두고 자물쇠를 바꾸는 셈이니까요.</p>
+
+      <p>그런데 저 표를 두고 아직 한 번도 안 물어본 것이 있습니다. <b>저 표가 어디에 있느냐.</b>
+      지금 답은 서버 프로세스의 메모리예요. 변수 하나에 담겨서, 프로세스와 함께 생기고 프로세스와 함께 사라집니다.
+      지금은 이게 아무 문제도 아닌 것처럼 보이는데, <a class="link" href="#twoservers">7장</a>이 통째로 이 한 줄에서 나옵니다.</p>
+
+      <h3>🪤 훔치는 대신 미리 쥐여 주는 공격</h3>
+
+      <p>세션 ID는 훔쳐야 쓸 수 있는 값처럼 보입니다. 그런데 훔치지 않고 남의 세션에 올라타는 길이 하나 있어요.
+      순서를 뒤집으면 됩니다.</p>
+
+      <p>공격자가 우리 사이트에 그냥 들어와 세션 하나를 받습니다. 로그인은 안 해요 —
+      아직 아무것도 안 든 빈 칸 하나와 그 열쇠를 받는 겁니다. 누구나 할 수 있는 일이고요.
+      그 열쇠를 피해자의 브라우저에 심어 두고, 피해자가 그 상태로 로그인하면 서버는 <b>이미 있는 칸</b>에
+      로그인 정보를 채워 넣습니다. 그 칸의 열쇠는 공격자도 갖고 있고요.</p>
+
+      <p>이 공격에 <span class="term" data-t="세션 고정">세션 고정</span>이라는 이름이 붙어 있습니다.
+      훔친 것이 없어서 유출 탐지에 걸리지 않고, 피해자는 자기 비밀번호로 정상 로그인했으니 로그에도 이상한 줄이 안 남아요.
+      공격자는 아까부터 들고 있던 열쇠를 계속 들고 있을 뿐입니다.</p>
+
+      <p>방어는 한 줄입니다. <b>로그인에 성공하는 그 순간 세션 ID를 새로 발급한다.</b>
+      쥐여 주기가 통하려면 로그인 전과 후의 ID가 같아야 하는데, 그 전제를 깨는 거예요.
+      공격자가 심어 둔 열쇠는 로그인이 끝나는 순간 아무 칸도 열지 못하는 문자열이 됩니다.</p>
+
+      <div class="demo" id="sessionStore">
+        <span class="demo-tag">서버 안을 들여다보기</span>
+        <p style="margin:0 0 10px">버튼 하나에 세 곳이 동시에 움직입니다 —
+        브라우저가 들고 있는 것, 선을 지나간 것, 서버가 기억하는 것.
+        아래쪽 <b>세션 고정 재현</b>은 방어를 껐다 켜 놓고 <code>공격자가 ID 심기</code> → <code>로그인</code> 순서를 밟아 보는 자리예요.</p>
+        <div class="ss-ctl">
+          <button id="ssLogin">🔑 로그인</button>
+          <button id="ssReq">📨 요청 보내기</button>
+          <button id="ssLogout">🚪 로그아웃</button>
+          <button id="ssRestart">♻️ 서버 재시작</button>
+          <button class="sm ghost" id="ssReset">↺ 처음부터</button>
+        </div>
+        <div class="ss-grid">
+          <div class="ss-pane">
+            <div class="ss-h">🌐 브라우저의 쿠키 상자</div>
+            <div id="ssBrowser"></div>
+          </div>
+          <div class="ss-pane">
+            <div class="ss-h">📡 네트워크에 흐르는 것</div>
+            <div class="ss-wire" id="ssWire"></div>
+          </div>
+          <div class="ss-pane">
+            <div class="ss-h">🗄️ 서버의 세션 Map</div>
+            <div id="ssStore"></div>
+          </div>
+        </div>
+        <div id="ssOut" aria-live="polite"></div>
+        <div class="verdict" style="align-items:flex-start">
+          <span class="badge">📡 읽는 법</span>
+          <div class="dim" style="font-size:13.2px; line-height:1.6">올라가는 줄(<span class="mono">→</span>)에 무엇이 실려 있는지 보세요.
+          <b>노란 줄은 로그인 요청 하나뿐입니다</b> — 자격 증명이 지나가는 것은 그 한 번이고, 그 뒤로는 열두 글자짜리 난수가 전부예요.
+          <b>서버 칸</b>에 적힌 이름도 등급도 브라우저는 모릅니다. 화면에 이름이 보이는 건 서버가 찾아서 그려 준 것이지
+          브라우저가 알고 있어서가 아니고요.</div>
+        </div>
+        <div class="ss-atk">
+          <div class="ss-h">🪤 세션 고정 재현</div>
+          <div class="ss-ctl" id="ssDefTogs">
+            <button class="tog on" data-k="def">세션 고정 방어</button>
+            <button id="ssPlant">😈 공격자가 ID 심기</button>
+          </div>
+          <div id="ssAtkOut" aria-live="polite"></div>
+        </div>
+      </div>
+
+      <details class="spring">
+        <summary>Spring에서는 이 이름이다</summary>
+        <div class="sp-body">
+          <p>앞에서 그린 그 표를 서블릿 컨테이너가 이미 갖고 있습니다. 꺼내 쓰는 이름이 <code>HttpSession</code>이에요.</p>
+          <pre class="language-java"><code class="language-java">HttpSession session = request.getSession();
+session.setAttribute("cart", cart);
+Object cart = session.getAttribute("cart");</code></pre>
+          <p><code>getSession()</code>이 하는 일이 앞에서 본 그 두 줄입니다 — 세션이 없으면 칸을 새로 열고 ID를 발급해
+          <code>Set-Cookie</code>로 내보내고, 있으면 그 칸을 돌려줘요.
+          <code>setAttribute</code>로 넣는 값들이 표의 오른쪽에 쌓이는 것이고요.</p>
+          <p>세션 고정 방어는 Spring Security가 로그인 성공 시점에 대신 해 줍니다. 전략이 셋 있어요.</p>
+          <dl class="kv">
+            <dt>changeSessionId</dt>
+            <dd>서블릿 컨테이너가 제공하는 ID 교체를 그대로 씁니다. <b>Servlet 3.1 이상에서의 기본값</b>이고,
+            요즘 쓰는 컨테이너는 전부 3.1 이상이라 사실상 이것이 기본이에요. 아무 설정도 하지 않았다면 이게 돌고 있습니다.</dd>
+            <dt>newSession</dt>
+            <dd>세션을 새로 만들되 <b>Spring Security가 쓰는 속성만</b> 옮깁니다. 로그인 전에 담아 둔 장바구니는 따라오지 않아요.</dd>
+            <dt>migrateSession</dt>
+            <dd>세션을 새로 만들고 <b>모든</b> 속성을 옮깁니다. Servlet 3.0 이하에서의 기본값이었습니다.</dd>
+          </dl>
+          <p>셋 중 무엇을 골라도 ID가 바뀐다는 결과는 같습니다. 갈리는 것은 로그인 전에 담아 둔 것들의 운명이에요.
+          비로그인 상태의 장바구니를 로그인 뒤에도 살려 두고 싶다면 <code>newSession</code>은 답이 아닙니다.</p>
+          <p>끄는 선택지도 있긴 한데 권장되지 않습니다. 끄면 위 데모에서 방어를 껐을 때의 순서가 그대로 성립해요.</p>
+        </div>
+      </details>
+
+      <div class="callout tip">
+        <h4>🧰 세션 ID를 다룰 때의 최소선</h4>
+        <p>값 자체는 프레임워크가 만들어 주니 손댈 일이 거의 없습니다. 손이 가는 자리는 <b>그 값이 어디에 복사되느냐</b>예요 —
+        접근 로그, 에러 리포트, URL 쿼리스트링, 고객센터에 붙여 넣는 디버그 덤프.
+        세션 ID는 비밀번호와 같은 급으로 다뤄야 하는 값입니다. 주운 쪽이 그대로 그 사람이 되니까요.</p>
+      </div>
+
+      <p>3장이 갈래 A에 걸었던 기대는 이것으로 값을 다 치렀습니다. 서버가 기억하고, 브라우저는 열쇠만 들어요.
+      만료·회수·범위가 전부 표 한 줄을 고치는 일로 끝나고, 요청마다 흐르는 것은 뜻 없는 난수 하나입니다.</p>
+
+      <p>깔끔한데, 4장에서 얻었던 편의 하나가 이 그림 위에서 갑자기 다르게 읽힙니다.
+      브라우저가 요청마다 알아서 붙여 준다고 했죠. 거기 <b>누가 그 요청을 만들었든</b>이라는 단서가 딸려 있었어요.
+      지금 그 자동이 나르고 있는 것은 로그인된 사람의 열쇠입니다.
+      그 열쇠를 남이 대신 쓰게 만드는 방법이 <a class="link" href="#csrf">6장</a>에 있고요.</p>
+
+      <div class="oneline">
+        <span style="font-size:20px">🗄️</span>
+        <div><strong>세션은 뜻 없는 난수 하나와 서버 안의 표 한 줄로 이뤄집니다.</strong>
+        브라우저는 자기가 누구인지 모르고, 아는 것은 서버뿐이에요.
+        그 표가 어디에 놓여 있는지는 아직 물어보지 않았고, 그 열쇠를 남이 대신 쓰게 만드는 길도 아직 열려 있습니다.</div>
+      </div>
+
+      <div class="quiz" data-qid="q-session" data-answer="c">
+        <div class="q-head">✅ 체크포인트</div>
+        <div class="q">동료가 이렇게 말한다 — <b>"세션 ID는 어차피 뜻 없는 난수인데, 접근 로그에 찍히거나 URL에 노출되는 게 그렇게 큰일인가요?"</b> 가장 정확한 대답은?</div>
+        <button class="opt" data-opt="a"><span class="mk">A</span> 난수라 그 자체로는 아무 뜻이 없다. 서버가 요청마다 비밀번호를 다시 확인하므로 노출돼도 문제되지 않는다</button>
+        <button class="opt" data-opt="b"><span class="mk">B</span> 세션 ID는 발급된 IP·기기와 묶여 있어서 다른 곳에서 그 값을 써도 통하지 않는다</button>
+        <button class="opt" data-opt="c"><span class="mk">C</span> 주운 쪽이 비밀번호를 몰라도 그대로 그 사람이 된다. 서버는 열쇠가 맞는지만 볼 뿐, 누가 들고 왔는지는 보지 않는다</button>
+        <button class="opt" data-opt="d"><span class="mk">D</span> 만료가 걸려 있으니 짧은 노출은 위험하지 않다. 만료 시간을 줄이는 것으로 해결된다</button>
+        <div class="explain"><b>정답 C.</b> 뜻이 없다는 것과 위험하지 않다는 것은 다른 이야기입니다.
+        뜻이 없어야 했던 이유는 추측을 막기 위해서였지, 주웠을 때 쓸모없게 만들려는 것이 아니었어요.
+        <b>이 값은 그 자체로 로그인된 상태 전부입니다.</b>
+        <p style="margin:8px 0 0"><b>A</b>는 이 장의 그림을 거꾸로 읽었습니다. 요청마다 비밀번호를 다시 확인하는 구조였다면 애초에 세션이 필요 없었어요.
+        서버가 하는 일은 표를 한 번 찾는 것뿐이고, 표는 열쇠가 맞는지만 봅니다.</p>
+        <p style="margin:8px 0 0"><b>B</b>가 현장에서 가장 자주 나오는 오답입니다. 세션을 IP에 묶는 구성이 불가능한 건 아니지만 기본 동작이 아니고,
+        실제로 걸어 두면 이동 중에 네트워크가 바뀔 때마다 로그아웃되는 서비스가 됩니다. 기본값이라고 믿고 있는 쪽이 위험해요.</p>
+        <p style="margin:8px 0 0"><b>D</b>는 방향은 맞는데 답은 아닙니다. 만료를 줄이면 창이 좁아질 뿐 닫히지는 않아요.
+        게다가 주워 간 쪽은 그 창 안에서 하고 싶은 일을 다 할 수 있습니다 — 계정에 걸린 이메일 주소를 바꾸는 데 몇 초가 걸리지 않으니까요.</p>
+        <p style="margin:8px 0 0">그래서 세션 ID에는 두 가지가 동시에 필요합니다. <b>추측할 수 없을 것</b>(난수),
+        그리고 <b>새어 나갈 자리를 만들지 않을 것</b>(<code>HttpOnly</code>·<code>Secure</code>, 로그와 URL에 남기지 않기).
+        4장의 속성 다섯이 왜 그렇게 깐깐했는지가 여기서 이어집니다.</p></div>
+      </div>
+    </section>
+
+    <!-- ============================================================
+         6장 · CSRF
+         ============================================================ -->
+    <section id="csrf" data-title="CSRF">
+      <div class="sec-head">
+        <div class="kicker">06 · 대가</div>
+        <h2 class="sec-title">🎣 자동으로 붙는다는 성질의 대가 — CSRF <span class="lvl must">🟢 필수</span></h2>
+      </div>
+
+      <p class="lead">5장에서 서버가 요청을 판정하는 근거는 <code>Cookie: sid=…</code> 한 줄이었습니다.
+      그 줄에 안 적혀 있는 것이 하나 있어요 — <b>이 요청을 누가 시켰나.</b>
+      브라우저는 목적지만 보고 쿠키를 붙이지, 그 요청을 만든 페이지가 우리 것인지는 따지지 않습니다.</p>
+
+      <p>4장에서 이 성질을 편의로 얻었죠. 링크를 눌러 들어와도, 새로고침을 해도, 이미지를 받아 와도 붙는다고요.
+      그 목록에 <b>남의 페이지가 만든 요청</b>도 처음부터 들어 있었습니다.</p>
+
+      <h3>🎭 공격은 이런 모양이다</h3>
+
+      <p>피해자는 은행 사이트에 로그인해 둔 채로 탭을 하나 더 엽니다. 이벤트 당첨 안내라는 메일에 붙어 있던 링크예요.
+      그 페이지에는 눈에 보이는 게 거의 없습니다. 있는 건 폼 하나고, 그 폼은 뜨자마자 스스로 제출됩니다.</p>
+
+      <p>제출되는 곳은 그 페이지가 놓인 서버가 아니라 <b>우리 은행</b>이고요.</p>
+
+      <p>브라우저는 이 요청을 정직하게 처리합니다. 목적지가 우리 은행이니까 우리 은행의 쿠키를 붙여요.
+      서버에 도착한 요청은 이렇게 생겼습니다.</p>
+
+      <pre class="language-http"><code class="language-http">POST /transfer HTTP/1.1
+Host: bank.example.com
+Cookie: sid=8f2ac31b7d94
+Content-Type: application/x-www-form-urlencoded
+
+받는사람=공격자계좌&amp;금액=1000000</code></pre>
+
+      <p>이 요청을, 피해자가 직접 송금 화면에서 버튼을 눌러 만든 요청 옆에 놓아 보면 —
+      <b>서버가 보는 바이트가 똑같습니다.</b> 세션도 유효하고, 열쇠도 진짜고, 5장의 표를 찾으면 진짜 그 사람이 나와요.
+      서버가 거절할 근거가 요청 안에 한 줄도 없습니다.</p>
+
+      <p>이 공격의 이름이 <span class="term" data-t="CSRF">CSRF</span>입니다. 교차 사이트 요청 위조.
+      훔친 것이 아무것도 없다는 점을 눈여겨볼 만해요 — 세션 ID를 읽지도, 비밀번호를 알아내지도 않았습니다.
+      <b>브라우저를 시켰을 뿐이에요.</b> 4장의 퀴즈에서 갈라 뒀던 두 공격 중 <b>그 자리에서 부리는</b> 쪽이 여기까지 자란 모양입니다.</p>
+
+      <h3>📐 "같은 사이트"의 정확한 규칙</h3>
+
+      <p><code>SameSite</code>가 기준으로 삼는 <span class="term" data-t="같은 사이트">같은 사이트</span>는 정확히 어디까지일까요.
+      4장에서는 "도메인을 등록한 단위가 같으면 된다"는 한 줄로 넘어갔는데, 그 한 줄로는 판정이 안 되는 자리가 곧 나옵니다.</p>
+
+      <p>기준은 <span class="term" data-t="등록 가능 도메인">등록 가능 도메인</span>입니다.
+      공개 접미사 목록에 올라 있는 항목에 그 바로 앞 한 조각을 붙인 단위 — <code>example.com</code>이나 <code>example.co.kr</code> 같은 것이에요.
+      여기서 셋이 따라 나옵니다.</p>
+
+      <dl class="kv">
+        <dt>서브도메인</dt>
+        <dd><b>같은 사이트입니다.</b> <code>shop.example.com</code>과 <code>api.example.com</code>은 호스트가 다르지만 등록 단위가 같아요.
+        4장에서 <code>Domain</code>을 넓게 잡으면 새어 나간다고 했던 그 범위를 <code>SameSite</code>는 좁혀 주지 않습니다.
+        협력사에 하위 도메인 하나를 내줬다면, 그쪽 페이지가 만든 요청도 <code>SameSite</code>에게는 <b>같은 사이트</b>예요.</dd>
+        <dt>포트</dt>
+        <dd><b>안 봅니다.</b> <code>example.com:8080</code>과 <code>example.com:443</code>은 같은 사이트입니다.
+        출처(origin)를 따질 때는 포트가 걸리는데 사이트를 따질 때는 안 걸려요. 비슷하게 생긴 두 개념이 여기서 갈립니다.</dd>
+        <dt>스킴</dt>
+        <dd>일반적인 사이트 판정에서는 안 보는데, <b><code>SameSite</code> 쿠키에서만은 봅니다.</b>
+        스킴까지 보는 더 엄격한 정의에 따로 이름이 붙어 있어요 — schemeful same-site.
+        그래서 <code>http://example.com</code>과 <code>https://example.com</code>은 <code>SameSite</code> 판정에서 <b>서로 다른 사이트</b>입니다.</dd>
+      </dl>
+
+      <p>셋째가 4장의 <code>localhost</code> 예외와 만나면 익숙한 증상이 하나 더 나옵니다.
+      로컬에서는 스킴이 <code>http</code> 하나뿐이고 <code>Secure</code>도 예외로 봐주니 아무 문제가 안 보여요.
+      배포하면 스킴이 둘이 됩니다 — <code>https</code>로 서비스하면서 <code>http</code>로 들어오는 입구를 남겨 두는 구성이 흔하니까요.
+      그 둘 사이는 <code>SameSite</code> 판정에서 <b>교차 사이트</b>입니다.
+      <b>로컬에선 되는데 배포하면 안 된다</b>의 원인이 4장에 이어 하나 늘어난 셈이에요.</p>
+
+      <h3>🛡️ 막는 길 셋</h3>
+
+      <p>요청만 봐서는 구별할 수 없다면, 방법은 둘 중 하나입니다.
+      브라우저가 애초에 쿠키를 안 붙이게 만들거나, <b>구별할 수 있는 무언가를 요청에 더해 두거나.</b>
+      실제로 쓰는 방법이 셋이고 서 있는 층이 다 다릅니다.</p>
+
+      <h4>1. SameSite — 브라우저에게 붙이지 말라고 시킨다</h4>
+
+      <p>가장 싼 방법입니다. 쿠키에 한 단어를 더하면 끝이고 서버 코드는 한 줄도 안 바뀌어요.
+      <code>Lax</code>면 남의 페이지가 만든 <code>POST</code>에는 쿠키가 안 붙고, 쿠키가 안 붙으면 그 요청은 로그인하지 않은 사람의 요청이 됩니다.</p>
+
+      <p>대신 이건 <b>브라우저가 대신 해 주는 방어</b>예요. 우리 서버가 확인할 수 있는 것이 아닙니다 —
+      4장에서 봤듯 서버에 도착한 요청에는 그 쿠키에 어떤 속성이 걸려 있었는지가 안 적혀 있으니까요.
+      제대로 걸렸는지 확인하려면 브라우저 쪽을 봐야 합니다.</p>
+
+      <h4>2. 동기화 토큰 — 쿠키가 아닌 자리에 값을 하나 더 둔다</h4>
+
+      <p>서버가 세션마다 무작위 값을 하나 더 만들어 둡니다. 그리고 그 값을 <b>쿠키가 아닌 자리</b>에 실어 보내요.
+      폼의 숨은 필드나 요청 헤더입니다.</p>
+
+      <pre class="language-text"><code class="language-text">&lt;form method="post" action="/transfer"&gt;
+  &lt;input type="hidden" name="_csrf" value="9d4f2b…c1a2"&gt;
+  ...
+&lt;/form&gt;</code></pre>
+
+      <p>요청이 오면 서버는 둘을 맞춰 봅니다. 세션에 적어 둔 값과 요청에 실려 온 값이 같은가.
+      이 값에 <span class="term" data-t="동기화 토큰">동기화 토큰</span>이라는 이름이 붙어 있어요.</p>
+
+      <p>공격자의 페이지는 이 값을 채울 수 없습니다.
+      <span class="term" data-t="동일 출처 정책">동일 출처 정책</span> 때문에 남의 사이트의 문서를 읽을 수 없거든요.
+      우리 송금 페이지를 몰래 불러와 숨은 필드를 뽑아내는 것도, 그 페이지 안을 들여다보는 것도 안 됩니다.</p>
+
+      <p>여기가 이 방어의 핵심입니다 — <b>자동으로 붙지 않는 값이라서</b> 통해요.
+      쿠키는 브라우저가 알아서 붙여 주니까 공격자도 덕을 봤는데, 이 값은 우리 페이지를 읽을 수 있는 쪽만 채울 수 있습니다.
+      자동으로 붙지 않는다는 성질이 방어가 된다는 이 문장은 <a class="link" href="#choose">12장</a>에서 다시 걸려요.
+      증표를 쿠키가 아니라 <code>Authorization</code> 헤더로 보내는 방식에 CSRF 문제가 없는 이유가 정확히 같은 문장이거든요 —
+      그 헤더는 우리 코드가 붙여야 붙습니다.</p>
+
+      <h4>3. Origin·Referer 검사 — 서버가 출처를 직접 본다</h4>
+
+      <p>브라우저가 요청에 함께 실어 보내는 출처 정보를 서버가 직접 확인하고, 우리 것이 아니면 거절하는 방법입니다.
+      세션에 값을 따로 보관할 필요가 없는 게 장점이에요.</p>
+
+      <p>구멍은 <b>그 정보가 없을 때 무엇을 할지</b>에 있습니다. 없으면 통과시키기로 정해 두면 공격자는 없는 요청을 만들면 되고,
+      없으면 막기로 정하면 정상 요청 일부가 함께 걸려요. 그래서 이 방법은 단독으로 세우기보다 앞의 둘 위에 얹는 쪽으로 씁니다.</p>
+
+      <h3>🧯 "SameSite 기본값이 생겼으니 끝난 문제 아닌가"</h3>
+
+      <p>현장에서 이 방어를 통째로 걷어내게 만드는 문장이 하나 있습니다. 반쯤 맞아서 위험해요.</p>
+
+      <div class="myth">
+        <div class="m-row no">
+          <div class="m-x">✗</div>
+          <div class="m-txt"><b>"요즘 브라우저는 <code>SameSite</code> 기본이 <code>Lax</code>니까 CSRF는 옛날 이야기다"</b> —
+          아무것도 안 적어도 브라우저가 알아서 막아 준다는 이야기입니다.</div>
+        </div>
+        <div class="m-row yes">
+          <div class="m-x">✓</div>
+          <div class="m-txt"><b>규격 문서는 "일부" 브라우저가 그렇게 한다고 씁니다.</b> 전부라고 쓰지 않아요.
+          나머지에서는 아무 제한 없이 붙습니다. 어느 쪽이 될지를 우리가 아니라 <b>사용자가 무엇을 깔았느냐</b>가 정해요.</div>
+        </div>
+        <div class="m-row yes">
+          <div class="m-x">✓</div>
+          <div class="m-txt"><b>기본으로 적용된 <code>Lax</code>는 손으로 적은 <code>Lax</code>보다 느슨합니다.</b>
+          쿠키가 설정된 지 <b>2분</b>이 지나지 않았다면 교차 사이트 <code>POST</code>에도 붙여 줘요.
+          <b>로그인 직후가 정확히 그 2분입니다</b> — 공격자가 노리기 가장 좋은 구간이 그대로 열려 있는 셈이에요.</div>
+        </div>
+      </div>
+
+      <p>그러니 기본값에 기대는 것과 명시하는 것은 같은 상태가 아닙니다.
+      명시하지 않으면 방어의 강도를 우리가 모르고, 모르는 방어는 방어로 세지 않아요.</p>
+
+      <p>명시했다고 해도 <code>SameSite</code> 하나로 끝나지 않는 이유가 또 있습니다.
+      방금 정리한 규칙 때문이에요 — <b>서브도메인은 같은 사이트</b>입니다.
+      하위 도메인 하나가 뚫리거나 협력사에 내준 페이지 하나에 스크립트가 심기면,
+      거기서 만든 요청은 <code>SameSite</code>에게 남의 것이 아닙니다. 그래서 방어를 겹칩니다.</p>
+
+      <div class="demo" id="csrfLab">
+        <span class="demo-tag">공격 페이지 재현</span>
+        <p style="margin:0 0 10px">공격 페이지에서 공격을 하나 고르고, 우리 사이트 쪽에서 방어를 켰다 껐다 해 보세요.
+        한 번의 공격을 네 단계로 갈라서 판정합니다 —
+        <b>쿠키가 붙었나 · 요청이 닿았나 · 서버가 받아들였나 · 공격자가 결과를 읽었나.</b>
+        넷을 갈라 두는 이유는 셋째와 넷째가 자주 뒤섞이기 때문이에요.</p>
+        <div class="cs-grid">
+          <div class="cs-pane evil">
+            <div class="cs-h">😈 <b>evil.example</b> — 피해자가 방금 연 페이지</div>
+            <div class="picker" id="csAtk">
+              <button class="pick on" data-k="img">이미지 태그로 GET</button>
+              <button class="pick" data-k="form">자동 제출 폼으로 POST</button>
+              <button class="pick" data-k="f">fetch로 POST</button>
+            </div>
+            <div class="cs-code" id="csCode"></div>
+          </div>
+          <div class="cs-pane">
+            <div class="cs-h">🏦 <b>bank.example.com</b> — 피해자가 로그인해 둔 사이트</div>
+            <div class="verdict" style="margin-top:0">
+              <span class="badge ok">로그인됨</span>
+              <div class="cs-why" style="margin:0">세션 쿠키 <span class="mono">sid=8f2ac31b7d94</span>가 이 브라우저에 들어 있습니다. 그 탭은 닫히지 않았고요.</div>
+            </div>
+            <div class="cl-lab">방어 걸기</div>
+            <div class="cl-togs" id="csTogs">
+              <button class="tog" data-k="samesite">SameSite=Lax</button>
+              <button class="tog" data-k="token">CSRF 토큰</button>
+              <button class="tog" data-k="origin">Origin 검사</button>
+            </div>
+          </div>
+        </div>
+        <div id="csOut" aria-live="polite"></div>
+      </div>
+
+      <details class="spring">
+        <summary>Spring에서는 이 이름이다</summary>
+        <div class="sp-body">
+          <p><code>@EnableWebSecurity</code>를 쓰고 있다면 CSRF 방어는 <b>이미 켜져 있습니다.</b>
+          켜는 코드를 쓴 기억이 없어도 켜져 있어요. 기본값입니다.</p>
+          <p>그래서 이 기능은 대개 켜는 쪽이 아니라 <b>끄는 쪽</b>으로 처음 만나게 됩니다 —
+          멀쩡해 보이는 <code>POST</code>가 403으로 떨어지는데 이유를 모르겠을 때요.</p>
+          <p>무엇이 보호 대상인지는 알아 둘 만합니다. <b>서블릿과 리액티브가 다르거든요.</b></p>
+          <dl class="kv">
+            <dt>서블릿(MVC)</dt>
+            <dd>기본 매처가 <code>GET</code>·<code>TRACE</code>·<code>HEAD</code>·<code>OPTIONS</code>를 <b>제외한</b> 메서드를 보호합니다.
+            제외 목록을 적는 방식이에요.</dd>
+            <dt>리액티브(WebFlux)</dt>
+            <dd>기본 매처가 <code>PUT</code>·<code>POST</code>·<code>DELETE</code>를 보호합니다. 이쪽은 포함 목록을 적는 방식입니다.</dd>
+          </dl>
+          <p>두 목록이 같지 않다는 게 중요합니다. 제외 방식에서는 목록에 없는 메서드가 자동으로 보호 쪽에 들어가고,
+          포함 방식에서는 목록에 없으면 보호 밖이에요. <code>PATCH</code>가 그 사이에 놓입니다 —
+          서블릿 쪽 제외 목록에 없으니 보호되지만, 리액티브 쪽 포함 목록 셋에도 없어요.
+          "우리는 CSRF 켜져 있다"가 두 스택에서 같은 문장이 아니라는 뜻입니다.</p>
+          <p>토큰은 어디에 저장되나. 서블릿의 기본은 <code>HttpSessionCsrfTokenRepository</code>입니다 —
+          5장에서 본 그 세션 안이에요. 토큰 방식이 세션 위에 서 있다는 사실이 나중에 한 번 더 걸립니다.</p>
+          <p>그리고 <code>disable()</code>. 공식 문서가 조건을 못 박아 뒀습니다.</p>
+          <p style="border-left:2px solid var(--border-2); padding-left:12px; color:var(--text)">
+          “애플리케이션이 브라우저에서 전혀 쓰이지 않을 때만 권장된다.”</p>
+          <p>서버끼리만 부르는 API라면 해당합니다. 브라우저가 쿠키를 들고 오는 순간 해당하지 않아요.
+          <b>"REST API니까 끈다"는 근거가 되지 못합니다</b> — 판단 기준은 API의 모양이 아니라
+          <b>브라우저가 자동으로 붙여 주는 자격 증명을 쓰느냐</b>거든요.</p>
+        </div>
+      </details>
+
+      <div class="callout tip">
+        <h4>🧰 지금 당장 세워 둘 조합</h4>
+        <p>쿠키 세션으로 인증하는 서비스라면 <b><code>SameSite=Lax</code> + 동기화 토큰</b>이 출발점입니다.
+        앞은 브라우저가, 뒤는 서버가 서는 자리라 하나가 무너져도 다른 하나가 남아요.
+        <code>Origin</code> 검사는 그 위에 얹고, 그리고 <b>상태를 바꾸는 <code>GET</code>을 만들지 않는 것</b>이
+        여기 적은 어떤 설정보다 먼저입니다 — 위 실험실에서 <code>GET</code> 공격에 토큰을 걸어 보면 이유가 보여요.</p>
+      </div>
+
+      <p>4장의 편의에는 이런 대가가 달려 있었습니다. 브라우저가 성실히 붙여 준다는 것은
+      우리가 시키지 않은 요청에도 붙여 준다는 뜻이었고, 그 틈을 메우는 데 장 하나가 들었어요.</p>
+
+      <p>이제 세션도 섰고, 그 세션을 남이 부리는 길도 막았습니다. 5장에서 한 번 흔들렸던 자리 하나만 그대로 남아 있어요 —
+      <b>서버 재시작</b>을 눌렀을 때, 브라우저의 쿠키 상자는 아무것도 안 변했는데 로그인이 풀렸던 그 장면입니다.
+      서버가 한 대일 때도 그랬는데, 두 대가 되면 어떻게 될까요.</p>
+
+      <div class="oneline">
+        <span style="font-size:20px">🎣</span>
+        <div><strong>CSRF는 훔치지 않고 시키는 공격입니다.</strong>
+        브라우저가 목적지만 보고 쿠키를 붙이는 한 서버는 정상 요청과 구별할 수 없고,
+        그래서 방어는 전부 <b>자동으로 붙지 않는 무언가</b>를 요청에 더하거나 브라우저에게 붙이지 말라고 시키는 모양을 합니다.
+        세션은 이것으로 온전해졌는데, 그 세션이 어디에 놓여 있는지는 아직 그대로 열려 있어요.</div>
+      </div>
+
+      <div class="quiz" data-qid="q-csrf" data-answer="b">
+        <div class="q-head">✅ 체크포인트</div>
+        <div class="q">SPA를 만들고 있다. 인증은 <b>세션 쿠키</b>로 하고, 화면은 전부 자바스크립트가 API를 불러서 그린다.
+        팀에서 <code>csrf().disable()</code>을 넣자는 제안이 나왔다. 근거는 <b>"REST API니까"</b>. 어떻게 답해야 하나?</div>
+        <button class="opt" data-opt="a"><span class="mk">A</span> 맞다. REST API는 무상태로 설계하는 것이라 CSRF가 성립하지 않는다. 꺼도 된다</button>
+        <button class="opt" data-opt="b"><span class="mk">B</span> 쿠키로 인증하는 한 브라우저가 요청마다 자동으로 붙여 주므로 공격은 그대로 성립한다. 끄면 안 된다</button>
+        <button class="opt" data-opt="c"><span class="mk">C</span> <code>SameSite=Lax</code>만 걸어 두면 같은 효과가 나므로 CSRF 설정은 꺼도 무방하다</button>
+        <button class="opt" data-opt="d"><span class="mk">D</span> 서버가 JSON만 받도록 해 두면 폼으로는 공격할 수 없으니 꺼도 안전하다</button>
+        <div class="explain"><b>정답 B.</b> "REST API니까"에는 <b>브라우저</b>라는 단어가 한 번도 안 나옵니다.
+        그런데 판단을 가르는 것이 정확히 그 단어예요.
+        공식 문서가 끄는 조건을 이렇게 적어 뒀습니다 — <b>"애플리케이션이 브라우저에서 전혀 쓰이지 않을 때만 권장된다."</b>
+        이 SPA는 브라우저에서 쓰이고, 브라우저는 세션 쿠키를 자동으로 붙입니다. 조건에 해당하지 않아요.
+        <p style="margin:8px 0 0"><b>A</b>는 이름에 속은 답입니다. 무상태로 설계했다는 말과 브라우저가 쿠키를 자동으로 붙인다는 사실은 아무 관계가 없어요.
+        API가 아무리 REST다워도, 인증 자격이 쿠키에 실려 자동으로 따라오는 한 남의 페이지도 그 자동을 쓸 수 있습니다.</p>
+        <p style="margin:8px 0 0"><b>C</b>는 방향은 맞지만 한 겹을 통째로 걷어내는 제안입니다.
+        <code>SameSite</code>는 브라우저가 서 주는 방어이고, 기본값에 기대면 <b>일부 브라우저</b>와 <b>2분</b>이라는 구멍이 따라와요.
+        게다가 서브도메인은 같은 사이트라서, 하위 도메인 하나가 뚫리면 <code>SameSite</code>는 아무것도 막지 않습니다.</p>
+        <p style="margin:8px 0 0"><b>D</b>는 서버가 <b>다른 형식은 절대 안 받는다</b>는 데 방어를 통째로 걸고 있습니다.
+        프레임워크 기본 설정이 폼 형식도 함께 받아 주는 경우가 흔하고, 설정 한 줄이 바뀌면 방어가 조용히 사라져요.
+        막는 물건이 아니라 우연히 막히고 있는 상태에 가깝습니다.</p>
+        <p style="margin:8px 0 0">한 가지만 덧붙이면, <b>증표를 <code>Authorization</code> 헤더로 보낸다면 사정이 다릅니다.</b>
+        그 헤더는 브라우저가 자동으로 붙이지 않으니 남의 페이지가 요청을 만들어도 자격이 따라가지 않아요.
+        다만 자동을 포기하면 4장에서 쿠키로 얻었던 것들도 함께 포기하게 됩니다.
+        그 교환을 <a class="link" href="#choose">12장</a>에서 표로 놓고 따집니다.</p></div>
+      </div>
+    </section>
+
   </main>
 </div>
 
@@ -1334,6 +1823,12 @@ const GLOSSARY = {
   "최상위 내비게이션": "주소창의 문서 자체가 다른 것으로 교체되는 이동. 링크 클릭, 폼 제출, location 변경이 여기 든다. 이미지·스타일시트·fetch처럼 이미 떠 있는 페이지가 부품만 받아 오는 요청은 최상위 내비게이션이 아니다. SameSite=Lax가 열어 두는 예외가 정확히 이 구분 위에 서 있다.",
   "XSS": "공격자가 심은 스크립트가 피해자의 브라우저에서 그 사이트의 페이지로 실행되는 취약점. 크로스 사이트 스크립팅. 그 스크립트는 페이지가 할 수 있는 일을 전부 할 수 있다 — 화면을 바꾸고, 입력을 가로채고, 요청을 보낸다. HttpOnly는 이 스크립트가 쿠키 값을 읽어 가는 것만 막을 뿐, 스크립트가 도는 것 자체는 막지 않는다.",
   "work factor": "일부러 느리게 만든 해시 함수의 계산 비용을 정하는 값. 강도(strength)라고도 부른다. bcrypt에서는 반복 횟수의 밑이 2인 로그라서, 값이 12면 2의 12제곱인 4,096번을 돌린다. 그래서 1만 올려도 계산량이 정확히 두 배가 되고, 우리 서버의 검증 시간과 공격자의 대입 비용이 같은 배수로 함께 움직인다. bcrypt는 이 값을 해시 문자열 안에 함께 저장해서, 나중에 값을 올려도 이미 저장된 비밀번호를 그대로 검증할 수 있다.",
+  "세션": "서버 안에 열어 둔 칸 하나와, 그 칸을 여는 뜻 없는 난수 한 개의 짝. 누구인지·언제까지인지·무엇을 할 수 있는지는 전부 칸 안에 있고, 브라우저가 들고 다니는 것은 열쇠뿐이다. 그래서 브라우저는 자기가 누구인지 모르고, 서버는 요청마다 그 칸을 한 번 찾아본다.",
+  "세션 고정": "훔치는 대신 미리 쥐여 주는 공격. 공격자가 먼저 로그인하지 않은 세션을 하나 받아 두고 그 ID를 피해자의 브라우저에 심어 두면, 피해자가 그 상태로 로그인했을 때 서버가 이미 있는 칸에 로그인 정보를 채워 넣는다. 그 칸의 열쇠는 공격자도 갖고 있다. 방어는 로그인에 성공하는 순간 세션 ID를 새로 발급하는 것 하나뿐이다.",
+  "CSRF": "교차 사이트 요청 위조. 피해자가 로그인해 둔 사이트로 남의 페이지가 요청을 만들어 보내고, 브라우저가 거기에 세션 쿠키를 자동으로 붙여 주는 것을 이용한다. 훔쳐 가는 것이 아무것도 없다는 점이 특징이다 — 세션 ID를 읽지도 비밀번호를 알아내지도 않고, 브라우저를 시키기만 한다. 그래서 서버에 도착한 요청은 정상 요청과 바이트까지 같다.",
+  "등록 가능 도메인": "공개 접미사 목록(Public Suffix List)에 올라 있는 항목에 그 바로 앞 한 조각을 붙인 단위. example.com이나 example.co.kr 같은 것이고, eTLD+1이라고도 부른다. SameSite가 말하는 '사이트'가 바로 이 단위라서 서브도메인은 같은 사이트로 묶이고 포트는 판정에 끼지 않는다. 다만 SameSite 쿠키에서만은 스킴까지 함께 보는 더 엄격한 정의를 쓴다.",
+  "동기화 토큰": "서버가 세션마다 하나씩 만들어 두고, 쿠키가 아닌 자리(폼의 숨은 필드나 요청 헤더)에 실어 보내는 무작위 값. 요청이 오면 세션에 적어 둔 값과 실려 온 값을 맞춰 본다. 이 방어가 통하는 이유는 값이 복잡해서가 아니라 브라우저가 자동으로 붙여 주지 않기 때문이다 — 우리 페이지를 읽을 수 있는 쪽만 이 값을 채울 수 있다.",
+  "동일 출처 정책": "브라우저가 스크립트에게 거는 기본 제한. 자기 출처와 다른 출처의 문서 내용을 읽지 못하게 막는다. 요청을 보내는 것 자체를 막는 규칙이 아니라 읽는 것을 막는 규칙이라, 남의 사이트로 요청을 던지는 일은 되고 그 응답을 읽는 일만 안 된다. CSRF가 성립하는 자리와 동기화 토큰이 통하는 자리가 모두 이 구분 위에 있다.",
   // @GLOSSARY_END
 };
 
@@ -2065,6 +2560,380 @@ if(location.hash){
   state.same = 'Lax';
   wirePicker('#clSame', k => { state.same = k; render(state); });
   render(state);
+})();
+
+/* ============================================================
+   데모 5 — 서버 안을 들여다보기 (5장 · 세션)
+
+   세 칸이 같은 순간을 서로 다르게 본다는 것이 논지다. 브라우저는 난수 하나만 알고,
+   네트워크에는 그 난수만 흐르고, 내용은 전부 서버 쪽 Map에 있다.
+
+   `서버 재시작`은 Map만 비운다 — 쿠키도 네트워크도 건드리지 않는다. 그래서 브라우저 쪽에는
+   아무 변화가 없는데 다음 요청이 401이 된다. 7장으로 가는 다리가 이 한 줄이다.
+
+   세션 고정: 방어를 끄면 로그인 시점에 ID가 그대로 유지되므로 공격자가 심어 둔 ID가
+   로그인된 세션의 열쇠가 된다. 켜면 새 ID를 발급하고 옛 항목을 지운다(changeSessionId의 결과).
+   방어가 켜졌을 때만 로그인 응답에 Set-Cookie가 나가는 것도 그대로 보인다 —
+   ID를 바꾸지 않았다면 다시 내보낼 이유가 없다.
+
+   클래스 문자열은 조각내지 않고 분기마다 통째로 적는다. 이어 붙이면 사장 CSS 검사기가
+   `up`/`dn`/`cred` 같은 토큰을 "쓰이지 않음"으로 잘못 세기 때문이다.
+   ============================================================ */
+(function(){
+  const root = $('#sessionStore'); if(!root) return;
+  const elB = $('#ssBrowser'), elW = $('#ssWire'), elS = $('#ssStore'),
+        out = $('#ssOut'), atkOut = $('#ssAtkOut');
+
+  const WHO = '이름 가영 · 등급 회원 · 장바구니 3건';
+  const rid = () => (Math.random().toString(16).slice(2) + Math.random().toString(16).slice(2)).slice(0, 12);
+
+  const S = { cookie:null, store:{}, wire:[], atk:null };
+
+  function vd(kind, label, why){
+    const b = kind === 'ok'   ? '<span class="badge ok">'
+            : kind === 'bad'  ? '<span class="badge bad">'
+            : kind === 'warn' ? '<span class="badge warn">'
+            :                   '<span class="badge">';
+    return '<div class="verdict" style="align-items:flex-start">' + b + esc(label) + '</span>'
+         + '<div class="cs-why" style="margin:0">' + why + '</div></div>';
+  }
+  function lineHtml(l){
+    if(l.k === 'up')   return '<div class="ss-l up">'   + esc(l.t) + '</div>';
+    if(l.k === 'cred') return '<div class="ss-l cred">' + esc(l.t) + '</div>';
+    if(l.k === 'dn')   return '<div class="ss-l dn">'   + esc(l.t) + '</div>';
+    return '<div class="ss-l no">' + esc(l.t) + '</div>';
+  }
+  function push(k, t){ S.wire.push({ k:k, t:t }); if(S.wire.length > 18) S.wire.shift(); }
+
+  function renderBrowser(){
+    elB.innerHTML = S.cookie
+      ? '<div class="ss-key">sid=' + esc(S.cookie) + '</div>'
+        + '<div class="ss-val">브라우저가 아는 것은 이 문자열 하나뿐입니다. 이름도 등급도 여기 없어요.</div>'
+      : '<div class="ss-empty">비어 있음 — 붙일 쿠키가 없습니다.</div>';
+  }
+  function renderStore(){
+    const ks = Object.keys(S.store);
+    if(!ks.length){
+      elS.innerHTML = '<div class="ss-empty">비어 있음 — 서버가 아는 세션이 하나도 없습니다.</div>';
+      return;
+    }
+    elS.innerHTML = ks.map(k => {
+      const mark = (k === S.atk) ? ' · 공격자가 아는 ID' : '';
+      const v = S.store[k].user ? WHO : '아직 아무것도 없음 (로그인 전)';
+      return '<div class="ss-e"><div class="ss-key">' + esc(k) + '</div>'
+           + '<div class="ss-val">' + esc(v + mark) + '</div></div>';
+    }).join('');
+  }
+  function renderWire(){
+    elW.innerHTML = S.wire.length
+      ? S.wire.map(lineHtml).join('')
+      : '<div class="ss-empty">아직 아무것도 지나가지 않았습니다.</div>';
+    elW.scrollTop = elW.scrollHeight;
+  }
+  function renderAtk(){
+    if(!S.atk){
+      atkOut.innerHTML = vd('', '아직 없음',
+        '공격자도 우리 사이트에 그냥 들어와 <b>로그인하지 않은 세션</b>을 하나 받을 수 있습니다. 누구나 되는 일이니까요. '
+      + '그 ID를 피해자의 브라우저에 심는 것이 이 공격의 시작입니다.');
+      return;
+    }
+    const e = S.store[S.atk];
+    const id = '<span class="mono">' + esc(S.atk) + '</span>';
+    if(!e){
+      atkOut.innerHTML = vd('ok', '무효',
+        '공격자가 아는 ID ' + id + '로는 이제 아무 칸도 열리지 않습니다. '
+      + '서버의 표에서 그 항목이 사라졌거든요 — 그 문자열은 그냥 문자열이 됐어요.');
+    } else if(e.user){
+      atkOut.innerHTML = vd('bad', '로그인됨 — 가영',
+        '공격자가 처음부터 알고 있던 ID ' + id + '가 <b>로그인된 세션의 열쇠</b>가 됐습니다. '
+      + '공격자는 그 값을 자기 브라우저의 쿠키로 넣기만 하면 가영으로 로그인된 화면을 받아요. '
+      + '비밀번호를 알아낸 적도, 무언가를 훔친 적도 없습니다.');
+    } else {
+      atkOut.innerHTML = vd('warn', '익명 세션',
+        'ID ' + id + '가 피해자의 쿠키 상자에 들어갔습니다. 아직은 아무것도 안 든 칸이라 공격자에게 쓸모가 없어요. '
+      + '<b>피해자가 이 상태로 로그인하면</b> 그 칸이 채워집니다 — <code>로그인</code>을 눌러 보세요.');
+    }
+  }
+  function sync(){
+    const authed = !!(S.cookie && S.store[S.cookie] && S.store[S.cookie].user);
+    $('#ssLogin').disabled  = authed;
+    $('#ssLogout').disabled = !authed;
+    $('#ssPlant').disabled  = authed;
+  }
+  function render(html){
+    renderBrowser(); renderStore(); renderWire(); renderAtk(); sync();
+    if(html !== undefined) out.innerHTML = html;
+  }
+
+  function login(){
+    const had = !!(S.cookie && S.store[S.cookie]);
+    push('up', '→ POST /login   Cookie: ' + (S.cookie ? 'sid=' + S.cookie : '없음'));
+    push('cred', '     아이디=gayoung&비밀번호=••••••••');
+
+    const old = S.cookie;
+    let sid, rotated;
+    if(had && !st.def){ sid = old; rotated = false; }
+    else { if(had) delete S.store[old]; sid = rid(); rotated = true; }
+    S.store[sid] = { user:true };
+    S.cookie = sid;
+
+    if(rotated) push('dn', '← 200 OK   Set-Cookie: sid=' + sid + '; HttpOnly; Secure; SameSite=Lax');
+    else        push('dn', '← 200 OK   (Set-Cookie 없음 — ID를 바꾸지 않았습니다)');
+
+    if(had && !rotated){
+      render(vd('bad', '세션 고정 성립',
+        '로그인 <b>전</b>에 쓰던 ID가 그대로 로그인된 세션의 열쇠가 됐습니다. 방어를 껐으니 서버가 ID를 바꿀 이유를 못 찾은 거예요. '
+      + '네트워크 칸을 보세요 — 응답에 <code>Set-Cookie</code>가 아예 없습니다. 브라우저는 아무것도 달라진 걸 모르고요.'));
+    } else if(had && rotated){
+      render(vd('ok', '로그인 — ID 교체됨',
+        '로그인이 성공하는 순간 새 ID를 발급하고 옛 칸(<span class="mono">' + esc(old) + '</span>)을 지웠습니다. '
+      + '응답의 <code>Set-Cookie</code> 값이 아까와 다른지 확인해 보세요. 심어 뒀던 열쇠는 이제 아무 칸도 열지 못합니다.'));
+    } else {
+      render(vd('ok', '로그인 완료',
+        '서버가 칸을 하나 열고 이 사람에 대해 아는 것을 넣은 다음, <b>ID만</b> 내보냈습니다. '
+      + '<b>서버 칸</b>에는 이름·등급·장바구니가 생겼는데 <b>브라우저 칸</b>에는 난수뿐이에요. 이 비대칭이 세션의 전부입니다.'));
+    }
+  }
+
+  function request(){
+    push('up', '→ GET /cart   ' + (S.cookie ? 'Cookie: sid=' + S.cookie : '(쿠키 없음)'));
+    const e = S.cookie ? S.store[S.cookie] : null;
+
+    if(e && e.user){
+      push('dn', '← 200 OK   (장바구니 화면)');
+      render(vd('ok', '200 OK',
+        '서버가 <code>sid</code>로 표를 한 번 찾아 그 칸을 열었습니다. 올라간 줄에는 난수 하나뿐인데 서버는 가영을 알아봤어요. '
+      + '화면에 이름이 보이는 건 서버가 찾아서 그려 준 것이지, 브라우저가 알고 있어서가 아닙니다.'));
+    } else if(e){
+      push('dn', '← 200 OK   (로그인 화면)');
+      render(vd('warn', '칸은 있는데 비어 있음',
+        '열쇠에 맞는 칸이 있긴 한데 아직 아무것도 안 들어 있습니다. 로그인하지 않은 방문자의 세션이에요 — '
+      + '장바구니 같은 것만 담아 둘 수 있고, 신원은 없습니다.'));
+    } else if(S.cookie){
+      push('dn', '← 401 Unauthorized');
+      render(vd('bad', '401 — 쿠키는 그대로인데',
+        '브라우저는 아까와 <b>똑같은 쿠키</b>를 보냈습니다. 달라진 것은 서버 쪽뿐이에요 — 표에 그 열쇠에 맞는 칸이 없습니다. '
+      + '사용자에게는 갑자기 로그아웃된 것으로 보이고, 브라우저에는 아무 흔적도 남지 않아요. '
+      + '이 어긋남이 <a class="link" href="#twoservers">7장</a>의 출발점입니다.'));
+    } else {
+      push('dn', '← 401 Unauthorized');
+      render(vd('warn', '401 — 붙일 쿠키가 없음',
+        '쿠키 상자가 비어 있으니 요청에 열쇠가 안 붙습니다. 서버는 이 요청을 처음 보는 사람의 요청으로 처리해요.'));
+    }
+  }
+
+  function logout(){
+    push('up', '→ POST /logout   Cookie: sid=' + S.cookie);
+    delete S.store[S.cookie];
+    push('dn', '← 200 OK   Set-Cookie: sid=; Max-Age=0');
+    S.cookie = null;
+    render(vd('ok', '로그아웃',
+      '표에서 칸을 지웠습니다. 쿠키를 지우는 건 덤이에요 — 칸이 없으면 그 열쇠는 이미 아무것도 아니니까요. '
+    + '이게 3장에서 셌던 <b>회수</b>입니다. 항목 하나만 지우면 그 로그인 하나만 끊깁니다.'));
+  }
+
+  function restart(){
+    const n = Object.keys(S.store).length;
+    S.store = {};
+    push('no', '· 서버 재시작 — 네트워크에는 아무 일도 일어나지 않았습니다');
+    render(vd('warn', '메모리가 비었다',
+      '프로세스 메모리에 있던 표가 통째로 사라졌습니다(' + n + '개). '
+    + '<b>브라우저 칸을 보세요 — 쿠키는 한 글자도 안 변했습니다.</b> 네트워크에도 아무것도 흐르지 않았고요. '
+    + '이제 <code>요청 보내기</code>를 눌러 보면 같은 쿠키로 401이 돌아옵니다. '
+    + '배포 한 번이면 로그인해 있던 전원이 같은 일을 겪는데, 이게 서버가 <b>한 대</b>일 때의 이야기예요.'));
+  }
+
+  function plant(){
+    const id = rid();
+    S.atk = id;
+    S.store[id] = { user:false };
+    S.cookie = id;
+    push('up', '→ GET /shop;jsessionid=' + id + '   (공격자가 보낸 링크로 들어옴)');
+    push('dn', '← 200 OK   Set-Cookie: sid=' + id);
+    render(vd('warn', 'ID가 심겼다',
+      '공격자가 먼저 우리 사이트에서 빈 세션 하나를 받아 두고, 그 ID가 박힌 링크를 피해자에게 보냈습니다. '
+    + '피해자의 쿠키 상자에 <b>공격자가 아는 값</b>이 들어갔어요. 지금까지는 아무 피해도 없습니다 — 빈 칸이니까요. '
+    + '이 상태로 <code>로그인</code>을 눌러 보세요.'));
+  }
+
+  const START = vd('', '시작 상태', '아직 아무 일도 없었습니다. <code>로그인</code>부터 눌러 보세요.');
+
+  function reset(){
+    S.cookie = null; S.store = {}; S.wire = []; S.atk = null;
+    render(START);
+  }
+
+  const st = wireTogs('#ssDefTogs', () => {
+    out.innerHTML = st.def
+      ? vd('ok', '방어 켬', '로그인이 성공하는 순간 세션 ID를 새로 발급합니다. Servlet 3.1 이상에서의 기본 동작이에요.')
+      : vd('bad', '방어 끔', '로그인 전후로 세션 ID가 그대로 유지됩니다. <code>공격자가 ID 심기</code> → <code>로그인</code> 순서를 밟아 보세요.');
+  });
+
+  $('#ssLogin').addEventListener('click', login);
+  $('#ssReq').addEventListener('click', request);
+  $('#ssLogout').addEventListener('click', logout);
+  $('#ssRestart').addEventListener('click', restart);
+  $('#ssPlant').addEventListener('click', plant);
+  $('#ssReset').addEventListener('click', reset);
+
+  render(START);
+})();
+
+/* ============================================================
+   데모 6 — 공격 페이지 재현 (6장 · CSRF)
+
+   한 번의 공격을 네 단계로 가르는 것이 이 데모의 전부다.
+     1) 브라우저가 쿠키를 붙였나  — SameSite가 서는 자리
+     2) 요청이 서버에 닿았나      — 언제나 닿는다. 브라우저가 정하는 것은 무엇을 붙일지뿐이다
+     3) 서버가 받아들였나         — 토큰·Origin이 서는 자리
+     4) 공격자가 결과를 읽었나    — 언제나 못 읽는다. 그리고 그것은 공격의 실패가 아니다
+
+   셋째와 넷째를 가르지 않으면 "CORS가 막아 준다"는 오해가 그대로 남는다.
+
+   SameSite 미지정은 결과를 하나로 못 낸다(MDN이 "some browsers"라고 쓴다).
+   판정은 붙은 쪽 — 최악 — 을 기준으로 이어 간다. 방어를 그렇게 봐야 해서다.
+   2분 예외는 4장 데모와 같은 기준으로 폼 POST(최상위 POST 내비게이션)에만 붙인다.
+
+   GET에 토큰이 안 걸리는 것은 서블릿 기본 매처가 GET을 제외 목록에 두기 때문이다.
+   이 조합이 이 데모에서 가장 놀라운 칸이라 따로 설명을 붙인다.
+
+   주의: 데모 데이터의 예시 URL은 화살표 표기로 적는다. 태그와 src를 붙여 쓰거나
+   네트워크 호출 함수 이름을 그대로 쓰면 검사기가 진짜 외부 요청으로 잡는다.
+   ============================================================ */
+(function(){
+  const root = $('#csrfLab'); if(!root) return;
+  const codeEl = $('#csCode'), out = $('#csOut');
+
+  const ATK = {
+    img: {
+      name:'이미지 태그로 GET', method:'GET', top:false, twoMin:false,
+      code:'evil.example 페이지의 <img> — 보이지도 않는 1×1 이미지\n'
+         + '  → GET https://bank.example.com/transfer?to=공격자계좌&amount=1000000',
+      sameNote:'이 요청은 <b>최상위 내비게이션이 아닙니다</b> — 이미 떠 있는 evil.example 페이지가 부품 하나를 받아 오는 요청이니까요. '
+             + '<code>Lax</code>의 예외에 들지 못해 쿠키가 빠집니다.',
+      readNote:'돌아온 것은 이미지가 아니니 화면에 그려지지도 않고, 공격자의 스크립트가 그 내용을 읽을 방법도 없습니다. '
+             + '공격자는 성공했는지조차 몰라요 — 알 필요도 없고요.'
+    },
+    form: {
+      name:'자동 제출 폼으로 POST', method:'POST', top:true, twoMin:true,
+      code:'evil.example 페이지의 <form> — 뜨자마자 스스로 제출됩니다\n'
+         + '  → POST https://bank.example.com/transfer\n'
+         + '     받는사람=공격자계좌&금액=1000000',
+      sameNote:'<code>Lax</code>의 예외는 <b>안전한 메서드</b>에만 열려 있습니다. 폼 제출은 최상위 이동이지만 <code>POST</code>라 걸려요.',
+      readNote:'응답이 그려지는 곳은 피해자의 탭입니다. 공격자는 그 화면을 볼 수 없어요. '
+             + '보통은 눈에 안 띄는 프레임 안에서 제출해 피해자도 모르게 만듭니다.'
+    },
+    f: {
+      name:'fetch로 POST', method:'POST', top:false, twoMin:false,
+      code:'evil.example 페이지의 스크립트 — 폼과 같은 형식으로, 자격 증명을 포함해서\n'
+         + '  → POST https://bank.example.com/transfer\n'
+         + '     (형식이 폼과 같아 브라우저가 미리 물어보는 절차 없이 바로 나갑니다)',
+      sameNote:'스크립트가 만든 요청은 최상위 내비게이션이 아닙니다. <code>Lax</code>의 예외 근처에도 못 가요.',
+      readNote:'<b>CORS가 응답을 막습니다.</b> 콘솔에 빨간 줄이 뜨고 공격자의 코드는 에러를 받아요. '
+             + '그런데 그 에러가 뜬 시점에 서버 쪽 처리는 <b>이미 끝나 있습니다.</b> '
+             + '브라우저가 막은 것은 <b>읽기</b>지 <b>보내기</b>가 아니거든요 — "읽지 못함"과 "일어나지 않음"은 다릅니다.'
+    }
+  };
+
+  function vd(kind, label, title, why){
+    const b = kind === 'ok'   ? '<span class="badge ok">'
+            : kind === 'bad'  ? '<span class="badge bad">'
+            : kind === 'warn' ? '<span class="badge warn">'
+            :                   '<span class="badge">';
+    return '<div class="verdict" style="align-items:flex-start">' + b + esc(label) + '</span>'
+         + '<div><div class="cs-q">' + esc(title) + '</div>'
+         + '<div class="cs-why">' + why + '</div></div></div>';
+  }
+
+  function render(k, d){
+    const a = ATK[k];
+    codeEl.innerHTML = esc(a.code).replace(/\n/g, '<br>');
+
+    let html = '';
+    let attached;
+
+    /* 1단계 — 브라우저가 쿠키를 붙였나 */
+    if(d.samesite){
+      attached = false;
+      html += vd('ok', '안 붙었다', '1. 브라우저가 쿠키를 붙였나',
+        '<code>SameSite=Lax</code>가 걸려 있습니다. ' + a.sameNote);
+    } else {
+      attached = true;
+      let why = '<code>SameSite</code>를 <b>안 적었습니다.</b> 기본을 <code>Lax</code>로 두는 브라우저에서는 안 붙고, '
+              + '기본을 두지 않는 브라우저에서는 <b>붙습니다.</b> 아래 판정은 붙은 쪽으로 이어 가요 — 방어는 최악을 기준으로 봐야 하니까요.';
+      if(a.twoMin){
+        why += ' 게다가 기본으로 적용된 <code>Lax</code>는 손으로 적은 <code>Lax</code>보다 느슨해서, '
+             + '쿠키가 설정된 지 <b>2분</b>이 안 됐다면 교차 사이트 <code>POST</code>에도 실어 보냅니다. '
+             + '로그인 직후가 정확히 그 2분이에요.';
+      }
+      html += vd('warn', '브라우저마다 다름', '1. 브라우저가 쿠키를 붙였나', why);
+    }
+
+    /* 2단계 — 요청이 닿았나. 언제나 닿는다 */
+    html += vd('warn', '닿았다', '2. 요청이 서버에 닿았나',
+      '브라우저가 정하는 것은 <b>무엇을 붙여 보낼지</b>이지 보낼지 말지가 아닙니다. '
+    + '쿠키가 빠졌더라도 <code>POST /transfer</code>라는 요청 자체는 <code>bank.example.com</code>에 도착했어요. '
+    + '접근 로그에도 한 줄 남습니다.');
+
+    /* 3단계 — 서버가 받아들였나 */
+    let done = false, getHole = false;
+    if(!attached){
+      html += vd('ok', '거절 — 로그인 안 된 요청', '3. 서버가 받아들였나',
+        '쿠키가 없으니 서버는 5장의 표를 열 열쇠를 못 받았습니다. 처음 보는 사람의 송금 요청이 되고, 로그인 화면으로 돌려보내요.');
+    } else if(d.origin){
+      html += vd('ok', '거절 — 출처가 남의 것', '3. 서버가 받아들였나',
+        '요청에 함께 실려 온 출처가 <code>evil.example</code>입니다. 우리 것이 아니니 거절해요. '
+      + '다만 출처 정보가 <b>아예 없는</b> 요청을 어떻게 처리할지 정해 두지 않으면 여기에 구멍이 남습니다.');
+    } else if(d.token && a.method !== 'GET'){
+      html += vd('ok', '거절 — 토큰 없음', '3. 서버가 받아들였나',
+        '세션에 적어 둔 값과 맞춰 볼 토큰이 요청에 없습니다. 공격자는 우리 페이지를 읽을 수 없어서 그 값을 채울 방법이 없어요. '
+      + '403으로 떨어집니다.');
+    } else if(d.token && a.method === 'GET'){
+      done = true; getHole = true;
+      html += vd('bad', '처리됨 — 검사가 돌지 않았다', '3. 서버가 받아들였나',
+        '토큰 방어를 켜 뒀는데 <b>검사가 아예 돌지 않았습니다.</b> 기본 설정에서 <code>GET</code>은 보호 대상이 아니거든요 — '
+      + '읽기만 하는 메서드라고 보기 때문이에요. 그런데 이 <code>GET</code>은 돈을 옮깁니다. '
+      + '틀린 것은 방어가 아니라 <b>상태를 바꾸는 <code>GET</code>을 만들어 둔 쪽</b>입니다.');
+    } else {
+      done = true;
+      html += vd('bad', '처리됨 — 송금 실행', '3. 서버가 받아들였나',
+        '세션도 유효하고 거절할 근거도 없습니다. 서버가 보기에 이 요청은 피해자가 직접 버튼을 눌러 만든 요청과 <b>바이트까지 같아요.</b>');
+    }
+
+    /* 4단계 — 공격자가 읽었나. 언제나 못 읽는다 */
+    html += vd('warn', '못 읽는다', '4. 공격자가 결과를 읽었나', a.readNote);
+
+    /* 최종 판정 */
+    const caught = [];
+    if(d.samesite) caught.push('<code>SameSite=Lax</code>');
+    if(d.origin)   caught.push('<code>Origin</code> 검사');
+    if(d.token && a.method !== 'GET') caught.push('CSRF 토큰');
+
+    if(done){
+      html += vd('bad', '💸 송금됨',
+        a.name + ' — 공격 성공',
+        (getHole
+          ? '토큰이 켜져 있는데도 통과했습니다. <code>GET</code>은 기본 보호 대상 밖이라 검사가 돌 자리가 없었어요. '
+          + '설정으로 <code>GET</code>까지 보호 대상에 넣는 것보다 먼저 할 일은 <b>이 기능을 <code>POST</code>로 바꾸는 것</b>입니다.'
+          : '피해자는 아무것도 누르지 않았고, 공격자는 아무것도 훔치지 않았습니다. 그런데 돈은 옮겨졌어요. '
+          + '방어를 하나라도 켜 보면 어디서 걸리는지 보입니다.'));
+    } else {
+      html += vd('ok', '🛡️ 막혔다',
+        a.name + ' — 공격 실패',
+        '막은 것: ' + caught.join(' · ')
+      + (caught.length > 1
+          ? '. 겹쳐 두면 하나가 무너져도 다음이 받습니다 — 브라우저가 서는 방어와 서버가 서는 방어는 무너지는 이유가 다르거든요.'
+          : ' 하나뿐입니다. 이게 무너지는 경우를 생각해 보면 겹쳐야 하는 이유가 나와요.')
+      + ' 그리고 4단계는 여전히 <b>못 읽는다</b>인데, 그건 방어가 아니라 원래 그런 것이었습니다.');
+    }
+
+    out.innerHTML = html;
+  }
+
+  let cur = 'img';
+  const d = wireTogs('#csTogs', () => render(cur, d));
+  wirePicker('#csAtk', k => { cur = k; render(cur, d); });
+  render(cur, d);
 })();
 </script>
 </body>
