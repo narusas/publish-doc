@@ -1028,8 +1028,7 @@ pre.language-bash{background:var(--bg); border-color:var(--border-2)}
         그래서 서버를 몇 대로든 늘릴 수 있고, 한 대가 죽어도 나머지가 그 몫을 받아 냅니다.
         웹이 이만큼 커진 이유의 상당 부분이 여기 있어요. 그런데 로그인은 정확히 그 반대를 요구합니다 —
         <strong>이 요청을 보낸 사람이 아까 그 사람인지</strong>를 알아야 하니까요.
-        로그인이란 결국 무상태 위에 상태를 얹는 일이고, 그렇게 얹은 것이 어떻게 무너지는지가
-        <a class="link" href="#twoservers">7장</a>에서 마주칠 증상입니다.</p>
+        로그인이란 결국 무상태 위에 상태를 얹는 일입니다.</p>
       </div>
 
       <div class="oneline">
@@ -1598,7 +1597,7 @@ server.servlet.session.cookie.max-age=30m</code></pre>
           개발자 도구에서 <code>JSESSIONID</code>를 본 적이 있다면 그게 이 값이에요.</p>
           <p>다만 이 다섯 줄이 언제까지 유효한지는 <b>세션을 어디에 저장하느냐</b>에 달려 있습니다.
           저장소를 애플리케이션 바깥으로 옮기면 쿠키를 만들어 내는 주체가 바뀌고, 그러면 손댈 곳도 이 설정이 아니게 돼요.
-          그 옮기는 작업을 <a class="link" href="#sharing">8장</a>에서 직접 합니다 — 거기서 이 설정 이야기를 다시 꺼냅니다.</p>
+          그 옮기는 작업을 <a class="link" href="#sharing">8장</a>에서 직접 합니다 — 위 다섯 줄이 어디로 옮겨 가는지도 거기서 드러나요.</p>
         </div>
       </details>
 
@@ -1803,8 +1802,7 @@ Object cart = session.getAttribute("cart");</code></pre>
 
       <p>깔끔한데, 4장에서 얻었던 편의 하나가 이 그림 위에서 갑자기 다르게 읽힙니다.
       브라우저가 요청마다 알아서 붙여 준다고 했죠. 거기 <b>누가 그 요청을 만들었든</b>이라는 단서가 딸려 있었어요.
-      지금 그 자동이 나르고 있는 것은 로그인된 사람의 열쇠입니다.
-      그 열쇠를 남이 대신 쓰게 만드는 방법이 <a class="link" href="#csrf">6장</a>에 있고요.</p>
+      지금 그 자동이 나르고 있는 것은 로그인된 사람의 열쇠입니다.</p>
 
       <div class="oneline">
         <span style="font-size:20px">🗄️</span>
@@ -2102,7 +2100,7 @@ Content-Type: application/x-www-form-urlencoded
         <p style="margin:8px 0 0">한 가지만 덧붙이면, <b>증표를 <code>Authorization</code> 헤더로 보낸다면 사정이 다릅니다.</b>
         그 헤더는 브라우저가 자동으로 붙이지 않으니 남의 페이지가 요청을 만들어도 자격이 따라가지 않아요.
         다만 자동을 포기하면 4장에서 쿠키로 얻었던 것들도 함께 포기하게 됩니다.
-        그 교환을 <a class="link" href="#choose">12장</a>에서 표로 놓고 따집니다.</p></div>
+        무엇을 내주고 무엇을 받는지는 <a class="link" href="#choose">12장</a>이 쿠키와 헤더를 나란히 놓고 따집니다.</p></div>
       </div>
     </section>
 
@@ -2741,9 +2739,8 @@ Content-Type: application/x-www-form-urlencoded
         <p style="margin:8px 0 0"><b>D</b>는 사실이라 해도 고르는 이유가 못 됩니다.
         앞에서 본 네 장면 어디에도 라이브러리가 없어서 막힌 대목은 없었어요.
         라이브러리는 결정을 내린 뒤에 편해지는 것이지, 무엇을 팔지 정해 주지 않습니다.</p>
-        <p style="margin:8px 0 0">제안 자체도 한 칸 성급합니다. 서비스가 여러 개라는 말만으로는 넷 중 무엇이 걸렸는지 알 수 없거든요 —
-        조회가 걸린 것인지 쿠키가 걸린 것인지에 따라 답이 갈립니다.
-        그 갈래를 <a class="link" href="#choose">12장</a>에서 표로 놓습니다.</p></div>
+        <p style="margin:8px 0 0">제안 자체도 한 칸 성급합니다. 서비스가 여러 개라는 말만으로는 넷 중 무엇이 걸렸는지 알 수 없고,
+        무엇이 걸렸는지를 모르면 갈래를 바꿔서 무엇을 사는지도 모르는 채로 팔게 되거든요.</p></div>
       </div>
     </section>
 
@@ -3179,7 +3176,7 @@ payload → {"sub":"alice","role":"user","exp":1786000000}</code></pre>
       이 갈래가 실제로 손에 쥔 것이 그 둘이고요.</p>
 
       <p>그러니 저울에 올릴 것이 다 나왔습니다. 한쪽에 산 것 둘, 다른 쪽에 늘어난 물건 셋.
-      어느 쪽으로 기우는지는 <b>우리 서비스가 무엇에 걸렸느냐</b>로 갈립니다 — 그 갈래를 <a class="link" href="#choose">12장</a>이 답니다.</p>
+      어느 쪽으로 기우는지는 <b>우리 서비스가 무엇에 걸렸느냐</b>로 갈립니다.</p>
 
       <div class="oneline">
         <span style="font-size:20px">⏳</span>
