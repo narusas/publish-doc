@@ -17,8 +17,34 @@
 
 - Spring Security 5의 `SecurityContextPersistenceFilter`(읽기+쓰기)가 6에서
   **`SecurityContextHolderFilter`(읽기 전용)로 대체**되었다.
-- `requireExplicitSave`는 **6에서 기본 true**다. `.requireExplicitSave(true)`를 명시하는 설정
-  예제가 레퍼런스에 있지만, 그것은 5의 동작을 보존하려는 **마이그레이션 용도**의 반대편 설명이다.
+- `requireExplicitSave`는 **6에서 기본 true**다.
+
+  **⚠️ 정정 (2026-08-15) — 이 자리에 내가 틀린 문장을 썼었다.**
+  원래 "`.requireExplicitSave(true)` 예제는 5의 동작을 보존하려는 마이그레이션 용도의 반대편
+  설명"이라고 적었다. **틀렸다.** 13장 리뷰어가 1차 출처로 잡아냈고, 재확인 결과 방향이 반대다.
+
+  | 값 | 세워지는 필터 | 동작 | 누가 쓰나 |
+  |---|---|---|---|
+  | `true` | `SecurityContextHolderFilter` | 읽기만 — **6의 동작** | **6의 기본값.** 명시할 필요 없다 |
+  | `false` | `SecurityContextPersistenceFilter` | 자동 저장 — **5의 동작** | 5의 동작을 보존하려는 마이그레이션 |
+
+  > "In summary, when `requireExplicitSave` is `true`, Spring Security sets up **the
+  > `SecurityContextHolderFilter`** instead of the `SecurityContextPersistenceFilter`."
+  > — [Session Management](https://docs.spring.io/spring-security/reference/6.5/servlet/authentication/session-management.html)
+
+  마이그레이션 가이드의 `.requireExplicitSave(true)` 예제 바로 앞 문장:
+
+  > "If you are explicitly opting into Spring Security 6's new defaults, **the following
+  > configuration can be removed** to accept the Spring Security 6 defaults."
+  > — [Session Management Migrations](https://docs.spring.io/spring-security/reference/6.5/migration/servlet/session-management.html)
+
+  즉 그 예제는 **5.7/5.8에서 6의 동작을 미리 켜 두려던 사람들을 위한 것**이고, 6에 오면
+  군더더기라 지워도 된다. **5의 자동 저장을 유지하려면 `false`를 써야 한다.**
+
+  **교훈**: "이 항목은 낡은 블로그가 자주 틀린다"고 경고해 놓은 바로 그 자리에서 내가 틀렸다.
+  그리고 재확인 중에도 요약 한 쪽이 자기가 인용한 문장과 모순되는 결론을 냈다 — 인용문
+  (`true` → `SecurityContextHolderFilter`)이 맞고 요약이 틀렸다. **인용문과 요약이 어긋나면
+  인용문을 믿는다.**
 - 이유: "removes ambiguity and improves performance by only requiring writing to the
   `SecurityContextRepository` (i.e. HttpSession) when it is necessary."
 
