@@ -187,6 +187,31 @@
 포트 무시와 **schemeful same-site**를 함께 쓴다. 후자는 `Secure`의 localhost 예외와 묶어
 "로컬에선 되는데 배포하면 안 된다"의 또 다른 원인으로 설명할 수 있다.
 
+### V6 재보강 — 2분 예외("Lax+POST")의 정확한 범위와 성격 (2026-08-14, 5~6장 리뷰 중)
+
+6장 구현자가 데모에서 2분 예외를 **폼 POST(최상위 내비게이션)에만** 걸고 `fetch` POST에는
+안 걸었다. 리뷰어가 "실제 동작에 부합할 가능성이 높으나 facts만으로는 확정 불가"로 표시해
+확인했다.
+
+출처: [Chromium — SameSite FAQ](https://www.chromium.org/updates/same-site/faq/),
+[SameSite Updates](https://www.chromium.org/updates/same-site/)
+
+- **범위: 최상위 교차 사이트 POST에 한정된다.** Chrome은 2분 이하로 갓 설정된 쿠키에 대해
+  "Lax+POST" 예외를 두어 **top-level cross-site POST**에 실어 보낸다. 일반 `Lax`는 이걸
+  제외한다. → **구현자의 범위 한정이 맞다.** `fetch`/XHR 같은 배경 POST는 최상위 내비게이션이
+  아니므로 해당하지 않는다.
+- **왜 생겼나**: 교차 사이트 POST로 CSRF 토큰을 받는 기존 SSO 구현들을 깨뜨리지 않으려는
+  임시 조치다.
+- **⚠️ 그리고 이것은 한시적이다.** Chromium 문서가 직접 말한다 — 이 예외는 이후 릴리스에서
+  단계적으로 없어지며 *"purely a temporary solution and will be removed in the future"*.
+  **Chrome에 국한된 완화이지 표준 동작이 아니다.**
+
+→ **이 한시성은 6장의 논지를 오히려 강하게 만든다.** "기본값이 생겼으니 CSRF는 끝"이 틀린
+이유가 하나 더 늘어난다. 기본값과 그 예외는 **브라우저가 자기 사정으로 언제든 바꾸는 것**이고,
+실제로 바뀌는 중이다. 그러니 기대지 말고 명시하라 — 이것이 더 정확하고 더 오래 가는 교훈이다.
+
+서술할 때 "2분 예외"를 **모든 브라우저의 항구적 규칙처럼 쓰지 않는다.**
+
 ---
 
 ## V7 · Spring Security의 CSRF 기본값 — **확인됨**
