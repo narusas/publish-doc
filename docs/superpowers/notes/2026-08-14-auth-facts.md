@@ -135,6 +135,36 @@
 부가로 확인된, 문서에 쓸 만한 사실: DeltaManager는 **앱이 배포되지도 않은 노드에까지** 복제한다.
 낭비의 성격을 한 줄로 보여 주는 좋은 예다.
 
+### V5 보강 — 백업형에서 "사본이 없는 노드"는 어떻게 되나 (2026-08-14, 8장 리뷰 중)
+
+8장 구현자가 `#replCost` 표에 백업형의 요청당 원격 조회를 **`0~1`**로 적었다. 근거는
+"사본이 두 곳뿐이니 나머지는 받아 와야 한다"는 산술이었다. 리뷰어가 **"받아 온다는 결과
+자체가 근거 없는 가정"**이라고 지적했고, 확인 결과 리뷰어가 맞다.
+
+출처: [Tomcat 10.1 — Cluster Manager 설정](https://tomcat.apache.org/tomcat-10.1-doc/config/cluster-manager.html)
+
+**확인된 것:**
+> "The `org.apache.catalina.ha.session.BackupManager` also replicates deltas but only to one
+> backup node. **The location of the backup node is known to all nodes in the cluster.**"
+
+> "For this manager, only sessions where the current node is the primary node for the session
+> are considered active sessions."
+
+**확인되지 않은 것 — 그리고 이것이 핵심이다:**
+사본을 갖지 않은 제3의 노드에 그 세션의 요청이 도착했을 때 **무슨 일이 일어나는지 Tomcat
+문서는 말하지 않는다.** 프락시 세션 개념도, 원격 조회·재배치 메커니즘도 문서에 없다.
+
+→ **`0~1`이라는 수치는 "원격 조회가 성공한다"는 미확인 동작을 전제로 한다.** 8장이 스스로
+"구조에서 나오는 수만 쓴다"고 선을 그은 자리에서, 구조가 보장하지 않는 결과를 수치화했다.
+
+**쓸 수 있는 것은 여기까지다:**
+- 사본은 두 곳에만 있다 (구조)
+- **백업 노드의 위치는 클러스터의 모든 노드가 안다** (확인됨 — 최소한 어디를 볼지는 안다)
+- 나머지 노드가 그 요청을 실제로 어떻게 처리하는지는 **문서 밖이고, 구현과 LB 설정에 달렸다**
+
+이 셋으로도 논점은 선다. 오히려 "위치는 알지만 그다음은 보장되지 않는다"가 더 정확하고,
+sticky 라우팅이 백업형의 숨은 전제라는 것까지 드러난다.
+
 ---
 
 ## V6 · 브라우저의 `SameSite`·`HttpOnly`·`Secure` — **확인됨**
