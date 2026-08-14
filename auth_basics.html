@@ -537,6 +537,9 @@ pre.language-java{background:var(--bg); border-color:var(--border-2)}
    색이라 숫자만으로는 갈라지지 않는다. 옆에 붙는 `권장 밖` 배지와 같은 색으로 묶어 둔다. */
 .rc-num.zero{color:var(--text-mut)}
 .rc-num.hot{color:var(--warn)}
+/* 구조가 정해 주지 않는 칸. 수를 지어내지 않고 물음표를 세운다 — 다른 줄이 전부 확정 수인
+   만큼, 이 칸 하나가 "정해지지 않음"인 것 자체가 정보다 */
+.rc-num.na{color:var(--text-mut); font-size:17px}
 .rc-why{font-size:13px; color:var(--text-dim); line-height:1.6}
 .rc-foot{margin-top:12px; padding:10px 13px; border-radius:9px; background:var(--bg);
   border:1px solid var(--border); font-size:12.5px; color:var(--text-mut); line-height:1.75}
@@ -2109,8 +2112,11 @@ Content-Type: application/x-www-form-urlencoded
 
       <p>그래도 남는 것이 있습니다. 사본이 둘이라는 말은 같은 세션이 두 곳의 메모리를 차지한다는 뜻이고,
       그 메모리는 요청을 처리하려고 쓰는 바로 그 힙이에요. 로그인한 사람이 늘면 두 배로 늘고, 가비지 컬렉터도 그만큼 자주 돕니다.
-      그리고 사본이 둘뿐이라는 것은 <b>나머지 노드는 그 세션을 모른다</b>는 뜻이기도 합니다 —
-      요청이 그 둘 중 하나로 가지 않으면 사본을 가진 쪽에서 받아 와야 해요.</p>
+      그리고 사본이 둘뿐이라는 것은 <b>나머지 노드는 그 세션을 모른다</b>는 뜻이기도 합니다.
+      백업 노드가 어디인지는 클러스터의 모든 노드가 알아요. 그런데 사본이 없는 노드에 그 요청이 도착했을 때
+      그다음에 무슨 일이 일어나는지는 톰캣 문서가 말하지 않습니다.
+      그러니 이 방식은 <b>요청이 사본 있는 쪽으로 가 준다는 전제</b> 위에 서 있는 셈이에요 —
+      7장에서 대가를 넷이나 치르고 얻었던 그 라우팅을, 여기서 일부 도로 짊어집니다.</p>
 
       <p>어느 쪽을 고르든 세션은 여전히 <b>누군가의 프로세스 메모리</b> 안에 있습니다. 두는 곳이 하나에서 여럿으로 늘었을 뿐이고요.</p>
 
@@ -2171,7 +2177,8 @@ Content-Type: application/x-www-form-urlencoded
         <span class="demo-tag">노드가 늘면 무엇이 늘어나나</span>
         <p style="margin:0 0 10px">여기 그리는 수는 둘뿐입니다 — <b>세션 하나가 저장되는 곳의 수</b>와 <b>요청 하나당 원격 조회 횟수.</b>
         둘 다 구조에서 그대로 따라 나오는 수예요.
-        대역폭이나 응답 시간은 이 표에 없습니다. 그건 장비와 세션 크기와 트래픽이 함께 정하는 값이라, 노드 수만 알아서는 적을 수가 없어요.</p>
+        대역폭이나 응답 시간은 이 표에 없습니다. 그건 장비와 세션 크기와 트래픽이 함께 정하는 값이라, 노드 수만 알아서는 적을 수가 없어요.
+        <b>구조가 정해 주지 않는 칸에는 수를 적지 않고 물음표를 세웁니다.</b></p>
         <label>노드 수
           <input type="range" id="rcN" min="2" max="12" step="1" value="2" aria-label="노드 수">
           <span class="mono" id="rcNVal">2</span>대
@@ -3934,11 +3941,15 @@ if(location.hash){
     {
       name: '복제 · 백업 1개',
       copies:  n => 2,
-      lookups: n => n <= 2 ? '0' : '0~1',
+      // 사본이 없는 노드에 요청이 도착했을 때 무슨 일이 일어나는지는 톰캣 문서가 말하지 않는다.
+      // "받아 온다"고 적으면 미확인 동작을 수치로 굳히는 것이 되므로 수를 적지 않는다.
+      lookups: n => n <= 2 ? '0' : '?',
       why: n => n <= 2
         ? '노드가 둘뿐이면 위 줄과 결과가 같습니다 — 두 곳에 있으니까요. 노드를 늘려 보면 갈라집니다.'
         : '노드가 몇이든 사본은 둘입니다. 보내는 대상도 그 애플리케이션이 배포된 노드로 좁혀지고요. '
-        + '대신 나머지 <b>' + (n - 2) + '곳</b>은 이 세션을 모르니, 요청이 그 둘 중 하나로 가지 않으면 사본을 가진 쪽에서 받아 와야 합니다.'
+        + '백업 노드가 어디인지는 <b>클러스터의 모든 노드가 압니다.</b> '
+        + '다만 사본이 없는 나머지 <b>' + (n - 2) + '곳</b>에 그 요청이 도착하면 그다음에 무슨 일이 일어나는지를 톰캣 문서는 말하지 않아요. '
+        + '그래서 이 칸은 비워 둡니다 — <b>요청이 사본 있는 쪽으로 가 준다는 전제</b>가 이 방식 밑에 깔려 있습니다.'
     },
     {
       name: '중앙 저장소',
@@ -3956,6 +3967,7 @@ if(location.hash){
     const cCell = hot ? '<div class="rc-num hot" data-h="저장 위치">'
                       : '<div class="rc-num" data-h="저장 위치">';
     const lCell = (lk === '0') ? '<div class="rc-num zero" data-h="요청당 조회">'
+                : (lk === '?') ? '<div class="rc-num na" data-h="요청당 조회">'
                                : '<div class="rc-num" data-h="요청당 조회">';
     return '<div class="rc-row">'
          + '<div class="rc-name">' + esc(w.name)
