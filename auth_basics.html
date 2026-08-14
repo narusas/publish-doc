@@ -748,6 +748,37 @@ pre.language-java{background:var(--bg); border-color:var(--border-2)}
 /* 여기 일곱 줄은 할 일이 아니라 "우리 서비스가 이렇다"는 서술이라, 켰을 때 취소선을
    긋지 않는다. 사실을 그어 지우는 모양이 되어 버린다. 켜짐은 초록 상자가 말한다. */
 .ck.on .ct{color:var(--text-mut)}
+
+/* 부록의 표(A·B) — 행 하나가 그리드 하나다. 칸을 통째로 한 격자에 늘어놓으면 좁은 화면에서
+   먼저 사라지는 것이 행과 행의 경계라, 어느 칸이 어느 줄의 것인지 읽을 수 없게 된다.
+   행마다 격자를 따로 두면 좁아질 때 행 안에서만 쌓여 경계가 살아남는다.
+   열 수만 다르고 나머지는 같으므로 모양은 한 벌만 두고 sw3 · map4 두 갈래로 열을 가른다. */
+.aptab{border:1px solid var(--border-2); border-radius:var(--radius); overflow:hidden;
+  background:var(--panel); margin:16px 0}
+.aptab .ap-h, .aptab .ap-r{display:grid; gap:7px 13px; padding:11px 14px; align-items:baseline}
+.aptab .ap-h{background:var(--panel-2); font-family:var(--mono); font-size:10.5px;
+  letter-spacing:.6px; color:var(--text-mut); text-transform:uppercase}
+.aptab .ap-r{border-top:1px solid var(--border); font-size:13.4px; color:var(--text-dim); line-height:1.65}
+.aptab .ap-k{color:#fff; font-weight:700; min-width:0; line-height:1.5}
+/* 항목 뒤에 붙는 장 표시는 "2장"에서 잘리면 읽히지 않는다 — 통째로 넘긴다 */
+.aptab .ap-k .mono{white-space:nowrap}
+.aptab .ap-c{min-width:0; overflow-wrap:anywhere}
+.aptab .ap-c b{color:var(--text)}
+/* 상태 배지는 눌려도 줄바꿈하지 않는다 — 두 줄로 접히면 그 행만 키가 달라진다 */
+.aptab .badge{white-space:nowrap}
+.aptab.sw3 .ap-h, .aptab.sw3 .ap-r{grid-template-columns:minmax(108px,.78fr) 78px 1.7fr}
+.aptab.map4 .ap-h, .aptab.map4 .ap-r{grid-template-columns:minmax(112px,1fr) 1fr 1fr 1fr}
+@media(max-width:760px){
+  .aptab .ap-h{display:none}
+  .aptab.sw3 .ap-r, .aptab.map4 .ap-r{grid-template-columns:1fr; gap:3px}
+  /* 열 이름이 사라졌으므로 칸이 자기 이름을 달고 나온다 */
+  .aptab .ap-c[data-h]::before{content:attr(data-h) " "; font-family:var(--mono);
+    font-size:10.5px; letter-spacing:.4px; color:var(--text-mut)}
+}
+
+/* 부록 C의 명령 예시. Prism에 bash 문법이 있어 토큰 색은 붙지만 바탕은 기본 테마의
+   회색이라 이 문서에서 그 블록만 튄다 — java와 같은 처리를 한다. */
+pre.language-bash{background:var(--bg); border-color:var(--border-2)}
 </style>
 </head>
 <body>
@@ -879,6 +910,13 @@ pre.language-java{background:var(--bg); border-color:var(--border-2)}
         <a class="map-card" href="#filterchain"><div class="ic">⛓️</div><div class="tt">13 · 필터 체인</div></a>
         <a class="map-card" href="#delegate"><div class="ic">🤝</div><div class="tt">14 · OAuth로 인계</div></a>
         <a class="map-card" href="#wrap"><div class="ic">🏁</div><div class="tt">15 · 마무리</div></a>
+      </div>
+
+      <h4>부록 · 읽고 나서 펴 보는 것</h4>
+      <div class="map-grid">
+        <a class="map-card" href="#appendix-spring"><div class="ic">🍃</div><div class="tt">A · Spring 설정 두 벌</div></a>
+        <a class="map-card" href="#appendix-others"><div class="ic">🌐</div><div class="tt">B · 다른 프레임워크</div></a>
+        <a class="map-card" href="#appendix-cli"><div class="ic">🔬</div><div class="tt">C · 직접 확인</div></a>
       </div>
 
       <div class="callout tip">
@@ -3969,6 +4007,389 @@ securityContextRepository.saveContext(securityContext, httpServletRequest, httpS
       다섯째 줄이라면 답이 나오는 데 서버를 한 번 껐다 켜는 시간밖에 안 걸려요.</p>
     </section>
 
+    <!-- ============================================================
+         부록 A · Spring Security 최소 설정 두 벌
+         ============================================================ -->
+    <section id="appendix-spring" data-title="부록 A · Spring 설정" data-num="A">
+      <div class="sec-head">
+        <div class="kicker">부록 A · 설정</div>
+        <h2 class="sec-title">🍃 Spring Security 최소 설정 두 벌 <span class="lvl adv">🔵 심화</span></h2>
+      </div>
+
+      <p class="lead">열다섯 장을 지나며 세워 둔 것들을 꼽아 보죠. 로그인하는 순간의 세션 ID 교체,
+      상태를 바꾸는 요청마다 맞춰 보는 토큰, 요청과 요청 사이를 잇는 컨텍스트.
+      그 셋이 적혀 있어야 할 설정 파일을 열면 — 거의 비어 있습니다.</p>
+
+      <p>줄이 없는 이유는 두 가지인데 성격이 정반대예요. 하나는 <b>이미 켜져 있어서 적을 필요가 없는 것</b>이고,
+      다른 하나는 <b>아무도 대신 해 주지 않는데 적을 자리가 여기가 아닌 것</b>입니다.
+      설정 파일만 봐서는 둘이 구별되지 않아요. 양쪽 다 그냥 없는 줄로 보이거든요.</p>
+
+      <h3>🗂️ 세션형 — 서버가 기억하는 쪽</h3>
+
+      <pre class="language-java"><code class="language-java">@Configuration
+@EnableWebSecurity
+public class SecurityConfig {
+
+    @Bean
+    SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+        http
+            .authorizeHttpRequests((authorize) -> authorize
+                .anyRequest().authenticated());
+        return http.build();
+    }
+
+    @Bean
+    PasswordEncoder passwordEncoder() {
+        return PasswordEncoderFactories.createDelegatingPasswordEncoder();
+    }
+}</code></pre>
+
+      <p>쿠키 속성은 자바 코드가 아니라 설정 파일에서 겁니다. <a class="link" href="#cookie">4장</a>에서 하나씩 켜 보던 그 속성들이에요.</p>
+
+      <pre class="language-properties"><code class="language-properties">server.servlet.session.cookie.http-only=true
+server.servlet.session.cookie.secure=true
+server.servlet.session.cookie.same-site=lax
+server.servlet.session.cookie.name=JSESSIONID
+server.servlet.session.cookie.max-age=30m</code></pre>
+
+      <h4>이 설정이 켜는 것과 꺼 두는 것</h4>
+
+      <div class="aptab sw3">
+        <div class="ap-h"><div>항목</div><div>상태</div><div>무엇이 그렇게 정해 두었나</div></div>
+        <div class="ap-r">
+          <div class="ap-k">CSRF 방어</div>
+          <div class="ap-c" data-h="상태"><span class="badge ok">켜짐</span></div>
+          <div class="ap-c" data-h="근거"><code>@EnableWebSecurity</code>를 쓰면 켜진 채로 시작합니다.
+          보호 대상은 두 스택이 다르게 적혀 있어요 — 서블릿은 <code>GET</code>·<code>TRACE</code>·<code>HEAD</code>·<code>OPTIONS</code>를
+          <b>제외한</b> 나머지이고, 리액티브는 <code>PUT</code>·<code>POST</code>·<code>DELETE</code> <b>셋</b>입니다.
+          "우리는 CSRF 켜져 있다"가 두 곳에서 같은 문장이 아닙니다.</div>
+        </div>
+        <div class="ap-r">
+          <div class="ap-k">세션 고정 방어</div>
+          <div class="ap-c" data-h="상태"><span class="badge ok">켜짐</span></div>
+          <div class="ap-c" data-h="근거"><code>changeSessionId</code>가 Servlet 3.1 이상에서의 기본값입니다.
+          바꿔 적을 일이 생긴다면 로그인 전에 담아 둔 것들 때문이에요 —
+          <code>newSession</code>은 Spring Security가 쓰는 속성만, <code>migrateSession</code>은 모두 옮깁니다.</div>
+        </div>
+        <div class="ap-r">
+          <div class="ap-k">비밀번호 저장 형식</div>
+          <div class="ap-c" data-h="상태"><span class="badge warn">우리 몫</span></div>
+          <div class="ap-c" data-h="근거">권장되는 생성법이 <code>PasswordEncoderFactories.createDelegatingPasswordEncoder()</code>입니다.
+          bcrypt의 기본 강도는 <b>10</b>(<b>4~31</b> 사이로 지정), salt는 <b>16바이트</b>를 인코더가 스스로 만들어 넣고,
+          강도 값은 해시 문자열 안에 함께 저장돼요. salt 컬럼을 따로 만들 필요가 없는 것도, 나중에 강도를 올려도
+          기존 비밀번호가 안 깨지는 것도 이 형식에서 나옵니다.</div>
+        </div>
+        <div class="ap-r">
+          <div class="ap-k">컨텍스트 자동 저장</div>
+          <div class="ap-c" data-h="상태"><span class="badge">꺼짐</span></div>
+          <div class="ap-c" data-h="근거"><code>requireExplicitSave</code>가 6에서 기본 <code>true</code>이고,
+          그 값이 세우는 것이 <b>읽기만 하는</b> <code>SecurityContextHolderFilter</code>입니다.
+          5의 자동 저장을 되살리려면 <code>false</code>를 적어야 해요 —
+          그쪽이 <code>SecurityContextPersistenceFilter</code>를 세웁니다.
+          낡은 글과 요약본이 이 방향을 거꾸로 적어 두는 일이 흔한 자리예요.</div>
+        </div>
+        <div class="ap-r">
+          <div class="ap-k">쿠키 속성</div>
+          <div class="ap-c" data-h="상태"><span class="badge warn">우리 몫</span></div>
+          <div class="ap-c" data-h="근거">위 다섯 줄이 그 자리입니다. 브라우저가 미지정 쿠키에 무엇을 적용하는지는
+          브라우저마다 다르므로, <a class="link" href="#csrf">6장</a>이 그랬듯 기본값에 기대지 않고 적어 둡니다.</div>
+        </div>
+      </div>
+
+      <p>표의 넷째 줄이 코드로 나타나는 자리는 하나뿐입니다 — <b>컨텍스트에 우리가 직접 값을 넣을 때.</b></p>
+
+      <pre class="language-java"><code class="language-java">// 이 줄이 채우는 것은 이번 요청의 컨텍스트뿐이다
+SecurityContextHolder.setContext(securityContext);
+
+// 다음 요청에서도 남아 있으려면 저장까지 해야 한다
+securityContextRepository.saveContext(securityContext, httpServletRequest, httpServletResponse);</code></pre>
+
+      <p>아랫줄을 빠뜨려도 그 요청은 멀쩡히 동작합니다. 어긋나는 것은 <b>다음</b> 요청이에요.
+      왜 자동 저장을 걷어냈는지도 문서가 밝혀 뒀습니다 — 모호함을 없애고 <b>꼭 필요할 때만</b> 저장소에 쓰게 하려는 것이라고요.
+      <a class="link" href="#sharing">8장</a>에서 저장소를 프로세스 밖으로 뺐다면 그 쓰기 하나가 원격 쓰기 하나입니다.</p>
+
+      <div class="callout warn">
+        <h4>⚠️ 이 설정에 없는 줄 하나</h4>
+        <p>로그인 화면을 무엇으로 받을지가 위 어디에도 안 적혀 있습니다. 빠뜨린 게 아니라 비워 둔 자리예요 —
+        그 줄이 세우는 필터가 컨텍스트를 어떻게 다루는지를 확인하지 못했거든요.
+        확인하지 못한 자리는 그럴듯하게 메우는 것보다 비워 두는 편이 낫습니다.</p>
+      </div>
+
+      <p>세션을 프로세스 밖으로 빼면 표의 마지막 줄이 통째로 옮겨 갑니다.
+      쿠키를 만들어 내는 주체가 서블릿 컨테이너에서 Spring Session으로 넘어가면서 기본값도 그쪽 것을 따르거든요 —
+      기본 쿠키 이름이 <code>SESSION</code>이 되고(<code>JSESSIONID</code>가 아닙니다),
+      <code>sameSite</code>는 <code>Lax</code>, <code>maxAge</code>는 <code>-1</code>입니다.
+      8장이 밟은 함정이 정확히 그 이름 한 줄이었어요.</p>
+
+      <h3>🎫 JWT형 — 아무도 기억하지 않는 쪽</h3>
+
+      <p><a class="link" href="#jwt">10장</a>은 <code>alg: none</code>의 방어를 한 문장으로 적었습니다.
+      서버가 기대하는 알고리즘을 자기가 고정하고, 토큰이 주장하는 <code>alg</code>를 믿지 않는다고.
+      원칙으로는 맞는 말인데, 그 문장이 실제로 어떤 API의 모양을 하고 있는지는 그때 보여 줄 수 없었어요.</p>
+
+      <pre class="language-java"><code class="language-java">@Configuration
+@EnableWebSecurity
+public class ResourceServerConfig {
+
+    @Bean
+    SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+        http
+            .authorizeHttpRequests((authorize) -> authorize
+                .anyRequest().authenticated())
+            .oauth2ResourceServer((oauth2) -> oauth2
+                .jwt(Customizer.withDefaults()));
+        return http.build();
+    }
+
+    @Bean
+    JwtDecoder jwtDecoder() {
+        return JwtDecoders.fromIssuerLocation("https://…");
+    }
+}</code></pre>
+
+      <p>공개키를 직접 들고 있다면 <code>NimbusJwtDecoder.withPublicKey(key).build()</code>로도 만듭니다.
+      두 갈래 다 <code>JwtDecoder</code> 빈 하나로 끝나요. 그리고 그 빈을 한 줄 더 길게 쓰면 이렇게 됩니다.</p>
+
+      <pre class="language-java"><code class="language-java">NimbusJwtDecoder jwtDecoder = NimbusJwtDecoder.withIssuerLocation(this.issuer)
+        .jwsAlgorithm(RS512).jwsAlgorithm(ES512).build();</code></pre>
+
+      <p><code>jwsAlgorithm()</code>을 부른 만큼이 신뢰할 알고리즘의 목록입니다. 두 번 불렀으니 둘을 신뢰해요.
+      10장이 적어 둔 문장의 주어가 여기 그대로 있습니다 —
+      <b>목록을 정하는 쪽은 토큰의 헤더가 아니라 이 설정입니다.</b></p>
+
+      <p>레퍼런스가 검증이 세워지는 과정을 이렇게 적어 뒀습니다.</p>
+
+      <p style="border-left:2px solid var(--border-2); padding-left:12px; color:var(--text)">
+      “필요한 의존성과 <code>issuer-uri</code>가 설정되면 리소스 서버가 JWT 검증을 자동으로 세운다.
+      이 과정은 <code>jwks_url</code>을 찾아내고, <b>지원하는 알고리즘을 식별하고</b>,
+      <code>jwks_url</code>의 공개키로 서명과 <code>iss</code> 같은 클레임을 검증하도록 전략을 구성하는 일을 포함한다.”</p>
+
+      <p>가운데 구절을 다시 보죠. <b>알고리즘을 식별하는 일이 검증 전략을 세우는 단계 안에 들어 있습니다.</b>
+      토큰이 도착하기 전에 끝나는 일이라는 뜻이에요.
+      목록을 정하는 재료는 <code>jwks_url</code>과 우리가 부른 <code>jwsAlgorithm()</code>이고,
+      도착할 토큰의 헤더는 그 재료 안에 없습니다.</p>
+
+      <h4>이 설정이 켜는 것과 남겨 두는 것</h4>
+
+      <div class="aptab sw3">
+        <div class="ap-h"><div>항목</div><div>상태</div><div>무엇이 그렇게 정해 두었나</div></div>
+        <div class="ap-r">
+          <div class="ap-k">서명·클레임 검증</div>
+          <div class="ap-c" data-h="상태"><span class="badge ok">켜짐</span></div>
+          <div class="ap-c" data-h="근거">의존성과 <code>issuer-uri</code>가 있으면 <code>jwks_url</code>을 찾아
+          공개키를 받아 오고, 그 키로 서명과 <code>iss</code> 같은 <span class="term" data-t="클레임">클레임</span>을 검증하도록 스스로 구성합니다.</div>
+        </div>
+        <div class="ap-r">
+          <div class="ap-k">신뢰할 알고리즘</div>
+          <div class="ap-c" data-h="상태"><span class="badge warn">우리 몫</span></div>
+          <div class="ap-c" data-h="근거"><code>jwsAlgorithm()</code>으로 정합니다. 여러 번 불러 여럿을 신뢰할 수 있어요.
+          여기서 확인할 수 있는 것은 <b>목록을 설정에서 정한다는 구조</b>까지입니다 —
+          어떤 디코더가 어떤 <code>alg</code>를 어떻게 처리하는지는 이 문서가 확인하지 않았습니다.</div>
+        </div>
+        <div class="ap-r">
+          <div class="ap-k">CSRF 방어</div>
+          <div class="ap-c" data-h="상태"><span class="badge warn">우리 몫</span></div>
+          <div class="ap-c" data-h="근거">끄는 조건을 문서가 한 줄로 못 박아 뒀습니다 —
+          <b>“애플리케이션이 브라우저에서 전혀 쓰이지 않을 때만 권장된다.”</b>
+          토큰을 쓴다는 사실이 아니라 <a class="link" href="#csrf">6장</a>의 그 기준,
+          브라우저가 자동으로 붙여 주는 자격 증명을 쓰느냐로 가릅니다.</div>
+        </div>
+        <div class="ap-r">
+          <div class="ap-k">토큰 발급</div>
+          <div class="ap-c" data-h="상태"><span class="badge">밖</span></div>
+          <div class="ap-c" data-h="근거">위 설정은 받은 토큰을 검증하는 쪽, 즉 <span class="term" data-t="리소스 서버">리소스 서버</span>의 것입니다.
+          발급하는 쪽을 어떻게 세우는지는 확인하지 않았습니다.</div>
+        </div>
+      </div>
+
+      <p>두 벌을 나란히 놓으면 짧은 이유가 같습니다. 기본값이 이미 서 있어서예요.
+      대신 짧다는 것이 안전하다는 뜻은 아니어서, 두 표에 <span class="badge warn">우리 몫</span>이 각각 둘씩 남아 있습니다.
+      그 넷은 기본값이 정해 주지 않는 자리이고, 정해 주지 않는 이유는 서비스마다 답이 달라서고요.</p>
+
+      <div class="oneline">
+        <span style="font-size:20px">🍃</span>
+        <div><strong>최소 설정이 짧은 것은 할 일이 적어서가 아니라 기본값이 이미 서 있어서입니다.</strong>
+        그래서 설정 파일을 읽는 일은 적힌 줄을 읽는 것이 아니라, <b>없는 줄이 어느 쪽인지</b>를 가리는 일이 됩니다 —
+        이미 켜진 쪽인지, 아직 아무도 안 한 쪽인지.</div>
+      </div>
+    </section>
+
+    <!-- ============================================================
+         부록 B · 다른 이름 같은 이야기
+         ============================================================ -->
+    <section id="appendix-others" data-title="부록 B · 다른 프레임워크" data-num="B">
+      <div class="sec-head">
+        <div class="kicker">부록 B · 대응표</div>
+        <h2 class="sec-title">🌐 다른 이름 같은 이야기 <span class="lvl adv">🔵 심화</span></h2>
+      </div>
+
+      <p class="lead">Express로 짜인 코드를 열면 <code>req.session</code>이 보이고, Django에서는 <code>request.session</code>이 보입니다.
+      철자가 다를 뿐 <a class="link" href="#session">5장</a>에서 그린 그 표예요.
+      칸을 열고, 열쇠를 쿠키에 실어 내보내고, 다음 요청에 그 열쇠로 칸을 찾습니다.</p>
+
+      <p>그럴 수밖에 없기도 합니다. <a class="link" href="#stateless">1장</a>의 제약은 프레임워크가 만든 것이 아니라 HTTP가 만든 것이거든요.
+      제약이 같으면 푸는 방법의 모양도 같아지고, 남는 자유는 이름뿐입니다.</p>
+
+      <div class="callout warn">
+        <h4>⚠️ 아래 표가 맞춰 놓은 것은 이름까지입니다</h4>
+        <p>같은 자리를 각 프레임워크가 무엇이라 부르는지를 적었습니다.
+        그 이름 뒤의 <b>기본값과 세부 동작</b>이 이 문서의 서술과 어디까지 같은지는 확인하지 않았어요.
+        옮겨 갈 때 실제로 물어야 하는 것은 대개 그쪽이라, 표는 <b>어느 문서의 어느 항목을 펴야 하는지</b>까지만 가리킵니다.</p>
+      </div>
+
+      <div class="aptab map4">
+        <div class="ap-h"><div>이 문서의 이름</div><div>Express · express-session</div><div>Django</div><div>Rails</div></div>
+        <div class="ap-r">
+          <div class="ap-k">서버 안의 칸 <span class="dim mono">5장</span></div>
+          <div class="ap-c" data-h="Express"><code>req.session</code></div>
+          <div class="ap-c" data-h="Django"><code>request.session</code></div>
+          <div class="ap-c" data-h="Rails"><code>session</code></div>
+        </div>
+        <div class="ap-r">
+          <div class="ap-k">열쇠를 나르는 쿠키의 기본 이름 <span class="dim mono">4·8장</span></div>
+          <div class="ap-c" data-h="Express"><code>connect.sid</code></div>
+          <div class="ap-c" data-h="Django"><code>sessionid</code></div>
+          <div class="ap-c" data-h="Rails"><code>_앱이름_session</code></div>
+        </div>
+        <div class="ap-r">
+          <div class="ap-k">칸을 어디에 둘지 고르는 자리 <span class="dim mono">8장</span></div>
+          <div class="ap-c" data-h="Express"><code>store</code> 옵션</div>
+          <div class="ap-c" data-h="Django"><code>SESSION_ENGINE</code></div>
+          <div class="ap-c" data-h="Rails"><code>config.session_store</code></div>
+        </div>
+        <div class="ap-r">
+          <div class="ap-k">요청이 코드에 닿기 전 지나는 줄 <span class="dim mono">13장</span></div>
+          <div class="ap-c" data-h="Express">미들웨어</div>
+          <div class="ap-c" data-h="Django">미들웨어 · <code>MIDDLEWARE</code></div>
+          <div class="ap-c" data-h="Rails">Rack 미들웨어</div>
+        </div>
+        <div class="ap-r">
+          <div class="ap-k">동기화 토큰 <span class="dim mono">6장</span></div>
+          <div class="ap-c" data-h="Express">별도 미들웨어</div>
+          <div class="ap-c" data-h="Django"><code>CsrfViewMiddleware</code> · <code>{%&nbsp;csrf_token&nbsp;%}</code></div>
+          <div class="ap-c" data-h="Rails"><code>protect_from_forgery</code> · <code>authenticity_token</code></div>
+        </div>
+        <div class="ap-r">
+          <div class="ap-k">비밀번호를 저장 형태로 바꾸는 자리 <span class="dim mono">2장</span></div>
+          <div class="ap-c" data-h="Express">프레임워크 밖</div>
+          <div class="ap-c" data-h="Django"><code>PASSWORD_HASHERS</code> · <code>make_password()</code></div>
+          <div class="ap-c" data-h="Rails"><code>has_secure_password</code></div>
+        </div>
+        <div class="ap-r">
+          <div class="ap-k">이번 요청의 주체 <span class="dim mono">13장</span></div>
+          <div class="ap-c" data-h="Express"><code>req.user</code> · Passport</div>
+          <div class="ap-c" data-h="Django"><code>request.user</code></div>
+          <div class="ap-c" data-h="Rails"><code>current_user</code> · Devise</div>
+        </div>
+      </div>
+
+      <p>일곱 줄 안에 2·4·5·6·8·13장이 다 들어 있습니다. 이름이 스물몇 번 갈리는 동안 왼쪽 열은 한 번도 안 갈렸어요.
+      🍃 블록이 장마다 해 온 일도 이 표의 한 열을 채우는 것이었고요.</p>
+
+      <p>그러니 스택을 옮길 때 다시 배울 것은 개념이 아닙니다. 다시 확인할 것은 <b>기본값</b>이에요.
+      둘째 줄만 봐도 넷이 다 다르고, 8장이 배포 직후 전원 로그아웃으로 밟았던 함정이 정확히 그 줄이었습니다.
+      새 프레임워크에서 제일 먼저 펴 볼 페이지가 어디인지는 그래서 정해져 있어요 — <b>기본값 표</b>입니다.</p>
+
+      <div class="oneline">
+        <span style="font-size:20px">🌐</span>
+        <div><strong>개념은 프레임워크에 묶여 있지 않습니다. 묶여 있는 것은 이름과 기본값이고요.</strong>
+        왼쪽 열을 알면 어느 동네에서든 무엇을 찾아야 하는지는 압니다. 찾아낸 뒤에 그 값이 얼마인지는 그 동네 문서가 답합니다.</div>
+      </div>
+    </section>
+
+    <!-- ============================================================
+         부록 C · 진짜로 확인해 보기
+         ============================================================ -->
+    <section id="appendix-cli" data-title="부록 C · 직접 확인" data-num="C">
+      <div class="sec-head">
+        <div class="kicker">부록 C · 실측</div>
+        <h2 class="sec-title">🔬 진짜로 확인해 보기 <span class="lvl adv">🔵 심화</span></h2>
+      </div>
+
+      <p class="lead">이 문서의 데모는 대부분 흉내였습니다. 2장의 해시도, 10장의 서명도 진짜 계산이 아니었어요 —
+      10장의 데모에서 실제로 돌린 것은 base64url 하나뿐입니다.
+      논지를 보이는 데는 그걸로 충분했지만, <b>지금 우리 서비스가 실제로 무엇을 내보내고 있는지</b>는
+      흉내가 답해 주지 않아요.</p>
+
+      <p>그건 터미널 창 하나로 나옵니다. 아래 셋은 각각 <a class="link" href="#cookie">4장</a>·<a class="link" href="#session">5장</a>·<a class="link" href="#jwt">10장</a>이
+      화면으로 보여 준 것을 실제 응답에서 다시 꺼내 오는 명령이에요.</p>
+
+      <h3>① <code>Set-Cookie</code>를 눈으로 본다</h3>
+
+      <pre class="language-bash"><code class="language-bash"># 로그인 응답의 헤더를 전부 본다. -v가 내보내는 줄은 표준 출력이 아니라 표준 오류다
+curl -v -X POST http://localhost:8080/login \
+     -d 'username=alice&amp;password=hunter2'</code></pre>
+
+      <p><b>보이는 것</b> — 응답 쪽 <code>&lt; Set-Cookie:</code> 한 줄. 이름과 값이 앞에 오고,
+      뒤에 붙은 것들이 4장에서 하나씩 켜 보던 속성입니다.
+      <code>HttpOnly</code>가 안 보이면 안 걸린 거예요. 기본값으로 붙지 않습니다.</p>
+
+      <pre class="language-bash"><code class="language-bash"># 받은 쿠키를 파일에 담고, 다음 요청에 그대로 실어 보낸다
+curl -c jar.txt -X POST http://localhost:8080/login \
+     -d 'username=alice&amp;password=hunter2'
+curl -b jar.txt -v http://localhost:8080/me</code></pre>
+
+      <p><b>보이는 것</b> — 두 번째 명령의 <b>요청</b> 쪽 <code>&gt; Cookie:</code> 한 줄.
+      브라우저가 말없이 하던 일을 <code>-b</code>가 대신한 것이고,
+      1장이 세운 제약("매 요청이 스스로 신원을 증명해야 한다")이 실제로 어떻게 지켜지는지가 그 한 줄입니다.
+      <code>jar.txt</code>를 그냥 열어 봐도 속성들이 그대로 적혀 있어요.</p>
+
+      <h3>② 브라우저가 실제로 무엇을 갖고 있는지 본다</h3>
+
+      <p>개발자 도구를 열고 <b>Application</b> 탭 → <b>Storage</b> → <b>Cookies</b> → 우리 도메인을 고릅니다.
+      한 줄이 쿠키 하나이고, 열이 곧 4장의 속성이에요.</p>
+
+      <ul>
+        <li><code>HttpOnly</code>·<code>Secure</code>·<code>SameSite</code> — 명시한 값이 실제로 붙어 있는지.
+        <b>비어 있는 칸은 "기본값"이 아니라 "안 적혔음"</b>입니다.</li>
+        <li><code>Expires / Max-Age</code> — 비어 있으면 브라우저를 닫을 때 사라지는 <span class="term" data-t="세션 쿠키">세션 쿠키</span>입니다.</li>
+        <li><code>Domain</code>·<code>Path</code> — 이 쿠키가 어디까지 따라붙는지. 4장의 시나리오 판정이 이 두 칸 위에서 돌아갑니다.</li>
+      </ul>
+
+      <p>같은 창의 <b>Console</b> 탭에서 한 줄 더 찍어 보세요.</p>
+
+      <pre class="language-text"><code class="language-text">document.cookie</code></pre>
+
+      <p><b>보이는 것</b> — 방금 목록에서 본 쿠키 중 <b>몇 개가 없습니다.</b>
+      없는 것이 <code>HttpOnly</code>가 걸린 것들이에요.
+      <span class="term" data-t="XSS">XSS</span>로 들어온 스크립트가 보는 화면이 정확히 이것이고,
+      4장이 그 속성에 기대한 일이 이 한 줄에서 눈에 보입니다.</p>
+
+      <h3>③ 토큰을 손으로 디코드한다</h3>
+
+      <p>10장의 그 토큰을 그대로 씁니다. 가운데 토막만 떼어 내면 돼요.</p>
+
+      <pre class="language-bash"><code class="language-bash"># 열쇠도, 서명 검증도, 서버도 없이 payload를 읽는다
+python3 - &lt;&lt;'PY'
+import base64
+payload = "eyJzdWIiOiJhbGljZSIsInJvbGUiOiJ1c2VyIiwiZXhwIjoxNzg2MDAwMDAwfQ"
+print(base64.urlsafe_b64decode(payload + "=" * (-len(payload) % 4)).decode())
+PY</code></pre>
+
+      <p><b>보이는 것</b> — <code>{"sub":"alice","role":"user","exp":1786000000}</code>.
+      명령 어디에도 열쇠를 넣는 자리가 없다는 것이 이 실험의 전부입니다.
+      <span class="term" data-t="서명">서명</span>은 고쳐지지 않았음을 보장할 뿐, 감추는 일은 하지 않으니까요.</p>
+
+      <p>두 줄이 <span class="term" data-t="base64url">base64url</span>을 되돌리는 데 필요한 손질입니다.
+      <code>urlsafe_</code>가 <code>-</code>·<code>_</code>를 제자리로 돌려놓고, 뒤의 <code>=</code>는 우리가 다시 채워요.
+      같은 토큰인데 header 토막은 36자라 채울 것이 없고, payload는 62자라 두 개가 필요합니다.
+      <b>이 정도가 "누구나 읽는다"의 전부입니다.</b></p>
+
+      <div class="callout warn">
+        <h4>⚠️ 방금 확인한 성질이 그대로 주의사항이 됩니다</h4>
+        <p>운영 중인 서비스의 토큰은 그 자체가 로그인된 사람의 <span class="term" data-t="증표">증표</span>입니다.
+        payload가 열쇠 없이 읽힌다는 것을 방금 봤으니, 어디에 붙여 넣는지도 그만큼 봐야 해요 —
+        이슈 트래커, 채팅, 처음 보는 온라인 디코더. 위 명령은 붙여 넣을 데가 없다는 것이 장점입니다.</p>
+      </div>
+
+      <div class="oneline">
+        <span style="font-size:20px">🔬</span>
+        <div><strong>세 명령이 답하는 것은 "무엇이 맞나"가 아니라 "지금 우리 것은 어떤가"입니다.</strong>
+        <a class="link" href="#wrap">15장</a>의 일곱 줄 중 둘째 줄은 ①과 ②로 그 자리에서 결판나고,
+        일곱째 줄은 ③으로 결판납니다. 나머지 다섯 줄은 터미널이 아니라 저장소를 열어야 하고요.</div>
+      </div>
+    </section>
+
   </main>
 </div>
 
@@ -4032,6 +4453,7 @@ const GLOSSARY = {
   "인가": "이 주체가 이 일을 해도 되는지를 정하는 판단. 누구인지 확인하는 인증과는 다른 질문이고, 인증이 끝나야 물을 수 있다. 인증이 없는 것과 인가가 거절한 것은 응답도 다르다 — 앞은 누구인지 밝히고 다시 오라는 뜻(401)이라 다시 로그인하면 열리고, 뒤는 누구인지 알겠는데 이 일은 안 된다는 뜻(403)이라 다시 로그인해도 열리지 않는다.",
   "익명 주체": "로그인하지 않은 요청에도 채워 넣는 주체. 인증되지 않았다는 것을 빈 값이 아니라 하나의 상태로 표현한다. 이렇게 두면 컨텍스트가 절대 비지 않아서, 인가 규칙을 '비었는지 먼저 보고 그다음 권한을 본다'가 아니라 한 가지 문법으로 쓸 수 있다. '익명도 볼 수 있다'가 예외 처리가 아니라 규칙 한 줄이 되는 것이 이 주체를 두는 이유다. 권한을 하나도 갖지 않은 주체이지 없는 주체가 아니다.",
   "위임": "사용자가 누구인지 확인하는 일을 우리 서버가 하지 않고, 사용자가 이미 계정을 갖고 있는 다른 인증 서버에 맡기는 것. 비밀번호는 그쪽에만 입력되고 우리 서버를 스치지 않으며, 우리는 '이 사람이 맞다'는 결과만 받는다. 옮겨 가는 것은 확인하는 일 하나뿐이라, 그 결과를 받은 뒤에 무엇을 발급하고 그것을 어떻게 유지할지는 그대로 남는다. 대신 남이 보내 준 결과를 어떻게 확인할 것이냐는 질문이 새로 생긴다.",
+  "리소스 서버": "증표를 발급하지 않고, 들고 온 증표를 검증해서 요청을 처리하기만 하는 쪽. 발급하는 쪽과 검증하는 쪽이 다른 서버로 갈라졌을 때 후자를 이렇게 부른다. 검증에 필요한 것은 발급자가 누구인지와 그 발급자의 공개키뿐이라, 계정도 비밀번호도 갖고 있지 않다.",
   // @GLOSSARY_END
 };
 
@@ -4053,7 +4475,9 @@ sections.forEach((sec, i) => {
   const a = document.createElement('a');
   a.href = '#' + sec.id;
   a.dataset.target = sec.id;
-  a.innerHTML = `<span class="num">${i===0?'·':i}</span><span>${sec.dataset.title}</span>`;
+  // 번호는 위치에서 나오지만, 장이 아닌 절(개요·부록)은 자기 표지를 data-num으로 들고 온다.
+  // 부록에 16·17·18이 붙으면 16장이 있다는 뜻이 되어 버린다.
+  a.innerHTML = `<span class="num">${sec.dataset.num || (i===0?'·':i)}</span><span>${sec.dataset.title}</span>`;
   toc.appendChild(a);
 });
 const tocLinks = $$('#toc a');
