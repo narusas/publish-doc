@@ -18,7 +18,14 @@ import sys
 # Prism 테마 블록은 제외한다. 그 토큰 클래스들은 Prism이 런타임에 붙이므로
 # 소스에 나타나지 않고, 포함하면 전부 오탐이 된다.
 STYLE_TAG = re.compile(r'<style([^>]*)>(.*?)</style>', re.S)
-CLASS_SELECTOR = re.compile(r'\.([a-zA-Z][\w-]*)')
+SCRIPT_TAG = re.compile(r'<script([^>]*)>(.*?)</script>', re.S)
+# CSS 주석. 셀렉터를 찾기 전에 먼저 지운다 — 주석 안의 산문에 `.무엇` 같은 조각이
+# 있으면 클래스 정의로 오인되기 때문이다(파이썬 3의 `\w`는 한글도 매칭한다).
+# 주석에서 점을 빼는 식의 우회는 재발하므로 여기서 근본을 막는다.
+CSS_COMMENT = re.compile(r'/\*.*?\*/', re.S)
+# `.foo` 셀렉터. 이름 자체는 ASCII로 한정한다 — 이 저장소의 클래스는 전부 ASCII이고,
+# `\w`를 그대로 두면 CSS 문자열(content: "…")에 남은 한글이 다시 섞여 들어온다.
+CLASS_SELECTOR = re.compile(r'\.([a-zA-Z][A-Za-z0-9_-]*)')
 CLASS_ATTR = re.compile(r'''\bclass\s*=\s*["']([^"']*)["']''')
 CLASS_LIST = re.compile(r'''classList\.(?:add|remove|toggle|contains)\(\s*["']([^"']+)["']''')
 # `d.className = 'g-item'` 처럼 속성이 아니라 프로퍼티 대입으로 클래스를 붙이는
@@ -35,8 +42,13 @@ QUERY_ARG = re.compile(r'''(?<![\w$])\$\$?\(\s*["']([^"']*)["']''')
 def analyze(src):
     styles = [m.group(2) for m in STYLE_TAG.finditer(src)
               if 'prism-theme' not in m.group(1)]
-    css = '\n'.join(styles)
+    css = CSS_COMMENT.sub(' ', '\n'.join(styles))
     rest = STYLE_TAG.sub('', src)
+    # 테마 블록을 '정의'에서 빼는 것과 대칭으로, Prism 최소화 소스는 '사용'에서 뺀다.
+    # 그 안의 `e.classList.add("language-"+t)` 같은 문자열 리터럴 조각이 클래스
+    # 사용으로 잡혀 역방향 검사에 `.language-` 오탐을 만들기 때문이다.
+    rest = SCRIPT_TAG.sub(
+        lambda m: '' if 'prism' in m.group(1).lower() else m.group(0), rest)
 
     defined = set(CLASS_SELECTOR.findall(css))
     used = set()
