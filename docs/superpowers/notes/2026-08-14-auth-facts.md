@@ -157,6 +157,36 @@
 - `HttpOnly`: JS의 `document.cookie` 접근 차단 → XSS 완화.
 - `Secure`: `https:` 요청에만 전송. **단 localhost는 예외.**
 
+### V6 보강 — "같은 사이트"란 무엇인가 (2026-08-14, 3~4장 구현 중 추가 확인)
+
+4장 구현자가 `Domain` 시나리오를 판정하려면 `shop.example.com` ↔ `api.example.com`이 같은
+사이트인지 정해야 했는데 V6에 근거가 없어, **정의를 한 줄만 쓰고 정확한 규칙은 6장으로
+미뤄 두었다.** 올바른 처리였다. 확인해서 보강한다.
+
+출처: [MDN Glossary — Site](https://developer.mozilla.org/en-US/docs/Glossary/Site)
+
+> "a site is determined by the **registrable domain** portion of the domain name. The registrable
+> domain consists of an entry in the Public Suffix List plus the portion of the domain name just
+> before it." (= **eTLD+1**)
+
+| 요소 | 사이트 구분에 영향? | 근거 |
+|---|---|---|
+| 등록 가능 도메인(eTLD+1) | **그렇다** | 이것이 정의다 |
+| 서브도메인 | **아니다** | "`support.mozilla.org` and `developer.mozilla.org` are part of the same site" |
+| 포트 | **아니다** | "the port number is ignored when determining the site" |
+| 스킴(http/https) | **`SameSite` 쿠키에서는 그렇다** | 아래 참조 |
+
+**스킴이 걸리는 것이 중요하다.** 일반적인 "사이트" 정의는 스킴을 안 보지만, 스킴까지 보는
+더 엄격한 정의를 *schemeful same-site*라고 부르고 —
+
+> "This stricter definition is applied in the rules for handling `SameSite` cookies."
+
+즉 `http://example.com`과 `https://example.com`은 **`SameSite` 판정에서는 서로 다른 사이트다.**
+
+→ **4장의 "도메인을 등록한 단위가 같으면 된다"는 서술은 맞다.** 6장에서 규칙을 정확히 풀 때
+포트 무시와 **schemeful same-site**를 함께 쓴다. 후자는 `Secure`의 localhost 예외와 묶어
+"로컬에선 되는데 배포하면 안 된다"의 또 다른 원인으로 설명할 수 있다.
+
 ---
 
 ## V7 · Spring Security의 CSRF 기본값 — **확인됨**
