@@ -663,6 +663,39 @@ pre.language-java{background:var(--bg); border-color:var(--border-2)}
   .el-bv::before{content:attr(data-h) " "; color:var(--text-mut); font-size:10.5px}
   .el-bv{text-align:left}
 }
+
+/* 12장 — 채워진 대조표와 고르기 데모.
+   두 표 모두 3장의 `.fork`를 그대로 쓴다. 3장이 물음표로 세워 둔 표와 12장의 채워진 표가
+   같은 모양이어야 회수가 눈에 보이기 때문이다. 여기서 새로 필요한 것은 칸 안에 들어가는
+   배지 줄 하나뿐이다. */
+.ch-bs{display:flex; flex-wrap:wrap; gap:5px; margin:0 0 5px}
+/* 고르기 데모 — 질문 다섯 줄. 질문 텍스트와 토글이 같은 줄에서 양끝으로 갈린다.
+   좁은 화면에서 토글이 눌리는 자리를 잃지 않도록 최소 너비를 준다. */
+.ch-qs{display:flex; flex-direction:column; gap:7px; margin:12px 0 4px}
+.ch-q{display:flex; align-items:center; justify-content:space-between; gap:12px;
+  background:var(--bg); border:1px solid var(--border-2); border-radius:10px; padding:9px 12px}
+.ch-q .t{font-size:13.8px; color:var(--text-dim); line-height:1.5}
+.ch-q .t b{color:var(--text)}
+.ch-q .tog{flex:0 0 auto; min-width:64px; text-align:center}
+/* 권고 카드 — 이름 · 무엇을 사는가 · 무엇을 포기하는가 · 무엇으로 나르는가.
+   포기 줄은 반드시 함께 나온다. 노랑(상황 라벨)만 쓰고 빨강은 쓰지 않는다 —
+   이 문서에서 빨강은 "막았어야 할 것이 뚫림"이지 "값을 치른다"가 아니다. */
+.ch-card{background:var(--bg); border:1px solid var(--border-2); border-radius:11px;
+  padding:13px 15px; margin:12px 0 2px}
+.ch-name{font-size:16.5px; font-weight:800; color:#fff; margin:0 0 3px; line-height:1.4}
+.ch-sub{font-family:var(--mono); font-size:11px; letter-spacing:.4px; color:var(--text-mut); margin:0 0 9px}
+.ch-l{display:grid; grid-template-columns:78px 1fr; gap:6px 12px; padding:8px 0; font-size:13.6px; line-height:1.65}
+.ch-l+.ch-l{border-top:1px solid var(--border)}
+.ch-l .k{font-family:var(--mono); font-size:11.5px; color:var(--text-mut); padding-top:4px; white-space:nowrap}
+.ch-l .v{color:var(--text-dim); min-width:0; overflow-wrap:anywhere}
+.ch-l.give .k{color:var(--warn)}
+.ch-l.give .v{color:var(--text)}
+.ch-foot{margin-top:12px; padding:10px 13px; border-radius:9px; background:var(--bg);
+  border:1px solid var(--border); font-size:12.5px; color:var(--text-mut); line-height:1.75}
+@media(max-width:560px){
+  .ch-q{flex-direction:column; align-items:stretch; gap:8px}
+  .ch-l{grid-template-columns:1fr; gap:2px}
+}
 </style>
 </head>
 <body>
@@ -3072,6 +3105,279 @@ payload → {"sub":"alice","role":"user","exp":1786000000}</code></pre>
       </div>
     </section>
 
+    <!-- ============================================================
+         12장 · 그래서 세션이냐 토큰이냐 (3장 갈림길 회수)
+         ============================================================ -->
+    <section id="choose" data-title="세션이냐 토큰이냐">
+      <div class="sec-head">
+        <div class="kicker">12 · 결론</div>
+        <h2 class="sec-title">⚖️ 그래서 세션이냐 토큰이냐 <span class="lvl must">🟢 필수</span></h2>
+      </div>
+
+      <p class="lead">11장이 저울에 물건을 다 올려놓은 채로 끝났습니다. 한쪽에 산 것 둘, 다른 쪽에 늘어난 물건 셋.
+      그런데 개수를 세어 봐도 어느 쪽이 무거운지가 안 나와요. 물건의 무게가 서비스마다 다르거든요.
+      3장에서 표를 하나 세워 두고 여덟 칸을 물음표로 비워 뒀었죠. 아홉 장이 지났고, 그 여덟 칸이 다 찼습니다.</p>
+
+      <p>채워서 나란히 놓으면 이렇게 됩니다. 3장의 그 표, 같은 다섯 줄이에요.</p>
+
+      <div class="fork">
+        <div class="fk-h">질문</div>
+        <div class="fk-h">A · 서버가 기억한다</div>
+        <div class="fk-h">B · 증표에 담는다</div>
+
+        <div class="fk-q">증표에 무엇이 들었나</div>
+        <div class="fk-c" data-h="A · 서버가 기억한다">뜻 없는 무작위 문자열 하나. 들여다봐도 아무것도 안 나온다. <span class="dim mono">3장</span></div>
+        <div class="fk-c" data-h="B · 증표에 담는다">누구이고 언제까지인지가 그대로 적혀 있다. 읽으면 읽힌다. <span class="dim mono">3·10장</span></div>
+
+        <div class="fk-q">서버가 무엇을 기억하나</div>
+        <div class="fk-c" data-h="A · 서버가 기억한다">세션 하나에 서랍 한 칸. 서버가 여러 대가 되면 그 서랍을 모두가 보는 한 곳으로 옮긴다. <span class="dim mono">5·8장</span></div>
+        <div class="fk-c" data-h="B · 증표에 담는다">일반 요청에 대해서는 아무것도. 대신 무효화 기록과 refresh 토큰의 상태가 되돌아온다. <span class="dim mono">9·11장</span></div>
+
+        <div class="fk-q">취소할 수 있나</div>
+        <div class="fk-c" data-h="A · 서버가 기억한다">된다. 서랍 한 칸을 지우면 다음 요청부터 끊긴다. 기기 하나만 골라 끊는 것도 된다. <span class="dim mono">5장</span></div>
+        <div class="fk-c" data-h="B · 증표에 담는다">그대로는 안 된다. 되돌리는 방법은 전부 서버가 다시 기억하는 방법이고, 기억하면 조회가 따라온다. <span class="dim mono">11장</span></div>
+
+        <div class="fk-q">서버가 여러 대면</div>
+        <div class="fk-c" data-h="A · 서버가 기억한다">서랍이 어느 서버에 있느냐가 문제가 된다. 한 곳으로 모으면 풀리고, 그 한 곳이 단일 장애점이 된다. <span class="dim mono">7·8장</span></div>
+        <div class="fk-c" data-h="B · 증표에 담는다">몇 대가 되든 상관없다. 각자 자기 자리에서 서명만 본다. <span class="dim mono">9장</span></div>
+
+        <div class="fk-q">요청마다 조회가 필요한가</div>
+        <div class="fk-c" data-h="A · 서버가 기억한다">필요하다. 요청 하나에 한 번, 그 증표를 읽는 서비스마다 한 번씩. <span class="dim mono">5·9장</span></div>
+        <div class="fk-c" data-h="B · 증표에 담는다">필요 없다 — 블랙리스트를 켜기 전까지는. 켜는 순간 이 칸이 왼쪽과 같아진다. <span class="dim mono">11장</span></div>
+      </div>
+
+      <p>다 찼는데도 어느 갈래로 가라는 말은 표 어디에도 없습니다.
+      표가 하는 일은 두 갈래가 각각 무엇을 하고 무엇을 못 하는지 적어 두는 데까지예요.
+      고르는 것은 표가 아니라 우리고요.</p>
+
+      <h3>⚖️ 기본값은 세션입니다</h3>
+
+      <div class="oneline">
+        <span style="font-size:20px">🗄️</span>
+        <div><strong style="font-size:17px">브라우저를 상대하는 단일 서비스라면 세션이 기본값입니다.</strong></div>
+      </div>
+
+      <p>"기본값"은 더 좋다는 뜻이 아닙니다. <b>고르지 않았을 때 놓이는 값</b>이라는 뜻이에요.
+      이쪽으로 갈 때는 근거를 안 대도 되고, 저쪽으로 갈 때는 근거를 대야 합니다. 그 비대칭이 기본값의 전부고요.</p>
+
+      <p>왜 이쪽이 그 자리인지는 9장이 이미 세어 놨습니다. 세션이 감당하지 못하게 되는 자리가 넷 있었죠 —
+      앱 서버가 마흔 대가 되는 자리, 저장소가 스무 팀의 공통 장애점이 되는 자리,
+      쿠키가 도메인을 못 건너는 자리, 상대에게 쿠키 상자가 아예 없는 자리.
+      <b>그 넷 중 어디에도 안 걸렸다면 갈래를 바꿔서 사는 것이 없습니다.</b>
+      조회는 원래 문제가 아니었고, 쿠키는 원래 잘 붙고 있었으니까요.</p>
+
+      <p>그런데 사는 것이 없어도 파는 것은 그대로 팔립니다. 취소요.
+      9장의 거래는 조건부 할인이 아니라 그냥 거래라서, 살 게 없는 쪽에서 들어가면 <b>내놓기만 하고 나옵니다.</b>
+      강제 로그아웃도, 권한 박탈도, 비밀번호를 바꾼 뒤의 옛 증표도 전부 적어 둔 기한까지 살아 있게 되고요.</p>
+
+      <p>JWT를 고를 자리가 없다는 이야기는 아닙니다. 넷 중 하나에 실제로 걸렸을 때가 그 자리예요 —
+      그때는 팔 것이 있어서가 아니라 <b>살 것이 생겨서</b> 파는 겁니다. 순서가 반대면 그건 거래가 아니라 그냥 손해고요.</p>
+
+      <h3>🙅 그런데 왜 다들 JWT를 고르나</h3>
+
+      <p>여기서 걸리는 게 있을 겁니다. 새로 시작하는 프로젝트가 JWT를 고르는 걸 여러 번 봤는데,
+      그 팀들이 전부 9장의 넷에 걸려 있었을까요.</p>
+
+      <p>고른 이유를 물어보면 대개 세 문장 중 하나가 돌아옵니다. 셋 다 갈림길과 상관없는 문장이에요.</p>
+
+      <div class="myth">
+        <div class="m-row no">
+          <div class="m-x">✗</div>
+          <div class="m-txt"><b>"SPA니까 JWT"</b> — 프런트를 무엇으로 만들었느냐는 이 갈림길의 축이 아닙니다.
+          SPA도 쿠키 세션을 씁니다 — 4장 데모의 <b>같은 사이트의 API 호출</b> 칸이 그거였어요.
+          페이지 안의 스크립트가 부른 요청에도 브라우저는 쿠키를 붙여 주거든요.</div>
+        </div>
+        <div class="m-row yes">
+          <div class="m-x">✓</div>
+          <div class="m-txt"><b>실제로 걸리는 것은 출처가 갈릴 때입니다.</b> 프런트와 API가 다른 등록 단위에 있으면
+          쿠키가 안 건너가요. 그건 SPA라서가 아니라 <b>도메인이 갈려서</b> 생기는 문제고,
+          9장이 센 셋째 자리입니다. 프런트가 API와 같은 출처에 있다면 이 칸은 애초에 비어 있고요.</div>
+        </div>
+      </div>
+
+      <div class="myth">
+        <div class="m-row no">
+          <div class="m-x">✗</div>
+          <div class="m-txt"><b>"MSA니까 JWT"</b> — 서비스가 여럿이라는 말만으로는 넷 중 무엇이 걸렸는지 알 수 없습니다.
+          조회가 걸린 것인지 쿠키가 걸린 것인지에 따라 답이 갈리거든요.</div>
+        </div>
+        <div class="m-row yes">
+          <div class="m-x">✓</div>
+          <div class="m-txt"><b>바깥은 세션, 안쪽은 토큰으로 갈라 둘 수 있습니다.</b>
+          브라우저는 <span class="term" data-t="게이트웨이">게이트웨이</span>에 세션 쿠키를 내고,
+          게이트웨이가 그 세션을 한 번 확인해 안쪽 서비스용 토큰으로 바꿔 넘겨요.
+          9장 끝에서 값을 여기에 달아 두겠다고 했던 그 구성이고요 — 두 갈래를 <b>구간별로</b> 나눠 쓰는 겁니다.</div>
+        </div>
+      </div>
+
+      <div class="myth">
+        <div class="m-row no">
+          <div class="m-x">✗</div>
+          <div class="m-txt"><b>"JWT가 더 안전하다"</b> — 서명을 안전의 근거로 든 문장인데,
+          그 서명이 무엇을 하는지는 3장 퀴즈와 9장 퀴즈가 두 번 갈라 놨습니다.
+          <b>고쳐 쓰기를 막지 베껴 쓰기를 막지 않아요.</b> 통째로 복사해 간 증표는 복사한 쪽에서 그대로 통합니다.</div>
+        </div>
+        <div class="m-row yes">
+          <div class="m-x">✓</div>
+          <div class="m-txt"><b>갈리는 자리는 훔친 것이 밝혀진 다음입니다.</b>
+          세션은 그 서랍 한 칸을 지우면 다음 요청부터 끊기고, JWT는 적어 둔 기한이 끝날 때까지 통해요.
+          <b>취소가 안 되는 쪽이 더 안전할 이유가 없습니다.</b></div>
+        </div>
+      </div>
+
+      <h3>🚚 쿠키냐 헤더냐 — 이건 다른 축입니다</h3>
+
+      <p>"그럼 쿠키를 쓰라는 거냐 헤더를 쓰라는 거냐"가 여기서 나올 텐데,
+      그건 방금 답한 것과 다른 질문입니다. 증표에 무엇을 담느냐가 아니라 <b>무엇에 실어 보내느냐</b>거든요.</p>
+
+      <p>이 질문이 갈림길과 자꾸 붙어 다니는 데는 이유가 있어요. 갈래 A는 대개 쿠키를 타고 오고 갈래 B는 대개 헤더를 타고 오니까요.
+      그런데 9장이 넷째 자리에서 이미 선을 그어 뒀습니다 —
+      쿠키를 떼어 내고 증표를 헤더에 실어도, <b>그 증표가 열쇠라면 저장소에 물어보는 일은 그대로 남는다</b>고.
+      세션 열쇠를 <code>Authorization</code> 헤더로 보낼 수 있고, JWT를 쿠키에 담을 수도 있습니다.
+      <b>무엇을 담느냐와 무엇에 실어 보내느냐는 따로 고르는 겁니다.</b></p>
+
+      <p>따로 고르는 것이라면 이쪽도 따로 따져야겠죠. 같은 요청을 두 방식에 걸어 보면 이렇습니다.</p>
+
+      <div class="fork">
+        <div class="fk-h">같은 요청에서</div>
+        <div class="fk-h">🍪 쿠키에 실어 보낸다</div>
+        <div class="fk-h">📨 <code>Authorization</code> 헤더로 보낸다</div>
+
+        <div class="fk-q">누가 붙이나</div>
+        <div class="fk-c" data-h="🍪 쿠키">브라우저가. 우리 코드는 한 줄도 안 씁니다.</div>
+        <div class="fk-c" data-h="📨 Authorization 헤더">우리 코드가. 요청을 만드는 자리마다 빠뜨리면 안 됩니다.</div>
+
+        <div class="fk-q">우리 코드가 안 만든 요청</div>
+        <div class="fk-c" data-h="🍪 쿠키">주소창에 친 주소, 메일에 붙은 링크, <code>&lt;img&gt;</code>, 새로고침 — 전부 붙습니다.</div>
+        <div class="fk-c" data-h="📨 Authorization 헤더">안 붙습니다. 그런 요청에는 우리 코드가 낄 자리가 없어요.</div>
+
+        <div class="fk-q">CSRF</div>
+        <div class="fk-c" data-h="🍪 쿠키"><span class="ch-bs"><span class="badge bad">노출된다</span></span>
+        자동으로 붙는다는 그 성질을 남의 페이지도 그대로 씁니다. 6장 전체가 이 한 줄에서 나왔어요.</div>
+        <div class="fk-c" data-h="📨 Authorization 헤더"><span class="ch-bs"><span class="badge ok">노출되지 않는다</span></span>
+        남의 페이지는 이 헤더를 채울 수 없습니다. <b>자동으로 붙지 않는 값이라서</b> 방어가 되는 것 — 6장에서 CSRF 토큰을 설명한 문장 그대로입니다.</div>
+
+        <div class="fk-q">값을 어디에 두나</div>
+        <div class="fk-c" data-h="🍪 쿠키">브라우저의 쿠키 상자. <code>HttpOnly</code>를 걸면 스크립트가 아예 못 읽습니다.</div>
+        <div class="fk-c" data-h="📨 Authorization 헤더">코드가 읽을 수 있는 곳. 코드가 붙여야 하니 다른 수가 없습니다.</div>
+
+        <div class="fk-q">XSS가 났을 때</div>
+        <div class="fk-c" data-h="🍪 쿠키"><span class="ch-bs"><span class="badge ok">빼내 가기 막힘</span><span class="badge bad">그 자리에서 부리기 뚫림</span></span>
+        <code>HttpOnly</code>가 그은 선입니다. 값은 못 들고 나가는데, 그 페이지에서 요청을 던지면 브라우저가 쿠키를 붙여 줘요.</div>
+        <div class="fk-c" data-h="📨 Authorization 헤더"><span class="ch-bs"><span class="badge bad">빼내 가기 뚫림</span><span class="badge bad">그 자리에서 부리기 뚫림</span></span>
+        코드가 읽는 곳에 뒀으니 공격자의 코드도 읽습니다. 값이 그 페이지 밖으로 나갑니다.</div>
+
+        <div class="fk-q">브라우저가 아닌 상대</div>
+        <div class="fk-c" data-h="🍪 쿠키">쿠키 상자가 없습니다. 이 길로는 못 옵니다.</div>
+        <div class="fk-c" data-h="📨 Authorization 헤더">그쪽이 원래 쓰는 방식입니다.</div>
+      </div>
+
+      <p>CSRF 줄과 XSS 줄을 세로로 붙여 읽으면 이 표의 모양이 보입니다.
+      쿠키는 자동으로 붙어서 CSRF에 노출되고, 헤더는 자동으로 안 붙어서 노출되지 않아요.
+      대신 헤더는 코드가 붙여야 하니 코드가 읽을 수 있는 곳에 값을 둬야 하고, 그 순간 XSS 쪽 노출이 커집니다.
+      <b>한쪽을 줄이면 다른 쪽이 늡니다.</b></p>
+
+      <div class="callout why">
+        <h4>🎚️ 좋은 것을 고르는 게 아니라 어느 위험을 택할지 고르는 것</h4>
+        <p>쿠키를 고르면 CSRF 방어를 세워야 합니다 — 6장이 그 목록을 이미 만들어 뒀어요.
+        헤더를 고르면 그 값을 어디에 둘지가 남고, 그쪽에서는 XSS 한 번의 값이 커집니다.
+        어느 쪽을 골라도 <b>줄어든 위험만큼 늘어난 위험을 관리해야 합니다.</b></p>
+      </div>
+
+      <h3>🗄️ 그러면 그 값을 어디에 두나</h3>
+
+      <p>헤더 쪽을 골랐다고 하죠. 코드가 읽을 수 있는 곳에 둬야 한다는 것까지는 정해졌는데,
+      그 "곳"을 놓고 논쟁이 하나 벌어집니다. <code class="term" data-t="localStorage">localStorage</code>냐 쿠키냐요.</p>
+
+      <p>정리는 대개 이렇게 됩니다 — <b>"<code>localStorage</code>는 XSS에 뚫리니까 <code>HttpOnly</code> 쿠키에 둬라."</b>
+      틀린 말은 아닌데, 이 정리에는 빠진 칸이 있습니다. 4장 퀴즈가 이미 그 칸을 가리켜 뒀고요.</p>
+
+      <p>XSS가 났다고 놓고 두 쪽에 각각 걸어 봅시다. 공격자의 스크립트가 우리 페이지 안에서 돌고 있습니다.</p>
+
+      <div class="kv">
+        <dt>localStorage</dt>
+        <dd>스크립트가 값을 그대로 읽습니다. 읽어서 공격자에게 보내면 그 값은 <b>그 페이지 밖에서도 삽니다</b> —
+        공격자의 브라우저에서도, 브라우저 없이 스크립트로도. 탭을 닫는 것으로 끝나지 않아요.</dd>
+        <dt>HttpOnly 쿠키</dt>
+        <dd>값은 못 읽습니다. 그런데 <b>그 자리에서 요청을 던지는 것은 그대로 됩니다.</b>
+        공격자의 코드는 이미 우리 페이지 안에 있고, 거기서 <code>POST</code> 하나를 던지면 브라우저가 쿠키를 알아서 붙여 줘요.
+        값을 알 필요가 없습니다 — 브라우저가 대신 써 주니까요.</dd>
+      </div>
+
+      <p>4장 퀴즈가 그은 선이 여기서 그대로 다시 그어집니다.
+      <b>훔쳐 가는 것과 그 자리에서 부리는 것은 다른 공격이고, <code>HttpOnly</code>가 막는 것은 앞의 하나뿐입니다.</b></p>
+
+      <div class="callout bad">
+        <h4>💥 XSS가 나면 둘 다 집니다</h4>
+        <p><code>HttpOnly</code> 쿠키가 낫습니다 — 잃는 것이 적으니까요. 값이 페이지 밖으로 안 나가니 피해가 그 세션, 그 페이지가 열려 있는 동안으로 갇힙니다.
+        <b>다만 그건 덜 지는 것이지 이기는 게 아니에요.</b>
+        저장 위치를 고르는 일은 XSS가 났을 때 <b>얼마나 잃을지</b>를 정하는 일이지, XSS를 막는 일이 아닙니다.</p>
+        <p>막는 일은 다른 자리에 있어요. 출력할 때 이스케이프하고 입력을 검증하는 서버·템플릿 쪽 일 —
+        4장 퀴즈에 이미 적어 뒀듯 쿠키 속성이 하는 일이 아닙니다.
+        <strong>진짜 해결책은 XSS를 안 내는 것이고, 저장 위치는 그게 실패했을 때의 피해 범위입니다.</strong></p>
+      </div>
+
+      <p>그러니 두 저장 위치를 재는 일이 XSS를 막는 일보다 앞에 놓이면 순서가 뒤집힌 겁니다.
+      앞의 것은 <b>피해 범위</b>를 정하고 뒤의 것은 <b>피해가 나느냐</b>를 정하니까요. 뒤집힌 채로 며칠을 재도 뒤의 것은 안 정해지고요.</p>
+
+      <h3>🧭 그래서 우리는 무엇을 골라야 하나</h3>
+
+      <p>남은 것은 우리 서비스에 대한 질문 다섯 개입니다.
+      9장이 센 네 자리와 11장의 청구서를 우리 쪽 사정으로 바꿔 물으면 이 다섯이 돼요.</p>
+
+      <div class="demo" id="chooser">
+        <span class="demo-tag">내 상황에는 무엇이 맞나</span>
+        <p style="margin:0 0 4px">지금 맡고 있는 서비스를 떠올리며 다섯 줄을 <b>예</b>와 <b>아니오</b>로 맞춰 보세요.
+        네 가지 권고 중 하나가 나오고, 그 아래에 <b>무엇을 포기하는 것인지</b>가 함께 나옵니다.</p>
+        <div class="ch-qs" id="chQs">
+          <div class="ch-q"><span class="t">클라이언트가 <b>브라우저뿐</b>인가</span><button class="tog on" data-k="browser">예</button></div>
+          <div class="ch-q"><span class="t">서비스가 <b>하나</b>인가</span><button class="tog on" data-k="one">예</button></div>
+          <div class="ch-q"><span class="t">도메인이 <b>하나</b>인가</span><button class="tog on" data-k="domain">예</button></div>
+          <div class="ch-q"><span class="t"><b>즉시 강제 로그아웃</b>이 필요한가</span><button class="tog on" data-k="revoke">예</button></div>
+          <div class="ch-q"><span class="t">서버가 <b>수십 대 이상</b>으로 늘어나나</span><button class="tog" data-k="scale">아니오</button></div>
+        </div>
+        <div id="chOut" aria-live="polite"></div>
+        <div class="ch-foot" id="chFoot"></div>
+      </div>
+
+      <p>다섯을 어떻게 맞춰도 포기하는 줄이 비는 칸은 안 나옵니다.
+      3장이 갈래를 가르며 적어 둔 문장이 여기까지 그대로 오거든요 —
+      둘의 차이는 정보를 어디에 두느냐 하나뿐인데, <b>그 하나에서 나머지가 전부 따라 나온다</b>고.
+      정보를 한쪽에 두면 다른 쪽에는 없는 것이고, 없는 자리에서 할 수 있는 일은 없습니다.</p>
+
+      <div class="oneline">
+        <span style="font-size:20px">⚖️</span>
+        <div><strong>브라우저를 상대하는 단일 서비스라면 세션이 기본값이고, JWT는 9장이 센 넷 중 하나에 걸렸을 때 고르는 겁니다.</strong>
+        쿠키냐 헤더냐는 그 갈림길과 다른 축이고요 — CSRF를 줄일지 XSS를 줄일지, 어느 위험을 택할지의 문제입니다.
+        어느 칸을 골라도 값은 붙어 있고, 값이 안 붙은 칸을 보고 있다면 아직 못 본 겁니다.</div>
+      </div>
+
+      <div class="quiz" data-qid="q-choose" data-answer="c">
+        <div class="q-head">✅ 체크포인트</div>
+        <div class="q">사내 관리 도구를 새로 만든다. <b>브라우저로만 쓰고, 서비스는 하나, 도메인도 하나, 앱 서버는 두 대.</b>
+        팀에서 <b>"요즘은 다 JWT를 쓰니까 JWT로 갑시다"</b>는 말이 나왔다. 이 결정에 대한 가장 정확한 지적은?</div>
+        <button class="opt" data-opt="a"><span class="mk">A</span> JWT는 서명이 붙어 있어 세션 ID보다 안전하다. 규모와 상관없이 옳은 방향이라 지적할 것이 없다</button>
+        <button class="opt" data-opt="b"><span class="mk">B</span> 서버가 두 대뿐이라 아직 이르다. 서버가 늘어나 세션이 감당이 안 될 때 그때 JWT로 옮기면 된다</button>
+        <button class="opt" data-opt="c"><span class="mk">C</span> 이 조건에서는 JWT로 옮겨 사는 것이 없다. 조회도 쿠키도 문제가 아니었으니, 얻는 것 없이 취소 가능성만 내놓는 거래가 된다</button>
+        <button class="opt" data-opt="d"><span class="mk">D</span> 세션을 쓰되 세션 ID를 JWT로 만들면 양쪽의 장점을 다 가질 수 있다</button>
+        <div class="explain"><b>정답 C.</b> 9장이 센 네 자리에 이 조건을 하나씩 대 보면 답이 나옵니다.
+        앱 서버는 두 대고, 서비스는 하나라 저장소가 남의 팀 배치에 물리지 않고, 도메인은 하나라 쿠키가 건너야 할 곳이 없고, 상대는 브라우저뿐이라 쿠키 상자가 있어요.
+        <b>넷 다 비어 있습니다.</b> 갈래를 바꿔서 살 것이 없다는 뜻이에요.
+        <p style="margin:8px 0 0">그런데 거래의 반대쪽은 조건을 안 봅니다. 살 게 없다고 파는 것까지 면제되지는 않아요 —
+        발급한 증표는 그대로 서버의 손을 떠나고, 퇴사한 계정도 권한을 내린 계정도 적어 둔 기한까지 통합니다.
+        사내 관리 도구에서 그 요구가 안 들어올 리가 없고, 들어오는 순간 11장의 청구서를 받게 되고요.</p>
+        <p style="margin:8px 0 0"><b>A</b>는 서명이 하는 일을 넓게 잡았습니다. 3장 퀴즈와 9장 퀴즈가 두 번 갈라 놨어요 —
+        서명은 고쳐 쓰기를 막지 베껴 쓰기를 막지 않습니다. 그리고 훔친 것이 밝혀진 다음에 손댈 자리가 없는 쪽이 이쪽이에요.</p>
+        <p style="margin:8px 0 0"><b>B</b>는 결론이 절반 맞고 <b>축이 틀렸습니다.</b> 세션을 밀어내는 것은 서버 대수가 아니에요 —
+        8장이 노드를 늘려 가며 조회 횟수를 셌을 때 중앙 저장소 줄은 <b>1</b>에서 안 움직였습니다.
+        9장에서 문제가 된 것도 대수 자체가 아니라 그 대수가 만들어 내는 <b>조회량</b>이었고요.
+        게다가 넷 중 셋(서비스 분리·도메인·브라우저 아닌 상대)은 서버 대수와 아무 관계가 없습니다.</p>
+        <p style="margin:8px 0 0"><b>D</b>는 두 갈래를 이름만 섞었습니다. 세션 ID를 JWT로 만들어도 그 값으로 저장소를 여는 한 조회는 그대로 남고,
+        저장소를 안 연다면 그건 세션이 아니라 그냥 JWT예요. 3장의 갈림길은 <b>정보를 어디에 두느냐</b>였고,
+        양쪽에 동시에 둘 수는 있어도 그건 양쪽 값을 다 치르는 것이지 양쪽 장점을 다 갖는 게 아닙니다.</p></div>
+      </div>
+    </section>
+
   </main>
 </div>
 
@@ -3128,6 +3434,8 @@ const GLOSSARY = {
   "클레임": "JWT의 payload에 적히는 항목 하나하나. 누구인지(sub), 언제 만료되는지(exp), 언제 발급됐는지(iat)처럼 이름이 정해진 것도 있고 서비스가 직접 정하는 것도 있다. 서명은 이 항목들이 고쳐지지 않았음을 보장할 뿐, 적힌 내용이 지금도 사실인지는 보장하지 않는다.",
   "refresh 토큰": "짧게 만료되는 증표를 다시 받아 오는 데만 쓰는 별도의 증표. 갱신 요청은 발급하는 쪽을 거치므로 그 자리에서 계정 상태를 다시 확인할 수 있고, 덕분에 일반 요청에는 조회를 붙이지 않은 채로 공백의 상한을 짧게 못 박을 수 있다. 대신 이 토큰 자체는 오래 살아 있어서, 훔쳐 가면 훔쳐 간 쪽에서도 새 증표가 계속 나온다.",
   "토큰 회전": "갱신할 때마다 refresh 토큰을 새것으로 바꾸고 쓰인 옛것은 버리는 것. rotation이라고도 부른다. 버린 옛것이 다시 들어오는 일은 정상 흐름에서 나올 수 없으므로 탈취를 의심하고 그 계정의 토큰을 전부 무효로 만든다. 탈취를 막는 장치가 아니라 탈취가 있었다는 것을 드러나게 만드는 장치다.",
+  "게이트웨이": "여러 서비스 앞에 서서 바깥에서 오는 요청을 먼저 받는 자리. 인증 검사를 여기서 한 번만 하고 알아낸 신원을 안쪽으로 넘기면, 안쪽 서비스마다 같은 검사를 되풀이하지 않아도 된다. 대신 안쪽 서비스는 게이트웨이가 알아낸 것을 믿고 일하게 되므로, 게이트웨이를 거치지 않는 경로가 하나라도 생기면 검사가 통째로 사라진다.",
+  "localStorage": "브라우저가 출처마다 따로 두는 키-값 저장소. 자바스크립트가 읽고 쓰며, 탭을 닫아도 값이 남는다. 코드가 읽을 수 있다는 것이 쓰임새이자 그대로 위험이다 — 같은 페이지에서 도는 공격자의 스크립트도 같은 방법으로 읽는다. 쿠키와 달리 요청에 자동으로 붙지 않으므로, 여기 둔 값은 코드가 직접 헤더에 실어야 한다.",
   // @GLOSSARY_END
 };
 
@@ -5345,6 +5653,113 @@ if(location.hash){
   wirePicker('#elMode', k => { mode = k; render(); });
   expEl.addEventListener('input', render);
   render();
+})();
+
+/* ============================================================
+   데모 12 — 내 상황에는 무엇이 맞나 (12장 · 결론)
+
+   다섯 질문이 네 권고로 접힌다. 접는 규칙에 들어가는 것은 9장이 센 네 자리와
+   11장의 청구서뿐이다 — 팀이 무엇을 운영할 수 있는지, 이미 무엇이 깔려 있는지는
+   한 칸도 안 들어간다. 그래서 이 데모가 반드시 함께 내야 하는 것은 권고가 아니라
+   그 권고가 포기하는 줄이다. 포기 줄이 비는 조합은 만들지 않았다.
+
+   판정 순서: 쿠키가 설 수 있나(브라우저뿐 + 도메인 하나) → 즉시 취소가 필요한가
+   → 서비스가 하나인가 → 앱 서버가 수십 대인가.
+   첫 갈래가 운반(쿠키/헤더)을 정하고, 나머지가 갈래와 저장소의 모양을 정한다.
+   ============================================================ */
+(function(){
+  const root = $('#chooser'); if(!root) return;
+  const qs = $('#chQs'), out = $('#chOut'), foot = $('#chFoot');
+
+  const REC = {
+    single: {
+      name: '🗄️ 세션(단일 저장소)',
+      sub: 'A · 서버가 기억한다',
+      buy: '증표는 뜻 없는 열쇠 하나. 세션은 앱 서버 바깥의 저장소 <b>한 벌</b>에 두고, 앱 서버가 몇 대든 모두 그 한 곳을 봅니다. 8장이 만든 구성 그대로예요.',
+      carry: '🍪 쿠키 — <code>HttpOnly</code>·<code>Secure</code>·<code>SameSite</code>를 걸고, 자동으로 붙는 대가로 CSRF 방어를 함께 세웁니다.',
+      give: '요청마다 조회 한 번을 계속 냅니다. 그리고 <b>그 한 곳이 멈추면 서비스 전체가 로그인 화면을 봅니다</b> — 8장이 만든 단일 장애점은 그대로 남아 있어요.'
+    },
+    central: {
+      name: '🏢 세션(중앙 저장소)',
+      sub: 'A · 서버가 기억한다',
+      buy: '갈래는 그대로 두고 저장소를 <b>따로 운영하는 물건</b>으로 올립니다. 조회를 감당하도록 키우고, 여러 서비스가 함께 보게 되면 접근 규칙과 장애 대응도 그 저장소에 붙습니다.',
+      carry: '🍪 쿠키 — 브라우저를 상대하는 구간에서는 그대로 씁니다.',
+      give: '조회는 끝까지 사라지지 않습니다. 감당하는 방법이지 없애는 방법이 아니에요. 그리고 <b>그 한 곳이 여러 팀의 공통 장애점이 됩니다</b> — 9장 둘째 자리의 그 저장소요. 잘 감당하는 물건은 잘 감당하는 만큼 운영해야 하는 물건이기도 하고요.'
+    },
+    gateway: {
+      name: '🚪 게이트웨이에서 세션 → 토큰 변환',
+      sub: '바깥은 A · 안쪽은 B',
+      buy: '브라우저는 게이트웨이에 세션 쿠키를 냅니다. 게이트웨이가 그 세션을 <b>한 번만</b> 확인하고, 알아낸 신원을 안쪽 서비스용 토큰으로 바꿔 넘겨요. 바깥에서는 취소가 살아 있고, 안쪽에서는 서비스를 늘려도 조회가 안 늡니다.',
+      carry: '🍪 바깥은 쿠키 · 📨 안쪽은 <code>Authorization</code> 헤더',
+      give: '안쪽 서비스는 <b>게이트웨이가 알아낸 것을 믿고</b> 일합니다. 게이트웨이를 거치지 않는 경로가 하나라도 생기면 검사가 통째로 사라져요. 그리고 안쪽 토큰에 대해서는 취소가 안 됩니다 — 기한을 짧게 잡아 공백을 좁히는 것이 전부고, 게이트웨이 자신이 새 단일 장애점이 됩니다.'
+    },
+    stateless: {
+      name: '🕊️ 무상태 토큰',
+      sub: 'B · 증표에 담는다',
+      buy: '누구이고 언제까지인지를 증표 안에 적고 서명을 붙입니다. 받는 쪽은 아무에게도 안 물어보고 자기 자리에서 서명만 봐요. 서비스가 몇이든 도메인이 몇이든 조회는 0입니다.',
+      carry: '📨 <code>Authorization</code> 헤더 — 우리 코드가 붙입니다. CSRF는 성립하지 않는 대신 그 값을 둘 곳이 XSS에 노출됩니다.',
+      give: '<b>취소를 팝니다.</b> 강제 로그아웃도, 권한 박탈도, 비밀번호 변경도 적어 둔 기한까지는 반영되지 않아요. 나중에 그 요구가 들어오면 되돌리는 방법은 전부 서버가 다시 기억하는 방법이고, 기억하면 조회가 돌아옵니다 — 11장의 청구서 그대로입니다.'
+    }
+  };
+
+  // 어느 답이 이 권고를 불렀는지. 판정 분기마다 다른 문장이 나와야
+  // "왜 이게 나왔지"를 표에 되짚어 볼 수 있다.
+  function decide(s){
+    const cookieOk = s.browser && s.domain;
+    if(!cookieOk){
+      const blocked = !s.browser
+        ? (s.domain ? '브라우저가 아닌 상대가 있습니다' : '브라우저가 아닌 상대가 있고 도메인도 여럿입니다')
+        : '도메인이 여럿입니다';
+      if(s.revoke){
+        return ['central', blocked + ' — 쿠키가 못 서는 자리(9장 셋째·넷째)라 운반을 헤더로 바꿉니다. '
+          + '다만 <b>즉시 취소가 필요하다고 답했으니 갈래는 그대로 둡니다.</b> '
+          + '9장 넷째 자리가 무너뜨린 것은 쿠키였지 세션이 아니었어요 — 열쇠를 헤더에 실어도 저장소에 물어보는 일은 그대로 섭니다.'];
+      }
+      return ['stateless', blocked + ' — 쿠키가 못 서는 자리(9장 셋째·넷째)입니다. '
+        + '게다가 즉시 취소가 필요 없다고 답했으니, <b>9장이 판 것을 팔아도 되는 조합</b>이에요. '
+        + '조회를 없앨 수 있는 조건이 여기서 처음으로 다 맞습니다.'];
+    }
+    if(s.one){
+      if(s.scale){
+        return ['central', '브라우저뿐 · 서비스 하나 · 도메인 하나 — 쿠키는 잘 섭니다. '
+          + '다만 <b>앱 서버가 수십 대로 늘면 조회도 그만큼 늡니다</b>(9장 첫째 자리). '
+          + '8장 표의 조회 <b>1</b>은 노드당이 아니라 요청당이었으니까요. 저장소를 따로 키워 그 1을 감당하는 쪽입니다.'];
+      }
+      return ['single', '브라우저뿐 · 서비스 하나 · 도메인 하나 · 서버가 수십 대까지 가지 않는다 — '
+        + '<b>9장이 센 넷 중 어디에도 안 걸렸습니다.</b> 갈래를 바꿔서 살 것이 없으니 기본값에 그대로 섭니다.'];
+    }
+    if(s.scale || s.revoke){
+      return ['gateway', '서비스가 여럿인데 상대는 브라우저입니다. '
+        + (s.revoke ? '즉시 취소가 필요하니 바깥은 세션이어야 하고, ' : '')
+        + (s.scale ? '앱 서버가 수십 대라 안쪽에서 조회가 늘면 곤란하고요. ' : '안쪽 조회를 서비스 수만큼 늘리지 않는 쪽이 낫고요. ')
+        + '<b>바깥은 세션, 안쪽은 토큰</b>으로 구간을 갈라 두면 두 요구가 같은 구성 안에 섭니다.'];
+    }
+    return ['central', '서비스가 여럿이라 세션 저장소가 <b>조직 공통</b>이 됩니다(9장 둘째 자리). '
+      + '다만 즉시 취소도, 수십 대 규모도 걸리지 않았어요. 게이트웨이를 한 겹 더 세우는 것보다 '
+      + '<b>가장 적은 물건으로 서는 구성</b>이 이쪽입니다.'];
+  }
+
+  function render(st){
+    $$('.tog', qs).forEach(b => { b.textContent = st[b.dataset.k] ? '예' : '아니오'; });
+
+    const [key, why] = decide(st);
+    const r = REC[key];
+    out.innerHTML = '<div class="ch-card">'
+      + '<div class="ch-name">' + r.name + '</div>'
+      + '<div class="ch-sub">' + r.sub + '</div>'
+      + '<div class="ch-l"><span class="k">왜 이것</span><span class="v">' + why + '</span></div>'
+      + '<div class="ch-l"><span class="k">사는 것</span><span class="v">' + r.buy + '</span></div>'
+      + '<div class="ch-l"><span class="k">나르는 법</span><span class="v">' + r.carry + '</span></div>'
+      + '<div class="ch-l give"><span class="k">💸 포기</span><span class="v">' + r.give + '</span></div>'
+      + '</div>';
+  }
+
+  foot.innerHTML = '※ 이 다섯 줄이 결정을 대신하지는 않습니다. 여기 들어간 것은 <b>9장이 센 네 자리와 11장의 청구서</b>뿐이에요 — '
+    + '팀이 무엇을 운영할 수 있는지, 이미 무엇이 깔려 있는지, 규정이 무엇을 요구하는지는 한 칸도 안 들어가 있습니다. '
+    + '그리고 어느 조합에서도 <b>💸 포기</b> 줄은 나옵니다. 그 줄이 비는 칸은 이 데모에 없어요.';
+
+  const state = wireTogs('#chQs', render);
+  render(state);
 })();
 </script>
 </body>
