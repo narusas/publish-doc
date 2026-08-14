@@ -2988,7 +2988,7 @@ payload → {"sub":"alice","role":"user","exp":1786000000}</code></pre>
         서명은 봉인이라 뜯어 고치면 표가 나지만, 겉면의 글씨는 처음부터 누구에게나 보입니다.
         <p style="margin:8px 0 0"><b>C</b>는 방향이 반대입니다. 서명은 <b>앞 두 토막 전체</b>에 걸려요 —
         payload를 한 글자만 고쳐도 서명이 안 맞습니다. 위 데모에서 <code>role</code>을 고쳐 보면 그 자리에서 확인됩니다.
-        틀린 곳은 payload가 보호되지 <b>않는다</b>가 아니라, 보호가 <b>고쳐 쓰기에 대한 것</b>이라는 데 있습니다.</p>
+        틀린 곳은 payload가 보호되지 <b>않는다</b>가 아니라, 보호하는 것이 <b>고쳐 쓰기뿐</b>이라는 데 있습니다.</p>
         <p style="margin:8px 0 0"><b>D</b>는 두 갈래를 잘못 붙였습니다. 대칭이냐 비대칭이냐가 정하는 것은
         <b>누가 서명을 만들 수 있느냐</b>이지 내용이 가려지느냐가 아니에요. 어느 쪽으로 서명하든 앞 두 토막은 여전히 base64url입니다.</p>
         <p style="margin:8px 0 0"><b>A</b>는 이 문서가 하지 않는 주장입니다. 항목 수와 서명 비용의 관계는 구조에서 따라 나오지 않아요.
@@ -3239,7 +3239,7 @@ payload → {"sub":"alice","role":"user","exp":1786000000}</code></pre>
 
         <div class="fk-q">서버가 무엇을 기억하나</div>
         <div class="fk-c" data-h="A · 서버가 기억한다">세션 하나에 서랍 한 칸. 서버가 여러 대가 되면 그 서랍을 모두가 보는 한 곳으로 옮긴다. <span class="dim mono">5·8장</span></div>
-        <div class="fk-c" data-h="B · 증표에 담는다">일반 요청에 대해서는 아무것도. 대신 무효화 기록과 refresh 토큰의 상태가 되돌아온다. <span class="dim mono">9·11장</span></div>
+        <div class="fk-c" data-h="B · 증표에 담는다">일반 요청에는 아무것도. 대신 무효화 기록과 refresh 토큰의 상태가 되돌아온다. <span class="dim mono">9·11장</span></div>
 
         <div class="fk-q">취소할 수 있나</div>
         <div class="fk-c" data-h="A · 서버가 기억한다">된다. 서랍 한 칸을 지우면 다음 요청부터 끊긴다. 기기 하나만 골라 끊는 것도 된다. <span class="dim mono">5장</span></div>
