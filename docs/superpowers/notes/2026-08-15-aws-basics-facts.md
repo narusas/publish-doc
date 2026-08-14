@@ -1,0 +1,355 @@
+# AWS 기초 튜토리얼 — 사실 검증 기록
+
+- 날짜: 2026-08-15
+- 대상 문서: `aws_basics.html` (설계: `docs/superpowers/specs/2026-08-15-aws-basics-tutorial-design.md`)
+- 방법: AWS 공식 문서 원문을 직접 받아 인용. 요약본이 아니라 인용문을 근거로 삼는다.
+
+**옮겨 쓸 때의 규칙** — `2026-08-14-known-issues.md` §10에서 옮겨 온다.
+
+1. 아래 표·요약과 인용문이 어긋나면 **인용문을 믿는다.**
+2. 여기에 없는 사실은 **쓰지 말고 비워 둔 채 보고한다.** 완화해서 뭉개지 않는다.
+3. 요금 숫자는 **리전마다 다르다.** 아래 값은 공식 페이지에 적힌 그대로이고, 어느 리전 표인지
+   명시돼 있지 않았다. 본문에서는 절대값보다 **무엇이 시간당인가**를 축으로 쓴다.
+
+---
+
+## V1 · 퍼블릭 IPv4는 stop하면 바뀐다 — 확인됨
+
+출처: [Amazon EC2 instance IP addressing](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/using-instance-addressing.html)
+
+> We release the public IP address when the instance is stopped, hibernated, or terminated.
+> We assign a new public IP address when you start your stopped or hibernated instance.
+
+> A public IP address is assigned to your instance from Amazon's pool of public IPv4 addresses,
+> and is not associated with your AWS account.
+
+사설 IP는 반대다.
+
+> A private IPv4 address, regardless of whether it is a primary or secondary address, remains
+> associated with the network interface when the instance is stopped and started, or hibernated
+> and started, and is released when the instance is terminated.
+
+**주의**: 이 페이지는 재부팅(reboot)을 해제 사유 **목록에 넣지 않았다.** 목록에 없다는 사실까지가
+확인된 것이고, "재부팅하면 유지된다"는 문장은 이 페이지에서 직접 인용되지 않는다. 7장에서
+재부팅을 다룰 때는 인스턴스 스토어 쪽 표(V8)를 근거로 쓴다 — 거기에는 reboot 행이 있다.
+
+부수 확인 — 퍼블릭 IP가 해제돼도 새로 안 주는 두 경우:
+
+> If we release the public IP address of your instance and it has a secondary network interface,
+> we do not assign a new public IP address.
+
+---
+
+## V2 · 퍼블릭 IPv4는 붙어 있어도 과금된다 — 확인됨
+
+출처 ①: [Amazon EC2 instance IP addressing](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/using-instance-addressing.html)
+
+> AWS charges for all public IPv4 addresses, including public IPv4 addresses associated with
+> running instances and Elastic IP addresses.
+
+출처 ②: [Amazon VPC Pricing](https://aws.amazon.com/vpc/pricing/) — 두 줄이 **같은 값**이다.
+
+> Hourly charge for In-use Public IPv4 Address $0.005
+> Hourly charge for Idle Public IPv4 Address $0.005
+
+출처 ③: [New – AWS Public IPv4 Address Charge + Public IP Insights](https://aws.amazon.com/blogs/aws/new-aws-public-ipv4-address-charge-public-ip-insights/) ·
+[AWS Free Tier now includes 750 hours of free Public IPv4 addresses](https://aws.amazon.com/about-aws/whats-new/2024/02/aws-free-tier-750-hours-free-public-ipv4-addresses/)
+
+- 시행: **2024년 2월 1일**
+- 붙어 있든 놀고 있든 시간당 $0.005
+- EC2 프리 티어에 월 750시간이 첫 12개월간 포함된다
+- BYOIP로 가져온 주소는 과금되지 않는다
+- EC2뿐 아니라 RDS·EKS 노드 등 퍼블릭 IPv4를 붙일 수 있는 모든 서비스에 적용된다
+
+**12장에 쓸 것**: "안 쓰는 EIP만 돈이 나간다"는 낡은 상식이다. 지금은 **쓰고 있어도 같은 값**이 나간다.
+값이 같으므로 이 문서는 "붙였다/놀린다"가 아니라 **"몇 개나 갖고 있나"**를 축으로 쓴다.
+
+---
+
+## V3 · `DeleteOnTermination` 기본값 — **설계 문서가 틀렸다. 수정 필요**
+
+출처: [Preserve data when an instance is terminated](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/preserving-volumes-on-termination.html)
+
+설계 §5 6장에 "루트 볼륨과 추가 볼륨의 기본값이 갈린다"고 적었는데, 갈리는 축이 **둘이 아니라 셋**이다 —
+볼륨 종류 · 언제 붙였나 · **콘솔이냐 CLI냐**.
+
+| Volume type | Attached when | Method for attaching | Default behavior on instance termination |
+| --- | --- | --- | --- |
+| Root volume | At launch | Console or CLI | **Delete** |
+| Root volume | After launch | Console or CLI | Preserve |
+| Data volume | At launch | Console | Preserve |
+| Data volume | At launch | **CLI** | **Delete** |
+| Data volume | After launch | Console and CLI | Preserve |
+
+같은 "시작할 때 붙인 데이터 볼륨"인데 **콘솔은 남기고 CLI는 지운다.** 6장이 노릴 자리가 여기다.
+13장("콘솔과 CLI는 같은 문")과 정면으로 부딪히는 것처럼 보이지만 모순이 아니다 — 문은 하나이고,
+**콘솔이 대신 채워 넣는 기본값이 다를 뿐**이다. 두 장을 잇는 데 쓴다.
+
+> **No** (console) / `false` (CLI) – The volume is preserved when the instance is terminated.
+> Preserved volumes continue to incur charges.
+
+또 하나:
+
+> The default value at launch for an EBS volume is determined by the `DeleteOnTermination`
+> attribute set on the AMI.
+
+즉 최종 결정권은 AMI에 있다. **"기본값은 X다"라고 단정하지 말 것.**
+
+---
+
+## V4 · NAT Gateway 과금 축 — 확인됨
+
+출처 ①: [Amazon VPC Pricing](https://aws.amazon.com/vpc/pricing/) — 시간당 $0.045, 처리 GB당 $0.045.
+트래픽의 출발지·목적지와 무관하게 지나간 양으로 받는다.
+
+출처 ②: [Amazon EC2 instance IP addressing](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/using-instance-addressing.html) —
+같은 값이 EC2 사용자 안내서의 계산식에도 그대로 나온다. 두 페이지가 독립적으로 일치한다.
+
+> `NAT gateway per hour = $0.045 * 730 hours in a month * Number of Availability Zones the NAT gateways are in`
+> `NAT gateway public IPs = $0.005 * 730 hours in a month * Number of IPs associated with your NAT gateways`
+> `NAT gateway transfer = $0.045 * Number of GBs that will go through the NAT gateway in a month`
+
+**9장·12장에 쓸 것**: NAT Gateway는 **AZ마다 하나씩** 두므로 시간당 요금이 AZ 수만큼 곱해진다.
+그리고 NAT Gateway 자신도 퍼블릭 IP를 쥐고 있어서 V2의 $0.005가 **또 붙는다.** 요금이 세 겹이다.
+
+---
+
+## V5 · S3 버킷 이름은 "전 세계"가 아니라 "파티션 안에서" 유일하다 — 확인됨
+
+출처: [General purpose bucket naming rules](https://docs.aws.amazon.com/AmazonS3/latest/userguide/bucketnamingrules.html)
+
+> General purpose buckets exist in a global namespace, which means that each bucket name must be
+> unique across all AWS accounts in all the AWS Regions **within a partition**. A partition is a
+> grouping of Regions. AWS currently has four partitions: `aws` (Standard Regions), `aws-cn`
+> (China Regions), `aws-us-gov` (AWS GovCloud (US)), and `aws-eusc` (European Sovereign Cloud).
+
+**함께 확인된 것 — 계정 리전 네임스페이스(account regional namespace).** 전역 네임스페이스 말고
+계정 전용 네임스페이스에 버킷을 만들 수 있다. 이름 규칙은 `{prefix}-{계정ID}-{리전}-an`이다.
+
+> New general purpose buckets created in your account regional namespace are unique to your
+> account and can never be re-created by another account.
+
+8장에서 "이름을 남에게 뺏긴다"를 다룬 뒤 해법으로 한 줄 붙일 수 있다. **필수는 아니다.**
+
+---
+
+## V6 · `ap-northeast-2a`는 계정마다 다른 건물이다 — 확인됨
+
+출처: [Availability Zone IDs for your AWS resources](https://docs.aws.amazon.com/ram/latest/userguide/working-with-az-ids.html)
+
+> AWS maps the physical Availability Zones *randomly* to the Availability Zone names for each AWS
+> account. ... As a result, the Availability Zone `us-east-1a` for *your* AWS account might not
+> represent the same physical location as `us-east-1a` for a different AWS account.
+
+> An AZ ID is a unique and consistent identifier for an Availability Zone across all AWS accounts.
+> For example, `use1-az1` is an AZ ID for an Availability Zone in the `us-east-1` Region and it
+> represents the same physical location in every AWS account.
+
+**섞은 이유까지 적혀 있다.**
+
+> This approach helps to distribute resources across the Availability Zones in an AWS Region,
+> instead of resources likely being concentrated in Availability Zone "a" for each Region.
+
+**3장 데모에 그대로 쓸 실제 출력** — 공식 문서의 `describe-availability-zones` 예시다.
+`a`가 `az1`이 아니라는 것이 눈으로 보인다.
+
+| ZoneName | ZoneId |
+| --- | --- |
+| us-west-2a | usw2-az2 |
+| us-west-2b | usw2-az1 |
+| us-west-2c | usw2-az3 |
+| us-west-2d | usw2-az4 |
+
+---
+
+## V7 · ALB는 서브넷 둘, NLB는 하나 — 확인됨. **비대칭이다**
+
+출처 ①: [Application Load Balancers](https://docs.aws.amazon.com/elasticloadbalancing/latest/application/application-load-balancers.html)
+
+> **You must select at least two Availability Zone subnets.** The following restrictions apply:
+> Each subnet must be from a different Availability Zone.
+
+> verify that each Availability Zone subnet for your load balancer has a CIDR block with at least
+> a `/27` bitmask (for example, `10.0.0.0/27`) and at least eight free IP addresses per subnet.
+
+출처 ②: [Create a Network Load Balancer](https://docs.aws.amazon.com/elasticloadbalancing/latest/network/create-network-load-balancer.html)
+
+> For **Availability Zones and subnets**, **select at least one Availability Zone**, and select
+> one subnet per zone.
+
+**9장에 쓸 것**: 3장(AZ)과 7장(ENI는 서브넷에 갇힌다)이 여기서 값을 한다. 로드밸런서는 AZ마다
+ENI를 하나씩 만들기 때문에 서브넷을 요구하는 것이다.
+
+> Elastic Load Balancing creates network interfaces in the subnets where you configured your
+> load balancer. ... They have the description "ENI reserved by ELB for subnet".
+
+**ALB vs NLB의 진짜 갈림길 하나 더 — 고정 IP.** NLB는 AZ마다 EIP를 지정할 수 있다.
+
+> When creating an internet-facing Network Load Balancer, you can choose to specify an Elastic IP
+> address for each Availability Zone. Elastic IP addresses provide your Network Load Balancer with
+> static IP addresses.
+
+ALB는 그럴 수 없고, 주소를 서비스가 쥐고 있다가 회수한다.
+
+> While these IPs are visible in your account, they remain fully managed by the Application Load
+> Balancer service and cannot be modified or released.
+
+"방화벽에 IP를 등록해야 한다"가 NLB를 고르는 실제 이유가 되는 자리다.
+
+---
+
+## V8 · 인스턴스 스토어는 재부팅에서만 살아남는다 — 확인됨
+
+출처: [Data persistence for Amazon EC2 instance store volumes](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/instance-store-lifetime.html)
+
+> The data on an instance store volume persists even if the instance is rebooted. However, the
+> data does not persist if the instance is stopped, hibernated, or terminated. When the instance
+> is stopped, hibernated, or terminated, every block of the instance store volume is
+> cryptographically erased.
+
+| Event | What happens to your data? |
+| --- | --- |
+| The instance is rebooted | The data persists |
+| The instance is stopped | The data does not persist |
+| The instance is hibernated | The data does not persist |
+| The instance is terminated | The data does not persist |
+| **The instance type is changed** | **The data does not persist** |
+| A shutdown is initiated (OS) | The data does not persist |
+| A restart is initiated (OS) | The data persists |
+| The underlying disk fails | The data on the failed disk does not persist |
+| Power failure | The data persists upon reboot |
+
+**5장에 쓸 것**: OS에서 `reboot`을 치면 살고 `shutdown`을 치면 죽는다. 같은 터미널에서 한 글자
+차이로 갈린다. 그리고 붙였다 뗄 수도 없다.
+
+> Instance store volumes are attached only at instance launch. You can't attach instance store
+> volumes after launch. You can't detach an instance store volume from one instance and attach it
+> to a different instance.
+
+이것이 6장 EBS와의 대비축이다 — EBS는 붙였다 뗄 수 있고, 인스턴스 스토어는 못 한다.
+
+---
+
+## V9 · Lambda 한계 — 확인됨. **단, "15분이 최대"는 이제 조건부다**
+
+출처: [Lambda quotas](https://docs.aws.amazon.com/lambda/latest/dg/gettingstarted-limits.html)
+
+| 항목 | 값 |
+| --- | --- |
+| Function timeout | 900 seconds (15 minutes) |
+| Function memory allocation | 128 MB to 10,240 MB, in 1-MB increments |
+| 배포 패키지 (.zip) | 50 MB (압축, API·SDK 업로드) / 250 MB (압축 해제, 레이어 포함) |
+| 컨테이너 이미지 | 10 GB (압축 해제 최대 이미지 크기) |
+| Concurrent executions | 1,000 (기본, 증액 가능) |
+| Invocation payload | 동기 요청·응답 각 6 MB / 비동기 1 MB |
+
+> At 1,769 MB, a function has the equivalent of one vCPU.
+
+**주의 — 같은 페이지에 `Lambda MicroVMs`라는 별개 항목이 있고 최대 실행 시간이 8시간(28,800초)이다.**
+따라서 **"Lambda는 15분이 최대다"라고 단정하면 틀린다.** 11장에서는 "Lambda **함수**의 타임아웃은
+900초"로 대상을 좁혀 쓴다. MicroVM은 이 문서의 범위 밖이므로 언급하지 않는다.
+
+> New AWS accounts have reduced concurrency and memory quotas for Lambda Functions and Lambda
+> MicroVMs. AWS raises these quotas automatically based on your usage.
+
+신규 계정은 위 기본값보다 낮게 시작한다. 이것도 "기본값은 X다"를 단정하지 못하게 하는 조건이다.
+
+---
+
+## V10 · RDS가 끝내 내주지 않는 것 — 확인됨
+
+출처: [Amazon RDS Custom](https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/rds-custom.html)
+
+> **To deliver a managed service experience, Amazon RDS doesn't let you access the underlying
+> host. Amazon RDS also restricts access to some procedures and objects that require high-level
+> privileges.**
+
+10장 데모의 뼈대가 될 표. 출처: [What is Amazon RDS?](https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/Welcome.html)
+(같은 표가 RDS Custom 페이지에도 실려 있다 — 두 페이지가 일치한다.)
+
+| Feature | On-premises | Amazon EC2 | Amazon RDS |
+| --- | --- | --- | --- |
+| Application optimization | Customer | Customer | Customer |
+| Scaling | Customer | Customer | AWS |
+| High availability | Customer | Customer | AWS |
+| Database backups | Customer | Customer | AWS |
+| Database software patching | Customer | Customer | AWS |
+| Database software install | Customer | Customer | AWS |
+| Operating system (OS) patching | Customer | Customer | AWS |
+| OS installation | Customer | Customer | AWS |
+| Server maintenance | Customer | AWS | AWS |
+| Hardware lifecycle | Customer | AWS | AWS |
+| Power, network, and cooling | Customer | AWS | AWS |
+
+**표를 그대로 쓰면 안 되는 이유가 표 자체에 있다.** 열한 줄 중 맨 윗줄만 세 열이 전부 `Customer`다.
+AWS가 아무리 가져가도 **쿼리는 끝까지 내 것**이라는 이야기이고, 공식 문서도 따로 못을 박는다.
+
+> You are responsible for query tuning ... Monitoring and tuning are highly individualized
+> processes that you own for your RDS databases.
+
+RDS Custom은 "OS 접근이 필요하면 이쪽"이라는 **탈출구**로만 한 줄 언급한다. 이 문서의 범위 밖이다.
+
+---
+
+## V11 · ARN에서 칸이 비는 것은 정상이다 — 확인됨
+
+출처: [Identify AWS resources with Amazon Resource Names (ARNs)](https://docs.aws.amazon.com/IAM/latest/UserGuide/reference-arns.html)
+
+> Be aware that the ARNs for some resources omit the Region, the account ID, or both the Region
+> and the account ID.
+
+```
+arn:partition:service:region:account-id:resource-id
+arn:partition:service:region:account-id:resource-type/resource-id
+arn:partition:service:region:account-id:resource-type:resource-id
+```
+
+4장 데모에 쓸 대조군 — 전부 공식 문서의 예시다.
+
+| 리소스 | ARN | 비는 칸 |
+| --- | --- | --- |
+| IAM user | `arn:aws:iam::123456789012:user/john` | 리전 |
+| S3 객체 | `arn:aws:s3:::amzn-s3-demo-bucket/*` | 리전 · 계정 |
+| SNS topic | `arn:aws:sns:us-east-1:123456789012:example-sns-topic-name` | 없음 |
+| VPC | `arn:aws:ec2:us-east-1:123456789012:vpc/vpc-0e9801d129EXAMPLE` | 없음 |
+
+**비는 칸에 뜻이 있다.** IAM은 전역이라 리전이 없고, S3 버킷 이름은 파티션 전역에서 유일하니(V5)
+계정까지 없다. 3장의 "글로벌인 것들"이 4장에서 ARN의 모양으로 다시 나타난다.
+
+**⚠️ 두 공식 문서가 어긋난다 — 파티션 개수.**
+
+| 페이지 | 나열한 파티션 |
+| --- | --- |
+| IAM ARN 레퍼런스 | `aws` · `aws-cn` · `aws-us-gov` (셋) |
+| S3 버킷 이름 규칙 (V5) | `aws` · `aws-cn` · `aws-us-gov` · `aws-eusc` (넷) |
+
+S3 쪽이 European Sovereign Cloud를 포함해 더 최신으로 보이지만, **어느 쪽이 옳은지 이 검증으로는
+확정하지 못했다.** 따라서 본문에 **파티션 개수를 숫자로 쓰지 않는다.** "중국과 GovCloud는 별도
+파티션"까지만 쓰면 두 페이지 모두와 어긋나지 않는다.
+
+---
+
+## 검증 요약
+
+| # | 대상 | 결과 |
+|---|---|---|
+| V1 | stop→start 시 퍼블릭 IPv4 | 확인됨. 재부팅은 원문에 없으므로 V8로 대체 |
+| V2 | 퍼블릭 IPv4 과금 | 확인됨. 2024-02-01, 시간당 $0.005, **붙어 있어도 같은 값** |
+| V3 | `DeleteOnTermination` | **설계가 틀렸다.** 축이 셋이고 CLI는 데이터 볼륨도 지운다 |
+| V4 | NAT Gateway 과금 | 확인됨. 시간당 + GB당 + 퍼블릭 IP까지 세 겹 |
+| V5 | S3 버킷 이름 유일성 | 확인됨. 전 세계가 아니라 **파티션 안** |
+| V6 | AZ 이름↔ID | 확인됨. 무작위 매핑. 실제 CLI 출력 확보 |
+| V7 | ALB/NLB 최소 서브넷 | 확인됨. ALB 둘 / NLB 하나. 고정 IP도 갈린다 |
+| V8 | 인스턴스 스토어 수명 | 확인됨. 전체 표 확보 |
+| V9 | Lambda 한계 | 확인됨. **"15분이 최대"는 함수로 한정해야 한다** |
+| V10 | RDS가 안 주는 것 | 확인됨. 호스트 접근 불가 원문 확보 |
+| V11 | ARN 빈 칸 | 확인됨. **파티션 개수는 문서끼리 어긋나므로 쓰지 않는다** |
+
+## 설계 문서에 반영할 것
+
+1. **6장** — "루트와 추가 볼륨이 갈린다"를 "볼륨 종류 · 붙인 시점 · 콘솔이냐 CLI냐, 축이 셋"으로
+   고친다. 그리고 최종 결정권이 AMI에 있다는 한 줄을 넣는다.
+2. **11장** — "Lambda는 15분"을 "Lambda 함수의 타임아웃은 900초"로 좁힌다.
+3. **4장** — 파티션 개수를 숫자로 쓰지 않는다.
+4. **12장** — "안 쓰는 EIP에 돈이 나간다"를 "갖고 있는 퍼블릭 IPv4 개수만큼 나간다"로 고친다.
+   쓰는 것과 노는 것의 값이 같으므로, 옛 상식대로 쓰면 그 자체가 오해를 남긴다.
