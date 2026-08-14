@@ -583,6 +583,86 @@ pre.language-java{background:var(--bg); border-color:var(--border-2)}
 .td-foot{margin-top:12px; padding:10px 13px; border-radius:9px; background:var(--bg);
   border:1px solid var(--border); font-size:12.5px; color:var(--text-mut); line-height:1.75}
 @media(max-width:820px){.td-grid{grid-template-columns:1fr}}
+
+/* JWT 해부 실험실(10장) — 위에 토큰 문자열 한 줄, 아래에 편집기 둘.
+   세 토막의 색이 이 데모의 뼈대다. 위 문자열의 색과 아래 편집기의 색이 같아야
+   "저 글자 뭉치가 이 JSON이다"가 눈으로 붙고, 고쳤을 때 어느 토막이 움직이는지도 보인다.
+   서명 토막만 취소선을 갖는 것은 그 토막만 지울 수 있기 때문이다. */
+.jl-tok{
+  font-family:var(--mono); font-size:12.5px; line-height:1.95; overflow-wrap:anywhere;
+  background:var(--bg); border:1px solid var(--border-2); border-radius:9px;
+  padding:11px 13px; margin:10px 0 4px;
+}
+.jl-h{color:#7dd3fc}
+.jl-p{color:#fcd34d}
+.jl-s{color:#86efac}
+.jl-s.gone{color:var(--text-mut); text-decoration:line-through}
+.jl-dot{color:var(--text-mut); font-weight:800}
+.jl-grid{display:grid; grid-template-columns:1fr 1fr; gap:12px; margin:12px 0}
+.jl-box{background:var(--bg); border:1px solid var(--border-2); border-radius:11px; padding:11px 13px; min-width:0}
+.jl-lab{font-family:var(--mono); font-size:11.5px; letter-spacing:.5px; margin:0 0 7px}
+.jl-ta{
+  display:block; width:100%; min-height:84px; resize:vertical;
+  background:var(--panel-2); border:1px solid var(--border); color:var(--text);
+  border-radius:9px; padding:9px 11px; font-family:var(--mono); font-size:12.5px; line-height:1.6;
+}
+.jl-ta:focus-visible{outline:2px solid var(--accent); outline-offset:2px}
+.jl-dec{
+  font-family:var(--mono); font-size:12px; line-height:1.7; overflow-wrap:anywhere;
+  background:var(--bg); border:1px solid var(--border); border-radius:9px;
+  padding:10px 12px; margin:10px 0 2px; color:var(--text-dim);
+}
+.jl-dec b{color:#fcd34d}
+.jl-why{font-size:13.2px; color:var(--text-dim); line-height:1.6}
+.jl-foot{margin-top:12px; padding:10px 13px; border-radius:9px; background:var(--bg);
+  border:1px solid var(--border); font-size:12.5px; color:var(--text-mut); line-height:1.75}
+@media(max-width:820px){.jl-grid{grid-template-columns:1fr}}
+
+/* 언제부터 실제로 막히나(11장) — 두 줄이 서로 다른 일을 한다.
+   위 타임라인은 사건의 순서를 보인다: 박탈과 실제 차단 사이가 비어 있다는 것.
+   가로 간격은 순서를 위한 것이지 시간에 비례하지 않는다. 길이의 비교는 아래 막대가
+   맡는다 — 그 빈 구간이 실제로 몇 시간인지, 그리고 세션 방식의 0을 같은 자에 놓는다.
+   둘을 한 화면에 두지 않으면 "공백이 사라지는 대신 조회가 돌아온다"가 성립하지 않는다. */
+.el-row{background:var(--bg); border:1px solid var(--border-2); border-radius:11px; padding:12px 14px; margin:12px 0}
+.el-h{font-size:13.5px; font-weight:700; color:#fff; margin:0 0 2px}
+.el-sub{font-family:var(--mono); font-size:11px; letter-spacing:.4px; color:var(--text-mut); margin:0 0 6px}
+.el-track{position:relative; height:104px; margin:6px 0 0}
+.el-line{position:absolute; left:0; right:0; top:44px; height:3px; background:var(--border-2); border-radius:99px}
+.el-gap{position:absolute; top:38px; height:15px; border-radius:4px; min-width:5px}
+.el-gap.open{background:rgba(248,113,113,.30); border:1px solid rgba(248,113,113,.6)}
+.el-gap.shut{background:rgba(52,211,153,.28); border:1px solid rgba(52,211,153,.6)}
+.el-mk{position:absolute; top:32px}
+.el-mk i{display:block; width:2px; height:28px; background:var(--text-mut); margin:0 auto}
+.el-mk b{position:absolute; left:50%; transform:translateX(-50%); top:31px; white-space:nowrap;
+  font-family:var(--mono); font-size:10.5px; font-weight:700; color:var(--text-mut)}
+.el-mk.hot i{background:var(--bad); width:3px}
+.el-mk.hot b{color:#fca5a5}
+.el-mk.lo b{top:51px}
+.el-tick{position:absolute; top:39px; width:13px; height:13px; margin-left:-7px; border-radius:50%;
+  border:1px solid var(--border-2); background:var(--panel-2)}
+.el-tick.pass{background:rgba(248,113,113,.55); border-color:var(--bad)}
+.el-tick.stop{background:rgba(52,211,153,.55); border-color:var(--ok)}
+.el-tick b{position:absolute; left:50%; transform:translateX(-50%); top:-19px; font-size:10px}
+/* 비교 막대 — 이름 · 막대 · 공백 · 조회 */
+.el-bars{display:grid; grid-template-columns:minmax(92px,auto) 1fr 74px 92px;
+  gap:9px 12px; align-items:center; font-size:13px; margin:2px 0}
+.el-hd{font-family:var(--mono); font-size:10.5px; letter-spacing:.5px; color:var(--text-mut)}
+.el-hd.r{text-align:right}
+.el-bn{color:#fff; font-weight:700; font-size:13px; line-height:1.45}
+.el-bt{position:relative; height:14px; border-radius:99px; background:var(--panel-2); border:1px solid var(--border)}
+.el-bf{position:absolute; left:0; top:0; bottom:0; border-radius:99px; min-width:4px}
+.el-bf.open{background:linear-gradient(90deg,rgba(248,113,113,.85),rgba(248,113,113,.35))}
+.el-bf.shut{background:rgba(52,211,153,.6)}
+.el-bv{font-family:var(--mono); font-size:12px; color:var(--text-dim); text-align:right}
+.el-foot{margin-top:12px; padding:10px 13px; border-radius:9px; background:var(--bg);
+  border:1px solid var(--border); font-size:12.5px; color:var(--text-mut); line-height:1.75}
+@media(max-width:700px){
+  .el-bars{grid-template-columns:1fr 1fr}
+  .el-bn, .el-bt{grid-column:1 / -1}
+  .el-hd{display:none}
+  .el-bv::before{content:attr(data-h) " "; color:var(--text-mut); font-size:10.5px}
+  .el-bv{text-align:left}
+}
 </style>
 </head>
 <body>
@@ -2527,6 +2607,471 @@ Content-Type: application/x-www-form-urlencoded
       </div>
     </section>
 
+    <!-- ============================================================
+         10장 · JWT
+         ============================================================ -->
+    <section id="jwt" data-title="JWT">
+      <div class="sec-head">
+        <div class="kicker">10 · 갈래 (b)</div>
+        <h2 class="sec-title">🎫 JWT — 증표 안에 내용을 담는다 <span class="lvl must">🟢 필수</span></h2>
+      </div>
+
+      <p class="lead">9장은 이름 하나를 내놓고 닫혔습니다. 내용을 안에 담고 서명으로 위조를 막은 증표,
+      <span class="term" data-t="JWT">JWT</span>라고요. 이름을 아는 것과 값을 아는 것은 다른 일이라는 말도 함께 적어 뒀고요.
+      값을 세려면 물건을 손에 올려놓고 봐야 합니다. 하나 뜯어 보죠.</p>
+
+      <h3>🧩 점 두 개로 잘린 세 토막</h3>
+
+      <p>생긴 것은 이렇습니다.</p>
+
+      <pre class="language-text"><code class="language-text">eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJhbGljZSIsInJvbGUiOiJ1c2VyIiwiZXhwIjoxNzg2MDAwMDAwfQ.(이 자리에 서명)
+
+header    eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9
+payload   eyJzdWIiOiJhbGljZSIsInJvbGUiOiJ1c2VyIiwiZXhwIjoxNzg2MDAwMDAwfQ
+signature (이 자리에 서명)</code></pre>
+
+      <p>첫인상은 암호문입니다. 아니에요. 점 두 개가 문자열을 세 토막으로 자르고 있고, 토막마다 맡은 일이 다릅니다.</p>
+
+      <dl class="kv">
+        <dt>header</dt>
+        <dd>이 증표를 <b>어떤 알고리즘으로 서명했는지</b>가 적힙니다. 열쇠 이름 같은 것이 함께 적히기도 하고요.</dd>
+        <dt>payload</dt>
+        <dd>담은 <b>내용</b>입니다. 누구인지(<code>sub</code>), 언제까지인지(<code>exp</code>), 무엇을 할 수 있는지.
+        항목 하나하나를 <span class="term" data-t="클레임">클레임</span>이라고 부릅니다.</dd>
+        <dt>signature</dt>
+        <dd>앞의 <b>두 토막에 대고</b> 발급한 쪽이 만든 값입니다. 앞 두 토막이 한 글자라도 달라지면 이 값이 안 맞게 돼요.</dd>
+      </dl>
+
+      <p>앞의 두 토막을 풀면 그냥 JSON입니다.</p>
+
+      <pre class="language-text"><code class="language-text">header  → {"alg":"HS256","typ":"JWT"}
+payload → {"sub":"alice","role":"user","exp":1786000000}</code></pre>
+
+      <p>JSON을 그대로 헤더에 실으면 중괄호와 따옴표가 걸리니 한 번 감싸는데, 그 감싸는 방식이
+      <span class="term" data-t="base64url">base64url</span>입니다. base64에서 <code>+</code>와 <code>/</code>를
+      <code>-</code>와 <code>_</code>로 바꾸고 끝의 <code>=</code> 채움을 뗀 변형이에요 — 주소 안에도, 헤더에도 그대로 실리라고요.</p>
+
+      <h3>🔓 잠긴 게 아니라 봉인된 것</h3>
+
+      <p>방금 낯익은 것이 하나 지나갔습니다. base64요.</p>
+
+      <p>2장에서 <code>YWxpY2U6cEBzc3cwcmQh</code>를 놓고 같은 이야기를 했었죠 —
+      암호문처럼 생겼는데 암호문이 아니고, 되돌리는 데 열쇠가 필요 없다고.
+      JWT의 앞 두 토막이 정확히 그 물건입니다. 붙여 넣고 한 번 풀면 끝이에요.</p>
+
+      <div class="myth">
+        <div class="m-row no">
+          <div class="m-x">✗</div>
+          <div class="m-txt"><b>"서명이 붙어 있으니 내용도 보호된다"</b> —
+          서명은 자물쇠가 아니라 봉인입니다. 뜯어 고치면 표가 나지만, 겉면에 적힌 글씨는 처음부터 다 보여요.</div>
+        </div>
+        <div class="m-row yes">
+          <div class="m-x">✓</div>
+          <div class="m-txt"><b>payload는 누구나 읽습니다.</b> 그 증표를 손에 넣기만 하면 됩니다 —
+          개발자 도구를 연 사용자 본인, 요청을 통째로 남긴 디버그 로그, 브라우저 확장,
+          그 증표를 그대로 넘겨받은 안쪽 서비스.</div>
+        </div>
+      </div>
+
+      <p>그래서 규칙 하나가 여기서 못 박힙니다. <strong>JWT에 비밀을 담지 않습니다.</strong>
+      비밀번호도, 주민등록번호도, 카드번호도, 내부 서비스를 부를 때 쓰는 열쇠도요.
+      담아도 되는 것은 드러나도 되는 것뿐입니다 — 식별자, 역할 이름, 만료 시각 같은 것.</p>
+
+      <p>판단이 애매할 때 기준이 하나 있습니다. <b>이 값이 접근 로그에 그대로 찍혀도 괜찮은가.</b>
+      괜찮지 않다면 payload에 넣을 값이 아니에요. 로그에 찍히는 것과 payload에 적는 것은 노출 범위가 사실상 같거든요.</p>
+
+      <h3>✍️ 그럼 서명은 무엇을 사 주나</h3>
+
+      <p>감추지 않는다면 서명은 대체 무엇을 하는 걸까요. 하는 일이 정확히 하나 있습니다 — <b>고쳐 쓰기를 막습니다.</b></p>
+
+      <p>payload의 <code>"role":"user"</code>를 <code>"role":"admin"</code>으로 바꿔 보면 둘째 토막이 달라지고,
+      그러면 그 토막에 대고 만들어진 서명이 안 맞습니다.
+      맞는 서명을 새로 만들려면 발급한 쪽의 열쇠가 있어야 하는데, 증표를 들고 있는 쪽에는 그 열쇠가 없어요.</p>
+
+      <p>3장 퀴즈의 마지막 보기가 서명이 하는 일을 이렇게 적어 뒀습니다 —
+      그 내용이 발급한 쪽에서 나왔고 도중에 고쳐지지 않았음을 보장할 뿐이라고.
+      <b>보장할 뿐</b>이라는 말이 여기서 값을 부릅니다. 보장 목록에 <b>없는</b> 것이 셋이거든요.</p>
+
+      <ol>
+        <li><b>비밀 유지</b> — 방금 봤습니다. 서명은 봉인이지 자물쇠가 아니에요.</li>
+        <li><b>들고 있는 쪽이 누구인지</b> — 3장에서 봤습니다. 통째로 복사해 간 증표는 복사한 쪽에서 그대로 통합니다.</li>
+        <li><b>셋째</b> — 아직 이름을 안 붙였습니다. 이 장의 끝에서 꺼내죠.</li>
+      </ol>
+
+      <h3>🕳️ 검증할 알고리즘을 누가 고르나</h3>
+
+      <p>서명을 검증하려면 <b>무엇으로</b> 검증할지부터 알아야 합니다. 그 값이 어디 적혀 있느냐면 — header의 <code>alg</code>입니다.
+      토큰 안에요.</p>
+
+      <p>한 칸 물러서서 보면 배치가 좀 이상합니다. 검증받을 쪽이 검증 방법을 함께 들고 오는 셈이니까요.
+      평소에는 아무 문제도 아닙니다. 발급한 것이 서버 자신이고, 서버가 적어 넣은 값을 서버가 도로 읽는 것뿐이거든요.</p>
+
+      <p>그런데 <code>alg</code>에는 <code>none</code>이라는 값이 있습니다. <b>서명이 없다</b>는 뜻이에요.</p>
+
+      <p>공격은 두 줄이면 끝납니다. header의 <code>alg</code>를 <code>none</code>으로 바꾸고, 세 번째 토막을 지웁니다.
+      payload는 그사이 원하는 대로 고쳐 적고요.
+      검증하는 쪽이 <code>alg</code>에 적힌 것을 그대로 따른다면, 그쪽은 <b>"서명을 검사하지 말라"는 지시를 토큰에게서 받은</b> 셈입니다.
+      검사가 일어나지 않으니 통과해요. 위조를 막으라고 붙여 둔 장치가, 위조된 토큰의 말을 듣고 스스로 비켜섭니다.</p>
+
+      <p>방어는 짧습니다. <strong>서버가 기대하는 알고리즘을 서버 쪽에 못 박아 두고, 토큰이 주장하는 <code>alg</code>를 판단 근거로 쓰지 않는 것.</strong>
+      토큰이 뭐라고 적어 왔든 서버는 자기가 정한 방법으로 검증하고, 그 방법이 아니면 거기서 끝냅니다.</p>
+
+      <div class="callout why">
+        <h4>🧭 한 줄로 줄이면</h4>
+        <p><strong>검증할 방법을 검증받을 쪽이 고르게 두면, 그것은 검증이 아닙니다.</strong></p>
+        <p>토큰의 <code>alg</code>는 서버가 <b>참고할 입력</b>이지 따라야 할 지시가 아니에요.
+        이 문장은 <code>none</code> 하나에만 걸리는 것도 아닙니다 — 알고리즘 이름이 무엇이든,
+        고르는 쪽이 토큰이면 같은 모양의 구멍이 납니다.</p>
+      </div>
+
+      <p>말로 따라오면 당연한 이야기 같은데, 눌러 보면 좀 다르게 보입니다.
+      같은 토큰 하나를 놓고 검증하는 쪽만 바꿔 보죠.</p>
+
+      <div class="demo" id="jwtLab">
+        <span class="demo-tag">해부하고 고쳐 보기</span>
+        <p style="margin:0 0 10px">아래 두 칸이 header와 payload입니다. 고치면 위의 토큰 문자열이 그 자리에서 따라 움직여요.
+        <b>서명은 발급하던 순간의 것 하나뿐</b>입니다 — 내용을 고쳐도 새 서명은 만들어지지 않습니다. 열쇠가 없으니까요.</p>
+
+        <div class="ss-ctl" id="jlCtl">
+          <button id="jlAdmin">😈 role을 admin으로</button>
+          <button id="jlNone">🕳️ alg를 none으로</button>
+          <button id="jlSecret">🔑 payload에 비밀 적기</button>
+          <button class="sm ghost" id="jlReset">↺ 처음부터</button>
+        </div>
+
+        <div class="jl-tok" id="jlToken"></div>
+
+        <div class="jl-grid">
+          <div class="jl-box">
+            <div class="jl-lab jl-h">header (JSON)</div>
+            <textarea class="jl-ta" id="jlHdr" spellcheck="false" aria-label="header JSON"></textarea>
+          </div>
+          <div class="jl-box">
+            <div class="jl-lab jl-p">payload (JSON)</div>
+            <textarea class="jl-ta" id="jlPay" spellcheck="false" aria-label="payload JSON"></textarea>
+          </div>
+        </div>
+
+        <div class="cl-lab">세 번째 토막</div>
+        <div class="picker" id="jlSig">
+          <button class="pick on" data-k="keep">서명 그대로</button>
+          <button class="pick" data-k="drop">서명 지움</button>
+        </div>
+
+        <div class="cl-lab">검증하는 쪽</div>
+        <div class="picker" id="jlVer">
+          <button class="pick" data-k="trust">header의 alg를 믿는다</button>
+          <button class="pick on" data-k="pin">서버가 알고리즘을 고정한다</button>
+        </div>
+
+        <div id="jlOut" aria-live="polite"></div>
+        <div class="jl-dec" id="jlDec"></div>
+
+        <div class="verdict" style="align-items:flex-start">
+          <span class="badge warn">흉내</span>
+          <div class="dim" style="font-size:13.2px; line-height:1.6">여기의 서명은 <strong>실제 서명 알고리즘이 아닙니다.</strong>
+          그래서 값이 <code>demoSig_</code>로 시작하게 해 뒀어요 — 실제 JWT의 세 번째 토막은 이렇게 생기지 않았습니다.
+          이 데모가 흉내 내는 것은 <strong>검증의 논리</strong> 하나뿐입니다: 같은 내용이면 같은 값이 나오고,
+          한 글자만 달라져도 다른 값이 나오고, 그 값을 새로 만들려면 열쇠가 있어야 한다는 것.
+          <strong>어떤 라이브러리가 실제로 이렇게 동작한다는 이야기가 아니에요.</strong>
+          여기서 보이려는 것은 <strong>검증하는 쪽이 헤더를 믿으면 무슨 일이 생기는가</strong>입니다.
+          <b>base64url 인코딩만은 이 페이지에서 진짜로 계산합니다</b> — 위 토큰의 앞 두 토막은 실제로 되돌려 읽을 수 있는 값이에요.</div>
+        </div>
+        <div class="jl-foot" id="jlFoot"></div>
+      </div>
+
+      <h3>🔑 열쇠가 하나냐 둘이냐</h3>
+
+      <p>서버가 알고리즘을 고정한다면, 무엇으로 고정할까요. 여기서 갈래가 하나 더 열립니다.</p>
+
+      <p>HMAC 계열은 <b>비밀 열쇠 하나</b>로 서명하고 같은 열쇠로 검증합니다. 만드는 쪽과 확인하는 쪽이 같은 것을 들고 있어야 해요.
+      RSA·ECDSA 계열은 열쇠가 짝을 이룹니다 — 개인키로 서명하고 공개키로 검증하죠.
+      <a class="link" href="https_tutorial.html">HTTPS 문서</a>에서 갈라 둔 대칭키와 비대칭키의 구분 그대로입니다.</p>
+
+      <p>서버가 한 대라면 차이가 안 느껴집니다. 발급도 검증도 같은 프로세스가 하니까 열쇠가 하나든 둘이든 자기 안에 있어요.
+      차이는 <b>검증하는 자리가 늘어날 때</b> 드러납니다. 9장에서 이 갈래로 건너온 이유가 서비스가 여럿이 됐다는 것이었죠.
+      그 여럿에게 검증을 맡기려면 열쇠를 나눠 줘야 하는데 —</p>
+
+      <p>HMAC이면 나눠 준 그 열쇠로 <b>서명도 만들 수 있습니다.</b> 검증만 맡기고 싶었는데 발급 권한이 함께 갑니다.
+      정산 서비스 하나가 뚫리면 그 열쇠로 관리자 증표를 찍어 낼 수 있고, 그렇게 찍힌 증표는 다른 모든 서비스에서 통해요.
+      열쇠를 쥔 곳이 스무 곳이면 발급 권한을 가진 곳도 스무 곳입니다.</p>
+
+      <p>비대칭이면 나눠 주는 것은 공개키뿐입니다. 그것으로는 검증만 됩니다.
+      발급하는 쪽은 개인키를 자기 자리에 그대로 두고요. 스무 곳 중 하나가 뚫려도 새어 나가는 것은 <b>이미 공개인 값</b>입니다.</p>
+
+      <div class="callout tip">
+        <h4>🔐 이 갈래가 실제로 정하는 것</h4>
+        <p><strong>검증 권한만 나눠 주고 발급 권한은 쥐고 있을 수 있느냐.</strong>
+        서비스 하나짜리에서는 물어볼 일이 없는 질문이고, 검증하는 자리가 늘어나는 순간 이것 하나가 갈래를 정합니다.
+        열쇠를 받은 곳이 늘어날수록 그중 하나가 새어 나갈 확률도 늘어나는데, <b>그때 새어 나가는 것이 무엇인지</b>가 여기서 갈리거든요.</p>
+      </div>
+
+      <h3>⏳ 서명이 못 사 주는 마지막 하나</h3>
+
+      <p>미뤄 둔 셋째를 꺼낼 자리입니다.</p>
+
+      <p>payload의 <code>"role":"user"</code>는 서명이 붙어 있으니 고쳐지지 않았습니다. 거기까지는 확실해요.
+      그런데 그 줄이 말하고 있는 것이 정확히 무엇입니까.</p>
+
+      <p><strong>"발급하던 그 순간, 이 사람의 역할은 user였다."</strong> 그게 전부입니다.</p>
+
+      <p>서명은 그 순간의 기록이 고쳐지지 않았음을 보장하지, 그 기록이 <b>지금도 사실인지</b>는 한 글자도 말하지 않습니다.
+      이름을 붙이면 최신성이고요. 증표는 발급되는 순간 시간이 멈춘 종이가 됩니다 —
+      찍힐 때의 사실을 정확히 담고, 그 뒤로는 세상이 어떻게 변하든 같은 말만 반복해요.</p>
+
+      <p>세션 방식에서는 이 질문이 생기지도 않았습니다. 요청마다 서랍을 열었으니 서랍 안의 값이 곧 지금 값이었거든요.
+      값을 바꾸면 그다음 요청부터 바뀐 값이 나오고, 서랍을 버리면 그다음 요청부터 아무것도 안 나오고.
+      조회를 없애면서 함께 사라진 것이 그 <b>"지금"</b>입니다.</p>
+
+      <p>9장이 이것을 문장 하나로 적어 두고 청구서를 넘겼습니다 — 조회 없음을 사고 취소 가능성을 판다고.
+      판 것의 정체가 여기 있어요. 취소가 안 되는 이유는 증표가 튼튼해서가 아니라, <b>증표가 발급 시점에 멈춰 있기 때문</b>입니다.
+      청구서는 <a class="link" href="#revocation">11장</a>에 있습니다.</p>
+
+      <div class="oneline">
+        <span style="font-size:20px">🎫</span>
+        <div><strong>JWT는 잠긴 상자가 아니라 봉인된 종이입니다.</strong>
+        고쳐 쓰면 표가 나지만 적힌 것은 처음부터 다 보이고, 적힌 것은 발급하던 순간의 사실이에요.
+        위조는 서명이 막아 주고, 그 뒤에 바뀐 사실은 아무도 막아 주지 않습니다.</div>
+      </div>
+
+      <div class="quiz" data-qid="q-jwt" data-answer="b">
+        <div class="q-head">✅ 체크포인트</div>
+        <div class="q">로그인 응답으로 내려보낼 JWT의 payload에 팀이 이런 항목을 넣자고 한다 —
+        <code>email</code>, <code>phone</code>, 그리고 안쪽 서비스를 부를 때 쓰는 <code>internalKey</code>.
+        근거는 <b>"서명이 붙어 있으니 건드릴 수 없다"</b>는 것이다. 이 근거의 무엇이 틀렸나?</div>
+        <button class="opt" data-opt="a"><span class="mk">A</span> payload가 길어지면 서명 계산이 무거워진다. 항목 수를 줄여야 한다는 것이 문제다</button>
+        <button class="opt" data-opt="b"><span class="mk">B</span> 서명이 막는 것은 고쳐 쓰기뿐이고 읽는 것은 막지 않는다. 앞 두 토막은 열쇠 없이 그대로 읽힌다</button>
+        <button class="opt" data-opt="c"><span class="mk">C</span> 서명은 header에만 걸린다. payload는 애초에 서명 대상이 아니라서 건드릴 수 있다</button>
+        <button class="opt" data-opt="d"><span class="mk">D</span> HMAC 대신 RSA로 서명하면 payload까지 함께 보호된다. 알고리즘 선택의 문제다</button>
+        <div class="explain"><b>정답 B.</b> "건드릴 수 없다"는 말은 맞습니다. 다만 그것이 "볼 수 없다"는 뜻이 아니에요.
+        서명은 봉인이라 뜯어 고치면 표가 나지만, 겉면의 글씨는 처음부터 누구에게나 보입니다.
+        <p style="margin:8px 0 0"><b>C</b>는 방향이 반대입니다. 서명은 <b>앞 두 토막 전체</b>에 걸려요 —
+        payload를 한 글자만 고쳐도 서명이 안 맞습니다. 위 데모에서 <code>role</code>을 고쳐 보면 그 자리에서 확인됩니다.
+        틀린 곳은 payload가 보호되지 <b>않는다</b>가 아니라, 보호가 <b>고쳐 쓰기에 대한 것</b>이라는 데 있습니다.</p>
+        <p style="margin:8px 0 0"><b>D</b>는 두 갈래를 잘못 붙였습니다. 대칭이냐 비대칭이냐가 정하는 것은
+        <b>누가 서명을 만들 수 있느냐</b>이지 내용이 가려지느냐가 아니에요. 어느 쪽으로 서명하든 앞 두 토막은 여전히 base64url입니다.</p>
+        <p style="margin:8px 0 0"><b>A</b>는 이 문서가 하지 않는 주장입니다. 항목 수와 서명 비용의 관계는 구조에서 따라 나오지 않아요.
+        문제는 크기가 아니라 <b>내용의 성격</b>입니다.</p>
+        <p style="margin:8px 0 0">그리고 <code>internalKey</code>는 그중에서도 성격이 다릅니다.
+        <code>email</code>과 <code>phone</code>이 새면 그 사람의 정보가 새는데, 안쪽 서비스를 부르는 열쇠가 새면
+        <b>그 증표를 손에 넣은 누구나 안쪽 서비스를 부를 수 있게</b> 돼요.
+        판단이 애매할 때의 기준은 하나입니다 — <b>이 값이 접근 로그에 그대로 찍혀도 괜찮은가.</b></p></div>
+      </div>
+    </section>
+
+    <!-- ============================================================
+         11장 · 청구서
+         ============================================================ -->
+    <section id="revocation" data-title="취소할 수 없다">
+      <div class="sec-head">
+        <div class="kicker">11 · 청구서</div>
+        <h2 class="sec-title">⏳ 청구서 — 취소할 수 없다는 것 <span class="lvl must">🟢 필수</span></h2>
+      </div>
+
+      <p class="lead">로그아웃 버튼을 누릅니다. 브라우저에서 증표를 지웠고, 화면은 로그인 페이지로 돌아갔어요.
+      그런데 그 증표의 사본을 어딘가에서 누가 들고 있다면, 그 사본은 방금 아무 일도 겪지 않았습니다.
+      서명은 그대로 맞고, 적힌 기한도 아직 안 지났고요. <strong>다음 요청에 그대로 통합니다.</strong></p>
+
+      <h3>🕳️ 박탈과 차단 사이</h3>
+
+      <p>세 장면이 같은 모양입니다.</p>
+
+      <ol>
+        <li><b>퇴사 처리</b> — 관리 화면에서 계정을 껐습니다. 그 사람 노트북에 남아 있는 증표는 그 사실을 모릅니다.</li>
+        <li><b>비밀번호 변경</b> — 유출이 의심돼 바꿨습니다. 이미 나간 증표는 비밀번호를 보지 않고 만들어진 것이라 아무 영향도 안 받아요.</li>
+        <li><b>권한 강등</b> — <code>admin</code>에서 <code>user</code>로 내렸습니다. 손에 있는 증표에는 <code>admin</code>이라고 적혀 있고, 그 줄의 서명도 멀쩡합니다.</li>
+      </ol>
+
+      <p>셋 다 결정은 서버에서 났고, 증표는 그 결정을 모릅니다. 결정한 시각과 실제로 막히는 시각 사이가 벌어져 있어요.
+      그 벌어진 구간을 <b>공백</b>이라고 부르기로 하죠.</p>
+
+      <p>공백의 길이는 이미 정해져 있습니다 — <b>증표에 적어 둔 기한까지</b>입니다.
+      그 이상도, 그 이하도 아니에요. 서버가 개입할 자리가 없으니 시간이 알아서 닫아 줄 때까지 기다리는 겁니다.
+      기한을 24시간으로 적어 뒀다면 공백도 최대 24시간이고요.</p>
+
+      <h3>🩹 그 공백에 대고 할 수 있는 일 셋</h3>
+
+      <h4>1. 기한을 짧게 적고, 갱신을 따로 둔다</h4>
+
+      <p>공백의 상한이 기한이라면 기한을 줄이면 됩니다. 24시간을 5분으로 줄이면 공백도 5분으로 줄어요. 산수입니다.</p>
+
+      <p>그런데 5분마다 다시 로그인하라고 할 수는 없죠. 그래서 증표를 둘로 나눕니다 —
+      요청마다 실려 나가는 <b>짧은 것</b>과, 그 짧은 것을 다시 받아 오는 데만 쓰는 <b>긴 것</b>.
+      뒤엣것이 <span class="term" data-t="refresh 토큰">refresh 토큰</span>입니다.</p>
+
+      <p>여기가 중요합니다. <b>갱신 요청은 발급하는 쪽을 거칩니다.</b>
+      일반 요청은 여전히 아무에게도 안 물어보지만, 5분에 한 번 오는 갱신 요청에서는 발급자가 계정 상태를 다시 봅니다.
+      꺼진 계정이면 거기서 새 증표가 안 나와요.</p>
+
+      <p>그러니 이 대응이 산 것은 <b>공백의 상한</b>입니다. 값은 둘이고요.
+      갱신 요청이 새로 생기고 — 사용자가 많으면 그 수도 함께 많아집니다 —
+      <b>refresh 토큰이라는 새 물건이 생깁니다.</b> 오래 살고, 이것 하나로 새 증표가 계속 나오는 물건이에요.
+      훔쳐 가면 훔쳐 간 쪽에서도 새 증표가 계속 나옵니다.</p>
+
+      <h4>2. 무효화한 증표의 목록을 서버가 들고 있는다</h4>
+
+      <p>로그아웃할 때 그 증표를 목록에 적어 둡니다. 요청이 오면 목록에 있는지 보고, 있으면 거부하고요.
+      흔히 블랙리스트라고 부릅니다.</p>
+
+      <p>공백이 0이 됩니다. 박탈한 바로 다음 요청부터 막혀요. 요구가 "즉시 반영"이라면 이것이 답입니다.</p>
+
+      <p>그런데 방금 문장을 한 번 더 읽어 보죠. <b>요청이 올 때마다 목록을 본다.</b></p>
+
+      <p><strong>조회가 돌아왔습니다.</strong></p>
+
+      <p>9장이 이 갈래로 건너온 이유가 요청마다의 조회를 없애는 것이었습니다. 그 조회를 되살리는 대응이에요.
+      그것도 세션보다 나은 자리가 딱히 없습니다 — 세션은 조회 한 번으로 신원과 권한을 함께 얻는데,
+      이쪽은 서명을 검증하고 <b>그 위에</b> 목록 조회를 한 번 더 합니다.</p>
+
+      <p>목록이 커지는 성질도 붙습니다. 무효화한 증표는 <b>적힌 기한이 지날 때까지</b> 목록에 남아 있어야 하거든요.
+      먼저 지우면 그 증표가 다시 통하니까요. 그리고 서버가 여러 대라면 그 목록도 모두가 같은 것을 봐야 합니다 —
+      8장이 세션 저장소를 놓고 했던 이야기가 이름만 바꿔 그대로 돌아옵니다.</p>
+
+      <h4>3. 사용자마다 번호를 하나 두고 맞춰 본다</h4>
+
+      <p>사용자 레코드에 정수를 하나 둡니다. 증표를 발급할 때 그 값을 payload에 함께 적어 넣고요.
+      비밀번호를 바꾸거나 전체 로그아웃을 누르면 그 정수를 1 올립니다.
+      그러면 그 계정으로 이미 나간 증표는 전부 옛 번호를 들고 있으니 한꺼번에 안 맞게 돼요.</p>
+
+      <p>조회는 여전히 요청마다 한 번 생깁니다. 이 대응도 조회를 없애 주지는 않아요.
+      그럼 무엇이 블랙리스트보다 작은가. <b>들고 있어야 하는 것</b>이 작습니다.
+      블랙리스트의 항목 수는 무효화한 증표 수만큼 늘고 기한까지 남아 있어야 하는데,
+      이쪽은 <b>사용자 하나에 정수 하나</b>로 고정입니다. 사용자가 늘지 않는 한 안 늘어요.</p>
+
+      <p>대신 못 하는 것이 생깁니다. 이쪽이 끊는 단위는 <b>계정 전체</b>예요.
+      증표 하나만 골라 끊는 일은 안 됩니다 — 3장에서 증표가 비밀번호보다 나은 이유로 셌던 그 <b>회수</b>,
+      낯선 기기 하나만 골라 끊던 그 성질이 여기서는 안 나와요. 번호를 올리면 내 노트북과 내 휴대폰도 함께 끊깁니다.</p>
+
+      <p>번호 대신 <b>시각</b>을 쓰기도 합니다. "이 시각보다 먼저 발급된 증표는 전부 거부"로 두고,
+      증표의 발급 시각(<code>iat</code>)과 맞춰 보는 방식이요. 모양은 같고 눈금이 정수 대신 시간일 뿐입니다.</p>
+
+      <p>셋을 말로만 늘어놓으면 어느 것이 무엇을 대신 내주는지 헷갈립니다. 하나씩 눌러 보는 편이 빠르겠네요.</p>
+
+      <div class="demo" id="expiryLine">
+        <span class="demo-tag">언제부터 실제로 막히나</span>
+        <p style="margin:0 0 10px">위 줄은 <b>사건의 순서</b>입니다 — 로그인하고, 요청을 보내다가, 권한이 박탈되고, 기한이 지나고, 갱신을 시도해요.
+        아래 줄은 <b>길이의 비교</b>고요. 대응을 바꿔 가며 붉은 구간이 어떻게 되는지, 그리고 그 대신 무엇이 생기는지 보세요.</p>
+        <label>증표에 적는 기한
+          <input type="range" id="elExp" min="0" max="9" step="1" value="7" aria-label="증표에 적는 기한">
+          <span class="mono" id="elExpVal">8시간</span>
+        </label>
+        <div class="picker" id="elMode">
+          <button class="pick on" data-k="none">대응 없음</button>
+          <button class="pick" data-k="refresh">짧은 만료 + refresh</button>
+          <button class="pick" data-k="blacklist">블랙리스트</button>
+          <button class="pick" data-k="version">토큰 버전</button>
+        </div>
+        <div id="elStage"></div>
+        <div id="elOut" aria-live="polite"></div>
+        <div class="el-foot" id="elFoot"></div>
+      </div>
+
+      <div class="callout why">
+        <h4>💸 9장의 거래는 어디로 갔나</h4>
+        <p>9장이 산 것은 <b>요청마다의 조회 없음</b>이었고, 판 것은 <b>취소 가능성</b>이었습니다.
+        블랙리스트와 토큰 버전은 판 것을 도로 사 오는 대응이에요.
+        <strong>그리고 값은 산 것으로 치릅니다 — 조회가 돌아옵니다.</strong></p>
+        <p>그러면 물어야 할 것이 하나 생깁니다.
+        요청마다 서버 측 기록을 한 번 보게 될 거라면, <b>애초에 세션이 아니어야 했던 이유가 무엇이었나.</b></p>
+        <p>이 질문에는 답이 있습니다. 다만 답하려면 9장이 센 네 자리 중 <b>무엇이 걸렸는지</b>부터 갈라야 해요 —
+        조회가 걸린 것인지 쿠키가 걸린 것인지에 따라 답이 달라지거든요.
+        <a class="link" href="#choose">12장</a>이 그 표를 놓습니다.</p>
+      </div>
+
+      <h3>🔄 훔쳐 간 refresh 토큰을 어떻게 알아채나</h3>
+
+      <p>첫째 대응이 남긴 새 물건으로 돌아옵니다. refresh 토큰은 오래 살고, 그것 하나로 새 증표가 계속 나옵니다.
+      훔쳐 간 쪽은 조용히 계속 쓰면 그만이고요. 짧은 기한으로 줄여 놓은 공백이 이쪽으로 새어 나가는 셈입니다.</p>
+
+      <p>손을 쓸 자리가 하나 있긴 합니다. 갱신할 때마다 <b>새 refresh 토큰을 함께 내주고 쓰인 옛것은 버리는</b> 거예요.
+      refresh 토큰이 한 번만 쓰이는 값이 됩니다. <span class="term" data-t="토큰 회전">토큰 회전</span>이라고 부릅니다.</p>
+
+      <p>그러면 성질이 하나 생깁니다 — <b>이미 버린 옛것이 다시 들어오는 일은 정상 흐름에서 나올 수 없습니다.</b>
+      정상 사용자는 늘 마지막 것을 들고 있으니까요.</p>
+
+      <p>그 일이 실제로 벌어지는 경우는 둘뿐입니다. 훔쳐 간 쪽이 먼저 쓰고 나서 원래 사용자가 쓰거나,
+      원래 사용자가 먼저 쓰고 나서 훔쳐 간 쪽이 쓰거나. 어느 쪽이든 <b>버려진 값이 다시 나타납니다.</b></p>
+
+      <p>그래서 옛것이 다시 들어오면 그 요청 하나를 거부하는 데서 끝내지 않습니다.
+      <strong>그 계정의 refresh 토큰을 전부 무효로 만들고 다시 로그인하게 합니다.</strong>
+      둘 중 누가 진짜인지 그 자리에서는 가릴 수 없으니, 둘 다 끊는 쪽을 고르는 거예요.</p>
+
+      <p>회전이 탈취를 막지는 않습니다. 탈취가 있었다는 것을 <b>드러나게</b> 만들 뿐이에요.
+      막을 수 없는 것을 드러나게 만드는 쪽으로 방향을 튼 겁니다.
+      그리고 무효로 만들려면 서버가 refresh 토큰의 상태를 어딘가 들고 있어야 합니다. 기록이 또 하나 늘어요.</p>
+
+      <h3>🍪 그 refresh 토큰은 어디에 두나</h3>
+
+      <p>값나가는 물건이 하나 생겼습니다. 오래 살고, 이것 하나로 새 증표가 계속 나오는 물건.</p>
+
+      <p>4장에서 칸을 하나 만들어 두고 왔었죠. <code>HttpOnly</code>를 걸면 그 쿠키는 자바스크립트에게 아예 보이지 않는다고,
+      브라우저 안에 <b>스크립트가 닿지 못하는 칸</b>이 하나 생긴다고요.
+      값나가는 것을 어디 둘지 정해야 할 때 이 칸이 다시 걸린다고 적어 두기도 했습니다.</p>
+
+      <p>이 자리입니다. refresh 토큰은 그 칸에 둡니다 —
+      <code>HttpOnly</code>와 <code>Secure</code>를 걸고, 갱신 경로에만 붙도록 <code>Path</code>를 좁혀서요.
+      XSS가 한 번 나도 스크립트가 그 값을 <b>읽어 갈</b> 수는 없습니다.</p>
+
+      <p>4장 퀴즈가 그은 선은 그대로 살아 있습니다. <code>HttpOnly</code>는 훔쳐 가는 것을 막지 그 자리에서 부리는 것을 막지 않아요 —
+      공격자의 스크립트가 우리 페이지에서 갱신 요청을 던지면 브라우저는 그 쿠키를 알아서 붙여 줍니다.
+      다만 <b>값을 들고 나가지는 못합니다.</b> 그 페이지가 닫히면 거기서 끝나요.</p>
+
+      <p>쿠키를 쓰기 시작하면 6장도 함께 돌아옵니다. 브라우저가 알아서 붙여 준다는 성질이 CSRF의 조건이었으니,
+      <code>SameSite</code>를 걸고 갱신 경로에도 방어를 겁니다. 4장에서 다섯 속성을 세운 그 목록이 그대로 다시 쓰이는 셈이에요.</p>
+
+      <h3>🙃 그런데 뭔가 이상합니다</h3>
+
+      <p>한 걸음 물러서서, 이 장에서 늘어난 것을 세어 보죠.</p>
+
+      <ul>
+        <li>서버 측에 <b>무효화 기록</b>이 하나 — 블랙리스트든 버전 번호든.</li>
+        <li><b>refresh 토큰의 상태 기록</b>이 하나 — 회전과 재사용 탐지를 하려면 필요합니다.</li>
+        <li>그 refresh 토큰을 나르는 <b><code>HttpOnly</code> 쿠키</b>가 하나.</li>
+      </ul>
+
+      <p>9장이 이 갈래로 건너온 이유는 서버가 아무것도 기억하지 않게 하려는 것이었습니다.
+      4장의 쿠키를 떠난 이유는 브라우저 없는 상대가 있어서였고요.
+      <strong>둘 다 돌아왔습니다.</strong> 서버는 다시 기억하고, 브라우저는 다시 쿠키를 받습니다.</p>
+
+      <p>그렇다고 출발점으로 되돌아온 것은 아니에요. 남은 것을 세어 볼 수 있습니다 —
+      블랙리스트를 켜지 않았다면 <b>일반 요청은 여전히 아무에게도 안 물어보고</b>,
+      브라우저 없는 상대는 <b>여전히 헤더로 증표를 실어 나릅니다.</b>
+      이 갈래가 실제로 손에 쥔 것이 그 둘이고요.</p>
+
+      <p>그러니 저울에 올릴 것이 다 나왔습니다. 한쪽에 산 것 둘, 다른 쪽에 늘어난 물건 셋.
+      어느 쪽으로 기우는지는 <b>우리 서비스가 무엇에 걸렸느냐</b>로 갈립니다 — 그 갈래를 <a class="link" href="#choose">12장</a>이 답니다.</p>
+
+      <div class="oneline">
+        <span style="font-size:20px">⏳</span>
+        <div><strong>발급한 증표는 서버의 손을 떠납니다.</strong>
+        되돌리는 방법은 전부 서버가 다시 무언가를 기억하는 방법이고, 기억하기 시작하면 조회가 따라와요.
+        9장이 산 것을 되돌려 내는 셈입니다.</div>
+      </div>
+
+      <div class="quiz" data-qid="q-revocation" data-answer="c">
+        <div class="q-head">✅ 체크포인트</div>
+        <div class="q">JWT로 만든 서비스에 <b>"관리자가 누른 강제 로그아웃이 즉시 반영돼야 한다"</b>는 요구가 들어왔다.
+        팀은 블랙리스트를 붙이기로 했다. 이 결정을 말할 때 <b>반드시 함께 말해야 하는</b> 것은?</div>
+        <button class="opt" data-opt="a"><span class="mk">A</span> 목록은 메모리에 두면 되니 비용이 사실상 없다. 요구를 공짜로 만족시킬 수 있다</button>
+        <button class="opt" data-opt="b"><span class="mk">B</span> 서명 검증은 로컬에서 끝나므로 요청 처리 속도는 그대로다. 달라지는 것은 저장 공간뿐이다</button>
+        <button class="opt" data-opt="c"><span class="mk">C</span> 요청마다 그 목록을 봐야 하므로 조회가 되살아난다 — JWT로 옮기며 산 것이 바로 그 조회 없음이었다</button>
+        <button class="opt" data-opt="d"><span class="mk">D</span> 목록을 두면 서명이 필요 없어진다. 목록에 없는 증표는 유효한 증표다</button>
+        <div class="explain"><b>정답 C.</b> 9장이 사고판 것을 다시 놓으면 이 결정의 모양이 보입니다.
+        산 것은 요청마다의 조회 없음, 판 것은 취소 가능성.
+        블랙리스트는 <b>판 것을 도로 사 오면서 산 것을 내놓는</b> 거래예요. 그래서 이 결정은 기능 추가가 아니라 <b>갈래 재검토</b>입니다.
+        <p style="margin:8px 0 0"><b>A</b>는 값을 0으로 셌습니다. 목록은 적어 넣은 증표의 기한이 지날 때까지 들고 있어야 하고 —
+        먼저 지우면 그 증표가 다시 통하니까요 — 서버가 여러 대라면 그 목록도 모두가 같은 것을 봐야 합니다.
+        8장이 세션 저장소를 놓고 했던 이야기가 이름만 바꿔 그대로 돌아와요.</p>
+        <p style="margin:8px 0 0"><b>B</b>는 이 문서가 하지 않는 주장입니다. 조회 한 번과 서명 검증 한 번 중 무엇이 더 걸리는지는
+        장비와 네트워크가 함께 정하는 값이라 구조에서 따라 나오지 않아요.
+        구조에서 따라 나오는 것은 <b>조회가 있느냐 없느냐</b>이고, 이 결정이 바꾸는 것이 정확히 그것입니다.</p>
+        <p style="margin:8px 0 0"><b>D</b>는 방향이 반대입니다. 목록에 없으면 유효하다고 하면 <b>아무나 만든 증표가 유효해집니다.</b>
+        서명은 그대로 필요하고, 블랙리스트는 그 위에 한 겹 더 얹히는 것이에요. 그래서 이쪽은 검사가 하나 줄지 않고 하나 늡니다.</p>
+        <p style="margin:8px 0 0">요구를 거절하라는 이야기가 아닙니다. 강제 로그아웃이 즉시 반영돼야 한다는 요구는 정당해요.
+        다만 그 요구를 받아들이는 순간 이 갈래를 고른 근거의 절반이 사라지므로, 그 자리에서 다시 물어야 하는 질문이 생깁니다.</p></div>
+      </div>
+    </section>
+
   </main>
 </div>
 
@@ -2578,6 +3123,11 @@ const GLOSSARY = {
   "직렬화": "메모리 안의 객체를 저장하거나 다른 곳으로 보낼 수 있는 바이트 열로 바꾸는 것. 되돌리는 쪽은 역직렬화라고 한다. 세션을 프로세스 밖에 두는 순간 세션에 담긴 것이 전부 이 변환을 거치게 되므로, 변환할 수 없는 것을 넣어 두었다면 옮기는 자리에서 드러나고 무거운 것을 넣어 두었다면 요청마다 그 무게를 낸다.",
   "단일 장애점": "그것 하나가 멈추면 시스템 전체가 멈추는 지점. 영어 머리글자를 따 SPOF라고도 부른다. 이중화란 이 지점을 없애는 작업이고, 구조를 고른다는 것은 대개 단일 장애점을 어디에 둘지 고르는 일이기도 하다. 어떤 문제를 없애려고 고른 답이 새 단일 장애점을 만드는 일이 흔하다.",
   "서명": "어떤 내용에 대해 열쇠를 가진 쪽만 만들어 낼 수 있는 값을 함께 붙여 두는 것. 받은 쪽은 그 값을 검사해, 내용이 그 열쇠를 가진 쪽에서 나왔고 도중에 고쳐지지 않았음을 확인한다. 내용을 감추지는 않으며, 지금 그것을 들고 있는 쪽이 누구인지도 말해 주지 않는다. 해시·서명·대칭키·비대칭키가 각각 무엇을 보장하는지는 HTTPS 문서에서 갈라 뒀다.",
+  "JWT": "누구이고 언제까지인지를 증표 안에 적고 서명을 붙인 형식. 점 두 개로 잘린 세 토막(header · payload · signature)으로 되어 있고, 앞의 두 토막은 base64url로 인코딩만 되어 있어 열쇠 없이 그대로 읽힌다. 서명이 보장하는 것은 발급한 쪽이 적었고 도중에 고쳐지지 않았다는 것뿐이라, 내용을 감추지도 않고 발급한 뒤에 바뀐 사실을 반영하지도 않는다.",
+  "base64url": "base64에서 주소나 헤더에 그대로 실을 수 없는 글자를 바꾼 변형. +와 /를 -와 _로 바꾸고 끝의 = 채움을 뗀다. base64와 마찬가지로 열쇠 없이 되돌릴 수 있는 인코딩이라, 실려 있는 내용을 감추는 일은 하지 않는다.",
+  "클레임": "JWT의 payload에 적히는 항목 하나하나. 누구인지(sub), 언제 만료되는지(exp), 언제 발급됐는지(iat)처럼 이름이 정해진 것도 있고 서비스가 직접 정하는 것도 있다. 서명은 이 항목들이 고쳐지지 않았음을 보장할 뿐, 적힌 내용이 지금도 사실인지는 보장하지 않는다.",
+  "refresh 토큰": "짧게 만료되는 증표를 다시 받아 오는 데만 쓰는 별도의 증표. 갱신 요청은 발급하는 쪽을 거치므로 그 자리에서 계정 상태를 다시 확인할 수 있고, 덕분에 일반 요청에는 조회를 붙이지 않은 채로 공백의 상한을 짧게 못 박을 수 있다. 대신 이 토큰 자체는 오래 살아 있어서, 훔쳐 가면 훔쳐 간 쪽에서도 새 증표가 계속 나온다.",
+  "토큰 회전": "갱신할 때마다 refresh 토큰을 새것으로 바꾸고 쓰인 옛것은 버리는 것. rotation이라고도 부른다. 버린 옛것이 다시 들어오는 일은 정상 흐름에서 나올 수 없으므로 탈취를 의심하고 그 계정의 토큰을 전부 무효로 만든다. 탈취를 막는 장치가 아니라 탈취가 있었다는 것을 드러나게 만드는 장치다.",
   // @GLOSSARY_END
 };
 
@@ -4421,6 +4971,380 @@ if(location.hash){
   nEl.addEventListener('input', render);
 
   reset();
+})();
+
+/* ============================================================
+   데모 10 — JWT 해부하고 고쳐 보기 (10장 · JWT)
+
+   ⚠️ 이 데모는 실제 서명 알고리즘을 구현하지 않는다. 특정 라이브러리·버전·취약점 번호를
+   지목하지도 않는다(사실 검증 기록 V8의 서술 제한). 보이려는 것은 하나뿐이다 —
+   **검증하는 쪽이 헤더를 믿으면 무슨 일이 생기는가.**
+   그래서 서명 값은 `demoSig_`로 시작하게 해 두고 화면에도 흉내라고 적어 둔다.
+   2장 #hashLab이 bcrypt를 흉내 낼 때 세운 규율과 같은 것이다.
+
+   흉내 내는 성질은 셋뿐이다:
+     · 같은 내용이면 같은 값이 나온다
+     · 한 글자만 달라도 다른 값이 나온다
+     · 새로 만들려면 열쇠가 있어야 한다 → 그래서 이 데모의 사용자는 새 서명을 만들 수 없다
+   검증의 논리에 필요한 것이 이 셋이고, 이 셋이면 서명 불일치도 alg:none도 그대로 재현된다.
+   base64url 인코딩만은 진짜로 계산한다 — 앞 두 토막이 실제로 되돌려 읽힌다는 것이
+   이 장의 논지("누구나 읽는다")를 떠받치기 때문이다.
+
+   배지 색은 이 문서의 관행을 따른다: 초록 = 의도대로 걸렀다, 빨강 = 막았어야 하는데 통과했다.
+   그래서 서명 불일치로 `거부`되는 것이 초록이고(제대로 걸렀다), alg:none으로 `통과`하는 것이
+   빨강이다(검증이 사라졌다). 노랑은 판정이 아니라 상황 라벨에만 쓴다.
+   payload에 적힌 비밀이 그대로 읽히는 것은 빨강이다 — 지켜졌어야 할 값이 실제로 새고 있다.
+
+   판정 문구에 .term을 쓰지 않는다 — 툴팁 배선은 페이지 로드 시 한 번뿐이다.
+   클래스는 분기마다 통째로 적는다 — 이어 붙이면 사장 CSS 검사기가 못 본다.
+   ============================================================ */
+(function(){
+  const root = $('#jwtLab'); if(!root) return;
+  const hdrEl = $('#jlHdr'), payEl = $('#jlPay'), tokEl = $('#jlToken'),
+        outEl = $('#jlOut'), decEl = $('#jlDec'), footEl = $('#jlFoot');
+
+  const H0  = '{"alg":"HS256","typ":"JWT"}';
+  const P0  = '{"sub":"alice","role":"user","exp":1786000000}';
+  const PIN = 'HS256';   // 서버가 못 박아 둔 알고리즘
+
+  // payload에 적혔을 때 "이건 누구나 읽습니다"를 띄울 낱말들.
+  const SECRET = /(비밀번호|비번|암호|주민|카드번호|계좌|password|passwd|pwd|"pw"|secret|api_?-?key|private_?key|internal_?key|ssn)/i;
+
+  let sigKept = true;    // 세 번째 토막을 그대로 들고 있는가
+  let trustHdr = false;  // 검증하는 쪽이 header의 alg를 믿는가
+
+  function b64u(s){
+    const bytes = new TextEncoder().encode(s);
+    let bin = '';
+    bytes.forEach(b => { bin += String.fromCharCode(b); });
+    return btoa(bin).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+  }
+  function demoSig(data){
+    let a = 0x811c9dc5, b = 0x9e3779b9;
+    const s = data + '|이 열쇠는 발급하는 쪽에만 있다';
+    for(let i = 0; i < s.length; i++){
+      a = Math.imul(a ^ s.charCodeAt(i), 0x01000193) >>> 0;
+      b = Math.imul(b + s.charCodeAt(i) + i, 0x85ebca6b) >>> 0;
+    }
+    return 'demoSig_' + a.toString(16).padStart(8, '0') + b.toString(16).padStart(8, '0');
+  }
+  const SIG0 = demoSig(b64u(H0) + '.' + b64u(P0));
+
+  // JSON이 깨져 있어도 alg는 읽어 본다 — 공격자가 넣는 헤더가 늘 온전하란 법은 없다.
+  function algOf(txt){
+    try{
+      const o = JSON.parse(txt);
+      if(o && typeof o.alg === 'string') return o.alg;
+      return null;
+    }catch(e){
+      const m = /"alg"\s*:\s*"([^"]*)"/.exec(txt);
+      return m ? m[1] : null;
+    }
+  }
+
+  function vd(kind, label, why){
+    const b = kind === 'ok'   ? '<span class="badge ok">'
+            : kind === 'bad'  ? '<span class="badge bad">'
+            : kind === 'warn' ? '<span class="badge warn">'
+            :                   '<span class="badge">';
+    return '<div class="verdict" style="align-items:flex-start">' + b + esc(label) + '</span>'
+         + '<div class="jl-why">' + why + '</div></div>';
+  }
+  function setPick(sel, k){
+    $$(sel + ' .pick').forEach(b => b.classList.toggle('on', b.dataset.k === k));
+  }
+
+  function render(){
+    const h = hdrEl.value, p = payEl.value;
+    const hb = b64u(h), pb = b64u(p);
+    const alg = algOf(h);
+    const expected = demoSig(hb + '.' + pb);
+    const sig = sigKept ? SIG0 : '';
+
+    /* --- 토큰 문자열 --- */
+    tokEl.innerHTML =
+        '<span class="jl-h">' + esc(hb) + '</span>'
+      + '<span class="jl-dot">.</span>'
+      + '<span class="jl-p">' + esc(pb) + '</span>'
+      + '<span class="jl-dot">.</span>'
+      + (sig ? '<span class="jl-s">' + esc(sig) + '</span>'
+             : '<span class="jl-s gone">' + esc(SIG0) + '</span>');
+
+    /* --- 검증 판정 --- */
+    let html;
+    if(!trustHdr){
+      if(alg !== PIN){
+        html = vd('ok', '거부',
+          '서버는 <code>' + esc(PIN) + '</code>으로 검증한다고 자기 쪽에 못 박아 뒀습니다. '
+        + (alg === null ? '그런데 토큰의 <code>alg</code>는 <b>읽히지도 않았어요</b>. '
+                        : '토큰이 들고 온 <code>alg</code>는 <code>' + esc(alg) + '</code>입니다. ')
+        + '기대한 알고리즘이 아니면 서명을 계산해 볼 것도 없이 여기서 끝납니다 — '
+        + '<b>토큰이 무엇을 주장하든 판단은 서버 쪽에 있어요.</b>');
+      } else if(sig && sig === expected){
+        html = vd('ok', '통과',
+          '앞 두 토막이 발급하던 때 그대로고, 서명도 그 두 토막에서 나오는 값과 맞습니다. 정상 증표예요.');
+      } else if(!sig){
+        html = vd('ok', '거부',
+          '세 번째 토막이 비어 있습니다. 서버는 <code>' + esc(PIN) + '</code> 서명을 기대하고 있는데 대조할 값이 없어요.');
+      } else {
+        html = vd('ok', '거부',
+          '<b>서명 불일치.</b> 앞 두 토막에서 나오는 값은 <code>' + esc(expected) + '</code>인데 '
+        + '들고 온 것은 <code>' + esc(sig) + '</code>입니다. '
+        + '내용을 고쳤으니 맞는 서명을 새로 만들어야 하는데, 그러려면 발급하는 쪽의 열쇠가 있어야 해요. '
+        + '<b>고쳐 쓰기를 막는다는 것이 이 자리입니다.</b>');
+      }
+    } else {
+      if(alg === 'none'){
+        html = vd('bad', '통과',
+          '<b>검증이 일어나지 않았습니다.</b> 헤더에 <code>alg</code>가 <code>none</code>이라고 적혀 있고, '
+        + '검증하는 쪽이 그 말을 따랐거든요 — 서명을 검사하지 말라는 지시를 <b>토큰에게서</b> 받은 셈이에요. '
+        + 'payload에 무엇이 적혀 있든 그대로 받아들여집니다. '
+        + '위조를 막으라고 붙여 둔 장치가 위조된 토큰의 말을 듣고 스스로 비켜섰어요.');
+      } else if(sig && sig === expected){
+        html = vd('ok', '통과',
+          '이 토큰은 손대지 않은 것이라 어느 쪽으로 검증해도 통과합니다. '
+        + '검증하는 쪽의 차이는 <b>손댄 토큰이 왔을 때</b> 드러나요.');
+      } else if(!sig){
+        html = vd('ok', '거부',
+          '세 번째 토막이 비었는데 헤더는 '
+        + (alg === null ? '<code>none</code>이라고 적어 두지도 않았습니다. '
+                        : '<code>' + esc(alg) + '</code>로 검증하라고 합니다. ')
+        + '대조할 값이 없어 걸렸어요 — <b>헤더를 믿는 쪽도 <code>none</code>이라고 적히기 전까지는 검사를 합니다.</b>');
+      } else {
+        html = vd('ok', '거부',
+          '<b>서명 불일치.</b> 헤더가 시킨 대로 검증했고, 그 결과 안 맞았습니다. '
+        + '헤더를 믿는 것이 늘 뚫린다는 뜻은 아니에요 — 뚫리는 것은 헤더가 <code>none</code>이라고 적어 왔을 때입니다.');
+      }
+    }
+
+    /* --- 서명 대조는 늘 보인다. 어느 쪽으로 검증하든 두 값의 관계는 같으니까. --- */
+    html += vd('', '서명 대조',
+        '들고 온 것 <code>' + (sig ? esc(sig) : '(없음)') + '</code><br>'
+      + '앞 두 토막에서 나오는 값 <code>' + esc(expected) + '</code>');
+
+    /* --- payload에 비밀이 적혔을 때 --- */
+    if(SECRET.test(p)){
+      html += vd('bad', '그대로 읽힙니다',
+        'payload에 감춰야 할 값이 적혀 있습니다. <b>서명은 이 값을 가려 주지 않아요.</b> '
+      + '위 토큰의 가운데 토막을 복사해 되돌리면 그대로 나옵니다 — 열쇠도 권한도 필요 없어요. '
+      + '<b>검증 판정과는 상관이 없습니다.</b> 이 데모에서는 payload를 손으로 고친 것이라 서명이 안 맞지만, '
+      + '실제로는 발급하는 쪽이 이 내용으로 발급했을 테니 서명이 맞겠죠. '
+      + '읽는 데에는 검증이 필요 없으니 어느 쪽이든 결과는 같습니다.');
+    }
+    outEl.innerHTML = html;
+
+    /* --- 열쇠 없이 읽어 낸 payload --- */
+    decEl.innerHTML =
+        '<b>가운데 토막을 되돌리면</b><br>' + esc(pb) + '<br>↓<br>' + esc(p);
+  }
+
+  function reset(){
+    hdrEl.value = H0;
+    payEl.value = P0;
+    sigKept = true;  setPick('#jlSig', 'keep');
+    trustHdr = false; setPick('#jlVer', 'pin');
+    render();
+  }
+
+  footEl.innerHTML = '※ 이 데모가 정한 것들입니다 — 발급된 토큰은 <b>하나</b>뿐이고, '
+    + '아래 칸을 고쳐도 새 서명은 만들어지지 않습니다(발급하는 쪽의 열쇠가 여기 없으니까요). '
+    + '서버가 못 박아 둔 알고리즘은 <b>' + PIN + '</b>으로 뒀고요. '
+    + '그리고 <code>alg</code>가 <code>none</code>인 토큰을 <b>거부하는 쪽이 정상</b>입니다 — '
+    + '초록이 붙는 쪽이 그쪽이에요.';
+
+  hdrEl.addEventListener('input', render);
+  payEl.addEventListener('input', render);
+  wirePicker('#jlSig', k => { sigKept = (k === 'keep'); render(); });
+  wirePicker('#jlVer', k => { trustHdr = (k === 'trust'); render(); });
+
+  $('#jlAdmin').addEventListener('click', () => {
+    payEl.value = '{"sub":"alice","role":"admin","exp":1786000000}';
+    render();
+  });
+  $('#jlNone').addEventListener('click', () => {
+    hdrEl.value = '{"alg":"none","typ":"JWT"}';
+    sigKept = false; setPick('#jlSig', 'drop');
+    render();
+  });
+  $('#jlSecret').addEventListener('click', () => {
+    payEl.value = '{"sub":"alice","role":"user","exp":1786000000,"pw":"p@ssw0rd!","internalKey":"발급받은 내부 열쇠"}';
+    render();
+  });
+  $('#jlReset').addEventListener('click', () => reset());
+
+  reset();
+})();
+
+/* ============================================================
+   데모 11 — 언제부터 실제로 막히나 (11장 · 청구서)
+
+   두 줄이 서로 다른 일을 한다. 위 타임라인은 <순서>를 보인다 — 박탈과 실제 차단 사이가
+   비어 있다는 것. 아래 막대는 <길이>를 보인다 — 그 빈 구간이 24시간 자 위에서 얼마인지와,
+   세션 방식의 0을 같은 자에 나란히. 둘이 함께 있어야 이 장의 논지가 선다:
+   블랙리스트를 켜면 공백이 사라지는 대신 <요청당 조회 1회>가 돌아온다.
+
+   그리는 수는 둘뿐이다 — 공백의 길이(분)와 요청당 조회 횟수. 둘 다 아래 모형에서
+   그대로 따라 나온다. 밀리초는 그리지 않는다(8·9장의 원칙을 그대로 잇는다).
+
+   모형: 권한 박탈이 <발급 직후>에 일어난 경우를 그린다 — 공백이 가장 길어지는 경우다.
+   그래서 공백의 길이가 곧 증표에 적어 둔 기한이 된다. 타임라인의 가로 위치는 순서를
+   위한 것이지 시간에 비례하지 않는다(그래서 길이 비교는 아래 막대가 따로 맡는다).
+
+   토큰 버전의 요청당 조회를 블랙리스트보다 <작은 수>로 적지 않았다. 둘 다 요청마다
+   한 번이다. 작은 것은 횟수가 아니라 <들고 있어야 하는 것>이라, 그 차이는 수가 아니라
+   `keeps` 칸에 적는다 — 구조에서 나오지 않는 수는 지어내지 않는다.
+
+   배지 색은 이 문서의 관행이다: 초록 = 의도대로 차단됨, 빨강 = 막았어야 하는데 통과함,
+   노랑 = 판정이 아닌 상황 라벨(여기서는 되돌아온 조회의 값).
+   ============================================================ */
+(function(){
+  const root = $('#expiryLine'); if(!root) return;
+  const expEl = $('#elExp'), expVal = $('#elExpVal'), stage = $('#elStage'),
+        out = $('#elOut'), foot = $('#elFoot');
+
+  const MINS = [1, 5, 15, 30, 60, 120, 240, 480, 720, 1440];
+  const MAX  = 1440;                                   // 아래 막대의 가로 자 = 24시간
+  const fmt  = m => m < 60 ? m + '분' : (m / 60) + '시간';
+
+  // 가로 위치(%) — 순서를 보이는 눈금이지 시간축이 아니다.
+  const AT = { login:5, revoke:18, expire:78, renew:91 };
+  const TICK_PRE  = 11;
+  const TICK_POST = [30, 40, 50, 60, 70];
+
+  const MODES = {
+    none: {
+      name: '대응 없음', sub: '증표 하나 · 서버는 아무것도 안 들고 있다',
+      look: 0, blocks: false, keeps: '없음'
+    },
+    refresh: {
+      name: '짧은 만료 + refresh', sub: '증표 둘 · 갱신할 때만 발급하는 쪽을 거친다',
+      look: 0, blocks: false, keeps: 'refresh 토큰의 상태'
+    },
+    blacklist: {
+      name: '블랙리스트', sub: '무효화한 증표 목록을 요청마다 본다',
+      look: 1, blocks: true, keeps: '무효화한 증표 하나하나 · 기한이 지날 때까지'
+    },
+    version: {
+      name: '토큰 버전', sub: '사용자 레코드의 번호를 요청마다 본다',
+      look: 1, blocks: true, keeps: '사용자 하나에 정수 하나 · 늘지 않는다'
+    }
+  };
+
+  let mode = 'none';
+
+  function vd(kind, label, why){
+    const b = kind === 'ok'   ? '<span class="badge ok">'
+            : kind === 'bad'  ? '<span class="badge bad">'
+            : kind === 'warn' ? '<span class="badge warn">'
+            :                   '<span class="badge">';
+    return '<div class="verdict" style="align-items:flex-start">' + b + esc(label) + '</span>'
+         + '<div class="jl-why">' + why + '</div></div>';
+  }
+  // 클래스 이름은 분기마다 통째로 적는다 — 문자열로 이어 붙이면 사장 CSS 검사기가 못 본다.
+  // 그래서 이 헬퍼들은 위치만 만들어 주고, class 속성은 부르는 자리에 리터럴로 남긴다.
+  function lft(x){ return ' style="left:' + x + '%"'; }
+
+  function render(){
+    const exp = MINS[Number(expEl.value)];
+    const M   = MODES[mode];
+    const gap = M.blocks ? 0 : exp;
+    expVal.textContent = fmt(exp);
+
+    /* --- 위: 사건의 순서 --- */
+    const eye = M.look ? '<b>🔎</b>' : '';
+    let tl = '<div class="el-line"></div>';
+    tl += M.blocks
+      ? '<div class="el-gap shut" style="left:' + AT.revoke + '%; width:2%"></div>'
+      : '<div class="el-gap open" style="left:' + AT.revoke + '%; width:' + (AT.expire - AT.revoke) + '%"></div>';
+    tl += '<div class="el-tick"' + lft(TICK_PRE) + '>' + eye + '</div>';
+    TICK_POST.forEach(x => {
+      tl += M.blocks
+        ? '<div class="el-tick stop"' + lft(x) + '>' + eye + '</div>'
+        : '<div class="el-tick pass"' + lft(x) + '>' + eye + '</div>';
+    });
+    tl += '<div class="el-mk"' + lft(AT.login) + '><i></i><b>로그인</b></div>';
+    tl += '<div class="el-mk hot lo"' + lft(AT.revoke) + '><i></i><b>권한 박탈</b></div>';
+    tl += '<div class="el-mk"' + lft(AT.expire) + '><i></i><b>기한 만료</b></div>';
+    tl += '<div class="el-mk lo"' + lft(AT.renew) + '><i></i><b>갱신 시도</b></div>';
+
+    /* --- 아래: 길이의 비교 --- */
+    const pct = Math.round(gap / MAX * 1000) / 10;
+    const jwtBar = gap > 0
+      ? '<div class="el-bt"><div class="el-bf open" style="width:' + pct + '%"></div></div>'
+      : '<div class="el-bt"><div class="el-bf shut" style="width:0%"></div></div>';
+    const sessBar = '<div class="el-bt"><div class="el-bf shut" style="width:0%"></div></div>';
+    const bars =
+        '<div class="el-hd"></div><div class="el-hd">24시간 자 위의 공백</div>'
+      + '<div class="el-hd r">공백</div><div class="el-hd r">요청당 조회</div>'
+      + '<div class="el-bn">🕊️ ' + esc(M.name) + '</div>'
+      + jwtBar
+      + '<div class="el-bv" data-h="공백">' + (gap > 0 ? esc(fmt(gap)) : '0') + '</div>'
+      + '<div class="el-bv" data-h="조회">' + M.look + '회</div>'
+      + '<div class="el-bn">🗄️ 세션 방식</div>'
+      + sessBar
+      + '<div class="el-bv" data-h="공백">0</div>'
+      + '<div class="el-bv" data-h="조회">1회</div>';
+
+    stage.innerHTML =
+        '<div class="el-row">'
+      +   '<div class="el-h">🕊️ 무상태 증표 · ' + esc(M.name) + '</div>'
+      +   '<div class="el-sub">' + esc(M.sub) + '</div>'
+      +   '<div class="el-track">' + tl + '</div>'
+      + '</div>'
+      + '<div class="el-row">'
+      +   '<div class="el-h">📏 그래서 얼마나 비어 있나</div>'
+      +   '<div class="el-sub">서버가 들고 있는 것 — ' + esc(M.keeps) + '</div>'
+      +   '<div class="el-bars">' + bars + '</div>'
+      + '</div>';
+
+    /* --- 판정 --- */
+    let html;
+    if(mode === 'none'){
+      html = vd('bad', '공백 ' + fmt(exp),
+        '박탈한 뒤에도 <b>' + fmt(exp) + '</b> 동안 요청이 그대로 통과합니다. '
+      + '붉은 동그라미가 그 요청들이에요 — 막으라고 했는데 통과한 것들입니다. '
+      + '서버가 할 수 있는 일은 기한이 지나기를 기다리는 것뿐이고, 그래서 <b>공백의 길이가 곧 기한</b>입니다. '
+      + '슬라이더를 왼쪽으로 밀어 보세요 — 공백이 함께 줄어듭니다. '
+      + '다만 이 칸에서 기한을 5분으로 줄이면 사용자는 5분마다 다시 로그인해야 해요.');
+    } else if(mode === 'refresh'){
+      html = vd('bad', '공백 ' + fmt(exp),
+        '공백은 여전히 있습니다. 통과하는 요청도 그대로고요 — <b>줄어든 것은 길이뿐</b>입니다. '
+      + '이 대응이 실제로 한 일은 슬라이더를 왼쪽으로 밀 수 있게 만든 것이에요. '
+      + '기한이 짧아도 사용자가 다시 로그인하지 않아도 되니까요.')
+        + vd('warn', '갱신 시도에서 걸린다',
+        '타임라인 오른쪽 끝의 갱신 요청은 <b>발급하는 쪽을 거칩니다.</b> '
+      + '거기서 계정 상태를 다시 보니 꺼진 계정이면 새 증표가 안 나와요. '
+      + '그래서 공백의 상한이 기한으로 못 박힙니다. 대신 갱신 요청이 새로 생기고, '
+      + '<b>오래 사는 refresh 토큰이 새 물건으로 생깁니다.</b>');
+    } else if(mode === 'blacklist'){
+      html = vd('ok', '공백 없음',
+        '박탈한 바로 다음 요청부터 막힙니다. 붉은 구간이 사라졌어요 — 요구가 "즉시 반영"이라면 이것이 답입니다. '
+      + '슬라이더를 아무리 밀어도 공백이 0인 것도 보세요. <b>이 칸에서는 기한이 공백을 정하지 않습니다.</b>')
+        + vd('warn', '요청당 조회 1회',
+        '동그라미마다 붙은 🔎가 그 값입니다. <b>요청이 올 때마다 목록을 한 번 봅니다.</b> '
+      + '아래 막대에서 세션 방식과 나란히 놓고 보세요 — 공백 0, 조회 1. <b>같은 줄이 됐습니다.</b> '
+      + '9장이 이 갈래로 건너온 이유가 그 조회를 없애는 것이었어요.');
+    } else {
+      html = vd('ok', '공백 없음',
+        '박탈한 바로 다음 요청부터 막힙니다. 증표에 적힌 번호가 사용자 레코드의 번호와 안 맞게 되거든요.')
+        + vd('warn', '요청당 조회 1회',
+        '조회 횟수는 블랙리스트와 <b>같습니다.</b> 요청마다 한 번이에요. '
+      + '작은 것은 횟수가 아니라 <b>들고 있어야 하는 것</b>입니다 — '
+      + '블랙리스트는 무효화한 증표 하나하나를 기한까지 들고 있어야 하는데, 이쪽은 사용자 하나에 정수 하나로 끝나거든요. '
+      + '대신 끊는 단위가 <b>계정 전체</b>라, 기기 하나만 골라 끊는 일은 이 대응으로 안 됩니다.');
+    }
+    out.innerHTML = html;
+  }
+
+  foot.innerHTML = '※ 이 데모의 모형입니다 — 권한 박탈이 <b>발급 직후</b>에 일어난 경우를 그렸습니다. '
+    + '공백이 가장 길어지는 경우라, 공백의 길이가 곧 증표에 적어 둔 기한이 됩니다. '
+    + '위 줄의 가로 간격은 <b>사건의 순서</b>를 보이는 것이지 시간에 비례하지 않아요 — 길이의 비교는 아래 막대가 24시간 자로 따로 합니다. '
+    + '그리고 여기 세는 것은 조회 <b>횟수</b>뿐입니다. 조회 한 번이 몇 밀리초인지는 장비와 네트워크가 함께 정하는 값이라, '
+    + '대응 방식만 알아서는 적을 수가 없어요.';
+
+  wirePicker('#elMode', k => { mode = k; render(); });
+  expEl.addEventListener('input', render);
+  render();
 })();
 </script>
 </body>
