@@ -38,7 +38,7 @@
   > configuration can be removed** to accept the Spring Security 6 defaults."
   > — [Session Management Migrations](https://docs.spring.io/spring-security/reference/6.5/migration/servlet/session-management.html)
 
-  즉 그 예제는 **5.7/5.8에서 6의 동작을 미리 켜 두려던 사람들을 위한 것**이고, 6에 오면
+  즉 그 예제는 **6 이전에 6의 동작을 미리 켜 두려던 사람들을 위한 것**이고, 6에 오면
   군더더기라 지워도 된다. **5의 자동 저장을 유지하려면 `false`를 써야 한다.**
 
   **교훈**: "이 항목은 낡은 블로그가 자주 틀린다"고 경고해 놓은 바로 그 자리에서 내가 틀렸다.
