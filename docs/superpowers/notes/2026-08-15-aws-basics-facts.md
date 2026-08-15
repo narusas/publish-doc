@@ -393,6 +393,62 @@ Network Access Analyzer 다섯이다.
 
 **2장에 쓸 것**: "양쪽이 다 허락해야 한다"까지. **정책의 종류(아이덴티티 기반 / 리소스 기반)와 이름은 꺼내지 않는다** — 그건 `iam_tutorial.html`의 본론이고, 이 문서의 독자는 아직 IAM을 모른다. 2장은 "문이 두 개고 둘 다 열려야 한다"는 모양까지만 보이고 넘긴다.
 
+## V15 · 리전 격리와 "글로벌인 것들"의 명단 — 확인됨
+
+3장이 "리전은 서로 격리된 별개의 세계"와 "IAM·CloudFront·Route 53은 리전을 고르지 않는다"를
+쓰려 해서 확인했다. 둘 다 한 페이지에 있다.
+
+출처: [AWS service endpoints](https://docs.aws.amazon.com/general/latest/gr/rande.html)
+
+**리전 격리** — 3장의 첫 기둥을 그대로 받친다.
+
+> **If a service supports Regions, the resources in each Region are independent of similar
+> resources in other Regions.** For example, you can create an Amazon EC2 instance or an Amazon
+> SQS queue in one Region. When you do, the instance or queue is independent of instances or
+> queues in all other Regions.
+
+**글로벌 엔드포인트 명단** — 짐작이 아니라 열거된 목록이다.
+
+> The following services each have a global endpoint that spans AWS Regions:
+> AWS Cloud WAN · **Amazon CloudFront** · AWS Global Accelerator ·
+> **AWS Identity and Access Management (IAM)** · AWS Organizations · **Amazon Route 53** ·
+> AWS Shield Advanced · AWS WAF Classic
+
+**3장에 쓸 것**: CloudFront·IAM·Route 53 셋으로 충분하다. 나머지 다섯은 이 문서의 독자가
+아직 모르는 서비스이니 꺼내지 않는다.
+
+**주의 — S3는 이 목록에 없다.** S3 버킷은 리전에 만든다. 리전을 넘는 것은 **이름의 유일성**뿐이고,
+그건 다른 이야기다(V5). 3장이 S3를 "글로벌인 것들"에 같이 묶으면 틀린다 — 이름만 넘는다고
+정확히 갈라 써야 하고, 범위가 어디까지인지는 8장으로 넘긴다.
+
+## V16 · AZ는 서로의 장애로부터 격리되도록 설계돼 있다 — 확인됨. **다만 원인을 지정하지 않는다**
+
+3장이 "한 건물이 **정전으로** 흔들려도 다른 건물까지 같이 흔들리지는 않는다"고 썼다. 뜻은 맞지만
+**정전이라는 원인은 공식 문서가 말하지 않은 것**이다. 문서가 쓰는 표현은 원인을 특정하지 않는다.
+
+출처 ①: [What is Amazon RDS?](https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/Welcome.html)
+
+> Each AWS Region contains multiple distinct locations called Availability Zones, or AZs.
+> **Each Availability Zone is engineered to be isolated from failures in other Availability Zones.**
+> Each is engineered to provide inexpensive, low-latency network connectivity to other Availability
+> Zones in the same AWS Region.
+
+출처 ②: [Regions and Zones](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/using-regions-availability-zones.html)
+
+> Although rare, failures can occur that affect the availability of instances that are in the same
+> location. If you host all of your instances in a single location that is affected by a failure,
+> none of your instances would be available.
+
+> By launching EC2 instances in multiple Availability Zones, you can protect your applications
+> from the failure of a single location in the Region.
+
+**쓸 수 있는 것**: "AZ는 다른 AZ의 장애로부터 격리되도록 설계돼 있다", "한 곳이 무너져도 다른
+곳의 인스턴스는 살아 있다", "그래서 AZ를 나눠 두면 한 위치의 장애를 견딘다".
+
+**쓰면 안 되는 것**: 장애의 **원인을 지정하는 것**. 정전·화재·냉각 실패 같은 예시는 문서에 없다.
+`failures`라고만 적혀 있고, 그 이상은 지어낸 것이 된다. 그리고 문서 자신이 `Although rare`와
+`engineered to be`라고 쓴다 — **보장이 아니라 설계 목표**다. 3장도 그 온도를 지켜야 한다.
+
 ## 검증 요약
 
 | # | 대상 | 결과 |
@@ -411,6 +467,8 @@ Network Access Analyzer 다섯이다.
 | V12 | VPC 구성 요소 과금 | 부분 확인. VPC 자체·사설 IPv4는 무과금. **ENI·키 페어는 근거 없음 — 1장에서 "무료"라고 쓰지 않고 12장으로 넘긴다** |
 | V13 | 계정 = 격리 단위 = 청구 단위 | 확인됨. 조직으로 묶으면 **격리는 그대로 두고 청구만** 합쳐진다 |
 | V14 | 계정 경계를 넘는 조건 | 확인됨. **양쪽 평가가 모두 Allow일 때만** 통과. 정책 종류·이름은 IAM 문서의 몫이라 쓰지 않는다 |
+| V15 | 리전 격리 · 글로벌 서비스 명단 | 확인됨. 리전 간 리소스는 독립. 글로벌 엔드포인트 명단에 CloudFront·IAM·Route 53이 있고 **S3는 없다** |
+| V16 | AZ의 장애 격리 | 확인됨. 단 **원인(정전·화재)은 문서에 없다.** `failures`까지만, 그리고 `engineered to be`이지 보장이 아니다 |
 
 ## 설계 문서에 반영할 것
 
