@@ -998,6 +998,64 @@ button:focus-visible, .pick:focus-visible, .term:focus-visible, a:focus-visible,
       </div>
     </section>
 
+    <section id="s3" data-title="S3">
+      <div class="sec-head">
+        <div class="kicker">08 · 객체</div>
+        <h2 class="sec-title">🗄️ 파일 서버가 아니다 <span class="lvl must">🟢 필수</span></h2>
+      </div>
+      <p class="lead">2장은 같은 이름의 버킷을 두 번 만들 수 없다고만 했습니다. 3장이 남긴 답은 "얼마나 넓은 범위에서 유일해야 하는지는 8장에서"라는 약속 하나. 4장은 S3 객체의 ARN에서 계정 칸까지 비어 있는 이유를 "이름이 이미 유일해서"라는 한 줄로 넘겼습니다. 셋 다 같은 사실을 다른 각도에서 보고 있었던 건 아닐까요.</p>
+
+      <h3>파티션 안에서 유일하다</h3>
+      <p><span class="term" data-t="버킷">버킷</span> 이름은 계정 안에서만 유일한 게 아닙니다. 내 계정이 아니라 전혀 모르는 남의 계정이 먼저 써 버린 이름도 다시 못 씁니다. 정확한 범위는 파티션 — 리전 여러 개를 묶은, 계정보다도 리전보다도 한 칸 위의 경계. "전 세계에서 유일해야 한다"는 흔한 요약이지만 정확하지는 않습니다. 중국 리전과 GovCloud는 각각 별도의 파티션이라, 그 경계 밖에서는 같은 이름이 따로 존재할 수 있거든요.</p>
+
+      <div class="myth">
+        <div class="m-row no"><span class="m-x">✕</span><div class="m-txt">"버킷 이름은 전 세계에서 유일해야 한다" — 2장부터 어렴풋이 짐작해 온 요약.</div></div>
+        <div class="m-row yes"><span class="m-x">✓</span><div class="m-txt">정확히는 <b>파티션 안에서 유일</b>해야 합니다. 서울 계정에서 만든 이름과 베이징 계정에서 만든 이름이 겹칠 일은 없는데, 그건 전 세계가 하나라서가 아니라 우연히 같은 파티션 안에 있어서예요.</div></div>
+      </div>
+
+      <p>그럼 지운 이름은 나중에 다시 쓸 수 있을까요. 되찾을 수도 있지만 보장은 없습니다. 버킷을 지우고 나면 그 이름이 즉시 풀리지 않을 수 있고, 풀리기 전에 같은 파티션 안 다른 계정이 먼저 채 갈 수도 있어요. 그러면 예전 이름으로 오던 요청은 이제 그 계정의 새 버킷으로 들어갑니다. 이름을 계속 쥐고 있고 싶다면 지우는 대신 비워 두고 그대로 두라는 것이 공식 문서의 권고인데, 3장이 "반쯤 걸쳐 있다"고 해 둔 그 절반이 바로 이 범위예요.</p>
+
+      <h3>폴더도, 반쪽짜리 수정도 없다</h3>
+      <p>S3는 처음부터 <span class="term" data-t="객체 스토리지">객체 스토리지</span>였습니다. 버킷 하나를 열어 콘솔에서 폴더를 만들어 본 적 있으신가요. 화면은 분명 폴더처럼 그려지는데, 그 밑에 실제로 있는 건 폴더가 아니라 <span class="term" data-t="객체">객체</span>뿐입니다. 공식 문서가 밝혀 둔 그대로, 일반 파일시스템 같은 계층 구조 대신 평평한(flat) 구조 하나만 있습니다. <code>photos/2024/trip.jpg</code>처럼 슬래시가 낀 이름을 올리면 콘솔이 <code>photos</code>와 <code>2024</code>를 폴더로 그려 주지만, 그 슬래시는 경로 구분자가 아니라 그저 키 이름에 든 문자 하나일 뿐이에요. 폴더 속의 폴더는 눈속임이고, 실체는 슬래시가 든 긴 이름 하나입니다.</p>
+
+      <p>그럼 그 객체, 한 글자만 고쳐 쓸 수 있을까요. 안 됩니다. 공식 API 문서가 못을 박아 둔 자리인데, PUT 요청이 성공했다는 응답을 받았다면 그건 객체 전체가 통째로 들어갔다는 뜻이지 일부만 들어갔다는 뜻이 아닙니다. 메타데이터 한 조각만 바꾸고 싶어도 사정은 같아서, 바뀐 값을 포함해 객체 전체를 다시 올려야 해요. 부분 수정이라는 동작 자체가 이 API에는 없거든요.</p>
+
+      <div class="callout warn">
+        <h4>📦 6장이 남겨 둔 이름</h4>
+        <p>6장에서 스냅샷 이야기를 하며 "가는 곳은 다시 S3"라고 짚어 뒀습니다. 스냅샷이 S3에 저장되는 건 맞지만, 내가 만든 버킷 목록에 그 조각들이 나타나지는 않아요. 공식 문서가 딱 잘라 두는 대로, 스냅샷이 놓이는 버킷은 직접 접근할 수 없는 버킷입니다.</p>
+      </div>
+
+      <h3>마운트해서 쓰는 물건이 아니다</h3>
+      <p>그럼 이 버킷을 드라이브 하나처럼 인스턴스에 연결해 쓸 수 있을까요. 원래 얼굴은 그런 모양이 아닙니다. S3에 접근하는 표준 창구는 HTTP를 그대로 쓰는 REST API인데, 공식 문서의 표현 그대로 "HTTP 인터페이스"입니다. GET으로 읽고 PUT으로 쓰고 DELETE로 지우는 식이라, 공개된 객체라면 브라우저 하나로도 그냥 열려요. 마운트라는 동작 자체가 파일시스템을 가진 블록 장치에서나 성립하는 개념인데, S3에는 애초에 그 자리가 없어요.</p>
+
+      <div class="demo" id="storeCmp">
+        <span class="demo-tag">저장소 대조기</span>
+        <p style="margin:0 0 4px">같은 요청을 S3와 EBS 양쪽에 나란히 넣어 보면, 어디서 갈릴까요.</p>
+        <div class="picker" id="storePicker">
+          <button class="pick on" data-k="edit-part">파일 일부 수정</button>
+          <button class="pick" data-k="mount">마운트해서 쓰기</button>
+          <button class="pick" data-k="concurrent">서버 열 대가 동시에 읽기</button>
+          <button class="pick" data-k="outlive">인스턴스보다 오래 살기</button>
+          <button class="pick" data-k="az">다른 AZ에서 붙이기</button>
+        </div>
+        <div id="storeOut"></div>
+      </div>
+
+      <div class="oneline">
+        <div class="ol-ic">🗄️</div>
+        <div><div class="ol-t">8장 한 줄 요약</div><div class="ol-b"><b>버킷 이름은 계정이 아니라 파티션 안에서 유일하고, 객체는 통째로 쓰고 통째로 읽습니다.</b> 디렉터리도 마운트도 없이 HTTP API로 주고받는 것이 원래 얼굴이고, EBS와 갈라서는 축은 접근 방식·동시 접근·수명·AZ.</div></div>
+      </div>
+
+      <div class="quiz" data-qid="q-s3" data-answer="c">
+        <div class="q">로그 파일을 S3에 두고 <b>새 줄을 계속 덧붙이려</b> 합니다. 가장 정확한 설명은?</div>
+        <button class="opt" data-opt="a">append 모드로 열어 쓰면 된다</button>
+        <button class="opt" data-opt="b">버킷에 추가 쓰기 권한을 주면 된다</button>
+        <button class="opt" data-opt="c">덧붙일 수 없다 — 매번 객체 전체를 다시 써야 한다</button>
+        <button class="opt" data-opt="d">1MB를 넘으면 자동으로 이어 쓰기로 바뀐다</button>
+        <div class="explain"><b>정답은 C입니다.</b> 객체는 통째로가 원칙이고, 그래서 로그를 S3에 실시간으로 쌓는 구조는 대개 모아서 주기적으로 올리는 모양이 됩니다. A는 파일시스템의 감각을 그대로 가져온 것이고 — S3는 파일시스템이 아니에요. B는 권한 문제가 아니라 모델의 문제라서 틀렸고, D는 그런 자동 전환이 애초에 없어서 틀렸습니다.</div>
+      </div>
+    </section>
+
   </main>
 </div>
 
@@ -1052,6 +1110,9 @@ const GLOSSARY = {
   "사설 IP": "VPC 안에서만 통하는 IP 주소로, ENI에 매인 값입니다. 인스턴스를 중지했다 시작해도 그대로 남고, 종료할 때 비로소 해제됩니다.",
   "탄력적 IP": "내 계정에 할당해 두는 고정 공인 IP 주소입니다. 연결을 끊거나 놓아주기 전까지는 계속 내 것이라, 인스턴스를 중지했다 시작해도 바뀌지 않습니다.",
   "보안 그룹": "인스턴스가 아니라 ENI에 붙는 가상 방화벽입니다. 무엇을 허용할지 정하는 규칙은 네트워크 보안 튜토리얼의 몫입니다.",
+  "버킷": "S3에서 객체를 담는 컨테이너입니다. 이름은 계정이 아니라 파티션 안에서 유일해야 하고, 만들 때 리전 하나를 고르지만 이름의 유일성은 그 리전을 넘습니다.",
+  "객체": "S3에 저장되는 데이터 한 덩어리입니다. 키라는 이름이 붙고, 통째로 쓰고 통째로 읽을 뿐 일부만 고쳐 쓸 수는 없습니다.",
+  "객체 스토리지": "파일시스템처럼 디렉터리 계층을 두지 않고, 평평한 네임스페이스 안에 객체를 담아 HTTP API로 주고받는 스토리지 모델입니다. S3가 이 모델을 따릅니다.",
   // @GLOSSARY_END
 };
 
@@ -1522,6 +1583,69 @@ if(location.hash){
   }
   wirePicker('#eniPicker', render);
   render('stop-start');
+})();
+
+/* ============================================================
+   데모 8 — 저장소 대조기 (8장)
+   ============================================================ */
+(function(){
+  const out = $('#storeOut'); if(!out) return;
+  // PutObject가 객체를 통째로만 받아들인다는 것은 API 레퍼런스 "PutObject" 페이지 —
+  // "Amazon S3 never adds partial objects; if you receive a success response, Amazon S3 added
+  // the entire object to the bucket. You cannot use PutObject to only update a single piece of
+  // metadata for an existing object. You must put the entire object with updated metadata if you
+  // want to update some values." — 로 확인했다.
+  // 버킷이 폴더 없이 평평한 구조라는 것은 "Organizing objects in the Amazon S3 console by using
+  // folders" 페이지의 "Amazon S3 general purpose buckets have a flat structure instead of a
+  // hierarchy like you would see in a file system."로, 표준 접근이 HTTP REST API라는 것은
+  // "What is Amazon S3?" 페이지의 "The REST API is an HTTP interface to Amazon S3. With the
+  // REST API, you use standard HTTP requests to create, fetch, and delete buckets and objects."로
+  // 확인했다.
+  // EBS 볼륨이 기본적으로 인스턴스 하나에만 붙는다는 것(멀티 어태치는 예외 기능)은
+  // "Attach an Amazon EBS volume to an Amazon EC2 instance" 페이지의 "You can attach volumes to
+  // instances that are in the same Availability Zone only." / "Multi-Attach enabled volumes can
+  // be attached to up to 16 instances."로 확인했다 — 별도로 켜야 하는 예외라는 뜻이라, 이 데모는
+  // 기본 동작만 다룬다.
+  // S3 객체가 여러 클라이언트의 동시 GET을 견딘다는 것은 "How Amazon S3 works" 문서의 데이터
+  // 일관성 모델 — "if you make a PUT request to an existing key from one thread and perform a GET
+  // request on the same key from a second thread concurrently, you will get either the old data or
+  // the new data, but never partial or corrupt data." — 로, 버킷이 리전 안 여러 가용 영역에 걸쳐
+  // 중복 저장된다는 것은 같은 문서의 "you can redundantly store objects across multiple
+  // Availability Zones."로 확인했다.
+  const D = {
+    "edit-part": {t:"파일 일부 수정", rows:[
+      ["S3","gone","<b>불가.</b> PutObject가 성공했다는 응답은 객체 전체가 들어갔다는 뜻이지, 일부만 바뀌었다는 뜻이 아니에요. 한 글자를 고치려 해도 객체 전체를 다시 올려야 합니다."],
+      ["EBS","keep","<b>가능.</b> 블록 스토리지라 원하는 위치만 골라 덮어쓸 수 있습니다. 파일시스템이 이 위에서 하는 일이 바로 그거예요."]
+    ], why:"접근 방식 자체가 다릅니다. S3는 객체 하나를 통으로 주고받는 API이고, EBS는 블록 단위로 어디든 찍어 쓸 수 있는 디스크예요."},
+    "mount": {t:"마운트해서 쓰기", rows:[
+      ["S3","gone","<b>불가.</b> 애초에 마운트할 대상이 아닙니다. S3에 접근하는 원래 창구는 HTTP를 그대로 쓰는 REST API — GET으로 읽고 PUT으로 씁니다."],
+      ["EBS","keep","<b>가능.</b> 인스턴스에 붙이면 그 위에 파일시스템을 얹어 커널이 그대로 마운트해요. 우리가 아는 디스크의 모습 그대로입니다."]
+    ], why:"마운트라는 동작 자체가 파일시스템을 가진 블록 장치에서나 성립합니다. S3에는 애초에 그 자리가 없어요."},
+    "concurrent": {t:"서버 열 대가 동시에 읽기", rows:[
+      ["S3","keep","<b>가능.</b> 같은 객체라도 여러 클라이언트가 동시에 GET을 보낼 수 있습니다. HTTP 요청이 몇 개든 버킷은 개의치 않거든요."],
+      ["EBS","gone","<b>불가.</b> 볼륨 하나는 기본적으로 인스턴스 하나에만 붙습니다. 열 대가 동시에 읽으려면 볼륨도 열 개로 늘리거나 다른 스토리지를 골라야 해요."]
+    ], why:"동시 접근을 견디도록 설계된 쪽과, 애초에 한 인스턴스만 상대하도록 설계된 쪽의 차이예요."},
+    "outlive": {t:"인스턴스보다 오래 살기", rows:[
+      ["S3","keep","<b>가능.</b> 버킷과 객체는 처음부터 어떤 인스턴스에도 매여 있지 않습니다. 인스턴스를 하나도 띄우지 않아도 존재할 수 있는 리소스예요."],
+      ["EBS","warn","<b>조건부.</b> <a class=\"link\" href=\"#ebs\">6장</a>에서 이미 확인했듯, 볼륨 종류와 붙인 시점, 붙인 방법이 겹쳐야 종료 후의 운명이 정해집니다."]
+    ], why:"S3는 인스턴스와의 관계 자체가 없어서 물을 필요도 없는 질문이지만, EBS는 그 관계가 있어서 조건이 붙어요."},
+    "az": {t:"다른 AZ에서 붙이기", rows:[
+      ["S3","keep","<b>가능.</b> 버킷은 리전 하나를 골라 만들지만, 그 리전 안 여러 가용 영역에 걸쳐 데이터가 중복 저장됩니다. 특정 AZ 하나에 매인 리소스가 아니에요."],
+      ["EBS","gone","<b>불가.</b> <a class=\"link\" href=\"#ebs\">6장</a>이 그은 선 그대로, 볼륨은 놓인 가용 영역의 인스턴스에만 붙습니다."]
+    ], why:"서브넷도 ENI도 볼륨도 전부 AZ 하나에 갇힌다고 <a class=\"link\" href=\"#eni\">7장</a>이 정리했던 그 못인데, S3는 처음부터 그 못을 지나가지 않아요."}
+  };
+  const CLS = {keep:"가능", gone:"불가", warn:"조건부"};
+  function render(k){
+    const d = D[k]; if(!d) return;
+    let rows = d.rows.map(([n,c,t]) =>
+      `<tr><td>${esc(n)}</td><td><span class="badge ${c}">${CLS[c]}</span></td><td>${t}</td></tr>`).join('');
+    out.innerHTML = `<div class="kv"><dt>작업</dt><dd>${esc(d.t)}</dd></div>
+      <table class="t"><thead><tr><th>스토리지</th><th>판정</th><th>이유</th></tr></thead><tbody>${rows}</tbody></table>
+      <p>${d.why}</p>`;
+    out.classList.add('show');
+  }
+  wirePicker('#storePicker', render);
+  render('edit-part');
 })();
 
 </script>
