@@ -466,6 +466,12 @@ table.t tr.hit td{background:rgba(52,211,153,.12)}
 .kv dd{margin:0; color:var(--text-dim); line-height:1.7}
 @media(max-width:600px){.kv{grid-template-columns:1fr; gap:2px 0}.kv dd{margin-bottom:10px}}
 
+/* 수명 축 배지 (5장에서 처음 씀 — 6·7장이 같은 클래스를 그대로 쓴다) */
+.badge.keep{color:var(--keep); border-color:rgba(52,211,153,.4)}
+.badge.gone{color:var(--gone); border-color:rgba(248,113,113,.4)}
+.badge.fresh{color:var(--fresh); border-color:rgba(251,191,36,.4)}
+/* .badge.warn은 위(288행 부근)의 기본 .badge 규칙에 이미 있음 — var(--warn) 사용, 재정의하지 않는다 */
+
 /* ARN 해부 (4장) */
 .arn-full{margin:10px 0 14px}
 .arn-full code{font-size:15px; padding:8px 12px; display:inline-block; word-break:break-all}
@@ -832,6 +838,54 @@ button:focus-visible, .pick:focus-visible, .term:focus-visible, a:focus-visible,
       </div>
     </section>
 
+    <section id="ec2" data-title="EC2 인스턴스">
+      <div class="sec-head">
+        <div class="kicker">05 · 인스턴스</div>
+        <h2 class="sec-title">🖥️ 인스턴스는 서버가 아니다 <span class="lvl must">🟢 필수</span></h2>
+      </div>
+      <p class="lead">"인스턴스가 서버지 뭔가." 그렇게 여겨도 이상할 것 없습니다. SSH로 붙어 보면 프롬프트 하나, 커널 하나, 다를 게 없어 보이니까요. 그런데 서버는 껐다 켜도 여전히 같은 서버인 반면, 인스턴스는 껐다 켜는 사이에 달라지는 것이 있습니다.</p>
+
+      <h3>틀에서 찍혀 나온 것</h3>
+      <p>콘솔에서 누른 "인스턴스 시작" 버튼, 정체가 무엇일까요. 사실은 <span class="term" data-t="AMI">AMI</span> 한 장을 복제하는 버튼이었습니다. AMI 자체는 그저 이미지 파일 한 장인데, 인스턴스는 그 이미지를 실행에 옮긴 결과물입니다. 같은 AMI로 백 개를 찍으면 어떨까요. 백 개가 처음부터 하나같이 같은 모습으로 켜집니다. 그 손, 서버실에서 상자를 하나하나 조립하던 손과 같을까요.</p>
+      <p>인스턴스에 붙는 <span class="term" data-t="인스턴스 타입">인스턴스 타입</span>은 이름표 하나로 CPU 개수와 메모리 크기, 네트워크 대역폭까지 한꺼번에 정해 버립니다. t3.micro로 시작했다가 트래픽이 몰리면 t3.large로 옮기고 싶어지는데, 그 이름표는 켜 둔 채로 바꿀 수 없습니다. 공식 문서가 이 절차 맨 앞에 박아 둔 조건은 하나, 인스턴스를 먼저 멈춰야 한다는 것.</p>
+      <p>인스턴스를 처음 켜던 화면에서 김주임은 <span class="term" data-t="키 페어">키 페어</span>를 새로 하나 만들었습니다. 그때 브라우저가 내려 준 .pem 파일 한 장이 그 인스턴스로 들어가는 유일한 문이었습니다. 그 개인키, 다시 받을 방법이 있을까요. 없습니다. 잃어버리면 새 키 페어를 만들어 갈아 끼우는 수밖에 없습니다.</p>
+
+      <h3>상태는 넷, 남는 것은 다르다</h3>
+      <p>인스턴스가 오가는 상태는 몇 가지일까요. 상태는 <code>running</code> · <code>stopped</code> · <code>terminated</code>, 그리고 잠깐 스쳐 가는 <code>rebooting</code>, 이 넉 가지로 좁혀집니다. 이름은 단순한데, 그 사이를 오가는 동작마다 인스턴스 밑에 붙어 있던 것들의 운명이 갈립니다. 그 밑에는 무엇이 붙어 있을까요.</p>
+      <p>하나는 <span class="term" data-t="인스턴스 스토어">인스턴스 스토어</span>라는, 인스턴스에 물리적으로 붙어 있는 로컬 디스크입니다. EBS와 무엇이 다른지는 6장이 본론으로 다루지만, 여기서는 대비만 짚어 둡니다. 또 하나는 <span class="term" data-t="퍼블릭 IPv4">퍼블릭 IPv4</span> 주소, 인터넷에서 이 인스턴스로 곧장 붙는 문패.</p>
+
+      <div class="demo" id="lifecycle">
+        <span class="demo-tag">상태 기계</span>
+        <p style="margin:0 0 4px">네 동작을 하나씩 눌러, 무엇이 남고 무엇이 사라지는지 직접 맞혀 보세요.</p>
+        <div class="picker" id="lifePicker">
+          <button class="pick on" data-k="reboot">재부팅 (reboot)</button>
+          <button class="pick" data-k="stop">중지 (stop)</button>
+          <button class="pick" data-k="term">종료 (terminate)</button>
+          <button class="pick" data-k="resize">인스턴스 타입 변경</button>
+        </div>
+        <div id="lifeOut"></div>
+      </div>
+
+      <div class="callout tip">
+        <h4>⌨️ reboot과 shutdown, 한 끗 차이</h4>
+        <p>운명을 가르는 게 콘솔 버튼뿐일까요. 터미널에서 <code>reboot</code>을 치면 인스턴스 스토어가 살고, <code>shutdown</code>을 치면 죽는데 — 콘솔이 아니라 터미널 한 곳, 명령 한 마디 차이.</p>
+      </div>
+
+      <div class="oneline">
+        <div class="ol-ic">🖥️</div>
+        <div><div class="ol-t">5장 한 줄 요약</div><div class="ol-b"><b>인스턴스는 AMI에서 찍혀 나온 한 벌이지, stop과 terminate는 서로 다른 사건입니다.</b> 인스턴스 스토어는 재부팅에서만 살아남고, 키 페어의 개인키는 처음 한 번만 손에 쥘 수 있습니다.</div></div>
+      </div>
+
+      <div class="quiz" data-qid="q-ec2" data-answer="c">
+        <div class="q">배포 스크립트가 빌드 결과를 <code>/mnt/cache</code>에 쌓아 두는데, 그 경로가 <b>인스턴스 스토어</b>라면 다음 중 데이터가 <b>남아 있는</b> 경우는 무엇일까요?</div>
+        <button class="opt" data-opt="a">인스턴스 타입을 t3.small에서 t3.medium으로 올렸다</button>
+        <button class="opt" data-opt="b">밤에 인스턴스를 중지했다가 아침에 다시 켰다</button>
+        <button class="opt" data-opt="c">터미널에서 <code>reboot</code>을 쳤다</button>
+        <button class="opt" data-opt="d">터미널에서 <code>shutdown</code>을 쳤다</button>
+        <div class="explain"><b>정답은 C입니다.</b> 재부팅만 살아남습니다. 가장 잔인한 오답은 D 아닐까요. 같은 터미널에서 reboot과 shutdown, 명령 한 마디 차이인데 결과는 정반대입니다. B는 "잠깐 껐을 뿐"이라는 감각이 통하지 않는 자리이고, A는 타입을 바꾸려면 먼저 인스턴스를 멈춰야 하는 절차라서 인스턴스 스토어가 함께 지워집니다.</div>
+      </div>
+    </section>
+
   </main>
 </div>
 
@@ -874,6 +928,10 @@ const GLOSSARY = {
   "ARN": "리소스 하나하나에 붙는 고유한 이름표로, arn:파티션:서비스:리전:계정:리소스 형태를 가집니다. 칸이 비어 있는 것도 정상이고, 그 빈 칸에는 늘 이유가 있습니다.",
   "파티션": "ARN의 두 번째 칸으로, 리소스가 속한 AWS 구역을 가리킵니다. 대부분은 aws이고, 중국 리전과 GovCloud는 별도의 파티션에 속합니다.",
   "리소스 ID": "AWS가 리소스를 만드는 순간 자동으로 붙이는 식별자입니다. vpc-0e9801d129EXAMPLE처럼 접두사와 임의의 문자열로 되어 있고, 사람이 붙인 이름과 달리 고쳐 쓸 수 없습니다.",
+  "인스턴스 타입": "인스턴스에 CPU 개수·메모리 크기·네트워크 대역폭을 한꺼번에 정해 주는 이름표입니다. t3.micro에서 t3.large로 바꾸는 식으로 나중에 바꿀 수 있지만, 공식 문서가 요구하는 절차상 인스턴스를 먼저 중지해야 합니다.",
+  "인스턴스 스토어": "인스턴스에 물리적으로 붙어 있는 로컬 디스크입니다. 재부팅에서만 데이터가 남고, 중지·최대 절전·종료·타입 변경에서는 모두 사라집니다. EBS와 달리 나중에 붙였다 뗄 수 없습니다.",
+  "키 페어": "인스턴스에 접속할 때 쓰는 공개키·개인키 한 쌍입니다. 만들 때 브라우저가 내려 주는 개인키 파일은 그 순간이 지나면 다시 받을 방법이 없습니다.",
+  "퍼블릭 IPv4": "인스턴스에 인터넷에서 붙는 공인 IP 주소입니다. 공식 문서가 적어 둔 해제 사유는 중지·최대 절전·종료 세 가지뿐이고, 다시 시작하면 새 주소를 받습니다.",
   // @GLOSSARY_END
 };
 
@@ -1192,6 +1250,54 @@ if(location.hash){
   }
   wirePicker('#arnPicker', render);
   render('iam');
+})();
+
+/* ============================================================
+   데모 5 — 인스턴스 상태 기계 (5장)
+   ============================================================ */
+(function(){
+  const out = $('#lifeOut'); if(!out) return;
+  // 인스턴스 스토어 행은 AWS 공식 문서의 데이터 지속성 표(V8) 그대로다.
+  // 퍼블릭 IPv4의 reboot 칸은 V1의 주의사항대로 "해제 사유 목록에 없음"까지만 쓰고 단정하지 않는다.
+  // resize의 "먼저 중지해야" 인과는 AWS 공식 문서(change-instance-type-of-ebs-backed-instance)의
+  // "You must stop your instance before you can change its instance type."로 검증된 뒤에 썼다.
+  const D = {
+    reboot: {t:"재부팅 (reboot)", rows:[
+      ["EC2 인스턴스","keep","그대로 살아 있습니다. 껐다 켜는 게 아니라, 재시작이거든요."],
+      ["EBS 볼륨","keep","이 볼륨도 그대로입니다."],
+      ["인스턴스 스토어","keep","<b>살아남습니다.</b> 공식 문서가 유지된다고 못 박아 둔 자리는 딱 여기, 재부팅뿐."],
+      ["퍼블릭 IPv4","keep","공식 문서가 적어 둔 해제 사유는 중지·최대 절전·종료 셋입니다. 재부팅은 그 목록에 없어요."]
+    ]},
+    stop: {t:"중지 (stop)", rows:[
+      ["EC2 인스턴스","keep","인스턴스는 남습니다. 이 동안 인스턴스 요금은 나가지 않아요."],
+      ["EBS 볼륨","keep","<b>남고, 요금도 계속 나가는데</b>, 껐으니 공짜라는 기대가 첫 자리에서 깨집니다."],
+      ["인스턴스 스토어","gone","<b>전부 사라집니다.</b> 모든 블록이 암호학적으로 지워져요."],
+      ["퍼블릭 IPv4","fresh","<b>해제되고, 다시 켜면 새 주소를 받습니다.</b> 붙여 뒀던 IP로는 더 이상 접속되지 않아요."]
+    ]},
+    term: {t:"종료 (terminate)", rows:[
+      ["EC2 인스턴스","gone","되돌릴 수 없습니다. 같은 AMI로 새로 띄울 수는 있지만 그건 다른 인스턴스예요."],
+      ["EBS 볼륨","warn","<b>경우에 따라 남습니다.</b> 무엇이 갈림길인지는 <a class=\"link\" href=\"#ebs\">6장</a>에서 확인할 수 있어요."],
+      ["인스턴스 스토어","gone","사라집니다."],
+      ["퍼블릭 IPv4","gone","해제됩니다."]
+    ]},
+    resize: {t:"인스턴스 타입 변경", rows:[
+      ["EC2 인스턴스","keep","같은 인스턴스인데, 먼저 중지해야 하는 절차라서 위 중지 결과가 고스란히 따라옵니다."],
+      ["EBS 볼륨","keep","그대로예요."],
+      ["인스턴스 스토어","gone","<b>사라집니다.</b> 새 타입이 인스턴스 스토어를 지원해도 데이터는 옮겨지지 않아요."],
+      ["퍼블릭 IPv4","fresh","중지와 시작을 거치므로, 새 주소를 받습니다."]
+    ]}
+  };
+  const CLS = {keep:"살아남는다", gone:"사라진다", fresh:"새로 받는다", warn:"조건부"};
+  function render(k){
+    const d = D[k]; if(!d) return;
+    let rows = d.rows.map(([n,c,t]) =>
+      `<tr><td>${esc(n)}</td><td><span class="badge ${c}">${CLS[c]}</span></td><td>${t}</td></tr>`).join('');
+    out.innerHTML = `<div class="kv"><dt>동작</dt><dd>${esc(d.t)}</dd></div>
+      <table class="t"><tbody>${rows}</tbody></table>`;
+    out.classList.add('show');
+  }
+  wirePicker('#lifePicker', render);
+  render('reboot');
 })();
 
 </script>
