@@ -1474,7 +1474,7 @@ DescribeInstancesResponse response = ec2.describeInstances(request);</code></pre
 
       <pre class="language-bash"><code class="language-bash"># 내가 지금 누구로 로그인해 있나
 aws sts get-caller-identity</code></pre>
-      <p>Account 칸에 뜬 번호가 지금 이 화면이 속한 계정이고, 나머지 일곱 개는 전부 그 번호 안에서 세는 것들입니다.</p>
+      <p>Account 칸에 뜬 번호가 지금 이 화면이 속한 계정이고, 나머지 일곱 개는 전부 그 번호 안에서 세는 것들.</p>
 
       <pre class="language-bash"><code class="language-bash"># 내 계정에서 AZ 이름이 어느 AZ ID에 붙어 있나 (3장)
 aws ec2 describe-availability-zones --region ap-northeast-2 \
@@ -1503,7 +1503,7 @@ aws ec2 describe-addresses \
 aws ec2 describe-nat-gateways \
   --query 'NatGateways[?State==`available`].{id:NatGatewayId,subnet:SubnetId}' \
   --output table</code></pre>
-      <p>뜨는 줄 수만큼 시간당 값이 겹으로 붙는 중이니, NAT 게이트웨이 요금이 왜 자릿수부터 다른지 이 한 표로 짐작이 됩니다.</p>
+      <p>뜨는 줄 수만큼 시간당 값이 겹으로 붙는 중이니, NAT 게이트웨이 요금이 왜 자릿수부터 다른지 이 한 표로 짐작이 가겠지요.</p>
 
       <pre class="language-bash"><code class="language-bash"># 인스턴스에 붙은 볼륨의 DeleteOnTermination (6장)
 aws ec2 describe-instances --instance-ids i-0123456789abcdef0 \
@@ -1516,6 +1516,8 @@ aws ec2 describe-instances \
   --query 'Reservations[].Instances[?!not_null(Tags[?Key==`Owner`].Value)].{id:InstanceId,az:Placement.AvailabilityZone}' \
   --output table</code></pre>
       <p>id 칸에 뜨는 쪽이 소유자 태그 없이 떠 있는 인스턴스이고, <code>Owner</code> 자리에 다른 태그 키를 넣으면 같은 필터로 어떤 태그가 비어 있는지도 그대로 드러납니다.</p>
+
+      <p>콘솔에서 손으로 만들고 파일로는 남기지 않은 흔적은 명령 한 줄로 걸러낼 수 없고, 파일과 실물을 나란히 대조해야 드러납니다 — 14장이 이미 세워 둔 그 이야기의 다른 증거인 셈이네요.</p>
     </section>
 
     <section id="appendix-map" data-title="부록 B · 다른 이름 같은 이야기">
