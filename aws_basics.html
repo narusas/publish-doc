@@ -499,6 +499,15 @@ button:focus-visible, .pick:focus-visible, .term:focus-visible, a:focus-visible,
   outline:2px solid var(--accent); outline-offset:2px; border-radius:8px;
 }
 .term:focus-visible{outline-offset:3px}
+
+@media (prefers-reduced-motion: reduce){
+  *, *::before, *::after{
+    animation-duration:0.01ms !important;
+    animation-iteration-count:1 !important;
+    transition-duration:0.01ms !important;
+    scroll-behavior:auto !important;
+  }
+}
 </style>
 </head>
 <body>
@@ -509,9 +518,9 @@ button:focus-visible, .pick:focus-visible, .term:focus-visible, a:focus-visible,
   <!-- ============ 사이드바 ============ -->
   <aside id="sidebar">
     <div class="brand">
-      <div class="logo"><span class="dot"></span> VPC·GATE</div>
+      <div class="logo"><span class="dot"></span> AWS·BASICS</div>
       <h1>AWS 기초</h1>
-      <div class="sub">SG · NACL · 라우팅 · Firewall · WAF · Endpoint</div>
+      <div class="sub">계정 · 리전 · EC2 · EBS · ENI · S3 · 요금</div>
     </div>
     <div class="progress-wrap">
       <div class="progress-line"><span>학습 진행률</span><span id="progPct">0%</span></div>
