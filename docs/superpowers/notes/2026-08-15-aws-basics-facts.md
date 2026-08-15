@@ -648,6 +648,28 @@ WebFetch를 했는가"가 아니라 **"이 파일에 있는가"**다. 이후 모
 **이 항목은 앞의 둘과 성격이 다르다.** V20·V22는 구현자가 확인하고 등재만 빠뜨린 것이고, 이것은
 **확인 없이 쓴 것**이다. 결과적으로 맞았지만 절차로는 더 나쁘다.
 
+## V25 · "관리형"과 "책임 공유 모델"은 AWS 자신의 용어다 — 확인됨
+
+10장 구현자가 확인해 왔다. 출처: [What is Amazon RDS?](https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/Welcome.html)
+
+**"관리형"의 규정.**
+> Amazon RDS is a **managed database service. It's responsible for most management tasks.** By
+> eliminating tedious manual processes, Amazon RDS frees you to focus on your application and
+> your users.
+
+**"책임 공유 모델"은 AWS가 붙인 이름이다.** 이 페이지의 실제 소제목이 `Amazon RDS shared
+responsibility model`이고, V10의 쿼리 튜닝 인용이 그 절 본문이다. **10장이 표를 보인 뒤에 이
+이름을 붙이는 것은 지어낸 이름이 아니라 문서의 이름을 되찾는 것이다.**
+
+**읽기 전용 복제본은 스케일링 쪽에 걸려 있다.**
+> You can also use **read replicas to increase read scaling.**
+
+→ 10장 퀴즈의 오답 A("읽기 전용 복제본을 두는 것")가 **RDS가 대신 해 주는 쪽**이라는 근거다.
+
+**V10의 표를 재확인했다.** 열 헤더의 정확한 표기는 `On-premises management / Amazon EC2
+management / Amazon RDS management`로 V10이 적어 둔 약칭과 문구가 다르지만, **Customer/AWS
+값은 열한 행 모두 일치**한다. V10의 표는 그대로 믿어도 된다.
+
 ## 검증 요약
 
 | # | 대상 | 결과 |
@@ -676,6 +698,7 @@ WebFetch를 했는가"가 아니라 **"이 파일에 있는가"**다. 이후 모
 | V22 | S3의 AZ 중복 저장 | 확인됨. `redundantly store objects across multiple Availability Zones`. **V20과 같은 절차 위반(주석에만 근거)으로 두 번째로 잡혀 여기 등재** |
 | V23 | 입구 넷이 하는 일 | 확인됨. IGW는 퍼블릭 주소를 가진 것만·라우팅 타깃 / NAT GW 단방향 / **ALB 7계층·NLB 4계층** / LB 뒤 타깃은 퍼블릭 IP 불필요 |
 | V24 | ALB 규칙 조건 타입 | 확인됨. `host-header` `path-pattern` `http-request-method` `source-ip`. **확인 없이 쓴 것이 결과적으로 맞았던 경우 — 절차로는 V20·V22보다 나쁘다** |
+| V25 | "관리형"·"책임 공유 모델"의 출처 | 확인됨. **둘 다 AWS 자신의 용어**(페이지 소제목이 `Amazon RDS shared responsibility model`). 읽기 전용 복제본은 스케일링 쪽. V10 표 재확인 — 값 열한 행 일치 |
 
 ## 설계 문서에 반영할 것
 
