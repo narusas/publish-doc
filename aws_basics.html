@@ -434,6 +434,7 @@ table.t tr.hit td{background:rgba(52,211,153,.12)}
 .verdict .vres{font-family:var(--mono); font-size:12.5px; font-weight:700; padding:3px 9px; border-radius:6px; white-space:nowrap}
 .verdict .vres.allow{color:#86efac; background:rgba(52,211,153,.14); border:1px solid rgba(52,211,153,.4)}
 .verdict .vres.deny{color:#fca5a5; background:rgba(248,113,113,.14); border:1px solid rgba(248,113,113,.4)}
+.verdict .vres.cond{color:#fde68a; background:rgba(251,191,36,.14); border:1px solid rgba(251,191,36,.4)}
 .verdict .vwhy{font-size:12.5px; color:var(--text-mut); flex:1}
 @media(max-width:600px){.verdict{flex-wrap:wrap}.verdict .vwhy{flex-basis:100%}}
 
@@ -664,6 +665,55 @@ button:focus-visible, .pick:focus-visible, .term:focus-visible, a:focus-visible,
       </div>
     </section>
 
+    <section id="account" data-title="계정">
+      <div class="sec-head">
+        <div class="kicker">02 · 그릇</div>
+        <h2 class="sec-title">🪪 모든 것이 담기는 그릇 <span class="lvl must">🟢 필수</span></h2>
+      </div>
+      <p class="lead">아홉 줄은 전부 같은 화면, 같은 로그인 뒤에 떠 있었습니다. 그 아홉 줄이 실제로 담겨 있는 곳은 어디일까요. 답은 짧습니다 — 그릇은 계정 하나.</p>
+
+      <h3>그릇 밖으로는 못 나간다</h3>
+      <p>김주임이 만든 EC2 인스턴스도, 그 밑에 딸린 EBS 볼륨도, 아직 이름조차 낯선 나머지 일곱 줄도 — 전부 지금 로그인해 있는 이 <span class="term" data-t="계정">계정</span> 하나에 속합니다. 그 계정, 정확히 언제 생긴 걸까요. 이메일 하나를 넣고 만든 순간, 그 이메일로 로그인하는 사람인 <span class="term" data-t="루트 사용자">루트 사용자</span>가 계정의 첫 문지기가 되는데, 그 사람이 정확히 무엇을 할 수 있는지는 <a class="link" href="iam_tutorial.html">IAM 튜토리얼</a>의 몫입니다.</p>
+      <p>그럼 계정을 바꾸고 싶으면 어떻게 할까요. 방법은 없습니다. 오직 하나, 새 계정에서 처음부터 다시 만드는 것뿐. 굳이 옮기고 싶다면 <span class="term" data-t="AMI">AMI</span>로 인스턴스를 통째로 떠서 다른 계정과 나눈 뒤, 그 계정에서 새로 띄우는 길은 있습니다. 다만 그렇게 태어난 인스턴스는 ID도 새로, ARN도 새로 — 옮긴 게 아니라 다시 지어낸 것.</p>
+      <p>청구서 역시 지금은 계정 하나에 한 장뿐.</p>
+
+      <h3>담장의 높이</h3>
+      <p>계정이 다르면 서로 보이지 않는 게 기본입니다. dev 계정에서 아무리 콘솔을 뒤져도 prod 계정의 리소스는 목록에 뜨지 않는데, ARN을 손에 쥐고 있어도 그걸로 문이 열리지는 않네요.</p>
+      <p>그 담장을 넘으려면 한쪽만 손을 내밀어서는 안 되고, 보내는 쪽과 받는 쪽이 둘 다 좋다고 해야 문이 열리는데, 그 두 번의 승낙이 정확히 무엇인지는 <a class="link" href="iam_tutorial.html">IAM 튜토리얼</a>이 다룹니다.</p>
+
+      <div class="demo" id="acctEval">
+        <span class="demo-tag">경계 판정기</span>
+        <p style="margin:0 0 4px">다섯 장면을 하나씩 짚어 보면 어디까지 넘고 어디서 막힐까요.</p>
+        <div class="picker" id="acctPicker">
+          <button class="pick on" data-k="s3">dev 계정의 EC2가 prod 계정의 S3 버킷을 읽는다</button>
+          <button class="pick" data-k="name">dev와 prod가 같은 이름의 S3 버킷을 각각 만든다</button>
+          <button class="pick" data-k="move">dev 계정의 EC2 인스턴스를 prod 계정으로 옮긴다</button>
+          <button class="pick" data-k="bill">두 계정의 요금을 한 장의 청구서로 받는다</button>
+          <button class="pick" data-k="az">dev의 ap-northeast-2a와 prod의 ap-northeast-2a가 같은 건물이다</button>
+        </div>
+        <div id="acctOut"></div>
+      </div>
+
+      <h3>그릇과 청구서는 다른 문제</h3>
+      <p>다섯 장면 가운데 넷은 "아니오"였는데, "예"는 딱 하나 — 청구.</p>
+      <p>계정은 격리 단위이자 청구 단위인데, 이 둘은 늘 붙어 다니지 않습니다. 조직으로 여러 계정을 묶으면 청구서는 한 장으로 합쳐지지만, 격리는 그대로 남습니다.</p>
+      <p>dev 계정의 리소스는 여전히 prod 계정에 보이지 않고, 옮길 수도 없습니다 — 청구서 위에서만 한 가족이 되는 셈.</p>
+
+      <div class="oneline">
+        <div class="ol-ic">🪪</div>
+        <div><div class="ol-t">2장 한 줄 요약</div><div class="ol-b"><b>계정은 리소스가 반드시 속하는 단 하나의 그릇이자 청구 단위입니다.</b> 격리와 청구는 조직으로 묶어도 따로 놉니다 — 격리는 그대로, 청구만 합쳐집니다.</div></div>
+      </div>
+
+      <div class="quiz" data-qid="q-account" data-answer="b">
+        <div class="q">계정을 <b>둘로 나누면</b> 따라오는 것은 무엇일까요?</div>
+        <button class="opt" data-opt="a">리소스를 두 계정에 나눠 담아도 요금은 항상 따로 청구된다</button>
+        <button class="opt" data-opt="b">한쪽에서 실수로 지운 것이 다른 쪽에 닿지 않는다</button>
+        <button class="opt" data-opt="c">같은 이름의 S3 버킷을 각각 만들 수 있게 된다</button>
+        <button class="opt" data-opt="d">리소스를 계정 사이로 옮길 수 있게 된다</button>
+        <div class="explain"><b>정답은 B.</b> 계정은 이 문서에 나오는 어떤 경계보다 단단해서, 한쪽에서 실수로 지운 것이 다른 쪽에 닿지 않습니다. 그럼 A는 왜 아닐까요. 격리와 청구가 따로 논다는 사실을 거꾸로 짚었기 때문인데, 계정을 조직으로 묶으면 청구는 오히려 한 장으로 합쳐집니다. C는 같은 이름의 버킷을 각각 만들 수 있다고 했지만, 계정보다 훨씬 넓은 범위에서 이름이 유일해야 하니 이건 8장의 몫. D는 정반대 — 나눌수록 오히려 옮기기 어려워지는 쪽입니다.</div>
+      </div>
+    </section>
+
   </main>
 </div>
 
@@ -696,6 +746,9 @@ const GLOSSARY = {
   "인스턴스": "EC2가 실행 중인 가상 서버 한 대를 가리키는 말입니다. 콘솔에 뜬 아홉 줄 중 첫 줄이지만, 나머지 여덟은 이 인스턴스에 딸린 부속이 아니라 각자 따로 사는 리소스입니다.",
   "볼륨": "EBS가 인스턴스에 붙여 주는 디스크입니다. 인스턴스를 지운다고 함께 사라지지 않을 수 있어서, 둘의 수명은 따로 매겨집니다.",
   "온프렘": "on-premises의 줄임말로, 클라우드가 아니라 회사가 직접 사서 운영하는 서버실의 물리 장비를 뜻합니다.",
+  "계정": "리소스 하나하나가 반드시 속하는 단위입니다. 계정을 옮길 수 있는 리소스는 없고, 계정이 다르면 기본적으로 서로 보이지 않습니다.",
+  "루트 사용자": "계정을 만들 때 쓴 이메일로 로그인하는 사용자입니다. 그 사용자가 무엇을 할 수 있고 없는지는 IAM 튜토리얼의 몫입니다.",
+  "AMI": "인스턴스를 통째로 떠서 만든 이미지입니다. 다른 계정과 공유한 뒤 그 계정에서 새 인스턴스를 띄우는 재료로 씁니다.",
   // @GLOSSARY_END
 };
 
@@ -925,6 +978,26 @@ if(location.hash){
   }
   wirePicker('#splitPicker', render);
   render('ec2');
+})();
+
+/* ============================================================
+   데모 2 — 계정 경계 판정기 (2장)
+   ============================================================ */
+(function(){
+  const out = $('#acctOut'); if(!out) return;
+  const D = {
+    s3:   {c:"cond",  v:"조건부", t:`넘을 수는 있지만 조건이 있습니다. 보내는 계정이 "가도 좋다"고 하고, 받는 계정이 "와도 좋다"고 해야 비로소 통과하는데, 한쪽만 열어 두면 아무 일도 일어나지 않습니다. 그 두 번의 승낙이 정확히 무엇인지는 <a class="link" href="iam_tutorial.html">IAM 튜토리얼</a>의 몫.`},
+    name: {c:"deny",  v:"아니오", t:`여기서부터는 "아니오"입니다. S3 버킷 이름은 계정 안이 아니라 <b>훨씬 넓은 범위에서 유일</b>해야 하거든요. 남이 먼저 쓴 이름은 내 계정에서도 다시 못 씁니다. 얼마나 넓은 범위인지는 <a class="link" href="#s3">8장</a>에서 정확히 봅니다.`},
+    move: {c:"deny",  v:"아니오", t:`그럼 인스턴스는 옮길 수 있을까요. 역시 아닙니다. 옮기고 싶다면 방법은 하나뿐 — <b>AMI로 떠서 공유한 뒤 저쪽에서 새로 띄우는 것</b>. 그건 옮긴 게 아니라 <b>새로 만든 것</b>이라서, ID도 새로 받고 <a class="link" href="#arn">ARN</a>도 새로 받습니다.`},
+    bill: {c:"allow", v:"예",     t:`여기서는 반대로 "예"입니다. 계정을 조직으로 묶으면 청구를 한곳으로 모을 수 있거든요. 격리는 그대로 두고 청구만 합치는 셈 — 두 성질이 따로 논다는 게 여기서 드러납니다.`},
+    az:   {c:"deny",  v:"아니오", t:`그럼 이 둘, 같은 건물일까요. 아닙니다. 이름은 같아도 다른 건물일 수 있습니다. 왜 그럴까요. 그 답은 <a class="link" href="#region">3장</a>이 실제 출력을 들고 옵니다.`}
+  };
+  function render(k){
+    const d = D[k]; if(!d) return;
+    out.innerHTML = `<div class="verdict"><span class="vres ${d.c}">${d.v}</span><span class="vwhy">${d.t}</span></div>`;
+  }
+  wirePicker('#acctPicker', render);
+  render('s3');
 })();
 
 </script>
