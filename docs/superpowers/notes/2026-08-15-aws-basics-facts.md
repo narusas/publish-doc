@@ -355,6 +355,44 @@ Network Access Analyzer 다섯이다.
 
 넘기는 것이 손해가 아니다. 1장에서 아홉 개 중 여섯이 답을 미루면 12장까지 끌고 갈 것이 남는다.
 
+## V13 · 계정은 격리 단위이자 청구 단위이고, 둘은 뗄 수 있다 — 확인됨
+
+2장이 "계정을 조직으로 묶으면 격리는 그대로 두고 청구만 합친다"고 쓰려 해서 확인했다.
+
+출처: [What is AWS Organizations?](https://docs.aws.amazon.com/organizations/latest/userguide/orgs_introduction.html)
+
+> **AWS accounts are natural boundaries for permission, security, costs, and workloads.**
+
+한 문장이 "계정은 격리 단위이자 청구 단위"를 통째로 받쳐 준다. 권한·보안·비용·워크로드 넷이 같은 경계에 걸려 있다.
+
+> Organizations helps you centrally manage and govern your environment as you grow and scale your
+> AWS resources ... and **simplify billing by using a single payment method for all of your accounts.**
+
+> **Organizations provides you with a single consolidated bill.**
+
+**2장에 쓸 것**: 격리와 청구가 같은 단위에 걸려 있으면서도 **청구만 따로 뗄 수 있다**. 조직으로 묶어도 계정 사이의 격리는 그대로다 — 위 첫 인용이 계정을 여전히 경계라고 부르고, 합쳐지는 것은 청구서 한 장뿐이다.
+
+`iam_tutorial.html`이 다루는 SCP·OU는 이 문서의 범위 밖이다. **이름도 꺼내지 않는다.**
+
+## V14 · 계정을 넘으려면 양쪽이 다 허락해야 한다 — 확인됨
+
+2장이 "계정이 다르면 보내는 쪽과 받는 쪽이 둘 다 좋다고 해야 문이 열린다"고 써서 확인했다.
+
+출처: [Cross-account policy evaluation logic](https://docs.aws.amazon.com/IAM/latest/UserGuide/reference_policies_evaluation-logic-cross-account.html)
+
+> When you make a cross-account request, AWS performs two evaluations. AWS evaluates the request
+> in the trusting account and the trusted account. ... **The request is allowed only if both
+> evaluations return a decision of `Allow`.**
+
+> For cross-account requests, the requester in the trusted `AccountA` must have an identity-based
+> policy. That policy must allow them to make a request to the resource in the trusting `AccountB`.
+> **Additionally**, the resource-based policy in `AccountB` must allow the requester in `AccountA`
+> to access the resource.
+
+문서가 붙인 이름까지 있다 — 주체가 있는 쪽이 **trusted**, 리소스가 있는 쪽이 **trusting**이다.
+
+**2장에 쓸 것**: "양쪽이 다 허락해야 한다"까지. **정책의 종류(아이덴티티 기반 / 리소스 기반)와 이름은 꺼내지 않는다** — 그건 `iam_tutorial.html`의 본론이고, 이 문서의 독자는 아직 IAM을 모른다. 2장은 "문이 두 개고 둘 다 열려야 한다"는 모양까지만 보이고 넘긴다.
+
 ## 검증 요약
 
 | # | 대상 | 결과 |
@@ -371,6 +409,8 @@ Network Access Analyzer 다섯이다.
 | V10 | RDS가 안 주는 것 | 확인됨. 호스트 접근 불가 원문 확보 |
 | V11 | ARN 빈 칸 | 확인됨. **파티션 개수는 문서끼리 어긋나므로 쓰지 않는다** |
 | V12 | VPC 구성 요소 과금 | 부분 확인. VPC 자체·사설 IPv4는 무과금. **ENI·키 페어는 근거 없음 — 1장에서 "무료"라고 쓰지 않고 12장으로 넘긴다** |
+| V13 | 계정 = 격리 단위 = 청구 단위 | 확인됨. 조직으로 묶으면 **격리는 그대로 두고 청구만** 합쳐진다 |
+| V14 | 계정 경계를 넘는 조건 | 확인됨. **양쪽 평가가 모두 Allow일 때만** 통과. 정책 종류·이름은 IAM 문서의 몫이라 쓰지 않는다 |
 
 ## 설계 문서에 반영할 것
 
