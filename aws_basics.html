@@ -466,6 +466,16 @@ table.t tr.hit td{background:rgba(52,211,153,.12)}
 .kv dd{margin:0; color:var(--text-dim); line-height:1.7}
 @media(max-width:600px){.kv{grid-template-columns:1fr; gap:2px 0}.kv dd{margin-bottom:10px}}
 
+/* ARN 해부 (4장) */
+.arn-full{margin:10px 0 14px}
+.arn-full code{font-size:15px; padding:8px 12px; display:inline-block; word-break:break-all}
+.arn-row{display:grid; grid-template-columns:repeat(auto-fit,minmax(100px,1fr)); gap:8px; margin:0 0 14px}
+.arn-c{background:var(--panel); border:1px solid var(--border); border-radius:var(--radius-sm); padding:10px 12px}
+.arn-c.empty{border-style:dashed; border-color:var(--text-mut); background:transparent}
+.arn-l{font-family:var(--mono); font-size:10.5px; color:var(--text-mut); text-transform:uppercase; letter-spacing:.5px; margin-bottom:4px}
+.arn-v{font-family:var(--mono); font-size:13px; color:var(--text); word-break:break-all}
+.arn-c.empty .arn-v{color:var(--text-mut); font-style:italic}
+
 /* 인물 소개 카드 (.card 위에 얹는 최소 확장 — 2장 히어로에서 추가) */
 .persona .p-role{font-family:var(--mono); font-size:11.5px; color:var(--text-mut); text-transform:uppercase; letter-spacing:1px}
 .persona .p-name{font-size:19px; font-weight:800; color:#fff; margin-top:4px}
@@ -770,6 +780,56 @@ button:focus-visible, .pick:focus-visible, .term:focus-visible, a:focus-visible,
       </div>
     </section>
 
+    <section id="arn" data-title="ARN">
+      <div class="sec-head">
+        <div class="kicker">04 · 이름표</div>
+        <h2 class="sec-title">🏷️ 빈 칸에도 뜻이 있다 <span class="lvl must">🟢 필수</span></h2>
+      </div>
+      <p class="lead">"솔직히 말하면, 한동안은 그냥 복사해서 붙여 넣기만 했어요." 정책 문서에 박힌 <code>arn:aws:s3:::my-bucket</code> 앞에서 김주임이 그렇게 털어놓습니다. 콜론으로 토막 난 그 줄, 뜻을 몰라도 복사와 붙여넣기는 늘 통했으니까요.</p>
+
+      <h3>여섯 토막, 콜론 다섯 개</h3>
+      <p>이 줄에는 사실 이름이 있습니다 — <span class="term" data-t="ARN">ARN</span>. 그리고 정해진 문법: <code>arn:파티션:서비스:리전:계정:리소스</code>.</p>
+      <p>맨 앞 <span class="term" data-t="파티션">파티션</span> 칸은 거의 언제나 <code>aws</code>입니다. 다만 중국 리전과 GovCloud는 사정이 달라서, 그 안에 짓는 리소스는 별도의 파티션에 속합니다. 서울 계정에서 뗀 ARN을 베이징 계정에 그대로 들이밀면 안 맞는 게 바로 이 지점.</p>
+      <p>서비스 칸에는 그 리소스를 다루는 서비스의 API 이름이 들어갑니다. S3 객체라면 <code>s3</code>, SNS 토픽이라면 <code>sns</code> — 대개는 콘솔 메뉴에서 본 이름과 같은데, 늘 그런 것은 아니에요.</p>
+      <p>리전 칸은 3장에서 이미 절반쯤 예고됐습니다. IAM 사용자에게는 이 칸이 아예 없고, SNS 토픽이나 VPC처럼 리전 안에 사는 리소스에는 <code>us-east-1</code> 같은 값이 그대로 들어갑니다. "리전을 고르지 않는다"던 3장의 그 말이, 오늘은 콘솔이 아니라 문자열의 빈 자리로 두 눈에 들어오네요.</p>
+      <p>계정 칸에는 흔히 <code>123456789012</code> 같은 열두 자리 계정 ID가 들어갑니다. 그런데 S3 객체의 ARN에는 이 칸마저 비어 있으니, 이유가 궁금하지 않으신가요.</p>
+      <p>마지막 리소스 칸은 생김새가 한결같지 않습니다. <code>user/john</code>처럼 종류와 이름이 슬래시로 묶이기도 하고, <code>example-sns-topic-name</code>처럼 이름 하나로 끝나기도 합니다.</p>
+
+      <h3>이름과 ID는 남남</h3>
+      <p>그 리소스 칸에 적힌 문자열, 전부 사람이 붙인 이름일까요. 아닙니다.</p>
+      <p>VPC를 만들면 콘솔은 Name 태그에 적어 둔 "prod-vpc" 같은 이름을 보여 주지만, ARN이 실제로 담는 것은 <code>vpc-0e9801d129EXAMPLE</code> 같은 <span class="term" data-t="리소스 ID">리소스 ID</span>입니다. AWS가 리소스를 만드는 순간 자동으로 붙이는 문자열이라, 사람 손으로 고치거나 다시 지을 수 없는 값이에요. EC2 인스턴스의 <code>i-0abc1234</code> 같은 식별자도 같은 부류.</p>
+      <p>반대로 IAM 사용자는 이름 자체가 곧 정체성입니다. <code>user/john</code>의 <code>john</code>은 누가 붙인 이름이자 API가 그대로 받아 적는 값인데, 콘솔용과 API용을 가르는 구분이 따로 없습니다. 같은 칸인데도 리소스에 따라 이름이 오기도 하고 ID가 오기도 하는 셈.</p>
+      <p>그 구분이 겉으로는 잘 드러나지 않아서, 콘솔만 보고 다니다 보면 둘을 같은 것이라 여기기 쉽습니다.</p>
+
+      <div class="demo" id="arnLab">
+        <span class="demo-tag">ARN 해부기</span>
+        <p style="margin:0 0 4px">공식 문서에 실린 실제 ARN 넷을 하나씩 눌러 어느 칸이 비는지 확인해 보세요.</p>
+        <div class="picker" id="arnPicker">
+          <button class="pick on" data-k="iam">IAM 사용자</button>
+          <button class="pick" data-k="s3">S3 객체</button>
+          <button class="pick" data-k="sns">SNS 토픽</button>
+          <button class="pick" data-k="vpc">VPC</button>
+        </div>
+        <div id="arnOut"></div>
+      </div>
+
+      <p>넷을 다 눌러 보면, 비는 칸이 리소스마다 다르다는 것이 확인됩니다. IAM은 리전만, S3는 리전과 계정까지, SNS와 VPC는 하나도. 우연이 아니라 그 리소스가 사는 세계의 모양 그대로.</p>
+
+      <div class="oneline">
+        <div class="ol-ic">🏷️</div>
+        <div><div class="ol-t">4장 한 줄 요약</div><div class="ol-b"><b>ARN은 리소스마다 붙는 이름표이고, 빈 칸에는 늘 이유가 있습니다.</b> IAM처럼 리전이 없어서 비거나, S3처럼 이름이 이미 유일해서 더 좁힐 게 없어서 비거나 — 콘솔의 이름과 ARN의 리소스 ID는 서로 다른 것을 가리킬 수 있습니다.</div></div>
+      </div>
+
+      <div class="quiz" data-qid="q-arn" data-answer="a">
+        <div class="q"><code>arn:aws:s3:::my-bucket</code>에서 <b>리전과 계정 칸이 비어 있는 이유</b>는?</div>
+        <button class="opt" data-opt="a">버킷 이름 자체가 이미 유일해서 더 좁힐 것이 없다</button>
+        <button class="opt" data-opt="b">S3는 리전을 고르지 않는 글로벌 서비스이기 때문이다</button>
+        <button class="opt" data-opt="c">버킷을 만든 계정이 소유권을 주장하지 않기 때문이다</button>
+        <button class="opt" data-opt="d">생략해도 되는 칸이라 관례적으로 비워 둔다</button>
+        <div class="explain"><b>정답은 A.</b> B가 가장 흔한 오답이고 절반만 맞습니다 — 버킷은 3장에서 봤듯 리전 하나를 골라 만들지만, 이름만은 그 리전을 넘어 유일합니다. 그래서 리전을 적을 필요가 없는 것이지, 리전이 없는 게 아닙니다. 그 절반의 차이가 곧 8장의 주제. C는 버킷을 만든 계정이 분명히 있다는 점에서, D는 빈 칸이 관례가 아니라 뜻이라는 점에서 틀렸습니다.</div>
+      </div>
+    </section>
+
   </main>
 </div>
 
@@ -809,6 +869,9 @@ const GLOSSARY = {
   "가용 영역": "리전 하나를 이루는, 물리적으로 독립된 자리입니다. 흔히 AZ라고 부르고, 서브넷은 이 가용 영역 하나에서 태어나 그 밖으로 옮겨 갈 수 없습니다.",
   "AZ ID": "가용 영역을 계정과 무관하게 가리키는 이름입니다. ap-northeast-2a 같은 이름은 계정마다 다른 건물을 가리킬 수 있지만, use1-az1 같은 AZ ID는 모든 계정에서 같은 물리적 위치를 나타냅니다.",
   "서브넷": "가용 영역 하나에 속하는 네트워크 조각입니다. 태어난 가용 영역을 벗어날 수 없어서, 1장에서 낯설었던 그 항목의 정체가 여기서 확정됩니다.",
+  "ARN": "리소스 하나하나에 붙는 고유한 이름표로, arn:파티션:서비스:리전:계정:리소스 형태를 가집니다. 칸이 비어 있는 것도 정상이고, 그 빈 칸에는 늘 이유가 있습니다.",
+  "파티션": "ARN의 두 번째 칸으로, 리소스가 속한 AWS 구역을 가리킵니다. 대부분은 aws이고, 중국 리전과 GovCloud는 별도의 파티션에 속합니다.",
+  "리소스 ID": "AWS가 리소스를 만드는 순간 자동으로 붙이는 식별자입니다. vpc-0e9801d129EXAMPLE처럼 접두사와 임의의 문자열로 되어 있고, 사람이 붙인 이름과 달리 고쳐 쓸 수 없습니다.",
   // @GLOSSARY_END
 };
 
@@ -1094,6 +1157,39 @@ if(location.hash){
   }
   wirePicker('#azPicker', render);
   render('usw2');
+})();
+
+/* ============================================================
+   데모 4 — ARN 해부기 (4장)
+   ============================================================ */
+(function(){
+  const out = $('#arnOut'); if(!out) return;
+  const D = {
+    iam: {arn:"arn:aws:iam::123456789012:user/john",
+          f:["aws","iam","","123456789012","user/john"],
+          why:"리전 칸이 비어 있습니다. 리전에 속하지 않는 게 IAM 사용자의 특징이라, 서울에서 만든 사용자가 도쿄에서도 그대로 통하거든요. <a class=\"link\" href=\"#region\">3장에서 본 글로벌</a>이 ARN에서는 이런 모양으로 나타납니다."},
+    s3:  {arn:"arn:aws:s3:::amzn-s3-demo-bucket/*",
+          f:["aws","s3","","","amzn-s3-demo-bucket/*"],
+          why:"리전도 계정도 비어 있습니다. 버킷 이름 자체가 <b>이미 유일</b>해서 더 좁힐 것이 없기 때문이에요. 이름이 얼마나 넓은 범위에서 유일한지는 <a class=\"link\" href=\"#s3\">8장</a>에서 봅니다. 끝의 <code>/*</code>는 버킷 안 모든 객체를 뜻해요."},
+    sns: {arn:"arn:aws:sns:us-east-1:123456789012:example-sns-topic-name",
+          f:["aws","sns","us-east-1","123456789012","example-sns-topic-name"],
+          why:"빈 칸이 없습니다. 리전 안에, 계정 안에 있는 평범한 리소스예요. 대부분의 리소스가 이 모양입니다."},
+    vpc: {arn:"arn:aws:ec2:us-east-1:123456789012:vpc/vpc-0e9801d129EXAMPLE",
+          f:["aws","ec2","us-east-1","123456789012","vpc/vpc-0e9801d129EXAMPLE"],
+          why:"리소스 칸이 <code>종류/식별자</code> 두 토막입니다. 그리고 서비스 칸이 <code>vpc</code>가 아니라 <b><code>ec2</code></b>예요 — 콘솔의 메뉴 이름과 API의 서비스 이름이 늘 같지는 않습니다."}
+  };
+  const LABELS = ["파티션","서비스","리전","계정","리소스"];
+  function render(k){
+    const d = D[k]; if(!d) return;
+    let cells = d.f.map((v,i) =>
+      `<div class="arn-c ${v?'':'empty'}"><div class="arn-l">${LABELS[i]}</div>
+       <div class="arn-v">${v ? esc(v) : '— 비어 있음'}</div></div>`).join('');
+    out.innerHTML = `<div class="arn-full"><code>${esc(d.arn)}</code></div>
+      <div class="arn-row">${cells}</div><p>${d.why}</p>`;
+    out.classList.add('show');
+  }
+  wirePicker('#arnPicker', render);
+  render('iam');
 })();
 
 </script>
