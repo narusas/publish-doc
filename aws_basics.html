@@ -1056,6 +1056,70 @@ button:focus-visible, .pick:focus-visible, .term:focus-visible, a:focus-visible,
       </div>
     </section>
 
+    <section id="entry" data-title="앞에 선 것들">
+      <div class="sec-head">
+        <div class="kicker">09 · 입구</div>
+        <h2 class="sec-title">🚪 앞에 무엇이 서 있나 <span class="lvl must">🟢 필수</span></h2>
+      </div>
+      <p class="lead">"인스턴스는 떴는데, 사람들이 여기로 어떻게 오나." 김주임이 콘솔에 뜬 초록 점 하나를 보며 그렇게 되묻습니다. 인스턴스 ID도, 사설 IP도 이미 떠 있는데, 브라우저 주소창에 뭘 적어야 할지는 정작 감이 안 잡히거든요. 필요한 것은 그 앞에 서서 요청을 받아 줄 무언가입니다.</p>
+
+      <h3>문 두 개, 방향이 다르다</h3>
+      <p>그 앞에 처음 놓이는 것은 <span class="term" data-t="인터넷 게이트웨이">인터넷 게이트웨이</span>입니다. 이 구성 요소, 아무나 들이는 문일까요. 아닙니다 — 공식 문서가 그어 둔 선은 또렷한데, 퍼블릭 IP 주소를 쥔 자원만 이 문을 통해 인터넷과 오갈 수 있고 반대편에서 먼저 걸어 오는 연결도 똑같이 그런 자원에게만 닿습니다. 사설 IP 하나만 쥔 인스턴스는 이 문 앞에 설 자격조차 없는 셈이거든요. 이 문은 혼자 서 있지 않은데, 서브넷에 딸린 라우팅 테이블에 이 게이트웨이로 가는 길이 올라 있어야 그 서브넷의 자원이 비로소 이 문에 닿습니다. 1장에서 이름만 얹혀 있던 라우팅 테이블, 쓸모를 드러내는 자리는 바로 여기.</p>
+      <p>그런데 서버가 인터넷으로 나가야 할 일은 있어도, 인터넷이 서버로 들어와야 할 일은 없는 경우도 흔합니다. 이때 쓰는 문은 따로 있는데, 이름은 <span class="term" data-t="NAT 게이트웨이">NAT 게이트웨이</span>. 방향이 하나뿐인 문이라, 사설 서브넷의 인스턴스는 밖으로 나가는 연결을 시작할 수 있어도 밖에서 걸어 오는 연결은 시작조차 되지 않습니다. 나가는 문은 열려 있고, 들어오는 문은 처음부터 없는 구조. 이 문 하나에 얼마가 나가는지는 12장이 마저 정산합니다.</p>
+
+      <h3>서브넷 요구가 갈리는 자리</h3>
+      <p>로드밸런서를 하나 세우려는데, 콘솔이 서브넷을 최소 두 개 고르라고 요구합니다. 인스턴스 하나 세울 때는 서브넷 하나로 충분했는데, 여기서는 왜 개수가 늘어날까요.</p>
+      <p>답은 로드밸런서가 활성화한 가용 영역마다 자신의 ENI를 하나씩 심는다는 데 있습니다. 3장에서 서브넷은 가용 영역 하나에 갇힌다고 했고 7장은 그 서브넷 위에 선 ENI도 같은 굴레를 벗어나지 못한다고 못 박았는데, 로드밸런서의 ENI라고 예외는 아니라서 심으려는 가용 영역 수만큼 서브넷도 그만큼 따로 내줘야 합니다.</p>
+      <p>그런데 이 요구는 로드밸런서 종류를 가리지 않을까요. 가립니다 — <span class="term" data-t="ALB">ALB</span>를 만들 때 공식 문서가 못 박은 최소는 서로 다른 가용 영역의 서브넷 둘, 하나만 골라서는 다음 화면으로 넘어가지지도 않습니다. <span class="term" data-t="NLB">NLB</span>는 다른데, 최소 요구는 가용 영역 하나, 서브넷 하나로도 만들어집니다. 같은 자리에서 나온 두 로드밸런서인데, 이 문턱만은 나란하지 않거든요.</p>
+      <p>ALB 쪽 서브넷에는 조건이 하나 더 붙습니다. CIDR이 최소 <code>/27</code> 이상이어야 하고 비어 있는 IP도 여덟 개는 남아 있어야 하는데, 트래픽이 몰려 로드밸런서가 노드를 늘리려는 순간 이 여덟 자리가 없으면 스케일링 자체가 막힙니다. 서브넷을 처음 나눌 때는 눈에 띄지 않던 여유, 값을 하는 것은 트래픽이 몰리는 바로 그 순간.</p>
+
+      <h3>무엇을 보느냐 — 첫 번째 갈림길</h3>
+      <p>서브넷 문턱을 넘고 나면, 이번엔 로드밸런서가 무엇을 보고 트래픽을 나누는지가 갈리거든요.</p>
+      <p>ALB는 애플리케이션 계층, OSI 7계층까지 올라가 요청을 읽습니다. 여기 붙는 <span class="term" data-t="리스너">리스너</span>의 규칙이 요청에 담긴 경로가 <code>/api</code>인지, 호스트 헤더가 무엇인지까지 들여다본 뒤에 갈 곳을 정합니다. <code>/api</code>는 서비스 A로, 나머지는 서비스 B로 나누고 싶다면 이 계층까지 읽어야 하는데, 그건 ALB가 아니고서는 할 수 없는 일.</p>
+      <p>NLB는 그보다 낮은 4계층에서 멈추는데, 연결을 이루는 프로토콜과 IP, 포트까지만 보고 대상을 고를 뿐 그 안에 담긴 내용까지는 들여다보지 않습니다. 경로도 호스트 헤더도, 이 계층에서는 애초에 존재하지 않는 정보나 마찬가지입니다. 속을 읽는 로드밸런서와, 겉만 보는 로드밸런서.</p>
+
+      <h3>주소를 쥔 손 — 두 번째 갈림길</h3>
+      <p>상대 회사의 방화벽 담당자에게서 메일이 옵니다. "트래픽을 열어 드릴 테니, 고정된 IP를 알려 주세요."</p>
+      <p>이 요청, ALB로는 답할 수 없습니다. ALB가 쓰는 IP는 계정에 보이기는 해도 그 IP를 쥔 손은 로드밸런서 서비스 자신인데, 공식 문서의 표현 그대로 이 IP들은 계정에 보이기는 해도 서비스가 온전히 관리하며 고치거나 놓아줄 수 없습니다. 로드밸런서가 스케일링하며 노드를 늘리고 줄이는 사이, 이 IP도 조용히 바뀔 수 있다는 뜻이거든요.</p>
+      <p>NLB는 다른 답을 쥐고 있습니다. 인터넷에 붙는 NLB를 만들 때는 가용 영역마다 탄력적 IP를 하나씩 지정할 수 있는데, 이렇게 붙인 탄력적 IP가 로드밸런서에 고정된 주소를 내줍니다. 방화벽 담당자에게 불러 줄 수 있는 고정된 숫자, NLB가 쥔 탄력적 IP 그 자체. 7장에서 이미 확인했듯 탄력적 IP는 놓아주기 전까지 계정의 것이니, NLB가 내미는 그 고정 주소도 결국 그 소유 위에 서 있는 셈입니다.</p>
+
+      <div class="myth">
+        <div class="m-row no"><span class="m-x">✕</span><div class="m-txt">"로드밸런서라면 어느 쪽이든 매한가지겠거니" — ALB든 NLB든 결국 트래픽을 나눠 주는 상자 하나일 거라는 짐작.</div></div>
+        <div class="m-row yes"><span class="m-x">✓</span><div class="m-txt">서브넷 최소 개수부터 갈립니다 — ALB는 서로 다른 가용 영역의 서브넷 <b>둘</b>, NLB는 <b>하나</b>로도 됩니다. 무엇을 보는지도 다른데, ALB는 경로까지 읽고 NLB는 포트까지만 봅니다. 주소를 고정할 수 있는 쪽도 하나뿐인데, 그 자리를 쥔 것은 <b>NLB</b>.</div></div>
+      </div>
+
+      <h3>인스턴스는 몸을 감춘다</h3>
+      <p>로드밸런서가 인스턴스 앞을 막아서면, 인스턴스 쪽 셈법도 달라집니다. 클라이언트가 실제로 붙는 자리는 로드밸런서의 노드이지 인스턴스가 아니라서, 인스턴스는 그 뒤에서 사설 IP 하나만으로도 응답할 수 있는데, 이는 인터넷에 노출된 로드밸런서든 내부용 로드밸런서든 마찬가지입니다.</p>
+      <p>5장에서 중지했다 켤 때마다 새로 배정되던 그 퍼블릭 IP, 7장에서 이 계정에도 이 ENI에도 속하지 않는다고 확인했던 바로 그 값. 로드밸런서를 앞에 세우고 나면, 인스턴스는 이제 그 값을 아예 필요로 하지 않습니다.</p>
+
+      <div class="demo" id="entryPick">
+        <span class="demo-tag">입구 고르기</span>
+        <p style="margin:0 0 4px">요구사항 하나를 고르면 앞에 세워야 할 것이 무엇인지, 하나씩 눌러 확인해 보세요.</p>
+        <div class="picker" id="entryPicker">
+          <button class="pick on" data-k="path">/api는 A로, 나머지는 B로 보내고 싶다</button>
+          <button class="pick" data-k="staticip">상대 회사 방화벽에 우리 IP를 등록해야 한다</button>
+          <button class="pick" data-k="outbound">서버는 밖으로 나가야 하지만 밖에서는 못 들어오게</button>
+          <button class="pick" data-k="direct">인스턴스 하나에 그냥 직접 붙고 싶다</button>
+          <button class="pick" data-k="noip">인스턴스에 퍼블릭 IP를 아예 안 주고 싶다</button>
+        </div>
+        <div id="entryOut"></div>
+      </div>
+
+      <div class="oneline">
+        <div class="ol-ic">🚪</div>
+        <div><div class="ol-t">9장 한 줄 요약</div><div class="ol-b"><b>IGW는 퍼블릭 IP를 가진 것만 지나가고, NAT GW는 나가는 문만 엽니다.</b> ALB는 요청을 읽고 서로 다른 AZ의 서브넷을 둘 요구하며, NLB는 포트만 보고 서브넷 하나로도 되는 대신 주소를 고정할 수 있습니다. 로드밸런서를 앞에 세우면, 인스턴스에 남는 것은 사설 IP 하나뿐.</div></div>
+      </div>
+
+      <div class="quiz" data-qid="q-entry" data-answer="a">
+        <div class="q">ALB를 만들려는데 콘솔이 서브넷을 <b>두 개 이상</b> 고르라고 합니다. 왜일까요?</div>
+        <button class="opt" data-opt="a">서로 다른 AZ마다 로드밸런서의 ENI가 하나씩 필요하기 때문</button>
+        <button class="opt" data-opt="b">한 서브넷의 IP가 부족할 때를 대비한 예비 서브넷이기 때문</button>
+        <button class="opt" data-opt="c">퍼블릭 서브넷과 프라이빗 서브넷을 각각 지정해야 하기 때문</button>
+        <button class="opt" data-opt="d">HTTP용과 HTTPS용 서브넷이 따로 필요하기 때문</button>
+        <div class="explain"><b>정답은 A입니다.</b> 3장이 그은 "서브넷은 가용 영역에 갇힌다"는 선과 7장이 그은 "ENI도 그 서브넷 안에 산다"는 선이 여기서 만납니다 — 로드밸런서가 가용 영역마다 ENI를 하나씩 심는 이상, 서브넷도 그 수만큼 따로 있어야 합니다. B는 둘을 예비로 오해한 것인데, 활성화한 가용 영역이라면 실제로 쓰는 것은 둘 다. C는 퍼블릭 서브넷이니 프라이빗 서브넷이니 하는 속성 자체가 서브넷에 있는 게 아니라서 틀렸고 — 실은 라우팅 테이블에 인터넷 게이트웨이로 가는 길이 걸렸느냐일 뿐, 그 경계가 실제로 어디서 갈리는지는 <a class="link" href="aws_network_security.html">네트워크 보안 문서</a>의 몫입니다. D는 리스너가 몇 개든 서브넷 요구와는 무관하다는 점에서 틀렸습니다.</div>
+      </div>
+    </section>
+
   </main>
 </div>
 
@@ -1113,6 +1177,11 @@ const GLOSSARY = {
   "버킷": "S3에서 객체를 담는 컨테이너입니다. 이름은 계정이 아니라 파티션 안에서 유일해야 하고, 만들 때 리전 하나를 고르지만 이름의 유일성은 그 리전을 넘습니다.",
   "객체": "S3에 저장되는 데이터 한 덩어리입니다. 키라는 이름이 붙고, 통째로 쓰고 통째로 읽을 뿐 일부만 고쳐 쓸 수는 없습니다.",
   "객체 스토리지": "파일시스템처럼 디렉터리 계층을 두지 않고, 평평한 네임스페이스 안에 객체를 담아 HTTP API로 주고받는 스토리지 모델입니다. S3가 이 모델을 따릅니다.",
+  "인터넷 게이트웨이": "VPC 하나에 붙는 구성 요소로, 퍼블릭 IP를 가진 자원만 이 문을 통해 인터넷과 오갈 수 있습니다. 서브넷의 라우팅 테이블에 이 게이트웨이로 가는 길이 있어야 그 서브넷의 자원이 이 문에 닿습니다.",
+  "NAT 게이트웨이": "사설 서브넷의 인스턴스가 인터넷으로 나가는 연결은 시작할 수 있어도, 인터넷 쪽에서 먼저 그 인스턴스로 연결을 걸어 오지는 못하게 하는 구성 요소입니다. 문이 한 방향으로만 열립니다.",
+  "ALB": "애플리케이션 계층까지 올라가 요청을 읽는 로드밸런서입니다. 경로나 호스트 헤더를 보고 대상을 나눌 수 있지만, 서로 다른 가용 영역의 서브넷을 최소 두 개 요구하고 자신이 쓰는 IP 주소를 직접 관리할 수 없습니다.",
+  "NLB": "연결을 이루는 프로토콜·IP·포트까지만 보고 대상을 고르는 로드밸런서입니다. ALB보다 낮은 계층에서 멈추는 대신, 가용 영역마다 탄력적 IP를 지정해 고정된 주소를 가질 수 있습니다.",
+  "리스너": "로드밸런서가 클라이언트의 연결 요청을 확인하는 지점입니다. 여기에 붙는 규칙이 요청을 어느 대상으로 보낼지를 정합니다.",
   // @GLOSSARY_END
 };
 
@@ -1646,6 +1715,58 @@ if(location.hash){
   }
   wirePicker('#storePicker', render);
   render('edit-part');
+})();
+
+/* ============================================================
+   데모 9 — 입구 고르기 (9장)
+   ============================================================ */
+(function(){
+  const out = $('#entryOut'); if(!out) return;
+  // IGW가 퍼블릭 IP를 가진 자원만 통과시킨다는 것, 그리고 라우팅 테이블에 그 게이트웨이로
+  // 가는 길이 있어야 서브넷이 거기 닿는다는 것은 "Enable internet access for a VPC using an
+  // internet gateway" 페이지의 "An internet gateway enables resources in your public subnets
+  // (such as EC2 instances) to connect to the internet if the resource has a public IPv4 address
+  // or an IPv6 address. Similarly, resources on the internet can initiate a connection to
+  // resources in your subnet using the public IPv4 address or IPv6 address." / "An internet
+  // gateway provides a target in your VPC route tables for internet-routable traffic."로 확인했다.
+  // NAT 게이트웨이가 한 방향으로만 열린다는 것은 "NAT gateways" 페이지의 "You can use a NAT
+  // gateway so that instances in a private subnet can connect to services outside your VPC but
+  // external services can't initiate a connection with those instances." / "Instances in private
+  // subnets can connect to the internet through a public NAT gateway, but the instances can't
+  // receive unsolicited inbound connections from the internet."로 확인했다.
+  // ALB가 애플리케이션 계층(7계층)에서 요청 내용을 읽고 NLB가 4계층에서 멈춘다는 것은
+  // "What is an Application Load Balancer?" 페이지의 "An Application Load Balancer functions at
+  // the application layer, the seventh layer... You can configure listener rules to route
+  // requests to different target groups based on the content of the application traffic." 및
+  // "Support for Path conditions... forward requests based on the URL in the request."와,
+  // "What is a Network Load Balancer?" 페이지의 "A Network Load Balancer functions at the fourth
+  // layer of the Open Systems Interconnection (OSI) model."로 확인했다.
+  // 서브넷 최소 개수(ALB 둘·NLB 하나)와 /27·여유 IP 여덟 개, ALB 주소가 서비스 관리라 고칠 수
+  // 없다는 것, NLB가 AZ마다 탄력적 IP를 지정할 수 있다는 것은 facts V7 그대로다.
+  // 로드밸런서가 대상에게 사설 IP로만 트래픽을 넘겨 대상이 퍼블릭 IP를 필요로 하지 않는다는
+  // 것은 "How Elastic Load Balancing works" 페이지의 "Both internet-facing and internal load
+  // balancers route requests to your targets using private IP addresses. Therefore, your targets
+  // do not need public IP addresses to receive requests from an internal or an internet-facing
+  // load balancer."로 확인했다.
+  const D = {
+    path: {req:"/api는 A로, 나머지는 B로 보내고 싶다", v:"ALB",
+      t:`경로로 나누려면 요청의 내용을 읽어야 합니다. NLB는 <code>/api</code> 같은 경로를 보는 계층이 아니라서 이 요구에는 애초에 응답하지 못하고, NAT 게이트웨이와 인터넷 게이트웨이는 요청을 갈라 보내는 역할 자체가 없습니다.`},
+    staticip: {req:"상대 회사 방화벽에 우리 IP를 등록해야 한다", v:"NLB + 탄력적 IP",
+      t:`ALB로는 안 되는데, ALB가 쓰는 IP는 계정에 보이기는 해도 그 IP를 쥔 손은 로드밸런서 서비스 자신이라 <b>바꾸거나 놓아줄 수 없습니다.</b> NLB는 가용 영역마다 탄력적 IP를 직접 지정할 수 있어, 방화벽에 등록할 고정 숫자를 내줄 수 있습니다.`},
+    outbound: {req:"서버는 밖으로 나가야 하지만 밖에서는 못 들어오게", v:"NAT 게이트웨이",
+      t:`IGW는 방향을 가리지 않아 인터넷 쪽에서 먼저 걸어 오는 연결도 통과시키므로 이 요구에는 맞지 않습니다. ALB·NLB는 밖으로 나가는 연결을 위한 것이 아니라, 밖에서 들어오는 요청을 안으로 분배하는 쪽입니다.`},
+    direct: {req:"인스턴스 하나에 그냥 직접 붙고 싶다", v:"IGW + 퍼블릭 IP",
+      t:`인스턴스 하나에 직접 붙는 데는 로드밸런서가 끼어들 이유가 없습니다. ALB·NLB는 여러 대상을 나누는 역할이고, NAT 게이트웨이는 나가는 연결만 열어 줄 뿐 인터넷 쪽에서 먼저 걸어 오는 연결은 애초에 막아 둡니다.`},
+    noip: {req:"인스턴스에 퍼블릭 IP를 아예 안 주고 싶다", v:"로드밸런서 (ALB 또는 NLB)",
+      t:`로드밸런서는 대상에게 사설 IP로 트래픽을 넘기므로, 인스턴스는 퍼블릭 IP 없이도 요청을 받을 수 있습니다. IGW로 직접 붙는 경로는 애초에 퍼블릭 IP가 있어야 성립하는 길이라 이 요구와는 정반대입니다.`}
+  };
+  function render(k){
+    const d = D[k]; if(!d) return;
+    out.innerHTML = `<div class="kv"><dt>요구</dt><dd>${esc(d.req)}</dd></div>
+      <div class="verdict"><span class="vres allow">${d.v}</span><span class="vwhy">${d.t}</span></div>`;
+  }
+  wirePicker('#entryPicker', render);
+  render('path');
 })();
 
 </script>
