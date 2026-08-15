@@ -1172,6 +1172,49 @@ button:focus-visible, .pick:focus-visible, .term:focus-visible, a:focus-visible,
       </div>
     </section>
 
+    <section id="compute" data-title="어디에 올리나">
+      <div class="sec-head">
+        <div class="kicker">11 · 세 갈래</div>
+        <h2 class="sec-title">📦 세 갈래 앞에서 <span class="lvl must">🟢 필수</span></h2>
+      </div>
+      <p class="lead">김주임이 데이터베이스는 RDS에 앉혔습니다. 남은 건 이제 자기 애플리케이션 코드 — 이 코드를 어디에 올릴 것인가. 10장이 DB를 두고 던졌던 질문, 어디까지 내 손이고 어디부터 AWS 손인가 하는 그 물음을, 이번에는 코드 앞에 세워 볼 차례네요.</p>
+
+      <h3>세 갈래, 세 단위</h3>
+      <p>AWS에 코드를 올리는 길은 크게 셋으로 갈립니다. EC2는 장비를 빌리는 셈이라 단위가 인스턴스, <span class="term" data-t="컨테이너">컨테이너</span>는 ECS·Fargate·EKS로 프로세스를 맡기는 셈이라 단위가 태스크, <span class="term" data-t="Lambda">Lambda</span>는 함수 하나만 던지는 셈이라 단위는 결국 실행 한 번.</p>
+      <p>셋 사이에서 갈리는 건 단위만이 아닙니다. EC2를 고르면 OS 패치까지 <span class="badge me">고객</span> 몫입니다. 같은 컨테이너라도 <span class="term" data-t="Fargate">Fargate</span>를 얹으면 서버라는 것 자체를 준비할 필요가 없어, 그 밑은 <span class="badge aws">AWS</span> 손. Lambda는 한 걸음 더 나아가, 넘길 서버라는 개념이 처음부터 없습니다. 단위가 다르면 요금을 세는 법도 다른데, 인스턴스는 켜 둔 시간을 세고 실행은 부른 횟수와 걸린 시간을 셉니다. 정확한 값을 손에 쥐는 자리는 <a class="link" href="#cost">12장</a>.</p>
+
+      <h3>얼마나 오래, 얼마나 자주</h3>
+      <p>어느 갈래가 맞을지는 무엇이 가를까요. 하루 종일 도는 일인가, 간헐적으로 잠깐씩 도는 일인가. 연결이나 세션처럼 붙들고 있어야 할 상태가 있는지, 그것도 다음 갈림. 뜨는 데 걸리는 몇 초, 몇 분을 견딜 수 있는지도 다르지 않습니다.</p>
+      <p>그중 가장 세게 작용하는 물음은 따로 있습니다. 실행 한 번이 얼마나 오래 걸리는가. Lambda 함수의 타임아웃은 900초, 곧 15분입니다. 이 문턱을 넘는 일이라면 Lambda라는 갈래는 통째로 빠집니다. 메모리는 128MB에서 10,240MB까지 늘릴 수 있고, 1,769MB에 이르면 vCPU 하나를 온전히 쥔 것과 같아지는데, 컨테이너 이미지로 함수를 배포한다면 그 상한은 10GB.</p>
+      <p>이 값들, 계정을 새로 만들자마자 전부 열려 있지는 않습니다. 새 계정은 동시 실행과 메모리 할당량을 이보다 낮게 받고 시작하는데, AWS는 사용량에 맞춰 그 한도를 자동으로 올려 줍니다. 오랫동안 부르지 않던 함수를 다시 부르면 어떻게 될까요. 실행 환경을 새로 마련하는 <span class="term" data-t="콜드 스타트">콜드 스타트</span>부터 거칩니다.</p>
+
+      <div class="demo" id="computePick">
+        <span class="demo-tag">세 갈래 선택기</span>
+        <p style="margin:0 0 4px">워크로드 성격을 하나 고르면, 세 갈래가 각각 어떻게 갈리는지 드러납니다.</p>
+        <div class="picker" id="computePicker">
+          <button class="pick on" data-k="always">하루 종일 도는 API 서버</button>
+          <button class="pick" data-k="spiky">하루 몇 번, 몇 초씩</button>
+          <button class="pick" data-k="batch">밤에 두 시간 도는 정산 배치</button>
+          <button class="pick" data-k="stateful">웹소켓 연결을 유지해야 함</button>
+        </div>
+        <div id="computeOut"></div>
+      </div>
+
+      <div class="oneline">
+        <div class="ol-ic">📦</div>
+        <div><div class="ol-t">11장 한 줄 요약</div><div class="ol-b"><b>세 갈래의 단위는 인스턴스·태스크·실행 한 번으로 다르고, 단위가 다르면 요금을 세는 법도 다릅니다.</b> Lambda 함수의 타임아웃은 900초, 그 문턱을 넘는 순간 통째로 빠지는 갈래 하나.</div></div>
+      </div>
+
+      <div class="quiz" data-qid="q-compute" data-answer="c">
+        <div class="q">밤마다 <b>40분씩</b> 도는 정산 배치를 옮기려 합니다. Lambda 함수로 가려 할 때 가장 먼저 막히는 것은?</div>
+        <button class="opt" data-opt="a">메모리 상한</button>
+        <button class="opt" data-opt="b">배포 패키지 크기</button>
+        <button class="opt" data-opt="c">함수 타임아웃</button>
+        <button class="opt" data-opt="d">동시 실행 수</button>
+        <div class="explain"><b>정답은 C입니다.</b> 함수 타임아웃은 900초, 곧 15분인데, 40분짜리 작업은 시작부터 성립하지 않습니다. A는 메모리를 10,240MB까지 올릴 수 있어서, B는 컨테이너 이미지로는 10GB까지 담을 수 있어서, D는 밤에 한 번 도는 배치가 동시 실행 수와는 무관해서 — 셋 다 오답. 쪼개서 이어 붙이는 방법이 없지는 않은데, 그건 이미 다른 설계입니다.</div>
+      </div>
+    </section>
+
   </main>
 </div>
 
@@ -1238,6 +1281,10 @@ const GLOSSARY = {
   "관리형 서비스": "AWS가 패치·백업 같은 반복되는 운영 작업을 대신 맡아, 사용자가 애플리케이션 쪽에만 집중하게 해 주는 서비스 형태입니다. RDS가 대표적인 예로, 대신 맡는 만큼 사용자가 직접 손댈 수 있는 자리는 줄어듭니다.",
   "읽기 전용 복제본": "원본 데이터베이스를 복제해 읽기 트래픽만 나눠 받는 인스턴스입니다. RDS는 이걸로 읽기 확장을 늘릴 수 있다고 안내합니다.",
   "책임 공유 모델": "AWS와 사용자 중 누가 어떤 운영 작업을 맡는지 가르는 경계선입니다. 온프렘·EC2·RDS 세 열로 표를 그리면 그 경계가 계단처럼 갈립니다.",
+  "컨테이너": "OS 커널을 함께 쓰면서 격리된 채로 실행되는 프로세스 묶음으로, 애플리케이션 코드와 그 실행에 필요한 것을 하나로 담습니다. ECS·Fargate·EKS는 이 컨테이너를 태스크 단위로 묶어 돌립니다.",
+  "Fargate": "컨테이너를 돌릴 서버를 직접 프로비저닝하지 않아도 되게 해 주는 서버리스 컴퓨팅 엔진입니다. ECS나 EKS와 함께 써서, 서버 대신 애플리케이션에만 집중하게 해 줍니다.",
+  "Lambda": "코드를 함수 단위로 올려 두면 호출될 때만 실행되는 서비스입니다. 함수 하나의 타임아웃은 900초이고, 메모리는 128MB에서 10,240MB까지 늘릴 수 있습니다.",
+  "콜드 스타트": "오랫동안 호출되지 않던 함수를 다시 부를 때, Lambda가 코드를 내려받고 실행 환경을 새로 준비하느라 걸리는 시간입니다. 이 구간만큼 응답이 늦어집니다.",
   // @GLOSSARY_END
 };
 
@@ -1881,6 +1928,57 @@ if(location.hash){
   }
   wirePicker('#respPicker', render);
   render('onprem');
+})();
+
+/* ============================================================
+   데모 11 — 세 갈래 선택기 (11장)
+   ============================================================ */
+(function(){
+  const out = $('#computeOut'); if(!out) return;
+  // Function timeout 900 seconds (15 minutes), Function memory allocation 128 MB to
+  // 10,240 MB, "At 1,769 MB, a function has the equivalent of one vCPU.", 컨테이너 이미지
+  // 10 GB는 "Lambda quotas" 페이지(facts V9) 그대로다. 같은 페이지의 Lambda MicroVMs(최대
+  // 8시간) 항목은 이 장의 범위 밖이라 옮기지 않는다. "New AWS accounts have reduced
+  // concurrency and memory quotas for Lambda Functions..." 도 같은 페이지, MicroVM이라는
+  // 낱말은 빼고 옮겼다.
+  // ECS 태스크가 "the smallest unit of compute in Amazon ECS"라는 것은 Amazon ECS FAQs
+  // 페이지로, AWS Fargate가 "a serverless, pay-as-you-go compute engine that lets you
+  // focus on building applications without managing servers"이고 "Use AWS Fargate with
+  // Amazon ECS or Amazon EKS..."라는 것은 aws.amazon.com/fargate/ 페이지로 확인했다.
+  // 콜드 스타트가 "the first two steps of downloading the code and setting up the
+  // environment"를 가리키는 말이고 그 시간에 "latency"가 붙는다는 것, 실행 환경을
+  // "You should not assume that the execution environment will persist indefinitely"라고
+  // 한 것은 Lambda 개발자 가이드의 "Understanding the Lambda execution environment
+  // lifecycle" 페이지로 확인했다(report의 "확인한 사실" 절 참고).
+  const D = {
+    always: { req:"하루 종일 도는 API 서버", rows:[
+      {m:"EC2", c:"allow", v:"적합", t:"인스턴스를 그대로 켜 두면 그만이라, 상시라는 성격과 맞물립니다."},
+      {m:"컨테이너", c:"allow", v:"적합", t:"태스크도 다르지 않은데, 서버를 직접 두고 싶지 않다면 그 밑을 Fargate가 대신 집니다."},
+      {m:"Lambda", c:"cond", v:"조건부", t:"실행 한 번마다 세는 함수를 하루 종일 붙잡아 두려면 호출이 끊이지 않아야 하니, 남는 건 상시와는 다른 그림."}
+    ]},
+    spiky: { req:"하루 몇 번, 몇 초씩", rows:[
+      {m:"EC2", c:"cond", v:"조건부", t:"인스턴스는 켜 둔 시간을 통째로 내는데, 하루 몇 번 몇 초 쓰자고 온종일 켜 두는 건 간헐적이라는 말과 어긋납니다."},
+      {m:"컨테이너", c:"cond", v:"조건부", t:"태스크도 몇 초 쓰자고 띄우고 내리길 반복하면, 뜨는 시간이 일하는 시간을 넘어설 수 있습니다."},
+      {m:"Lambda", c:"allow", v:"적합", t:"부른 만큼만 도는 성격, 이 몇 초짜리 호출과 정확히 겹치지 않을까요."}
+    ]},
+    batch: { req:"밤에 두 시간 도는 정산 배치", rows:[
+      {m:"EC2", c:"allow", v:"적합", t:"두 시간 켜 두는 일, 인스턴스에게는 낯설지 않습니다."},
+      {m:"컨테이너", c:"allow", v:"적합", t:"태스크도 컨테이너 프로세스가 도는 동안은 계속 실행되니, 두 시간을 못 버틸 이유가 없습니다."},
+      {m:"Lambda", c:"deny", v:"탈락", t:"함수의 타임아웃은 900초인데, 두 시간이면 7,200초 — 이 문턱을 한참 넘는 숫자."}
+    ]},
+    stateful: { req:"웹소켓 연결을 유지해야 함", rows:[
+      {m:"EC2", c:"allow", v:"적합", t:"연결을 오래 쥐고 있는 일도 상시로 켜 둔 인스턴스와는 자연스럽게 맞습니다."},
+      {m:"컨테이너", c:"allow", v:"적합", t:"태스크도 연결을 오래 붙들 수 있기는 마찬가지입니다."},
+      {m:"Lambda", c:"deny", v:"탈락", t:"실행이 끝나면 붙들고 있던 것도 함께 사라지는데, AWS 문서조차 실행 환경이 계속 남아 있으리라 가정하지 말라고 못 박아 둔 마당에 연결을 붙들고 있어야 하는 웹소켓과 결이 맞을 리 있을까요."}
+    ]}
+  };
+  function render(k){
+    const d = D[k]; if(!d) return;
+    const rows = d.rows.map(r => `<div class="verdict"><span class="vmodel">${esc(r.m)}</span><span class="vres ${r.c}">${esc(r.v)}</span><span class="vwhy">${r.t}</span></div>`).join('');
+    out.innerHTML = `<div class="kv"><dt>워크로드</dt><dd>${esc(d.req)}</dd></div>${rows}`;
+  }
+  wirePicker('#computePicker', render);
+  render('always');
 })();
 
 </script>
