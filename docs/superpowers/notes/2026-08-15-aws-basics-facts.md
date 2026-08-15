@@ -590,6 +590,64 @@ V8의 표가 타입 변경 행을 따로 두고 "The data does not persist"라�
 WebFetch를 했는가"가 아니라 **"이 파일에 있는가"**다. 이후 모든 태스크의 dispatch에
 "확인했으면 인용 전문을 보고서의 지정된 절에 적고, 컨트롤러가 등재할 수 있게 하라"를 명시한다.
 
+## V23 · 입구 넷이 하는 일 — 확인됨
+
+9장 구현자가 계획서의 근거 없는 주장 넷을 직접 확인해 인용을 가져왔다.
+
+**IGW는 퍼블릭 주소를 가진 것만 지나간다. 그리고 라우팅 테이블의 타깃이다.**
+> An internet gateway enables resources in your public subnets (such as EC2 instances) to connect
+> to the internet **if the resource has a public IPv4 address or an IPv6 address.**
+
+> An internet gateway provides a **target in your VPC route tables** for internet-routable traffic.
+
+**NAT Gateway는 단방향이다.**
+> You can use a NAT gateway so that instances in a private subnet can connect to services outside
+> your VPC but **external services can't initiate a connection with those instances.**
+
+> Instances in private subnets can connect to the internet through a public NAT gateway, but the
+> instances **can't receive unsolicited inbound connections** from the internet.
+
+**ALB는 7계층, NLB는 4계층이다.** 이 한 줄이 "무엇을 보느냐"라는 첫 갈림길의 근거다.
+> An Application Load Balancer functions at the **application layer, the seventh layer** of the OSI
+> model. … You can configure listener rules to route requests to different target groups **based on
+> the content of the application traffic.**
+
+> Support for **Path conditions.** You can configure rules for your listener that forward requests
+> based on the URL in the request.
+
+> A Network Load Balancer functions at the **fourth layer** of the OSI model.
+
+**로드밸런서를 앞에 세우면 타깃에 퍼블릭 IP가 필요 없다.**
+> Both internet-facing and internal load balancers route requests to your targets **using private
+> IP addresses.** Therefore, your targets **do not need public IP addresses** to receive requests
+> from an internal or an internet-facing load balancer.
+
+**9·12장에 쓸 것**: 마지막 인용이 12장과 이어진다. 퍼블릭 IPv4는 개수만큼 시간당 과금되므로(V2),
+로드밸런서를 앞에 세우는 것은 구조만이 아니라 **요금의 문제이기도 하다.**
+
+## V24 · ALB 리스너 규칙의 조건 타입 — 확인됨
+
+9장이 "ALB는 경로도 호스트 헤더도 본다"고 썼는데 V23은 `path-pattern`만 인용했다. 리뷰가
+"호스트 헤더는 근거 파일에 없다"고 잡아 컨트롤러가 확인했다.
+
+출처: [Listener rules for your Application Load Balancer](https://docs.aws.amazon.com/elasticloadbalancing/latest/application/listener-rules.html)
+
+> Each rule other than the default rule can optionally include one of the following conditions:
+> **`host-header`, `http-request-method`, `path-pattern`, and `source-ip`.** It can also optionally
+> include one or both of the following conditions: `http-header` and `query-string`.
+
+**호스트 헤더는 실제로 지원되는 조건 타입이다. 9장의 서술은 맞다.**
+
+**함께 확인된 것 — 규칙 평가는 우선순위 순이다.**
+> Rules are evaluated in **priority order, from the lowest value to the highest value.** The
+> default rule is evaluated last.
+
+이 문서는 규칙 평가 순서를 다루지 않는다(그건 통제에 가깝고 `aws_network_security.html`의 결이다).
+**쓰지 않는다.**
+
+**이 항목은 앞의 둘과 성격이 다르다.** V20·V22는 구현자가 확인하고 등재만 빠뜨린 것이고, 이것은
+**확인 없이 쓴 것**이다. 결과적으로 맞았지만 절차로는 더 나쁘다.
+
 ## 검증 요약
 
 | # | 대상 | 결과 |
@@ -616,6 +674,8 @@ WebFetch를 했는가"가 아니라 **"이 파일에 있는가"**다. 이후 모
 | V20 | ENI의 종료 동작 | 확인됨. 인스턴스 종료 시 함께 지울지 지정할 수 있다. **7장 리뷰에서 절차 위반(코드 주석에만 근거)으로 잡혀 여기 등재** |
 | V21 | S3의 성질 넷 · EBS 다중 연결 | 확인됨. 객체는 통째로 / 평면 구조 / HTTP REST / 부분 데이터 없음. **Multi-Attach는 최대 16대 — "한 대에만"으로 단정하면 틀린다** |
 | V22 | S3의 AZ 중복 저장 | 확인됨. `redundantly store objects across multiple Availability Zones`. **V20과 같은 절차 위반(주석에만 근거)으로 두 번째로 잡혀 여기 등재** |
+| V23 | 입구 넷이 하는 일 | 확인됨. IGW는 퍼블릭 주소를 가진 것만·라우팅 타깃 / NAT GW 단방향 / **ALB 7계층·NLB 4계층** / LB 뒤 타깃은 퍼블릭 IP 불필요 |
+| V24 | ALB 규칙 조건 타입 | 확인됨. `host-header` `path-pattern` `http-request-method` `source-ip`. **확인 없이 쓴 것이 결과적으로 맞았던 경우 — 절차로는 V20·V22보다 나쁘다** |
 
 ## 설계 문서에 반영할 것
 
