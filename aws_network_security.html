@@ -642,8 +642,8 @@ button:focus-visible, .pick:focus-visible, .term:focus-visible, a:focus-visible,
       </p>
 
       <div class="chips">
-        <span class="chip">🧱 <b>관문의 순서</b> — 1부 7장</span>
-        <span class="chip">🔗 신원과 네트워크가 <b>만나는 지점</b> — 2부 8장</span>
+        <span class="chip">🧱 <b>관문의 순서</b> — 1부 7개 장</span>
+        <span class="chip">🔗 신원과 네트워크가 <b>만나는 지점</b> — 2부 8개 장</span>
         <span class="chip">🖱️ 관문 체인을 <b>눌러가며</b> 추적</span>
         <span class="chip">⚖️ 6장 — <b>시나리오별</b> 관문 체인 클라이맥스</span>
         <span class="chip">🟢 <b>필수</b> / 🔵 <b>심화</b> 경로 표시</span>
@@ -743,7 +743,7 @@ button:focus-visible, .pick:focus-visible, .term:focus-visible, a:focus-visible,
 
       <h3>🧱 그래서 검문이 OS 밖에서 끝난다</h3>
       <p>부착 지점이 ENI라는 사실에는 귀결이 하나 딸려 있습니다. 검문소가 정확히 어디 서 있는지가 그걸로 정해지거든요.</p>
-      <p>리눅스에서 방화벽을 다뤄 본 사람이라면 <code>iptables -L</code>이 손에 붙어 있을 겁니다. 규칙이 죽 뜨는 순간, 전제가 하나 깔려요. 검사할 패킷이 이미 커널 안까지 들어와 있었다는 전제입니다. <span class="term" data-t="netfilter">netfilter</span>는 리눅스 커널 안에 박힌 후크(hook)이고, 랜카드가 패킷을 받아 커널 네트워크 스택에 올려놓아야 그 후크를 통과하거든요. <code>iptables</code>가 무엇을 판정하든, 판정 대상은 늘 '이미 도착한 패킷'입니다.</p>
+      <p>리눅스에서 방화벽을 다뤄 본 사람이라면 <code>iptables -L</code>이 손에 붙어 있을 겁니다. 규칙이 죽 뜨는 순간, 전제가 하나 깔려요. 검사할 패킷이 이미 커널 안까지 들어와 있었다는 전제입니다. <span class="term" data-t="netfilter">netfilter</span>는 그 커널 안에 박힌 후크(hook)이고, 랜카드가 패킷을 받아 커널 네트워크 스택에 올려놓아야 그 후크를 통과하거든요. <code>iptables</code>가 무엇을 판정하든, 판정 대상은 늘 '이미 도착한 패킷'입니다.</p>
       <p>SG는 그보다 앞에서 끝냅니다. 방금 본 그 ENI, 정확히는 그 입구에서요. 패킷이 랜카드를 통과하기도 전에 판정이 끝나 버리니, 커널은 이 패킷을 구경할 기회조차 없습니다. 같은 '방화벽'이라는 이름으로 뭉뚱그리기 쉽지만, 적용 지점이 이렇게 다릅니다. 이 경로는 <a class="link" href="network_basics.html">network_basics.html의 netfilter 장</a>에서 더 자세히 다뤘어요.</p>
 
       <div class="callout key">
@@ -934,7 +934,7 @@ button:focus-visible, .pick:focus-visible, .term:focus-visible, a:focus-visible,
       <p class="lead">SG는 규칙이 몇 줄 안 되는데도 오해가 많습니다. 대부분은 <strong><code>iptables</code>처럼 생각해서</strong> 생깁니다.</p>
 
       <h3>🔌 인스턴스가 아니라 ENI에 붙는다</h3>
-      <p><span class="term" data-t="ENI">ENI</span> 얘기는 <a class="link" href="#attach">1장</a>에서 이미 나왔죠 — SG가 실제로 붙는 자리는 인스턴스가 아니라 그 ENI라고요. 그러니 인스턴스에 ENI가 두 개면 SG도 두 벌입니다. 하나를 아무리 넓게 열어도, 다른 ENI의 SG가 닫혀 있으면 그 경로는 그대로 막혀 있어요.</p>
+      <p><span class="term" data-t="ENI">ENI</span> 얘기는 <a class="link" href="#attach">1장</a>에서 이미 끝냈습니다 — 붙는 자리는 인스턴스가 아니라 그 ENI라고요. 여기서는 결과 하나만 챙겨 둡니다. <b>ENI가 둘이면 SG도 두 벌</b>이고, 그 경로가 열리려면 두 벌이 다 열려 있어야 합니다.</p>
 
       <h3>✅ allow만 있다</h3>
       <p>SG 규칙 목록을 열어 보면 전부 허용(allow) 줄뿐입니다. 차단(deny) 규칙이라는 선택지 자체가 없어요. 그런데 기본값이 이미 전부 차단이니, 이 목록이 하는 일은 사실 구멍을 뚫는 것 하나뿐입니다. 문을 잠그는 규칙이 아니라, 문에 뚫을 구멍의 목록인 셈이죠.</p>
@@ -1233,7 +1233,7 @@ button:focus-visible, .pick:focus-visible, .term:focus-visible, a:focus-visible,
       <p class="lead">여기서부터 2부입니다. 관문을 하나씩 아는 것과, 그것들을 엮어서 구성하는 것은 다른 기술이에요. 첫 번째 도구가 이겁니다.</p>
 
       <h3>🏷️ SG 규칙의 source에 SG를 넣을 수 있다</h3>
-      <p>source 자리에는 지금까지 늘 CIDR을 썼습니다. <span class="mono">0.0.0.0/0</span>이든 <span class="mono">10.0.1.42/32</span>든, 결국 숫자 몇 자리였어요. 그런데 그 자리에 IP 대신 다른 SG의 id를 넣을 수 있습니다.</p>
+      <p>source 자리에는 지금까지 늘 CIDR을 썼습니다. <span class="mono">0.0.0.0/0</span>이든 <span class="mono">10.0.1.42/32</span>든, 결국 숫자에 지나지 않았어요. 그런데 그 자리에 IP 대신 다른 SG의 id를 넣을 수 있습니다.</p>
       <p>바뀌는 건 문법이 아니라 뜻입니다. source가 CIDR일 때는 "이 대역에서 오는 트래픽"을 가리켰는데, source가 SG일 때는 <b>"그 SG가 붙은 ENI에서 오는 트래픽"</b>을 가리키게 돼요. 지금 그 SG가 몇 개의 ENI에 붙어 있는지, 그 ENI들의 IP가 각각 몇인지는 규칙을 쓰는 사람이 알 필요가 없습니다. 계산은 AWS 쪽이 매 순간 다시 하거든요.</p>
       <p>IP는 한 글자도 등장하지 않아요.</p>
       <p>지금까지는 전부 같은 VPC 안 얘기입니다. VPC를 넘어가면 조건이 붙는데, 그건 <a class="link" href="#peering">12장</a>에서 다뤄요.</p>
@@ -1301,8 +1301,8 @@ button:focus-visible, .pick:focus-visible, .term:focus-visible, a:focus-visible,
 
       <h3>🔀 규칙을 아무리 써도 트래픽이 안 옵니다</h3>
       <p>Network Firewall을 만들고, 도메인 필터링 규칙까지 정성껏 채워 넣었다고 해보죠. 콘솔은 <span class="mono">Ready</span>를 표시하고 요금도 시간당 꼬박꼬박 나갑니다. 그런데 로그를 열어 보면 텅 비어 있어요. 규칙이 틀린 걸까요.</p>
-      <p>아닙니다. 방화벽을 만들 때 실제로 생기는 건 규칙이 아니라 <b>자기 서브넷 안의 <span class="term" data-t="ENI">ENI</span> 하나</b>입니다. 그 ENI는 트래픽이 알아서 찾아와 주는 자리가 아니에요 — <a class="link" href="#route">3장</a>에서 본 <span class="term" data-t="라우팅 테이블">라우팅 테이블</span>이 그 ENI를 next hop으로 가리켜야, 비로소 패킷이 옆길로 새서 방화벽을 거쳐 갑니다. 가리키지 않으면 방화벽은 서브넷 한구석에 얌전히 앉아 자기 몫의 트래픽을 하나도 못 보고 있는 셈이에요. 리소스에 <b>붙어서</b> 지나가는 걸 자동으로 검사하는 SG·NACL과는 근본부터 다른 그림입니다.</p>
-      <p>그 next hop을 정확히 어디에 심어야 하는지, 라우팅 테이블 두 장을 붙잡고 직접 확인해보죠.</p>
+      <p>아닙니다. 방화벽을 만들 때 실제로 생기는 건 규칙이 아니라 <b>자기 서브넷 안의 <span class="term" data-t="ENI">ENI</span> 하나</b>입니다. 그 ENI는 트래픽이 알아서 찾아와 주는 자리가 아니에요 — <a class="link" href="#route">3장</a>에서 본 <span class="term" data-t="라우팅 테이블">라우팅 테이블</span>이 그 ENI를 <b>다음 행선지</b>(next hop)로 가리켜야, 비로소 패킷이 옆길로 새서 방화벽을 거쳐 갑니다. 가리키지 않으면 방화벽은 서브넷 한구석에 얌전히 앉아 자기 몫의 트래픽을 하나도 못 보고 있는 셈이에요. 리소스에 <b>붙어서</b> 지나가는 걸 자동으로 검사하는 SG·NACL과는 근본부터 다른 그림입니다.</p>
+      <p>그 한 줄을 정확히 어디에 심어야 하는지, 라우팅 테이블 두 장을 붙잡고 직접 확인해보죠.</p>
 
       <div class="demo" id="nfwRoute">
         <span class="demo-tag">삽입 라우팅</span>
@@ -1316,9 +1316,9 @@ button:focus-visible, .pick:focus-visible, .term:focus-visible, a:focus-visible,
         <div id="nfwOut"></div>
       </div>
 
-      <p>앞의 세 가지는 전부 인터넷과 워크로드 사이, 그러니까 남북(north-south) 트래픽 얘기였습니다. 네 번째 버튼은 방향이 다릅니다. <a class="link" href="#route">3장</a>에서 라우팅 테이블을 처음 소개할 때 이미 한 가지를 심어 뒀죠 — <code>local</code> 경로는 지울 수 없지만 <b>타깃은 바꿀 수 있다</b>고요. 그 타깃을 방화벽 엔드포인트로 바꿔 끼우면, 인터넷을 거치지 않고 같은 VPC 안에서 서버끼리 주고받는 트래픽, 즉 동서(east-west) 트래픽까지 방화벽을 지나가게 만들 수 있습니다. <a class="link" href="#ref">8장</a>에서 이름 붙인 <span class="term" data-t="횡이동">횡이동</span> — 침해당한 서버 한 대가 옆의 다른 시스템으로 건너뛰는 일 — 을 막는 통제가 바로 이 자리에서 만들어져요. 방금 데모에서 그 <code>local</code> 줄이 사라지지 않고 타깃만 바뀐 채 남아 있는 걸 봤을 거예요.</p>
+      <p>앞의 세 가지는 전부 인터넷과 워크로드 사이, 그러니까 남북(north-south) 트래픽 얘기였습니다. 네 번째 버튼은 방향이 다릅니다. <a class="link" href="#route">3장</a>에서 라우팅 테이블을 처음 소개할 때 이미 한 가지를 심어 뒀죠 — <code>local</code> 경로는 지울 수 없지만 <b>타깃은 바꿀 수 있다</b>고요. 그 타깃을 방화벽 엔드포인트로 바꿔 끼우면, 인터넷을 거치지 않고 같은 VPC 안에서 서버끼리 주고받는 트래픽, 즉 동서(east-west) 트래픽까지 방화벽을 지나가게 만들 수 있습니다. <a class="link" href="#ref">8장</a>에서 이름 붙인 <span class="term" data-t="횡이동">횡이동</span>을 막는 통제가 바로 이 자리에서 만들어져요. 방금 데모에서 그 <code>local</code> 줄이 사라지지 않고 타깃만 바뀐 채 남아 있는 걸 봤을 거예요.</p>
 
-      <p>다만 이 스위치는 공짜가 아닙니다. <code>local</code> 경로의 목적지는 서브넷 하나가 아니라 <b>VPC CIDR 전체</b>예요. 그러니 타깃을 방화벽으로 바꾸는 순간, 침해당한 서버가 옆으로 건너뛰려는 트래픽만 골라 걸리는 게 아니라 <b>같은 VPC 안 모든 서브넷·모든 계층 사이의 트래픽이 예외 없이</b> 방화벽을 거쳐 가게 됩니다. 데이터베이스가 캐시 서버에 보내는 평범한 조회 하나까지도요. 그래서 이건 규칙 한 줄 추가하는 일이 아니라, VPC 전체 대역을 인라인 장비 하나에 걸어 두는 설계 결정입니다.</p>
+      <p>다만 이 스위치는 공짜가 아닙니다. <code>local</code> 경로의 목적지는 <b>VPC CIDR 전체</b>입니다. 서브넷 하나가 아니에요. 그러니 타깃을 방화벽으로 바꾸는 순간, 침해당한 서버가 옆으로 건너뛰려는 트래픽만 골라 걸리는 게 아니라 <b>같은 VPC 안 모든 서브넷·모든 계층 사이의 트래픽이 예외 없이</b> 방화벽을 거쳐 가게 됩니다. 데이터베이스가 캐시 서버에 보내는 평범한 조회 하나까지도요. 그래서 이건 규칙 한 줄 추가하는 일이 아니라, VPC 전체 대역을 인라인 장비 하나에 걸어 두는 설계 결정입니다.</p>
 
       <h3>🔍 SG가 못 보는 것을 본다</h3>
       <p>라우팅으로 경로를 만들고 나면, 그제야 규칙 얘기를 할 수 있습니다. 그런데 이 규칙은 <a class="link" href="#sg">4장</a>의 SG나 <a class="link" href="#nacl">5장</a>의 NACL이 쓰던 것과 종류가 다릅니다. 그 둘은 IP·포트·프로토콜, 이른바 5-tuple까지만 보고 판정을 내렸어요. 패킷 안에 뭐가 들었는지는 애초에 볼 수 있는 자리가 아니었죠. Network Firewall은 그 안쪽, <b>패킷 내용</b>을 봅니다.</p>
@@ -1398,7 +1398,7 @@ button:focus-visible, .pick:focus-visible, .term:focus-visible, a:focus-visible,
       </div>
 
       <h3>📦 어디에 붙는가</h3>
-      <p>방금 본 다섯 가지 반응은 전부 WAF가 이미 붙어 있다는 전제 위에서 나온 겁니다. 그런데 WAF는 SG처럼 아무 리소스에나 걸 수 있는 게 아니에요. 독립적으로 서 있는 장비가 아니라, 정해진 리소스에만 붙어야 존재하는 부착물입니다 — 대표적으로 <b>CloudFront·ALB·API Gateway·AppSync</b>이고, Cognito 사용자 풀이나 App Runner처럼 이후 지원이 추가된 자리도 여럿 있어요. 붙을 자리가 없으면 WAF도 없습니다 — NLB는 L4에서 IP와 포트만 다룰 뿐 HTTP라는 개념 자체가 없으니, WAF를 걸 자리가 애초에 생기지 않습니다.</p>
+      <p>방금 본 다섯 가지 반응은 전부 WAF가 이미 붙어 있다는 전제 위에서 나온 겁니다. 그런데 WAF는 SG처럼 아무 리소스에나 걸 수 있는 게 아니에요. 독립적으로 서 있는 장비가 아니라, 정해진 리소스에만 붙어야 존재하는 부착물입니다 — 대표적으로 <b>CloudFront·ALB·API Gateway·AppSync</b>이고, Cognito 사용자 풀이나 App Runner처럼 이후 지원이 추가된 곳도 여럿 있어요. 붙을 자리가 없으면 WAF도 없습니다 — NLB는 L4에서 IP와 포트만 다룰 뿐 HTTP라는 개념 자체가 없으니, WAF를 걸 자리가 애초에 생기지 않습니다.</p>
 
       <h3>🕳️ 가장 흔한 구멍 — 우회</h3>
       <p>CloudFront에 WAF를 걸었습니다. SQL 인젝션 규칙도, 봇 차단도 넣었어요. 방금 데모에서 본 그대로 잘 작동합니다.</p>
@@ -1547,7 +1547,7 @@ button:focus-visible, .pick:focus-visible, .term:focus-visible, a:focus-visible,
       <p>VPC가 셋을 넘어가면 Peering만으로 버티기 시작합니다. 넷이면 여섯 개, 다섯이면 열 개 — 늘어나는 속도가 VPC 개수보다 훨씬 빠릅니다. 조합의 개수는 <span class="mono">N×(N−1)/2</span>거든요. VPC가 열 개면 벌써 마흔다섯 개의 Peering을 각각 만들고 각각의 라우팅 테이블을 관리해야 합니다.</p>
       <p><span class="term" data-t="Transit Gateway">Transit Gateway</span>는 이 조합을 없애 버립니다. VPC마다 Peering을 여러 번 맺는 대신, 허브 하나에 딱 한 번씩만 붙이면 끝이에요. 다만 라우팅까지 허브가 대신 떠안는 건 아닙니다 — <b>각 VPC는 여전히 자기 서브넷 라우팅 테이블에 TGW로 가는 경로를 직접 넣어야 합니다.</b> 이 줄을 빠뜨리면 방금 본 편도 통행, 그 timeout이 TGW에서도 똑같이 재현돼요. 바뀌는 건 <span class="mono">N×(N−1)/2</span>개였던 조합별 경로 관리가 각 VPC가 아니라 <b>허브의 라우팅 테이블 쪽</b>으로 옮겨 간다는 점입니다.</p>
       <p>8장에서 미뤄 둔 이야기가 여기서도 한 번 더 나옵니다. TGW로 이은 VPC 사이에도 SG 참조가 되는 것으로 알려져 있는데, 조건이 Peering보다 좁습니다. <b>인바운드 규칙에서만</b> 쓸 수 있고, 트랜짓 게이트웨이와 각 VPC의 연결(attachment) 양쪽에서 이 기능을 따로 켜야 동작하며, 리전 조건도 그대로 남아 있는 것으로 보여요. 이 조합을 실제로 쓸 계획이라면 AWS 공식 문서에서 최신 제약을 다시 확인하는 편이 낫습니다.</p>
-      <p>허브를 두고 나면 <a class="link" href="#nfw">9장</a>에서 그림으로만 그려 뒀던 인스펙션 VPC 구성이 실제로 설 자리를 얻습니다. 방화벽을 VPC마다 두는 대신 인스펙션 전용 VPC 하나를 TGW에 함께 붙이고, TGW 라우팅으로 다른 VPC 간 트래픽을 그 VPC로 몰아 전부 지나가게 만드는 구성이에요. 방화벽 한 대가 자기 VPC 안의 트래픽만 보던 자리에서, 허브에 모인 VPC 전체의 트래픽을 보는 자리로 옮겨 가는 셈입니다.</p>
+      <p>허브를 두고 나면 <a class="link" href="#nfw">9장</a>에서 그림으로만 그려 뒀던 인스펙션 VPC 구성이 실제로 성립합니다. 그때 빠져 있던 조각이 바로 이 허브였어요 — 인스펙션 전용 VPC도 다른 VPC와 똑같이 TGW에 하나로 붙이고, <b>허브의 라우팅 테이블</b>에서 VPC 간 트래픽의 다음 행선지를 그 VPC로 지정하면 됩니다. 방화벽 한 대가 자기 VPC 안의 트래픽만 보던 자리에서, 허브에 모인 VPC 전체의 트래픽을 보는 자리로 옮겨 가는 셈입니다.</p>
 
       <div class="callout warn">
         <h4>🪤 CIDR 겹침은 되돌리기 어렵다</h4>

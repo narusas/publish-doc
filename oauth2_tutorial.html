@@ -306,7 +306,7 @@ pre b{color:var(--auth);font-weight:700}
       <div class="callout bad">
         <h4><span class="ic">🚨</span> 비밀번호를 직접 넘기는 방식</h4>
         <ul>
-          <li>그 앱은 이제 <strong>여러분 계정 전체</strong>를 할 수 있습니다. 사진뿐 아니라 메일, 결제, 비밀번호 변경까지.</li>
+          <li>그 앱은 이제 <strong>여러분 계정 전체</strong>를 주무를 수 있습니다. 사진뿐 아니라 메일, 결제, 비밀번호 변경까지.</li>
           <li>앱이 비밀번호를 <strong>그대로 저장</strong>합니다. 그 회사가 해킹당하면 내 비밀번호도 유출됩니다.</li>
           <li>권한을 <em>"사진만"</em>으로 좁힐 방법이 없습니다. 전부 아니면 전무.</li>
           <li>앱 하나만 차단하려 해도 <strong>비밀번호를 바꾸는 수밖에</strong> 없고, 그러면 다른 앱도 전부 끊어집니다.</li>
@@ -331,7 +331,7 @@ pre b{color:var(--auth);font-weight:700}
 
     <div class="callout oidc">
       <h4><span class="ic">🧭</span> 한 문장으로 못 박기</h4>
-      <p><span class="term" data-t="OAuth2">OAuth2</span>는 <strong>"인증(로그인)"이 아니라 "권한 위임(authorization)"</strong> 프레임워크입니다. 즉 <em>"이 앱이 내 데이터에 이런 행동을 해도 좋다"</em>고 허락하는 표준이에요. <span class="term" data-t="OIDC">OIDC</span>(OpenID Connect)는 그 위에 <em>"그래서 지금 로그인한 사람이 누구냐"</em>를 얹은 로그인 표준입니다. 이 둘의 차이가 이 튜토리얼 전체를 관통하는 핵심이니, 천천히 익혀 봅시다.</p>
+      <p><span class="term" data-t="OAuth2">OAuth2</span>는 <strong>"인증(로그인)"이 아니라 "권한 위임(authorization)"</strong> 프레임워크입니다. 즉 <em>"이 앱이 내 데이터에 이런 행동을 해도 좋다"</em>고 허락하는 표준이에요. <span class="term" data-t="OIDC">OIDC</span>(OpenID Connect)는 그 위에 <em>"그래서 지금 로그인한 사람이 누구냐"</em>를 얹은 로그인 표준입니다. 두 개념의 차이가 이 튜토리얼 전체를 관통하는 핵심이니, 천천히 익혀 봅시다.</p>
     </div>
 
     <div class="quiz" data-qid="q-intro" data-answer="b">
@@ -354,7 +354,7 @@ pre b{color:var(--auth);font-weight:700}
       <div class="card">
         <h3>🪪 인증 = AuthN</h3>
         <p style="font-size:17px;color:#fff;margin:6px 0"><strong>"너 누구야?"</strong></p>
-        <p>신원을 확인하는 일. 공항 보안검색대에서 <strong>여권을 보여주는</strong> 단계입니다.</p>
+        <p>신원을 확인하는 일. 공항 출입국 심사대에서 <strong>여권을 보여주는</strong> 단계입니다.</p>
         <ul>
           <li>예: 아이디/비밀번호 로그인, 지문, OTP</li>
           <li>OIDC에서 담당 — 결과물은 <code>id_token</code></li>
@@ -407,7 +407,7 @@ pre b{color:var(--auth);font-weight:700}
 
     <div class="quiz" data-qid="q-actors" data-answer="c">
       <div class="q-head">⚡ Quick Check</div>
-      <div class="q">access_token이 유효한지, scope가 충분한지를 최종 판단하는 주체는?</div>
+      <div class="q">access_token이 유효한지, scope가 충분한지를 최종 판단하는 쪽은?</div>
       <button class="opt" data-opt="a">A. 브라우저</button>
       <button class="opt" data-opt="b">B. 인증 서버(Authorization Server)</button>
       <button class="opt" data-opt="c">C. API 서버(Resource Server)</button>
@@ -444,7 +444,7 @@ pre b{color:var(--auth);font-weight:700}
       <tr><td><code>refresh_token</code></td><td>만료된 access_token을 새로 받는 교환권</td><td><span class="hl-client">클라이언트</span></td><td>팔찌 재발급권</td></tr>
     </table>
     </div>
-    <p class="note-inline">⚠️ 자주 틀리는 포인트: <code>id_token</code>은 <strong>API 호출용이 아닙니다.</strong> "이 사람이 누구다"를 클라이언트가 확인하는 용도일 뿐, API 서버에 보내면 안 됩니다.</p>
+    <p class="note-inline">⚠️ 자주 틀리는 대목: <code>id_token</code>은 <strong>API 호출용이 아닙니다.</strong> "이 사람이 누구다"를 클라이언트가 확인하는 용도일 뿐, API 서버에 보내면 안 됩니다.</p>
 
     <div class="quiz" data-qid="q-tokens" data-answer="b">
       <div class="q-head">⚡ Quick Check</div>
@@ -460,11 +460,11 @@ pre b{color:var(--auth);font-weight:700}
   <section id="bigpicture" data-title="전체 흐름 (애니메이션)">
     <div class="kicker"><b>04 · 핵심</b> 가장 중요한 그림</div>
     <h2>로그인 버튼 한 번에 일어나는 16단계, 전부 따라가 보자</h2>
-    <p class="lead">이게 이 튜토리얼의 <strong>심장</strong>입니다. <span class="term" data-t="authcode">Authorization Code + PKCE</span> 흐름 — 오늘날 웹·앱 로그인의 표준입니다. <strong>다음 ▶</strong> 버튼을 눌러 메시지가 누구에게서 누구에게로 가는지 한 줄씩 지켜보세요. 각 단계의 <strong>실제 HTTP 메시지</strong>가 아래에 펼쳐집니다.</p>
+    <p class="lead">이 그림이 튜토리얼의 <strong>심장</strong>입니다. <span class="term" data-t="authcode">Authorization Code + PKCE</span> 흐름 — 오늘날 웹·앱 로그인의 표준입니다. <strong>다음 ▶</strong> 버튼을 눌러 메시지가 누구에게서 누구에게로 가는지 한 줄씩 지켜보세요. 각 단계의 <strong>실제 HTTP 메시지</strong>가 아래에 펼쳐집니다.</p>
 
     <div class="callout oidc">
       <h4><span class="ic">🔑</span> 보기 전에 딱 하나만: 프론트채널 vs 백채널</h4>
-      <p><span class="badge front">┄ 프론트채널</span> = <strong>브라우저(주소창)를 거쳐</strong> 오가는 메시지. 사용자도 보이고, 가로채일 수도 있는 '노출된' 통로입니다. → 그래서 여기로는 <em>민감한 토큰을 직접 보내지 않습니다.</em><br>
+      <p><span class="badge front">┄ 프론트채널</span> = <strong>브라우저(주소창)를 거쳐</strong> 오가는 메시지. 사용자에게도 보이고, 가로채일 수도 있는 '노출된' 통로입니다. → 그래서 여기로는 <em>민감한 토큰을 직접 보내지 않습니다.</em><br>
       <span class="badge back">━ 백채널</span> = <strong>서버끼리 직접</strong> 주고받는 통신(HTTPS). 브라우저를 안 거칩니다. → <code>client_secret</code>과 실제 토큰 교환은 전부 여기서 일어납니다.</p>
     </div>
 
@@ -484,7 +484,7 @@ pre b{color:var(--auth);font-weight:700}
   <section id="authreq" data-title="인가 요청 만들기">
     <div class="kicker"><b>05 · 단계별</b> 1단계</div>
     <h2>로그인 버튼은 사실 'authorization request URL'을 만든다</h2>
-    <p class="lead">사용자가 버튼을 누르면, 앱은 브라우저를 인증 서버로 보냅니다. 그 주소(URL)에 들어가는 <strong>파라미터 하나하나가 보안의 핵심</strong>입니다. 아래에서 scope를 켜고 끄며 URL이 어떻게 바뀌는지 직접 만들어 보세요.</p>
+    <p class="lead">사용자가 버튼을 누르면, 앱은 브라우저를 인증 서버로 보냅니다. 그 주소(URL)에 들어가는 <strong>파라미터 하나하나가 보안의 핵심</strong>입니다. 아래에서 scope를 켜고 끄며 URL을 직접 만들어 보세요.</p>
 
     <div class="demo">
       <h4>🛠 Authorization URL 빌더</h4>
@@ -605,7 +605,7 @@ pre b{color:var(--auth);font-weight:700}
     <div class="analogy">
       <div class="tag">🅰️ 비유로 이해하기</div>
       <h4><span class="big">🔐</span> code_verifier = 열쇠 원본 · code_challenge = 그 열쇠로만 열리는 자물쇠</h4>
-      <p>1) 앱이 무작위 비밀 <code>code_verifier</code>(열쇠)를 만듭니다. 2) 그것의 해시 <code>code_challenge</code>(자물쇠)만 인가 요청에 실어 보냅니다. 자물쇠로는 열쇠를 역산할 수 없어요. 3) 나중에 토큰을 받을 때 <strong>열쇠 원본</strong>을 제시합니다. 인증 서버는 "이 열쇠가 그때 그 자물쇠를 여나?"를 확인하죠. <strong>코드를 훔친 공격자에겐 열쇠 원본이 없으니</strong> 토큰 교환에 실패합니다.</p>
+      <p>1) 앱이 무작위 비밀 <code>code_verifier</code>(열쇠)를 만듭니다. 2) 그 해시값인 <code>code_challenge</code>(자물쇠)만 인가 요청에 실어 보냅니다. 자물쇠로는 열쇠를 역산할 수 없어요. 3) 나중에 토큰을 받을 때 <strong>열쇠 원본</strong>을 제시합니다. 인증 서버는 "이 열쇠가 그때 그 자물쇠를 여나?"를 확인하죠. <strong>코드를 훔친 공격자에겐 열쇠 원본이 없으니</strong> 토큰 교환에 실패합니다.</p>
     </div>
 
     <div class="demo">
@@ -694,7 +694,7 @@ grant_type=authorization_code
 
     <div class="callout bad">
       <h4><span class="ic">🚫</span> Bearer 토큰 다루기 — 흘리면 끝</h4>
-      <p>access_token은 "가진 자가 임자"입니다. 그래서 <strong>URL 쿼리스트링에 넣거나(브라우저 기록·서버 로그에 남음), 콘솔/로그에 출력하면</strong> 매우 위험합니다. 반드시 <code>Authorization: Bearer &lt;token&gt;</code> 헤더로, HTTPS 위에서만 주고받으세요.</p>
+      <p>access_token은 "가진 사람이 곧 권한자"입니다. 그래서 <strong>URL 쿼리스트링에 넣거나(브라우저 기록·서버 로그에 남음), 콘솔/로그에 출력하면</strong> 매우 위험합니다. 반드시 <code>Authorization: Bearer &lt;token&gt;</code> 헤더로, HTTPS 위에서만 주고받으세요.</p>
     </div>
   </section>
 
@@ -702,7 +702,7 @@ grant_type=authorization_code
   <section id="tokentypes" data-title="토큰 3종 & 갱신">
     <div class="kicker"><b>06 · 심화</b> 세 토큰의 생애</div>
     <h2>access · id · refresh — 셋을 헷갈리지 말 것</h2>
-    <p class="lead">앞서 받은 세 토큰은 <strong>각자 주인과 용도가 다릅니다.</strong> 가장 많이 나는 사고가 이 셋을 섞어 쓰는 것이에요.</p>
+    <p class="lead">앞서 받은 세 토큰은 <strong>각자 주인과 용도가 다릅니다.</strong> 가장 흔한 사고가 이 셋을 섞어 쓰는 것이에요.</p>
 
     <table class="matrix">
       <tr><th>토큰</th><th>받는 질문</th><th>소비자</th><th>API에 보내나?</th><th>수명</th></tr>
@@ -742,8 +742,8 @@ grant_type=authorization_code
     <p class="lead">OAuth2만으로는 <strong>"누가 로그인했는지"를 안전하게 알 수 없습니다.</strong> <span class="term" data-t="OIDC">OIDC</span>는 OAuth2 위에 신원 계층을 얹어, 검증 가능한 <code>id_token</code>으로 그 답을 줍니다.</p>
 
     <div class="grid2">
-      <div class="card"><h3>OAuth2 (인가)</h3><ul><li>질문: <em>"이 API 호출 권한 있나?"</em></li><li>핵심 토큰: <code>access_token</code></li><li>검증 주체: <span class="hl-api">API 서버</span></li><li>토큰 내용: 클라이언트가 들여다볼 필요 없음(opaque일 수 있음)</li></ul></div>
-      <div class="card"><h3>OIDC (인증)</h3><ul><li>질문: <em>"이 사용자 누구야?"</em></li><li>핵심 토큰: <code>id_token</code> (항상 JWT)</li><li>검증 주체: <span class="hl-client">클라이언트</span></li><li>토큰 내용: 사용자 정보(claims)를 담음</li></ul></div>
+      <div class="card"><h3>OAuth2 (인가)</h3><ul><li>질문: <em>"이 API 호출 권한 있나?"</em></li><li>핵심 토큰: <code>access_token</code></li><li>검증하는 쪽: <span class="hl-api">API 서버</span></li><li>토큰 내용: 클라이언트가 들여다볼 필요 없음(opaque일 수 있음)</li></ul></div>
+      <div class="card"><h3>OIDC (인증)</h3><ul><li>질문: <em>"이 사용자 누구야?"</em></li><li>핵심 토큰: <code>id_token</code> (항상 JWT)</li><li>검증하는 쪽: <span class="hl-client">클라이언트</span></li><li>토큰 내용: 사용자 정보(claims)를 담음</li></ul></div>
     </div>
 
     <h3>🔬 id_token(JWT) 해부 — 직접 디코딩하고 서명 검증까지</h3>
@@ -777,7 +777,7 @@ grant_type=authorization_code
         <li><code>iss</code>(issuer): 내가 믿는 인증 서버가 발급했나?</li>
         <li><code>aud</code>(audience): 이 토큰이 <strong>나(이 클라이언트)</strong>를 위한 것인가?</li>
         <li><code>exp</code>(expiry): 만료되지 않았나?</li>
-        <li><code>signature</code>: 인증 서버의 공개키(<span class="term" data-t="jwks">JWKS</span>)로 서명이 진짜인가? — <strong>이게 빠지면 위 모든 값이 위조 가능</strong></li>
+        <li><code>signature</code>: 인증 서버의 공개키(<span class="term" data-t="jwks">JWKS</span>)로 서명이 진짜인가? — <strong>이 검증이 빠지면 위 모든 값이 위조 가능</strong></li>
         <li><code>nonce</code>: 내가 보낸 요청에 대한 응답이 맞나? (재생(replay) 방지)</li>
       </ul>
     </div>
@@ -792,12 +792,12 @@ grant_type=authorization_code
     </div>
 
     <h3>🔄 OIDC 메시지 흐름 상세 — 디스커버리부터 검증까지</h3>
-    <p>앞의 <a href="#bigpicture">전체 흐름</a>이 인가(Authorization Code) 중심이었다면, 이번엔 <strong>OIDC만의 부분</strong>에 초점을 맞춰 한 메시지씩 따라갑니다 — OP의 <code>.well-known</code> 디스커버리, <code>JWKS</code> 공개키 받기, <code>id_token</code> 발급, 그리고 클라이언트 내부의 <strong>id_token 검증 5단계</strong>(보라색 <span class="badge oidc">↻ 검증(내부)</span>), 마지막 <code>UserInfo</code>까지. <strong>다음 ▶</strong>로 한 줄씩 따라가 보세요.</p>
+    <p>앞의 <a href="#bigpicture">전체 흐름</a>이 인가(Authorization Code) 중심이었다면, 이번엔 <strong>OIDC만의 부분</strong>에 초점을 맞춰 한 메시지씩 따라갑니다 — OP(OpenID Provider, 곧 인증 서버)의 <code>.well-known</code> 디스커버리, <code>JWKS</code> 공개키 받기, <code>id_token</code> 발급, 그리고 클라이언트 내부의 <strong>id_token 검증 5단계</strong>(보라색 <span class="badge oidc">↻ 검증(내부)</span>), 마지막 <code>UserInfo</code>까지. <strong>다음 ▶</strong>로 한 줄씩 따라가 보세요.</p>
 
     <div class="callout oidc">
       <h4><span class="ic">🆚</span> 일반 OAuth2와 다른, OIDC만의 메시지들</h4>
       <ul style="margin:0">
-        <li><code>scope=openid</code> — 이게 있어야 OP가 <code>id_token</code>을 함께 발급합니다(OIDC 스위치).</li>
+        <li><code>scope=openid</code> — 이 값이 있어야 OP가 <code>id_token</code>을 함께 발급합니다(OIDC 스위치).</li>
         <li><code>.well-known/openid-configuration</code> · <code>jwks_uri</code> — 엔드포인트 위치와 <strong>서명 검증용 공개키</strong>를 표준 방식으로 찾습니다.</li>
         <li><code>nonce</code> · <code>at_hash</code> — id_token 재생(replay) 공격 방지와 access_token 바인딩.</li>
         <li><code>/userinfo</code> — 필요하면 추가 사용자 정보(claims)를 받습니다.</li>
@@ -806,7 +806,7 @@ grant_type=authorization_code
 
     <div class="callout warn">
       <h4><span class="ic">🧭</span> 헷갈리기 쉬운 점: 이 경로 이름들은 "표준"이 아니다</h4>
-      <p>아래 시퀀스의 <code>/authorize</code> · <code>/token</code> · <code>/userinfo</code> · <code>/jwks</code> 는 전부 <strong>예시 경로</strong>일 뿐입니다. OIDC에서 경로 이름까지 표준으로 고정된 것은 <strong>딱 하나</strong> — 디스커버리 문서 경로 <code>/.well-known/openid-configuration</code> 입니다.</p>
+      <p>아래 시퀀스의 <code>/authorize</code> · <code>/token</code> · <code>/userinfo</code> · <code>/jwks</code>는 전부 <strong>예시 경로</strong>일 뿐입니다. OIDC에서 경로 이름까지 표준으로 고정된 것은 <strong>딱 하나</strong> — 디스커버리 문서 경로 <code>/.well-known/openid-configuration</code> 입니다.</p>
       <ul style="margin:8px 0 0">
         <li>Google: 토큰 <code>oauth2.googleapis.com/token</code> · JWKS <code>www.googleapis.com/oauth2/v3/certs</code></li>
         <li>Auth0: <code>/authorize</code> · <code>/oauth/token</code> · <code>/userinfo</code></li>
@@ -847,7 +847,7 @@ grant_type=authorization_code
 
     <div class="callout ok">
       <h4><span class="ic">✅</span> 왜 안전한가</h4>
-      <p>코드는 <code>127.0.0.1</code> 안에서만 오가고(네트워크 미경유), 토큰 교환은 PKCE로 보호됩니다. 또 임베디드 웹뷰가 아니라 <strong>진짜 시스템 브라우저</strong>를 써서 기존 세션·패스키·비밀번호 관리자를 그대로 활용하고, 도구가 비밀번호를 엿볼 여지를 없앱니다. 받은 토큰은 <strong>OS 키체인</strong>(macOS Keychain·Windows Credential Manager·libsecret)에 보관하는 게 정석입니다.</p>
+      <p>코드는 <code>127.0.0.1</code> 안에서만 오가고(네트워크 미경유), 토큰 교환은 PKCE로 보호됩니다. 또 임베디드 웹뷰가 아니라 <strong>진짜 시스템 브라우저</strong>를 쓰므로, 도구가 비밀번호를 엿볼 여지가 없습니다. 받은 토큰은 <strong>OS 키체인</strong>(macOS Keychain·Windows Credential Manager·libsecret)에 보관하는 게 정석입니다.</p>
     </div>
 
     <h3>② 디바이스 코드 — 입력은 폰에서, 토큰은 기기가 폴링으로</h3>
@@ -948,7 +948,7 @@ grant_type=authorization_code
       <ul style="margin:0">
         <li><strong>주체가 '사람'이다.</strong> 그 사람이 퇴사하면 운영 서비스가 갑자기 멈춥니다. 감사 로그도 "김개발이 했다"로 찍혀 진짜 행위 주체(서비스)가 가려집니다.</li>
         <li><strong>권한이 과하다.</strong> 보통 그 사람 계정의 넓은 권한을 그대로 물려받습니다. (그래서 GitHub은 권한을 좁히는 <em>fine-grained PAT</em>를 권장)</li>
-        <li><strong>오래 산다 & 잘 샌다.</strong> 만료를 안 걸면 영원히 유효하고, 실수로 코드에 커밋돼 유출되는 사고가 가장 흔합니다.</li>
+        <li><strong>오래 살고, 잘 샌다.</strong> 만료를 안 걸면 영원히 유효하고, 실수로 코드에 커밋돼 유출되는 사고가 가장 흔합니다.</li>
       </ul>
     </div>
     <p>그래서 PAT를 쓸 거면: <span class="chip">fine-grained 우선</span><span class="chip">만료일 필수</span><span class="chip">secret manager 보관</span><span class="chip">절대 커밋 금지</span><span class="chip">정기 회전</span></p>
@@ -1030,7 +1030,7 @@ grant_type=authorization_code
 
     <div class="callout warn">
       <h4><span class="ic">💾</span> 토큰을 브라우저 어디에 저장하나?</h4>
-      <p>SPA에서 토큰을 <code>localStorage</code>에 두면 편하지만 <strong>XSS 한 방에 통째로 털립니다.</strong> 반대로 <code>HttpOnly</code> 쿠키는 JS가 못 읽어 XSS엔 강하지만 <strong>CSRF 대비(SameSite 등)</strong>가 필요하죠. 정답은 상황마다 다르고, 점점 <strong>BFF(Backend-for-Frontend)</strong> 패턴 — 토큰은 백엔드가 쥐고 브라우저엔 세션 쿠키만 주는 방식 — 이 권장됩니다.</p>
+      <p>SPA에서 토큰을 <code>localStorage</code>에 두면 편하지만 <strong>XSS 한 방에 통째로 털립니다.</strong> 반대로 <code>HttpOnly</code> 쿠키는 JS가 못 읽어 XSS엔 강하지만 <strong>CSRF 대비(SameSite 등)</strong>가 필요하죠. 정답은 상황마다 다릅니다. 다만 토큰은 백엔드가 쥐고 브라우저엔 세션 쿠키만 내주는 <strong>BFF(Backend-for-Frontend)</strong> 패턴이 점점 권장되는 추세입니다.</p>
     </div>
   </section>
 
@@ -1409,7 +1409,7 @@ const MAIN_STEPS=[
   {from:'auth',to:'browser',ch:'front',cap:'302 → 콜백(code)',wire:'HTTP/1.1 302 Found\nLocation: https://app.example.com/callback?\n  code=SplxlOBeZQQYbYS6WxSbIA&state=st_7Yqk9bV2',note:'<p><span class="nl what">무슨 일</span>인증 서버가 브라우저를 앱의 redirect_uri로 되돌려 보냅니다. 주소창에 code와 state가 붙어 옵니다.</p><p><span class="nl why">왜 중요</span>돌아오는 건 토큰이 아니라 <b>authorization code(교환권)</b>입니다. 프론트채널(주소창)은 노출될 수 있어서, 진짜 토큰 대신 한 번 더 교환해야 하는 코드만 보냅니다.</p>'},
   {from:'browser',to:'client',ch:'front',cap:'GET /callback?code',wire:'GET /callback?code=Splx...&state=st_7Yqk9bV2\nHost: app.example.com',note:'<p><span class="nl what">무슨 일</span>브라우저가 code·state를 들고 앱의 콜백 주소로 돌아옵니다. 앱이 가장 먼저 하는 일은 <b>state 검증</b>입니다.</p><p><span class="nl why">왜 중요</span>저장해 둔 state와 돌아온 state가 다르면 CSRF이거나 다른 흐름의 응답입니다. 즉시 중단해야 합니다.</p><p><span class="nl tip">초보 주의</span>state가 맞을 때만 토큰 교환으로 넘어갑니다. 순서를 바꾸면 안 됩니다.</p>'},
   {from:'client',to:'auth',ch:'back',cap:'POST /token (백채널)',wire:'POST /oauth/token   ← 브라우저를 거치지 않음!\ngrant_type=authorization_code\n&code=Splx...&code_verifier=dBjftJ...\n&client_id=study-client&client_secret=••••••\n&redirect_uri=https://app.example.com/callback',note:'<p><span class="nl what">무슨 일</span>여기서부터 <b>백채널</b>(서버 대 서버, 브라우저 안 거침)입니다. 앱이 교환권(code)을 토큰으로 바꿔 달라고 요청합니다.</p><p><span class="nl why">왜 중요</span>이때 PKCE의 code_verifier(열쇠 원본)와 client_secret을 증명합니다. 코드만 훔친 공격자는 verifier가 없어 이 단계에서 막힙니다 — 코드 노출이 곧 탈취로 이어지지 않는 이유입니다.</p><p><span class="nl tip">초보 주의</span>이 요청은 secret을 숨길 수 있는 서버에서 보내야 합니다. 브라우저 자바스크립트에서 client_secret을 쓰면 그 즉시 노출됩니다.</p>'},
-  {from:'auth',to:'client',ch:'back',cap:'200 토큰들',wire:'HTTP/1.1 200 OK\n{\n  "access_token": "at_eyJ...",\n  "id_token": "eyJhbGc...",\n  "refresh_token": "rt_8xM...",\n  "expires_in": 3600\n}',note:'<p><span class="nl what">무슨 일</span>드디어 진짜 토큰이 옵니다 — access_token(권한), id_token(신원·OIDC), refresh_token(갱신용).</p><p><span class="nl why">왜 중요</span>id_token을 쓰는 로그인이라면, 앱은 받자마자 서명·iss·aud·exp·nonce를 검증해 "누가 로그인했는지"를 확정합니다. access_token은 API를 부를 때 쓰는 출입증입니다.</p><p><span class="nl tip">초보 주의</span>세 토큰의 역할이 다릅니다. access는 자원 접근, id는 신원 증명, refresh는 재발급용 — 서로 바꿔 쓰면 안 됩니다.</p>'},
+  {from:'auth',to:'client',ch:'back',cap:'200 토큰들',wire:'HTTP/1.1 200 OK\n{\n  "access_token": "at_eyJ...",\n  "id_token": "eyJhbGc...",\n  "refresh_token": "rt_8xM...",\n  "expires_in": 3600\n}',note:'<p><span class="nl what">무슨 일</span>드디어 진짜 토큰이 옵니다 — access_token(권한), id_token(신원·OIDC), refresh_token(갱신용).</p><p><span class="nl why">왜 중요</span>id_token을 쓰는 로그인이라면, 앱은 받자마자 서명·iss·aud·exp·nonce를 검증해 "누가 로그인했는지"를 확정합니다. access_token은 API를 부를 때 내미는 팔찌입니다.</p><p><span class="nl tip">초보 주의</span>세 토큰의 역할이 다릅니다. access는 자원 접근, id는 신원 증명, refresh는 재발급용 — 서로 바꿔 쓰면 안 됩니다.</p>'},
   {from:'client',to:'browser',ch:'front',cap:'세션 쿠키 + 완료',wire:'HTTP/1.1 302 Found\nSet-Cookie: session=...; HttpOnly; Secure\nLocation: /dashboard',note:'<p><span class="nl what">무슨 일</span>앱이 자체 로그인 세션을 만들고(세션 쿠키), 사용자를 대시보드로 보냅니다.</p><p><span class="nl tip">초보 주의</span>세션 쿠키에는 HttpOnly·Secure를 거세요. 그리고 받은 access/id 토큰을 브라우저 localStorage에 그대로 두지 마세요 — XSS 탈취 위험이 큽니다.</p>'},
   {from:'client',to:'api',ch:'back',cap:'GET /api/me (Bearer)',wire:'GET /api/me\nAuthorization: Bearer at_eyJ...',note:'<p><span class="nl what">무슨 일</span>앱이 access_token을 Authorization: Bearer 헤더에 실어 보호된 API를 호출합니다.</p><p><span class="nl why">왜 중요</span>토큰은 URL 쿼리스트링이 아니라 <b>헤더</b>로 보냅니다. URL은 로그·기록에 남기 쉬워 토큰이 새기 때문입니다.</p>'},
   {from:'api',to:'client',ch:'back',cap:'200 사용자 데이터',wire:'HTTP/1.1 200 OK\n{ "id":"user_2489","name":"주니어 개발자" }',note:'<p><span class="nl what">무슨 일</span>API 서버가 토큰을 검증한 뒤 요청한 데이터를 돌려줍니다.</p><p><span class="nl why">왜 중요</span>API 서버는 토큰의 <b>서명·만료·scope·audience</b>를 직접 확인합니다. "토큰이 있으니 통과"가 아니라, 이 토큰이 이 API를 부를 자격이 있는지를 매번 검사합니다.</p>'}
@@ -1447,7 +1447,7 @@ const OIDC_STEPS=[
   {from:'client',to:'client',ch:'check',cap:'② iss · aud 검증',wire:'payload.iss == "https://auth.example.com"   (디스커버리의 issuer와 일치?)\npayload.aud == "study-client"               (이 토큰이 나(이 클라이언트)를 위한 것?)',note:'<p><span class="nl what">무슨 일</span>payload의 iss가 2단계에서 받은 issuer와 같은지, aud가 내 client_id와 같은지 비교합니다.</p><p><span class="nl why">왜 중요</span>iss 검증은 "내가 믿는 OP가 발급한 토큰인가"를, aud 검증은 "이 토큰이 다른 앱이 아니라 나를 위해 발급됐는가"를 보장합니다. aud를 안 보면, 다른 앱에 발급된 멀쩡히 서명된 토큰을 가져와 내 앱에 들이미는 공격이 통할 수 있습니다.</p><p><span class="nl tip">초보 주의</span>"서명만 맞으면 통과"는 흔한 실수입니다. 서명이 진짜여도 iss·aud가 내 것이 아니면 거부해야 합니다.</p>'},
   {from:'client',to:'client',ch:'check',cap:'③ exp · iat 검증',wire:'payload.exp > now      (만료되지 않았나?)\npayload.iat ≈ now       (발급 시각이 비정상적으로 과거/미래는 아닌가?)',note:'<p><span class="nl what">무슨 일</span>payload의 exp(만료 시각)가 아직 지나지 않았는지, iat(발급 시각)가 비정상적으로 과거나 미래는 아닌지 확인합니다.</p><p><span class="nl why">왜 중요</span>만료된 id_token의 재사용을 막습니다. id_token은 보통 수명이 짧고 "로그인 시점의 신원 증명" 용도라, 한 번 쓰고 끝나는 게 정상입니다.</p><p><span class="nl tip">초보 주의</span>서버 간 시계 차이(clock skew) 때문에 보통 몇 분의 여유는 허용하되, 그 이상 지난 토큰은 거부합니다. 여유를 너무 크게 주면 만료 검증이 무의미해집니다.</p>'},
   {from:'client',to:'client',ch:'check',cap:'④ nonce 검증',wire:'payload.nonce == "n_4Wv2sLpQ"   (6단계에서 내가 보낸 nonce와 같은가?)',note:'<p><span class="nl oidc">재생 방어</span>id_token 안의 nonce가, 5단계에서 내가 만들어 6단계 요청에 실어 보낸 그 nonce와 같은지 비교합니다.</p><p><span class="nl why">왜 중요</span>이게 같아야 "이 id_token은 바로 내가 방금 시작한 그 로그인의 결과"임이 증명됩니다. 공격자가 과거에 가로챈 멀쩡한 id_token을 재생(replay)해도, 그 토큰의 nonce는 지금 내 nonce와 다르므로 거부됩니다.</p><p><span class="nl tip">초보 주의</span>세션에 저장해 둔 값과 비교한 뒤 즉시 폐기합니다. 같은 nonce를 재사용하면 재생 방어가 깨집니다.</p>'},
-  {from:'client',to:'client',ch:'check',cap:'⑤ at_hash 검증 (조건부)',wire:'(id_token에 at_hash가 있을 때만)\nleft128bits( SHA-256(access_token) ) → base64url\n  == payload.at_hash ?',note:'<p><span class="nl what">무슨 일</span>at_hash가 들어 있다면, access_token을 SHA-256 해시한 뒤 앞 절반을 base64url로 만든 값이 id_token의 at_hash와 같은지 비교합니다.</p><p><span class="nl why">왜 중요</span>id_token과 access_token이 한 쌍으로 묶여 발급됐음을(토큰 바인딩) 증명합니다. access_token만 바꿔치기했다면 at_hash가 맞지 않아 걸러집니다.</p><p><span class="nl tip">초보 주의</span>★백채널 code 흐름에서는 at_hash가 <b>없는 OP가 대부분</b>이라 실무에선 거의 검증하지 않습니다 — <b>없다고 거부하면 정상 로그인이 깨집니다.</b> at_hash가 필수가 되는 건 토큰이 프론트채널로 직접 오는 implicit·hybrid 흐름이고, 거기선 OIDC가 검증을 필수로 요구합니다. <b>값이 있을 때만</b> 검증하세요.</p>'},
+  {from:'client',to:'client',ch:'check',cap:'⑤ at_hash 검증 (조건부)',wire:'(id_token에 at_hash가 있을 때만)\nleft128bits( SHA-256(access_token) ) → base64url\n  == payload.at_hash ?',note:'<p><span class="nl what">무슨 일</span>at_hash가 들어 있다면, access_token을 SHA-256 해시한 뒤 앞 절반을 base64url로 만든 값이 id_token의 at_hash와 같은지 비교합니다.</p><p><span class="nl why">왜 중요</span>id_token과 access_token이 한 쌍으로 묶여 발급됐음을(토큰 바인딩) 증명합니다. access_token만 바꿔치기했다면 at_hash가 맞지 않아 걸러집니다.</p><p><span class="nl tip">초보 주의</span>★백채널 code 흐름에서는 at_hash가 <b>없는 OP가 대부분</b>이라 실무에선 거의 검증하지 않습니다 — <b>없다고 거부하면 정상 로그인이 깨집니다.</b> at_hash가 꼭 있어야 하는 건 토큰이 프론트채널로 직접 오는 implicit·hybrid 흐름입니다. 거기선 OIDC가 검증을 필수로 요구합니다. <b>값이 있을 때만</b> 검증하세요.</p>'},
   {from:'client',to:'op',ch:'back',cap:'GET /userinfo (Bearer)',wire:'GET /userinfo\nHost: auth.example.com\nAuthorization: Bearer at_eyJ…',note:'<p><span class="nl what">무슨 일</span>id_token 검증이 끝난 뒤, 더 많은 사용자 정보가 필요하면 access_token을 Bearer로 넣어 UserInfo 엔드포인트를 호출합니다.</p><p><span class="nl why">왜 중요</span>id_token에는 최소한의 신원 정보만 담는 경우가 많습니다. 프로필 사진, 이메일 인증 여부 같은 추가 claim이 필요할 때 여기서 받아옵니다. 신원 확인 자체는 이미 id_token으로 끝났고, 이건 보강 단계입니다.</p><p><span class="nl tip">초보 주의</span>꼭 필요할 때만 부르세요. id_token에 이미 원하는 claim이 다 있다면 생략해도 되고, 매번 부르면 불필요한 왕복이 늘어납니다.</p>'},
   {from:'op',to:'client',ch:'back',cap:'200 사용자 정보',wire:'HTTP/1.1 200 OK\n{\n  "sub": "248289761001",\n  "name": "주니어 개발자",\n  "email": "junior@example.com",\n  "email_verified": true\n}',note:'<p><span class="nl what">무슨 일</span>OP가 access_token을 확인하고 사용자 정보(sub·name·email 등)를 JSON으로 돌려줍니다.</p><p><span class="nl why">왜 중요</span>응답의 <b>sub</b>는 id_token의 sub와 반드시 같아야 합니다. sub는 그 OP 안에서 사용자를 가리키는 불변 식별자입니다. 두 값이 다르면 서로 다른 사용자의 토큰을 섞어 쓰는 상황이므로 거부해야 합니다.</p><p><span class="nl tip">초보 주의</span>사용자를 DB에서 식별할 때 email이 아니라 <b>iss + sub 조합</b>을 키로 쓰세요. email은 바뀔 수 있지만 sub는 안 바뀝니다.</p>'},
   {from:'client',to:'browser',ch:'front',cap:'세션 쿠키 + 완료',wire:'HTTP/1.1 302 Found\nSet-Cookie: session=…; HttpOnly; Secure; SameSite=Lax\nLocation: /dashboard',note:'<p><span class="nl what">무슨 일</span>모든 검증을 통과하면 클라이언트는 OIDC 토큰과 별개로 <b>자체 로그인 세션</b>을 만들고(보통 세션 쿠키), 사용자를 대시보드로 보냅니다.</p><p><span class="nl why">왜 중요</span>id_token은 "로그인 순간의 신원 증명"이지 세션 유지 수단이 아닙니다. 이후 페이지 이동은 앱이 발급한 세션 쿠키로 처리합니다. 쿠키에는 HttpOnly·Secure·SameSite를 걸어 탈취·전송 위험을 줄입니다.</p><p><span class="nl tip">초보 주의</span>id_token이나 access_token을 브라우저 localStorage에 그대로 보관하지 마세요. XSS로 탈취되면 그대로 도용됩니다. 서버 세션 + HttpOnly 쿠키가 기본입니다.</p>'}
@@ -1462,7 +1462,7 @@ const NATIVE_ACTORS=[
 const NATIVE_STEPS=[
   {from:'user',to:'cli',ch:'ui',cap:'$ claude login',wire:'(터미널에서 로그인 명령 실행)',note:'<p><span class="nl what">무슨 일</span>사용자가 CLI 도구에 로그인을 시작합니다.</p><p><span class="nl why">왜 중요</span>CLI는 브라우저도 없고 client_secret도 숨길 수 없는 <b>public client</b>라, 웹 서버와는 다른 방식이 필요합니다. 그 답이 루프백 리다이렉트입니다.</p>'},
   {from:'cli',to:'cli',ch:'check',cap:'PKCE 생성 + 로컬 서버 기동',wire:'code_verifier / code_challenge 생성\nstate 생성\n임시 콜백 서버 listen:\n  http://127.0.0.1:53217/callback   (빈 포트 자동 선택)',note:'<p><span class="nl what">무슨 일</span>CLI가 자기 PC에 잠깐 쓸 콜백용 HTTP 서버를 임의의 빈 포트로 띄웁니다. 동시에 PKCE 값과 state를 만듭니다.</p><p><span class="nl why">왜 중요</span>브라우저가 인증 후 코드를 "어딘가로" 돌려줘야 하는데, 데스크톱 앱엔 공개 도메인이 없습니다. 그래서 자기 PC의 루프백 주소(127.0.0.1)를 redirect_uri로 씁니다(RFC 8252).</p><p><span class="nl tip">초보 주의</span>secret이 없으니 PKCE가 코드 보호의 전부입니다. 포트는 고정하지 말고 매번 빈 포트를 받아 쓰는 게 충돌·선점에 안전합니다.</p>'},
-  {from:'cli',to:'browser',ch:'ui',cap:'시스템 브라우저 열기',wire:'open "https://auth.example.com/authorize?\n  response_type=code&client_id=cli-tool\n  &redirect_uri=http://127.0.0.1:53217/callback\n  &scope=openid offline_access\n  &code_challenge=E9Mel…&code_challenge_method=S256\n  &state=st_…"',note:'<p><span class="nl what">무슨 일</span>CLI가 사용자의 기본 웹 브라우저를 열어 OP 로그인 페이지로 보냅니다.</p><p><span class="nl why">왜 중요</span>임베디드 웹뷰가 아니라 <b>진짜 시스템 브라우저</b>를 쓰는 게 RFC 8252 권고입니다 — 기존 로그인 세션·비밀번호 관리자·패스키를 그대로 활용하고, 도구가 비밀번호를 엿볼 여지를 없앱니다.</p><p><span class="nl tip">초보 주의</span>redirect_uri가 https가 아니라 http이지만, 127.0.0.1(루프백)이라 예외적으로 허용됩니다. 로컬 주소는 외부에서 가로채기 어렵기 때문입니다. IPv6 <code>[::1]</code>도 동일하게 허용되며(단 <code>localhost</code> 호스트명은 비권장), OP는 루프백 redirect의 <b>포트 번호를 등록값과 대조하지 않습니다</b> — 그래서 매번 다른 빈 포트를 써도 됩니다(RFC 8252).</p>'},
+  {from:'cli',to:'browser',ch:'ui',cap:'시스템 브라우저 열기',wire:'open "https://auth.example.com/authorize?\n  response_type=code&client_id=cli-tool\n  &redirect_uri=http://127.0.0.1:53217/callback\n  &scope=openid offline_access\n  &code_challenge=E9Mel…&code_challenge_method=S256\n  &state=st_…"',note:'<p><span class="nl what">무슨 일</span>CLI가 사용자의 기본 웹 브라우저를 열어 OP 로그인 페이지로 보냅니다.</p><p><span class="nl why">왜 중요</span>임베디드 웹뷰가 아니라 <b>진짜 시스템 브라우저</b>를 쓰는 게 RFC 8252 권고입니다 — 기존 로그인 세션·비밀번호 관리자·패스키를 그대로 활용하고, 도구가 비밀번호를 엿볼 여지를 없앱니다.</p><p><span class="nl tip">초보 주의</span>redirect_uri가 https가 아니라 http이지만, 127.0.0.1(루프백)이라 예외적으로 허용됩니다. 로컬 주소는 외부에서 가로채기 어렵기 때문입니다. IPv6 <code>[::1]</code>도 동일하게 허용됩니다(단 <code>localhost</code> 호스트명은 비권장). 또 OP는 루프백 redirect의 <b>포트 번호를 등록값과 대조하지 않습니다</b> — 그래서 매번 다른 빈 포트를 써도 됩니다(RFC 8252).</p>'},
   {from:'browser',to:'op',ch:'front',cap:'GET /authorize',wire:'GET /authorize?...(위 파라미터)\nHost: auth.example.com',note:'<p><span class="nl what">무슨 일</span>브라우저가 OP에 도착해 로그인·동의 화면을 띄웁니다.</p><p><span class="nl why">왜 중요</span>여기서부터는 일반 웹 OIDC와 똑같습니다 — 비밀번호는 OP에만 입력되고, CLI는 그 과정을 보지 못합니다.</p>'},
   {from:'op',to:'browser',ch:'front',cap:'302 → 127.0.0.1 콜백',wire:'HTTP/1.1 302 Found\nLocation: http://127.0.0.1:53217/callback?\n  code=SplxlOBe…&state=st_…',note:'<p><span class="nl what">무슨 일</span>로그인·동의가 끝나면 OP가 브라우저를 아까 그 루프백 주소로 되돌려 보냅니다.</p><p><span class="nl why">왜 중요</span>브라우저는 이 주소가 사용자 PC 자신(127.0.0.1)이라는 것만 알 뿐, 그게 CLI가 띄운 서버인지는 신경 쓰지 않습니다. 그냥 평소처럼 리다이렉트를 따라갈 뿐입니다.</p>'},
   {from:'browser',to:'cli',ch:'front',cap:'GET 127.0.0.1/callback?code',wire:'GET /callback?code=Splx…&state=st_…\nHost: 127.0.0.1:53217',note:'<p><span class="nl what">무슨 일</span>브라우저가 코드를 CLI의 로컬 서버로 전달합니다. CLI는 받은 state를 자신이 만든 값과 대조합니다.</p><p><span class="nl why">왜 중요</span>이렇게 CLI가 브라우저로부터 authorization code를 넘겨받습니다. 이 전달은 네트워크를 타지 않고 같은 PC 안에서 끝납니다.</p><p><span class="nl tip">초보 주의</span>같은 PC의 다른 로컬 프로세스가 끼어드는 걸 막기 위해 state·PKCE 검증이 여전히 중요합니다.</p>'},

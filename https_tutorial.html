@@ -1041,7 +1041,7 @@ button:focus-visible, .pick:focus-visible, .term:focus-visible, a:focus-visible,
 
       <p>그래서 미국 표준기술연구소는 공개 공모를 엽니다. 전 세계에서 후보를 받고, 몇 년에 걸쳐 서로 공격하게 하고, 살아남은 것을 표준으로 삼는 방식으로요.
       1997년에 시작해 2001년에 벨기에 연구자들의 <b>Rijndael</b>이 <span class="term" data-t="AES">AES</span>로 확정됐습니다.
-      전 과정이 공개된 채로 진행됐다는 점에 주목할 만합니다. 케르크호프스의 원칙이 제도로 굳어진 순간이었거든요.</p>
+      전 과정이 공개된 채로 진행됐습니다. 케르크호프스의 원칙이 제도로 굳어진 순간이었거든요.</p>
 
       <div class="tb-wrap">
       <table class="tb">
@@ -1629,7 +1629,7 @@ button:focus-visible, .pick:focus-visible, .term:focus-visible, a:focus-visible,
           <li><b>SSH 키</b> — <span class="mono">id_rsa</span>. 다만 SHA-1을 쓰는 옛 <span class="mono">ssh-rsa</span> 방식은 OpenSSH 8.8(2021)에서 기본 비활성화됐으니, 새로 만든다면 <span class="mono">ed25519</span>를 권합니다</li>
           <li><b>코드·문서 서명</b> — 검증이 압도적으로 많은 영역이라 RSA가 잘 맞습니다</li>
         </ul>
-        <p style="margin-top:10px">다만 방향은 정해져 있습니다. 새로 만드는 것에는 타원곡선을 고르고, 15장에서 볼 <b>양자내성 암호</b>로 넘어갈 때
+        <p style="margin-top:10px">다만 앞날은 정해져 있습니다. 새로 만드는 것에는 타원곡선을 고르고, 15장에서 볼 <b>양자내성 암호</b>로 넘어갈 때
         RSA는 가장 먼저 정리될 자리에 있습니다. 소인수분해와 이산 로그를 동시에 무너뜨리는 것이 바로 그 알고리즘이거든요.</p>
       </div>
 
@@ -2092,7 +2092,7 @@ sudo certbot renew --dry-run</code></pre>
 
       <p>1.2와 1.3의 메시지를 나란히 보면 차이가 한눈에 들어옵니다. 1.2에서는 이런 순서였습니다.
       클라이언트가 "이런 암호들 쓸 수 있어요" 하고 목록을 보내면, 서버가 "그럼 이걸로 하죠" 하고 고릅니다.
-      <b>그제서야</b> 그 방식에 맞는 키 교환 값을 주고받기 시작하죠. 협상이 끝나야 재료를 꺼낼 수 있으니 왕복이 두 번 필요했습니다.</p>
+      <b>그제야</b> 그 방식에 맞는 키 교환 값을 주고받기 시작하죠. 협상이 끝나야 재료를 꺼낼 수 있으니 왕복이 두 번 필요했습니다.</p>
 
       <p>1.3은 순서를 뒤집습니다. 클라이언트가 첫 메시지에서 <b>"아마 X25519를 쓰시겠죠?" 하고 미리 자기 키 교환 값까지 함께 던집니다.</b>
       선택지가 다섯 개뿐이라 이 추측은 거의 항상 맞습니다. 서버는 첫 응답에서 자기 값을 돌려주면 되고요.
@@ -2267,7 +2267,7 @@ sudo certbot renew --dry-run</code></pre>
 
       <p>HTTPS 페이지 안에서 이미지 하나를 <span class="mono">http://</span>로 불러오면 어떻게 될까요.
       그 이미지 요청은 평문으로 나가고, 중간자가 이미지를 바꿔치기할 수 있습니다. 스크립트라면 더 심각합니다 — 페이지 전체를 장악당하는 거죠.
-      이걸 <b>혼합 콘텐츠(mixed content)</b>라 하고, 요즘 브라우저는 스크립트·CSS 같은 능동적 리소스는 아예 차단하고 이미지는 자동으로 HTTPS로 승격시키려 시도합니다.</p>
+      이걸 <b>혼합 콘텐츠(mixed content)</b>라 합니다. 요즘 브라우저는 스크립트·CSS 같은 능동적 리소스는 아예 차단하고, 이미지는 자동으로 HTTPS로 승격시키려 시도하고요.</p>
 
       <p>쿠키도 같은 맥락에서 손봐야 합니다. <span class="mono">Secure</span> 속성이 없는 쿠키는 <b>평문 HTTP 요청에도 그대로 실려 나갑니다.</b>
       사이트 전체가 HTTPS라도, 어쩌다 발생한 평문 요청 하나에 세션 쿠키가 딸려 나가면 그걸로 끝입니다.</p>
@@ -2288,7 +2288,7 @@ sudo certbot renew --dry-run</code></pre>
 
       <div class="callout warn">
         <h4>🧩 안전은 얻었는데 체감이 무겁다</h4>
-        <p>TCP 악수 한 번, TLS 악수 한 번. 여기에 인증서 몇 KB가 오가고, 페이지 하나에 딸린 리소스가 80개쯤 되고요.
+        <p>TCP 핸드셰이크 한 번, TLS 핸드셰이크 한 번. 여기에 인증서 몇 KB가 오가고, 페이지 하나에 딸린 리소스가 80개쯤 되고요.
         HTTPS로 바꿨더니 사이트가 느려졌다는 불평이 2010년대 초반에 실제로 많았습니다.
         <b>그 느려짐의 정체는 암호화 연산이 아니었습니다.</b> 범인은 다른 곳에 있었고, 11장에서 그 정체가 드러납니다.</p>
       </div>
@@ -2314,7 +2314,7 @@ sudo certbot renew --dry-run</code></pre>
         <h2 class="sec-title">🚶 느려진 범인은<br>암호화 연산이 아니었다 <span class="lvl must">🟢 필수</span></h2>
       </div>
 
-      <p class="lead">HTTPS로 바꾸면 느려진다는 말이 한동안 정설처럼 돌았습니다. 저도 CPU가 암호화하느라 바쁜 줄 알았습니다.
+      <p class="lead">HTTPS로 바꾸면 느려진다는 말이 한동안 정설처럼 돌았습니다. 저도 CPU가 암호화하느라 바쁘겠거니 했습니다.
       측정해 보면 그렇지 않더군요. AES-NI 같은 전용 명령어를 쓰는 요즘 서버에서 <b>대칭키 암·복호화가 차지하는 비용은 1% 안팎</b>입니다.
       진짜 범인은 연산이 아니라 <b>기다림</b>이었습니다.</p>
 
@@ -2322,10 +2322,10 @@ sudo certbot renew --dry-run</code></pre>
 
       <p>초기 웹은 문서 하나를 받아 오면 끝이었습니다. 1996년의 HTTP/1.0은 그 시절에 맞게 <b>요청 하나 → 응답 하나 → 연결 종료</b>였고요.
       그런데 웹페이지에 이미지가 붙기 시작합니다. 이미지 30개짜리 페이지라면 TCP 연결을 서른 번 열고 닫아야 했죠.
-      HTTPS라면 여기에 TLS 악수까지 서른 번입니다. 왕복 지연이 곱하기로 늘어납니다.</p>
+      HTTPS라면 여기에 TLS 핸드셰이크까지 서른 번입니다. 왕복 지연이 곱하기로 늘어납니다.</p>
 
       <p>1997년 HTTP/1.1이 <b>keep-alive</b>를 기본값으로 만들면서 이 부분은 크게 나아졌습니다. 연결 하나를 열어 두고 여러 요청을 재사용하는 거죠.
-      악수 비용을 한 번만 내면 되니 즉효였습니다. 그런데 새 문제가 따라옵니다.</p>
+      핸드셰이크 비용을 한 번만 내면 되니 즉효였습니다. 그런데 새 문제가 따라옵니다.</p>
 
       <div class="callout bad">
         <h4>🚧 한 줄로 서서 기다린다 — HTTP 수준의 HOL 블로킹</h4>
@@ -2359,7 +2359,7 @@ sudo certbot renew --dry-run</code></pre>
       </div>
 
       <p>연결을 1개에서 6개로 늘리면 확실히 빨라집니다. 그런데 6개에서 8개로 늘려도 별로 나아지지 않죠.
-      악수 비용이 연결마다 새로 들고, 각 연결은 <b>느린 시작(slow start)</b> 때문에 처음엔 조금씩만 보내기 때문입니다.
+      핸드셰이크 비용이 연결마다 새로 들고, 각 연결은 <b>느린 시작(slow start)</b> 때문에 처음엔 조금씩만 보내기 때문입니다.
       연결을 늘려서 얻는 이득은 금방 한계에 부딪힙니다.</p>
 
       <div class="callout tip">
@@ -2375,9 +2375,9 @@ sudo certbot renew --dry-run</code></pre>
         <div class="q-head">✅ 체크포인트</div>
         <div class="q">HTTP/1.1에서 브라우저가 출처당 연결을 6개로 제한하는데, 이걸 20개로 늘리면 항상 빨라질까요?</div>
         <button class="opt" data-opt="a"><span class="mk">A</span> 그렇다. 병렬성이 높을수록 무조건 빠르다</button>
-        <button class="opt" data-opt="b"><span class="mk">B</span> 아니다. 연결마다 악수 비용과 느린 시작이 새로 들고, 대역폭 경쟁으로 혼잡이 심해진다</button>
+        <button class="opt" data-opt="b"><span class="mk">B</span> 아니다. 연결마다 핸드셰이크 비용과 느린 시작이 새로 들고, 대역폭 경쟁으로 혼잡이 심해진다</button>
         <button class="opt" data-opt="c"><span class="mk">C</span> 아니다. 브라우저 명세가 금지하기 때문이다</button>
-        <div class="explain"><b>정답 B.</b> 연결은 공짜가 아닙니다. TCP+TLS 악수, 커널 자원, 각 연결의 혼잡 윈도우가 따로 놀면서
+        <div class="explain"><b>정답 B.</b> 연결은 공짜가 아닙니다. TCP+TLS 핸드셰이크, 커널 자원, 각 연결의 혼잡 윈도우가 따로 놀면서
         전체 대역폭을 나눠 먹습니다. <b>병렬성을 늘리는 방향이 아니라, 연결 하나를 잘 쓰는 방향</b>이 옳다는 판단에서 HTTP/2가 나왔습니다.</div>
       </div>
     </section>
@@ -2419,7 +2419,7 @@ sudo certbot renew --dry-run</code></pre>
         <h4>📊 같은 리소스 12개 — HTTP/1.1과 나란히</h4>
         <div class="tlchart" id="h2Chart"></div>
         <div class="btn-row"><button class="sm primary" id="h2Run">▶ 다시 재생</button><span class="step-label" id="h2Total"></span></div>
-        <p class="hint">💡 HTTP/2 쪽은 악수를 <b>한 번만</b> 하고, 12개 요청이 동시에 출발합니다.
+        <p class="hint">💡 HTTP/2 쪽은 핸드셰이크를 <b>한 번만</b> 하고, 12개 요청이 동시에 출발합니다.
         대역폭은 나눠 쓰므로 개별 리소스는 조금씩 느려지지만, <b>전체가 끝나는 시각</b>이 앞당겨집니다.</p>
       </div>
 
@@ -2450,7 +2450,7 @@ sudo certbot renew --dry-run</code></pre>
       대신 <span class="mono">103 Early Hints</span>로 <em>"이것들을 미리 받아 두면 좋겠다"고 힌트만 주는</em> 방식이 자리를 잡았습니다.</p>
 
       <p>우선순위(priority) 기능도 비슷했습니다. 명세는 복잡했는데 구현이 제각각이라 기대만큼 동작하지 않았고, 결국 단순한 방식으로 재설계됐습니다.
-      <b>프로토콜에 넣었다고 다 쓰이는 건 아니라는</b> 사례로 기억해 둘 만합니다.</p>
+      <b>프로토콜에 넣었다고 다 쓰이는 건 아닙니다.</b></p>
 
       <div class="callout key">
         <h4>🔗 HTTP/2는 왜 사실상 HTTPS 전용인가</h4>
@@ -2524,7 +2524,7 @@ sudo certbot renew --dry-run</code></pre>
 
       <ul>
         <li><b>스트림별 독립 손실 복구</b> — 스트림 1의 패킷이 빠져도 스트림 3·5는 그대로 전달됩니다. TCP HOL 블로킹이 사라집니다.</li>
-        <li><b>악수의 통합</b> — TCP 악수와 TLS 악수를 <b>하나로 합쳤습니다.</b> 연결과 암호화가 동시에 완료되어 첫 접속이 1왕복, 재접속은 0왕복입니다.</li>
+        <li><b>핸드셰이크의 통합</b> — TCP 핸드셰이크와 TLS 핸드셰이크를 <b>하나로 합쳤습니다.</b> 연결과 암호화가 동시에 완료되어 첫 접속이 1왕복, 재접속은 0왕복입니다.</li>
         <li><b>연결 마이그레이션</b> — 연결을 IP·포트가 아니라 <b>Connection ID</b>로 식별합니다. 지하철에서 와이파이가 끊겨 LTE로 바뀌어도 <b>연결이 그대로 유지</b>됩니다. TCP였다면 끊기고 처음부터 다시 맺어야 했죠.</li>
         <li><b>더 나은 손실 복구</b> — 재전송 패킷에 새 번호를 붙여, 응답이 원본에 대한 것인지 재전송에 대한 것인지 명확히 구분합니다. TCP의 오래된 모호함 하나가 해소됩니다.</li>
         <li><b>암호화 범위 확대</b> — TCP는 헤더가 평문이라 중간 장비가 들여다보고 조작했지만, QUIC은 <b>대부분의 헤더까지 암호화</b>합니다.</li>
@@ -2605,7 +2605,7 @@ sudo certbot renew --dry-run</code></pre>
       </div>
 
       <p class="lead">원리를 다 쌓고 나면 남는 질문은 하나입니다. 그래서 내 서버의 설정 파일에는 결국 무엇을 적어야 하나?
-      좋은 소식은 <b>외울 게 별로 없다</b>는 겁니다. 08장에서 얻은 원칙 하나 — <em>약한 선택지를 끈다</em> — 만 지키면 대부분 해결되거든요.</p>
+      좋은 소식은 <b>외울 게 별로 없다</b>는 겁니다. 08장에서 얻은 원칙 하나 — <em>약한 옵션을 끈다</em> — 만 지키면 대부분 해결되거든요.</p>
 
       <h3>Nginx 설정, 한 줄씩</h3>
 
@@ -4043,7 +4043,7 @@ id=<span class="exposed">narusas@gmail.com</span>&amp;password=<span class="expo
       {s:'c', n:'{Finished}', d:'뒤늦게 핸드셰이크 마무리', e:1, desc:'<span class="tag">0-RTT · 그 대가</span>빠른 만큼 위험도 있습니다. 0-RTT 데이터에는 <b>이번 연결에만 유효하다는 증거가 없어</b>, 공격자가 복사해 두었다가 여러 번 재전송할 수 있습니다. <b>GET 같은 멱등 요청만</b> 실어야 합니다.'}
     ]},
     quic: { label:'QUIC (HTTP/3)', msgs:[
-      {s:'c', n:'Initial: ClientHello + key_share', d:'UDP 패킷 하나 · <b>연결 수립과 TLS를 동시에</b>', desc:'<span class="tag">QUIC · 13장</span>TCP 악수가 <b>없습니다</b>. QUIC은 연결 수립과 TLS 핸드셰이크를 하나로 합쳤거든요. UDP는 규칙이 없는 껍데기라, 필요한 절차를 QUIC이 직접 정의합니다.'},
+      {s:'c', n:'Initial: ClientHello + key_share', d:'UDP 패킷 하나 · <b>연결 수립과 TLS를 동시에</b>', desc:'<span class="tag">QUIC · 13장</span>TCP 핸드셰이크가 <b>없습니다</b>. QUIC은 연결 수립과 TLS를 하나로 합쳤거든요. UDP는 규칙이 없는 껍데기라, 필요한 절차를 QUIC이 직접 정의합니다.'},
       {s:'s', n:'Initial + Handshake: {Certificate}{CertificateVerify}{Finished}', d:'서버 응답 한 번에 전부', e:1, desc:'<span class="tag">QUIC</span>TLS 1.3과 같은 내용이 QUIC 패킷 안에 담겨 옵니다. 암호 방식도 그대로 TLS 1.3이고요 — <b>QUIC은 TLS를 대체한 게 아니라 품었습니다.</b>'},
       {s:'c', n:'{Finished} + {HTTP/3 요청}', d:'확인과 동시에 요청 전송', e:1, desc:'<span class="tag">QUIC · 누적 1 RTT</span><b>왕복 한 번</b>에 연결·암호화·인증이 전부 끝나고 요청까지 나갔습니다. TLS 1.3(총 2왕복)보다 또 하나 줄었죠. 재접속이라면 0왕복도 가능합니다.', rtt:1}
     ]}
@@ -4227,7 +4227,7 @@ const SIM = (function(){
   }
 
   const LEGEND = `<div class="tlc-legend">
-      <span><i class="setup"></i>연결·TLS 악수</span>
+      <span><i class="setup"></i>연결·핸드셰이크</span>
       <span><i class="wait"></i>요청 왕복 대기</span>
       <span><i class="xfer"></i>데이터 전송</span>
       <span><i class="stall"></i>패킷 손실로 정지</span>
@@ -4293,7 +4293,7 @@ const SIM = (function(){
     $('#h1ConnV').textContent = conns;
     const data = SIM.build('h1', {conns});
     const max = SIM.render(el, [{name:`HTTP/1.1 · 동시 연결 ${conns}개`, data}], false);
-    $('#h1Total').textContent = `총 ${Math.round(data.total)}ms · 악수 ${conns}회`;
+    $('#h1Total').textContent = `총 ${Math.round(data.total)}ms · 핸드셰이크 ${conns}회`;
     SIM.play(el, max);
   }
   slider.addEventListener('input', run);
@@ -4334,7 +4334,7 @@ const SIM = (function(){
       {name:'HTTP/3 (QUIC · 스트림 독립)', data:c}
     ], true);
     const note = loss === 0
-      ? `손실 없음 — HTTP/2 ${Math.round(b.total)}ms vs HTTP/3 ${Math.round(c.total)}ms. 차이는 악수 왕복 하나뿐입니다.`
+      ? `손실 없음 — HTTP/2 ${Math.round(b.total)}ms vs HTTP/3 ${Math.round(c.total)}ms. 차이는 핸드셰이크 왕복 하나뿐입니다.`
       : `손실 ${loss}% — HTTP/2 ${Math.round(b.total)}ms vs HTTP/3 ${Math.round(c.total)}ms. HTTP/2는 손실 하나가 전체를 세웁니다.`;
     $('#raceNote').textContent = note;
     SIM.play(el, max);
