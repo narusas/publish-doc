@@ -472,6 +472,12 @@ table.t tr.hit td{background:rgba(52,211,153,.12)}
 .badge.fresh{color:var(--fresh); border-color:rgba(251,191,36,.4)}
 /* .badge.warn은 위(288행 부근)의 기본 .badge 규칙에 이미 있음 — var(--warn) 사용, 재정의하지 않는다 */
 
+/* 책임 축 배지 (10장에서 처음 씀 — 11장이 같은 클래스를 그대로 쓴다) */
+.badge.me{color:var(--own-me); border-color:rgba(244,114,182,.4)}
+.badge.aws{color:var(--own-aws); border-color:rgba(56,189,248,.4)}
+table.t tr.me td{background:rgba(244,114,182,.08)}
+table.t tr.aws td{background:rgba(56,189,248,.08)}
+
 /* ARN 해부 (4장) */
 .arn-full{margin:10px 0 14px}
 .arn-full code{font-size:15px; padding:8px 12px; display:inline-block; word-break:break-all}
@@ -1120,6 +1126,52 @@ button:focus-visible, .pick:focus-visible, .term:focus-visible, a:focus-visible,
       </div>
     </section>
 
+    <section id="managed" data-title="관리형">
+      <div class="sec-head">
+        <div class="kicker">10 · 분계선</div>
+        <h2 class="sec-title">🛠️ 남는 손, 가져가는 손 <span class="lvl must">🟢 필수</span></h2>
+      </div>
+      <p class="lead">김주임이 이번엔 데이터베이스를 올릴 차례입니다. PostgreSQL을 어디에 앉힐지 — EC2에 직접, 아니면 RDS. 콘솔 두 화면을 나란히 켜 놓고도 손이 쉽게 안 움직이는데, 어느 쪽을 골라도 몇 분 뒤엔 접속 주소 하나가 손에 들어옵니다. 다만 그 뒤로 남는 일과 사라지는 일은, 서로 다른 이야기.</p>
+
+      <h3>설치할까, 맡길까</h3>
+      <p>EC2를 고르면 손에 익은 순서 그대로입니다. 인스턴스에 SSH로 들어가 PostgreSQL을 설치하고, 설정 파일을 손으로 고치고, 백업 스크립트를 크론에 걸어 두는 일까지 — 데이터베이스라는 짐이 5장에서 이미 만난 그 인스턴스 위에 하나 더 얹힙니다. <span class="term" data-t="RDS">RDS</span>를 고르면 얘기가 통째로 달라지는데, 콘솔에서 엔진과 사양만 고르고 나면 그 뒤로 남는 일은 몇 개나 될까요.</p>
+      <p>AWS는 RDS를 <span class="term" data-t="관리형 서비스">관리형 서비스</span>라고 부릅니다. 반복되는 운영 작업을 대신 떠맡아, 사용자가 애플리케이션과 사용자 쪽에만 집중하게 해 준다는 것이 공식 문서가 내세우는 설명입니다. 김주임의 커서가 마지막에 멈추는 자리는 결국 '생성' 버튼.</p>
+
+      <h3>열한 줄의 경계선</h3>
+      <p>그런데 '대신 떠맡는다'던 그 약속, 정확히 어디까지 뻗어 있을까요. 온프렘부터 EC2, RDS까지 세 갈래를 두고 공식 문서는 열한 개 항목을 나란히 채점해 둡니다. 하나씩 눌러 몫이 어느 손으로 넘어가는지 확인해 보세요.</p>
+
+      <div class="demo" id="respLine">
+        <span class="demo-tag">책임 분계선</span>
+        <p style="margin:0 0 4px">배포 방식을 하나 고르면, 열한 항목이 각각 누구 몫인지 드러납니다.</p>
+        <div class="picker" id="respPicker">
+          <button class="pick on" data-k="onprem">온프렘 — 서버실을 직접 굴린다</button>
+          <button class="pick" data-k="ec2">EC2 — 인스턴스에 직접 설치한다</button>
+          <button class="pick" data-k="rds">RDS — 관리형으로 띄운다</button>
+        </div>
+        <div id="respOut"></div>
+      </div>
+
+      <p>세 번 다 눌러 봐도 흔들리지 않는 줄, 몇 번째였을까요. 맨 윗줄, 애플리케이션 최적화 하나뿐. 공식 문서는 이 한 줄을 두고 따로 선을 긋는데, 쿼리 튜닝은 데이터베이스마다 다 다른, 사용자가 떠안는 과정이라고 적어 둡니다. 스케일링 한 줄에는 <span class="term" data-t="읽기 전용 복제본">읽기 전용 복제본</span>도 걸려 있는데, 읽기 트래픽을 늘리려면 이걸 쓰라는 게 공식 문서의 안내입니다. 손을 아무리 넘겨도 그대로인 몫, 쿼리 하나.</p>
+
+      <h3>그 대신 잠기는 문</h3>
+      <p>김주임이 못 미더운 마음에 RDS 인스턴스에도 SSH를 한번 쳐 봅니다. 연결은 애초에 되지 않는데, 이유는 하나. 관리형이라는 말을 지키려고, RDS는 그 밑에 있는 호스트에 접근을 내주지 않습니다. 권한이 높아야 손이 닿는 절차나 객체 몇 가지도 마찬가지로 막혀 있습니다.</p>
+      <p>확장을 설치하거나 OS 설정을 직접 건드려야 하는 워크로드는, 그럼 방법이 아예 없는 걸까요. 그 벽 너머로 나가고 싶을 때를 위해 AWS가 옆문을 하나 마련해 두긴 했습니다 — 이름은 RDS Custom. AWS는 이 경계에 이름을 붙여 뒀습니다 — RDS 페이지의 소제목 그대로, <span class="term" data-t="책임 공유 모델">책임 공유 모델</span>.</p>
+
+      <div class="oneline">
+        <div class="ol-ic">🛠️</div>
+        <div><div class="ol-t">10장 한 줄 요약</div><div class="ol-b"><b>관리형으로 옮긴다고 전부 넘어가지는 않습니다.</b> 애플리케이션 최적화, 그중에서도 쿼리 튜닝만은 온프렘도 EC2도 RDS도 예외 없이 내 몫이고, RDS가 대신 가져가는 것은 딱 하나, 호스트로 들어가는 문.</div></div>
+      </div>
+
+      <div class="quiz" data-qid="q-managed" data-answer="b">
+        <div class="q">EC2에 직접 설치한 PostgreSQL을 RDS로 옮겼습니다. <b>더 이상 할 수 없게 되는</b> 것은?</div>
+        <button class="opt" data-opt="a">읽기 전용 복제본을 두는 것</button>
+        <button class="opt" data-opt="b">DB 서버에 SSH로 들어가 설정 파일을 여는 것</button>
+        <button class="opt" data-opt="c">느린 쿼리를 찾아 인덱스를 거는 것</button>
+        <button class="opt" data-opt="d">백업을 매일 받는 것</button>
+        <div class="explain"><b>정답은 B.</b> 관리형이 가져간 것의 다른 얼굴입니다 — RDS는 호스트 접근 자체를 내주지 않으니, SSH로 들어가 설정 파일을 여는 길은 처음부터 없습니다. A와 D는 오히려 RDS가 대신 해 주는 쪽인데, 스케일링과 백업 둘 다 표에서 이미 AWS 몫으로 넘어가 있었습니다. C는 열한 줄 가운데 어디서도 흔들리지 않는, 그 한 줄. 온프렘에서도 EC2에서도 RDS에서도 쿼리 튜닝은 내 몫이라, 관리형으로 옮긴다고 느린 쿼리가 저절로 빨라지지는 않습니다.</div>
+      </div>
+    </section>
+
   </main>
 </div>
 
@@ -1182,6 +1234,10 @@ const GLOSSARY = {
   "ALB": "애플리케이션 계층까지 올라가 요청을 읽는 로드밸런서입니다. 경로나 호스트 헤더를 보고 대상을 나눌 수 있지만, 서로 다른 가용 영역의 서브넷을 최소 두 개 요구하고 자신이 쓰는 IP 주소를 직접 관리할 수 없습니다.",
   "NLB": "연결을 이루는 프로토콜·IP·포트까지만 보고 대상을 고르는 로드밸런서입니다. ALB보다 낮은 계층에서 멈추는 대신, 가용 영역마다 탄력적 IP를 지정해 고정된 주소를 가질 수 있습니다.",
   "리스너": "로드밸런서가 클라이언트의 연결 요청을 확인하는 지점입니다. 여기에 붙는 규칙이 요청을 어느 대상으로 보낼지를 정합니다.",
+  "RDS": "AWS가 대신 운영해 주는 관계형 데이터베이스 서비스입니다. 스케일링·백업·패치는 넘겨받지만, 호스트 접근과 일부 고권한 절차·객체는 사용자에게 내주지 않습니다.",
+  "관리형 서비스": "AWS가 패치·백업 같은 반복되는 운영 작업을 대신 맡아, 사용자가 애플리케이션 쪽에만 집중하게 해 주는 서비스 형태입니다. RDS가 대표적인 예로, 대신 맡는 만큼 사용자가 직접 손댈 수 있는 자리는 줄어듭니다.",
+  "읽기 전용 복제본": "원본 데이터베이스를 복제해 읽기 트래픽만 나눠 받는 인스턴스입니다. RDS는 이걸로 읽기 확장을 늘릴 수 있다고 안내합니다.",
+  "책임 공유 모델": "AWS와 사용자 중 누가 어떤 운영 작업을 맡는지 가르는 경계선입니다. 온프렘·EC2·RDS 세 열로 표를 그리면 그 경계가 계단처럼 갈립니다.",
   // @GLOSSARY_END
 };
 
@@ -1767,6 +1823,64 @@ if(location.hash){
   }
   wirePicker('#entryPicker', render);
   render('path');
+})();
+
+/* ============================================================
+   데모 10 — 책임 분계선 (10장)
+   ============================================================ */
+(function(){
+  const out = $('#respOut'); if(!out) return;
+  // 열한 행과 On-premises/Amazon EC2/Amazon RDS 세 열의 Customer/AWS 값은 "What is Amazon RDS?"
+  // 페이지의 비교표(facts V10) 그대로다.
+  // "관리형 서비스"라는 규정과 "반복 작업을 대신 떠맡아 사용자가 애플리케이션과 사용자에게
+  // 집중하게 해 준다"는 것은 같은 페이지의 "Amazon RDS is a managed database service. It's
+  // responsible for most management tasks. By eliminating tedious manual processes, Amazon RDS
+  // frees you to focus on your application and your users."로 확인했다.
+  // 스케일링에 읽기 전용 복제본이 걸려 있다는 것은 같은 페이지의 "You can also use read
+  // replicas to increase read scaling."로 확인했다.
+  // 맨 윗줄(애플리케이션 최적화)만 세 열이 전부 Customer이고 쿼리 튜닝이 사용자 몫이라는 것은
+  // 같은 페이지의 "Amazon RDS shared responsibility model" 절 — "You are responsible for query
+  // tuning ... Monitoring and tuning are highly individualized processes that you own for your
+  // RDS databases."로 확인했다(facts V10).
+  // RDS가 호스트 접근을 내주지 않고 일부 고권한 절차·객체도 막는다는 것은 "Amazon RDS Custom"
+  // 페이지의 "To deliver a managed service experience, Amazon RDS doesn't let you access the
+  // underlying host. Amazon RDS also restricts access to some procedures and objects that
+  // require high-level privileges."로 확인했다(facts V10).
+  const ROWS = [
+    ["애플리케이션 최적화","me","me","me"],
+    ["스케일링","me","me","aws"],
+    ["고가용성","me","me","aws"],
+    ["데이터베이스 백업","me","me","aws"],
+    ["데이터베이스 소프트웨어 패치","me","me","aws"],
+    ["데이터베이스 소프트웨어 설치","me","me","aws"],
+    ["OS 패치","me","me","aws"],
+    ["OS 설치","me","me","aws"],
+    ["서버 유지보수","me","aws","aws"],
+    ["하드웨어 수명 주기","me","aws","aws"],
+    ["전원·네트워크·냉각","me","aws","aws"]
+  ];
+  const IDX = {onprem:0, ec2:1, rds:2};
+  const LBL = {me:"고객", aws:"AWS"};
+  const D = {
+    onprem: {shrink:`<b>아직 없습니다.</b> 이 표의 기준점입니다.`,
+      lost:`<b>해당 없음.</b>`},
+    ec2: {shrink:`<b>세 줄.</b> 서버 유지보수 · 하드웨어 수명 주기 · 전원과 냉각이 AWS로 넘어갑니다.`,
+      lost:`<b>해당 없음.</b>`},
+    rds: {shrink:`<b>열 줄.</b> 애플리케이션 최적화 하나만 남고, 나머지는 전부 AWS 몫.`,
+      lost:`<b>호스트 접속이 막힙니다.</b> 높은 권한이 필요한 일부 절차와 객체도 손이 닿지 않습니다.`}
+  };
+  function render(k){
+    const i = IDX[k]; if(i===undefined) return;
+    const rows = ROWS.map(([name,...owners]) => {
+      const o = owners[i];
+      return `<tr class="${o}"><td>${esc(name)}</td><td><span class="badge ${o}">${LBL[o]}</span></td></tr>`;
+    }).join('');
+    const d = D[k];
+    out.innerHTML = `<table class="t"><thead><tr><th>항목</th><th>몫</th></tr></thead><tbody>${rows}</tbody></table>
+      <div class="kv"><dt>줄어든 일</dt><dd>${d.shrink}</dd><dt>못 하게 된 일</dt><dd>${d.lost}</dd></div>`;
+  }
+  wirePicker('#respPicker', render);
+  render('onprem');
 })();
 
 </script>
