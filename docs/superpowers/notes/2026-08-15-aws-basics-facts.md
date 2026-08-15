@@ -541,6 +541,55 @@ V8의 표가 타입 변경 행을 따로 두고 "The data does not persist"라�
 **규칙 재확인**: 확인한 사실은 **반드시 이 파일에 등재한다.** 코드 주석은 보조이지 근거가 아니다.
 검증 게이트는 "구현자가 WebFetch를 했는가"가 아니라 **"이 파일에 있는가"**다.
 
+## V21 · S3의 성질 넷과 EBS의 다중 연결 — 확인됨
+
+8장 구현자가 계획서의 근거 없는 주장들을 직접 확인해 인용을 가져왔다.
+
+**객체는 통째로다.** 8장 퀴즈의 정답이 이 인용 위에 선다.
+> Amazon S3 **never adds partial objects**; if you receive a success response, Amazon S3 added the
+> **entire object** to the bucket. You cannot use `PutObject` to only update a single piece of
+> metadata for an existing object. **You must put the entire object** with updated metadata if you
+> want to update some values.
+
+**디렉터리가 없다.**
+> Amazon S3 general purpose buckets have a **flat structure** instead of a hierarchy like you would
+> see in a file system.
+
+**마운트가 아니라 HTTP다.**
+> The REST API is an **HTTP interface** to Amazon S3. With the REST API, you use standard HTTP
+> requests to create, fetch, and delete buckets and objects.
+
+**동시 접근 시 부분 데이터는 없다.**
+> if you make a PUT request to an existing key from one thread and perform a GET request on the
+> same key from a second thread concurrently, you will get either the old data or the new data,
+> but **never partial or corrupt data**.
+
+**EBS의 다중 연결 — 예외가 있다.** V18의 "같은 AZ에만"에 조건이 하나 더 붙는다.
+> **Multi-Attach enabled** volumes can be attached to **up to 16 instances**.
+
+→ "EBS는 한 대에만 붙는다"고 **단정하면 틀린다.** 기본 동작과 Multi-Attach를 갈라 써야 한다.
+
+**지운 버킷 이름은 남이 가져갈 수 있다** — V5의 경고를 8장이 실제로 썼다.
+> After you delete a general purpose bucket in the shared global namespace, be aware that
+> **another AWS account in the same partition can use the same** general purpose bucket name for a
+> new bucket and can therefore potentially **receive requests intended for the deleted** bucket.
+
+## V22 · S3는 리전 안 여러 AZ에 걸쳐 중복 저장된다 — 확인됨
+
+8장 데모의 `az` 항목이 "S3는 AZ에 갇히지 않는다"의 근거로 쓴 것이다.
+
+> you can **redundantly store objects across multiple Availability Zones**.
+
+**8장에 쓸 것**: EBS는 AZ 하나에 갇히고(V18) S3는 여러 AZ에 걸친다. 이 대비가 6·7장이 세운
+"AZ에 박힌 못 셋"(서브넷·볼륨·ENI)과 S3를 가르는 자리다.
+
+**주의 — 이 항목도 V20과 똑같은 절차 위반으로 잡혔다.** 구현자가 확인은 했는데 근거를 코드
+주석과 보고서에만 남기고 이 파일에 등재하지 않았다. **같은 위반이 두 번째다.**
+
+**규칙을 다시 한번**: 확인한 사실은 **반드시 이 파일에 등재한다.** 검증 게이트는 "구현자가
+WebFetch를 했는가"가 아니라 **"이 파일에 있는가"**다. 이후 모든 태스크의 dispatch에
+"확인했으면 인용 전문을 보고서의 지정된 절에 적고, 컨트롤러가 등재할 수 있게 하라"를 명시한다.
+
 ## 검증 요약
 
 | # | 대상 | 결과 |
@@ -565,6 +614,8 @@ V8의 표가 타입 변경 행을 따로 두고 "The data does not persist"라�
 | V18 | EBS의 AZ 제약 · 스냅샷 | 확인됨. 볼륨은 **같은 AZ에만** 붙는다. 스냅샷은 증분이고 S3에 있지만 **직접 접근할 수 없다** |
 | V19 | ENI 부착·이동 · EIP 소유 | 확인됨. 기본 ENI는 못 뗀다, 속성은 ENI를 따라간다, 같은 AZ에서만 붙는다, **EIP는 놓아주기 전까지 내 것** |
 | V20 | ENI의 종료 동작 | 확인됨. 인스턴스 종료 시 함께 지울지 지정할 수 있다. **7장 리뷰에서 절차 위반(코드 주석에만 근거)으로 잡혀 여기 등재** |
+| V21 | S3의 성질 넷 · EBS 다중 연결 | 확인됨. 객체는 통째로 / 평면 구조 / HTTP REST / 부분 데이터 없음. **Multi-Attach는 최대 16대 — "한 대에만"으로 단정하면 틀린다** |
+| V22 | S3의 AZ 중복 저장 | 확인됨. `redundantly store objects across multiple Availability Zones`. **V20과 같은 절차 위반(주석에만 근거)으로 두 번째로 잡혀 여기 등재** |
 
 ## 설계 문서에 반영할 것
 
