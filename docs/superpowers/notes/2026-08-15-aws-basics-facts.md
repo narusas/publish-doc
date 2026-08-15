@@ -464,6 +464,30 @@ Network Access Analyzer 다섯이다.
 V8의 표가 타입 변경 행을 따로 두고 "The data does not persist"라고 적은 것과, 여기서 확인된
 "중지를 거친다"가 같은 결론에 이른다. **두 경로가 일치하므로 5장은 인과를 써도 된다.**
 
+## V18 · EBS 볼륨은 같은 AZ 안에서만 붙고, 스냅샷은 증분이며 S3에 있다 — 확인됨
+
+계획서 6장이 근거 없이 쓰려던 셋을 6장 구현자가 직접 확인해 인용을 가져왔다.
+
+출처 ①: Amazon EBS 사용자 안내서 — 볼륨 연결
+
+> You can attach an available EBS volume to one or more of your instances that is in the
+> **same Availability Zone** as the volume.
+
+> You can attach volumes to instances that are in the **same Availability Zone only**.
+
+출처 ②: [Amazon EBS snapshots](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/EBSSnapshots.html)
+
+> A snapshot is an **incremental** backup, which means that we save only the blocks on the volume
+> that have changed since the most recent snapshot.
+
+> Snapshots are **stored in Amazon S3**, in S3 buckets that **you can't access directly**.
+
+**6장에 쓸 것**: 볼륨이 AZ에 갇힌다는 것은 3장(서브넷은 AZ에 갇힌다)과 7장(ENI도 그렇다)이
+같은 제약 위에 서 있다는 뜻이다. **AZ 하나가 세 리소스를 동시에 묶는다.**
+
+**주의**: 스냅샷이 S3에 있다고 해서 8장에서 다룰 **내 버킷**에 보이는 것은 아니다. 원문이
+`you can't access directly`라고 못 박는다. 8장이 버킷을 다룰 때 이 둘을 섞지 않아야 한다.
+
 ## 검증 요약
 
 | # | 대상 | 결과 |
@@ -485,6 +509,7 @@ V8의 표가 타입 변경 행을 따로 두고 "The data does not persist"라�
 | V15 | 리전 격리 · 글로벌 서비스 명단 | 확인됨. 리전 간 리소스는 독립. 글로벌 엔드포인트 명단에 CloudFront·IAM·Route 53이 있고 **S3는 없다** |
 | V16 | AZ의 장애 격리 | 확인됨. 단 **원인(정전·화재)은 문서에 없다.** `failures`까지만, 그리고 `engineered to be`이지 보장이 아니다 |
 | V17 | 타입 변경은 중지를 거치는가 | 확인됨. "You must stop your instance before you can change its instance type." 5장이 인과를 써도 된다 |
+| V18 | EBS의 AZ 제약 · 스냅샷 | 확인됨. 볼륨은 **같은 AZ에만** 붙는다. 스냅샷은 증분이고 S3에 있지만 **직접 접근할 수 없다** |
 
 ## 설계 문서에 반영할 것
 
