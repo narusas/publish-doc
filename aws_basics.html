@@ -468,7 +468,6 @@ table.t tr.hit td{background:rgba(52,211,153,.12)}
 /* 인물 소개 카드 (.card 위에 얹는 최소 확장 — 2장 히어로에서 추가) */
 .persona .p-role{font-family:var(--mono); font-size:11.5px; color:var(--text-mut); text-transform:uppercase; letter-spacing:1px}
 .persona .p-name{font-size:19px; font-weight:800; color:#fff; margin-top:4px}
-.persona p{margin-top:10px}
 
 /* 자가진단 */
 .diag{border:1px solid var(--border-2); border-radius:var(--radius); background:var(--panel); padding:8px 16px 16px; margin:14px 0}
@@ -477,6 +476,10 @@ table.t tr.hit td{background:rgba(52,211,153,.12)}
 .d-item .d-txt b{color:#fff}
 .d-yes{white-space:nowrap; padding:7px 13px; border-radius:99px; font-size:12.5px}
 .d-yes.on{background:linear-gradient(90deg,var(--accent),var(--accent-2)); color:#1a1005; border-color:transparent}
+/* #diag(히어로 자가진단)는 짧은 "예" 버튼이 아니라 문장 전체를 버튼에 담으므로,
+   위 .d-yes의 nowrap을 이 컨테이너 안에서만 되돌려 줄바꿈·세로 배치로 바꾼다. */
+#diag{display:flex; flex-direction:column; gap:8px}
+#diag .d-yes{display:block; width:100%; white-space:normal; text-align:left; line-height:1.5}
 .diag-result{display:none; margin-top:14px; padding:13px 15px; border-radius:10px; background:var(--bg); border:1px solid var(--border); font-size:14px; color:var(--text-dim); line-height:1.75}
 .diag-result.show{display:block}
 .diag-result b{color:#fff}
@@ -555,7 +558,7 @@ button:focus-visible, .pick:focus-visible, .term:focus-visible, a:focus-visible,
         <dt>EC2 인스턴스</dt><dd>이건 예상했던 이름입니다.</dd>
         <dt>EBS 루트 볼륨</dt><dd>인스턴스 안에 딸린 디스크 아니었나요.</dd>
         <dt>ENI (네트워크 인터페이스)</dt><dd>네트워크 카드가 왜 따로 한 줄을 차지하는지.</dd>
-        <dt>보안 그룹</dt><dd>방화벽치고는 이름이 낯섭니다.</dd>
+        <dt>보안 그룹</dt><dd>이름의 '그룹'이 정확히 뭘 묶는지는 아직 모릅니다.</dd>
         <dt>키 페어</dt><dd>인스턴스를 만들 때 받았던 그 파일과 이름이 같습니다.</dd>
         <dt>서브넷</dt><dd>어디선가 계산해 본 적 있는 단어 같은데.</dd>
         <dt>라우팅 테이블</dt><dd>만든 기억이 없는데 목록엔 있습니다.</dd>
@@ -563,7 +566,7 @@ button:focus-visible, .pick:focus-visible, .term:focus-visible, a:focus-visible,
         <dt>탄력적 IP</dt><dd>IP 앞에 '탄력적'이 붙는 사연은 아직 모릅니다.</dd>
       </dl>
 
-      <p>이 아홉 줄을 만들어 낸 사람은 김주임입니다.</p>
+      <p>이 아홉 줄을 만든 사람은, 김주임.</p>
 
       <div class="card persona">
         <div class="p-role">개발자 · 입사 3개월</div>
@@ -581,7 +584,7 @@ button:focus-visible, .pick:focus-visible, .term:focus-visible, a:focus-visible,
         <button class="d-yes" data-w="1">ARN을 복사해 붙여는 넣지만 그 문자열의 칸이 무슨 뜻인지는 모른다</button>
         <button class="d-yes" data-w="1">리전을 잘못 골라서 만든 리소스가 안 보였던 적이 있다</button>
       </div>
-      <div id="diagResult" class="diag-result"></div>
+      <div id="diagResult" class="diag-result" aria-live="polite"></div>
 
       <h3>지도</h3>
       <p>장 순서는 차례로 매겨져 있지만, 그 차례대로 읽어야 하는 건 아닙니다.</p>
@@ -606,8 +609,8 @@ button:focus-visible, .pick:focus-visible, .term:focus-visible, a:focus-visible,
       </div>
 
       <h3>1부와 2부, 그리고 두 색</h3>
-      <p>앞의 아홉 장은 뜯어보는 쪽. 인스턴스 하나가 왜 아홉 조각으로 나뉘는지, 그 조각이 각자 무엇을 맡는지를 하나씩 떼어 봅니다. 뒤의 여섯 장은 정반대, 조립하는 쪽. 흩어진 조각을 다시 무엇 위에, 어떻게, 얼마에 올려놓을지를 봅니다.</p>
-      <p>자가진단이 갈라 둔 🟢·🔵는 각각 1부와 2부로 가는 화살표. 어느 쪽에서 시작하든 지도는 그대로 열려 있습니다.</p>
+      <p>앞의 여덟 장은 뜯어보는 쪽입니다. 인스턴스 하나가 왜 아홉 조각으로 나뉘는지, 그 조각이 각자 무엇을 맡는지는 하나씩 떼어봐야 알 수 있을지도 모릅니다. 뒤의 일곱 장은 정반대, 조립하는 쪽. 흩어진 조각을 다시 무엇 위에, 어떻게, 얼마에 올려놓을지를 가늠합니다.</p>
+      <p>자가진단의 🟢는 대체로 앞쪽 장을, 🔵는 9장 이후를 가리키는 듯합니다.</p>
       <p>다만 왜 하필 아홉인지는, 아직 아무도 답해 주지 않았습니다.</p>
     </section>
 
@@ -819,7 +822,7 @@ if(location.hash){
    ============================================================ */
 (function(){
   const diag = $('#diag'); if(!diag) return;
-  const res = $('#diagResult');
+  const res = $('#diagResult'); if(!res) return;
   function update(){
     const on = $$('.d-yes.on', diag);
     const score = on.reduce((s,x)=>s+(+x.dataset.w), 0);
@@ -831,7 +834,14 @@ if(location.hash){
     res.innerHTML = msg + ` <span class="dim">(체크 ${on.length}개 · 가중치 ${score})</span>`;
     res.classList.add('show');
   }
-  $$('.d-yes', diag).forEach(b => b.addEventListener('click', () => { b.classList.toggle('on'); update(); }));
+  $$('.d-yes', diag).forEach(b => {
+    b.setAttribute('aria-pressed', 'false');
+    b.addEventListener('click', () => {
+      b.classList.toggle('on');
+      b.setAttribute('aria-pressed', b.classList.contains('on') ? 'true' : 'false');
+      update();
+    });
+  });
 })();
 
 </script>
