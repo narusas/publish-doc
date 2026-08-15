@@ -714,6 +714,62 @@ button:focus-visible, .pick:focus-visible, .term:focus-visible, a:focus-visible,
       </div>
     </section>
 
+    <section id="region" data-title="리전과 AZ">
+      <div class="sec-head">
+        <div class="kicker">03 · 어디</div>
+        <h2 class="sec-title">🌍 같은 이름, 다른 곳 <span class="lvl must">🟢 필수</span></h2>
+      </div>
+      <p class="lead">"같은 <code>ap-northeast-2a</code>인데 다른 건물이라니, 이름이 다르면 될 일 아닌가." 김주임이 앞 장의 물음표를 그대로 입에 올립니다. 이름표 하나만 새로 붙이면 끝날 일처럼 들리기는 하니까요.</p>
+
+      <h3>리전부터, 딴 세상</h3>
+      <p>김주임이 만든 인스턴스는 서울, 정확히는 <span class="term" data-t="리전">리전</span> 코드로 <code>ap-northeast-2</code>라는 곳에 떠 있습니다. 콘솔 오른쪽 위, 로그인한 뒤로 눈여겨본 적 없는 그 드롭다운을 눌러 <code>ap-northeast-1</code>(도쿄)로 바꿔 보면 방금 만든 인스턴스도 EBS 볼륨도 목록에 없습니다. 지운 게 아니라, 애초에 그 세상에 있던 적이 없어서.</p>
+      <p>계정은 지난 장에서 이미 담장이었습니다. 리전은 그 담장 안에 또 하나 그어진 선입니다 — 같은 계정, 같은 로그인이라도 서울에서 만든 것은 도쿄 콘솔에서 처음부터 없던 물건. 리소스가 안 보인다는 문의 태반이 여기서 옵니다. 지웠다고 오해하거나 권한이 없다고 오해하는 쪽이 흔하지만, 실은 리전을 잘못 골랐을 뿐인 경우가 더 많습니다. 1장의 자가진단에 있던 그 항목 — 리전을 잘못 골라 리소스가 안 보였던 경험 — 이 가리키는 게 바로 이 순간.</p>
+
+      <h3>AZ, 리전 속의 자리</h3>
+      <p>리전 하나는 다시 여러 <span class="term" data-t="가용 영역">가용 영역</span>으로 나뉩니다. 리전이 도시라면 가용 영역은 그 도시 안에 따로 떨어져 선 건물 여러 채인 셈인데, 한 건물이 정전으로 흔들려도 다른 건물까지 같이 흔들리지는 않습니다. 인스턴스를 만들 때 낯설게 골랐던 <span class="term" data-t="서브넷">서브넷</span> — 1장에서 처음 마주쳤던 그 항목 — 은 실은 "어느 건물에 세울지"를 묻는 질문이었던 셈.</p>
+      <p>서브넷은 그 건물 하나에 갇힙니다. 만들 때 고른 가용 영역을 벗어나 다른 건물로 옮겨 갈 수 없고, 그 안에 놓인 ENI도 같은 신세라 — 이 갇힘은 7장에서, 그리고 9장에서 다시 값을 합니다.</p>
+
+      <p>그럼 그 "건물"이라는 이름, <code>ap-northeast-2a</code>가 정확히 어느 건물을 가리키는지도 정해져 있을까요. 지난 장에서 dev 계정과 prod 계정이 각각 만든 <code>ap-northeast-2a</code>를 나란히 놓고 물었을 때, 돌아온 답은 "아니오"였습니다. 이름은 같아도 가리키는 건물은 다를 수 있다는 뜻입니다.</p>
+
+      <div class="myth">
+        <div class="m-row no"><span class="m-x">✕</span><div class="m-txt">이름이 같으면 같은 곳이겠거니 — <code>ap-northeast-2a</code>라는 이름표 하나면 어느 계정에서 보든 같은 건물을 가리킬 거라는 생각.</div></div>
+        <div class="m-row yes"><span class="m-x">✓</span><div class="m-txt">AWS는 물리적인 가용 영역을 계정마다 <b>무작위로</b> 이름에 매핑합니다. 그 결과 내 계정의 <code>us-east-1a</code>는 다른 계정의 <code>us-east-1a</code>와 같은 물리적 위치가 아닐 수 있습니다. 계정을 넘어 같은 곳을 가리키려면 <span class="term" data-t="AZ ID">AZ ID</span>를 씁니다 — <code>use1-az1</code>이 그 예로, <code>us-east-1</code> 리전의 한 가용 영역을 가리키면서 모든 계정에서 같은 물리적 위치를 나타내는 이름.</div></div>
+      </div>
+      <p>이 매핑은 계정 하나 안에서는 고정되어 있어서, 내가 만든 모든 것에게 <code>2a</code>는 늘 같은 건물을 뜻합니다. 흔들리는 자리는 계정과 계정 사이뿐. 그런데 왜 굳이 계정마다 섞어 둘까요? 이렇게 섞어 두면 리소스가 각 리전의 가용 영역 "a"에 몰리는 대신, 리전 안 여러 가용 영역에 고르게 흩어집니다. 모두가 습관처럼 "일단 a"를 고르는 쏠림을, 이름 자체로 막아 둔 셈입니다.</p>
+
+      <div class="demo" id="azMap">
+        <span class="demo-tag">리전·AZ 지도</span>
+        <p style="margin:0 0 4px">리전을 하나 골라 이름과 AZ ID가 실제로 얼마나 어긋나는지 확인해 보세요.</p>
+        <div class="picker" id="azPicker">
+          <button class="pick on" data-k="usw2">US West (Oregon) · us-west-2</button>
+          <button class="pick" data-k="apne2">Asia Pacific (Seoul) · ap-northeast-2</button>
+          <button class="pick" data-k="global">리전이 없는 것들</button>
+        </div>
+        <div id="azOut"></div>
+      </div>
+
+      <h3>리전이 없는 것들</h3>
+      <p>계정 안에 리전, 리전 안에 가용 영역을 두는 이 위계를 모든 서비스가 따르지는 않습니다.</p>
+      <p>IAM은 리전을 고르지 않습니다. 4장에서 다시 마주칠 IAM 사용자의 ARN에는 리전 칸이 아예 비어 있는데, 고를 리전이 없으니 적을 칸도 없는 셈.</p>
+      <p>CloudFront도 마찬가지로 리전을 묻지 않습니다. 전 세계 엣지에 콘텐츠를 뿌려 두는 서비스라, 애초에 한 리전에만 세울 이유가 없어서겠지요.</p>
+      <p>Route 53 역시 리전 선택 화면이 없습니다. 도메인 이름 하나를 풀이해 주는 이 서비스가 서울에만 있어서는, 도쿄에서 들어온 요청까지 놓치는 꼴이 될 테니까요.</p>
+      <p>S3만은 반쯤 걸쳐 있습니다. 버킷 자체는 리전 하나를 골라 만들지만, 이름만은 리전은 물론 계정 경계까지 넘어 유일해야 하는데요. 얼마나 넓은 범위에서 유일해야 하는지는 <a class="link" href="#s3">8장</a>이 정확한 값을 들고 옵니다.</p>
+
+      <div class="oneline">
+        <div class="ol-ic">🌍</div>
+        <div><div class="ol-t">3장 한 줄 요약</div><div class="ol-b"><b>리전은 서로 격리된 별개의 세계이고, 가용 영역은 그 안의 독립된 자리이며 서브넷은 그 자리 하나에 갇힙니다.</b> 계정마다 다른 건물을 가리킬 수 있는 <code>ap-northeast-2a</code> 같은 이름과 달리, 모든 계정에서 같은 곳을 가리키는 이름은 AZ ID뿐.</div></div>
+      </div>
+
+      <div class="quiz" data-qid="q-region" data-answer="d">
+        <div class="q">동료가 "우리 서비스를 <code>ap-northeast-2a</code>에 몰아 두지 말고 <code>2a</code>와 <code>2c</code>에 나누자"고 합니다. 여기서 <b>틀린 것</b>은?</div>
+        <button class="opt" data-opt="a">AZ를 나누면 한 곳이 죽어도 다른 곳이 산다는 기대</button>
+        <button class="opt" data-opt="b">서브넷을 AZ마다 따로 만들어야 한다는 전제</button>
+        <button class="opt" data-opt="c">두 AZ가 같은 리전 안에 있다는 전제</button>
+        <button class="opt" data-opt="d">동료의 2a와 내 2a가 같은 건물이라는 전제</button>
+        <div class="explain"><b>이건 틀린 것을 고르는 문제입니다.</b> 정답은 D. 같은 계정 안에서는 <code>2a</code>가 늘 같은 건물을 가리키지만, 계정이 갈리는 순간 그 보장은 사라집니다 — AWS가 가용 영역 이름을 계정마다 따로 섞기 때문인데, 동료가 다른 계정(다른 팀, 다른 조직)에서 일하고 있다면 그의 <code>2a</code>와 내 <code>2a</code>는 다른 건물일 수 있습니다. 계정을 넘어 같은 곳을 맞추려면 AZ ID를 확인해야 합니다. A·B·C는 전부 맞는 말이라 오답입니다 — A는 AZ를 나누는 목적 그 자체이고, B는 서브넷이 가용 영역 하나에 갇힌다는 사실(이 장, 그리고 7장에서 다시)에서 그대로 따라 나오며, C는 <code>2a</code>와 <code>2c</code>가 같은 <code>ap-northeast-2</code> 리전 안의 이름이라는, 이 장이 세운 전제 그대로.</div>
+      </div>
+    </section>
+
   </main>
 </div>
 
@@ -749,6 +805,10 @@ const GLOSSARY = {
   "계정": "리소스 하나하나가 반드시 속하는 단위입니다. 계정을 옮길 수 있는 리소스는 없고, 계정이 다르면 기본적으로 서로 보이지 않습니다.",
   "루트 사용자": "계정을 만들 때 쓴 이메일로 로그인하는 사용자입니다. 그 사용자가 무엇을 할 수 있고 없는지는 IAM 튜토리얼의 몫입니다.",
   "AMI": "인스턴스를 통째로 떠서 만든 이미지입니다. 다른 계정과 공유한 뒤 그 계정에서 새 인스턴스를 띄우는 재료로 씁니다.",
+  "리전": "AWS가 세계 곳곳에 둔, 서로 격리된 데이터센터 묶음입니다. 계정은 같아도 리전이 다르면 콘솔에 뜨는 리소스 목록조차 서로 다릅니다.",
+  "가용 영역": "리전 하나를 이루는, 물리적으로 독립된 자리입니다. 흔히 AZ라고 부르고, 서브넷은 이 가용 영역 하나에서 태어나 그 밖으로 옮겨 갈 수 없습니다.",
+  "AZ ID": "가용 영역을 계정과 무관하게 가리키는 이름입니다. ap-northeast-2a 같은 이름은 계정마다 다른 건물을 가리킬 수 있지만, use1-az1 같은 AZ ID는 모든 계정에서 같은 물리적 위치를 나타냅니다.",
+  "서브넷": "가용 영역 하나에 속하는 네트워크 조각입니다. 태어난 가용 영역을 벗어날 수 없어서, 1장에서 낯설었던 그 항목의 정체가 여기서 확정됩니다.",
   // @GLOSSARY_END
 };
 
@@ -998,6 +1058,42 @@ if(location.hash){
   }
   wirePicker('#acctPicker', render);
   render('s3');
+})();
+
+/* ============================================================
+   데모 3 — 리전·AZ 지도 (3장)
+   ============================================================ */
+(function(){
+  const out = $('#azOut'); if(!out) return;
+  // us-west-2의 매핑은 AWS 공식 문서의 describe-availability-zones 출력 그대로다.
+  // 다른 리전의 매핑은 계정마다 다르므로 지어내지 않는다.
+  const REAL = [
+    {name:"us-west-2a", id:"usw2-az2"},
+    {name:"us-west-2b", id:"usw2-az1"},
+    {name:"us-west-2c", id:"usw2-az3"},
+    {name:"us-west-2d", id:"usw2-az4"}
+  ];
+  const D = {
+    usw2: {t:"US West (Oregon) · us-west-2", real:true,
+           note:"AWS 공식 문서에 실린 실제 출력입니다. <b>a가 az1이 아닙니다.</b> 이 계정에서는 <code>us-west-2b</code>가 <code>usw2-az1</code>이에요. 다른 계정에서 같은 명령을 치면 다르게 나오거든요."},
+    apne2:{t:"Asia Pacific (Seoul) · ap-northeast-2", real:false,
+           note:"이 리전의 매핑도 계정마다 다릅니다. 내 계정의 매핑은 <code>aws ec2 describe-availability-zones</code>로 직접 확인해야 하고, 그게 이 데모가 서울 리전의 값을 지어내지 않는 이유예요."},
+    global:{t:"리전이 없는 것들", real:false,
+           note:"IAM · CloudFront · Route 53은 리전을 고르지 않습니다. S3는 버킷을 리전에 만들지만 <b>이름만은 리전을 넘어 유일</b>해야 해요 — 얼마나 넓은 범위인지는 <a class=\"link\" href=\"#s3\">8장</a>에서 확인할 수 있어요."}
+  };
+  function render(k){
+    const d = D[k]; if(!d) return;
+    let html = `<div class="kv"><dt>대상</dt><dd>${d.t}</dd></div>`;
+    if(d.real){
+      html += '<table class="t"><thead><tr><th>ZoneName (계정마다 다름)</th><th>ZoneId (모든 계정 공통)</th></tr></thead><tbody>';
+      REAL.forEach(z => { html += `<tr><td><code>${z.name}</code></td><td><code>${z.id}</code></td></tr>`; });
+      html += '</tbody></table>';
+    }
+    html += `<p>${d.note}</p>`;
+    out.innerHTML = html;
+  }
+  wirePicker('#azPicker', render);
+  render('usw2');
 })();
 
 </script>
