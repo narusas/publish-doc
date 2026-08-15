@@ -670,6 +670,49 @@ responsibility model`이고, V10의 쿼리 튜닝 인용이 그 절 본문이다
 management / Amazon RDS management`로 V10이 적어 둔 약칭과 문구가 다르지만, **Customer/AWS
 값은 열한 행 모두 일치**한다. V10의 표는 그대로 믿어도 된다.
 
+## V26 · 컨테이너의 단위와 콜드 스타트 — 확인됨. **그리고 V9의 함정이 또 있었다**
+
+11장 구현자가 확인해 왔다.
+
+**Fargate** — https://aws.amazon.com/fargate/
+> AWS Fargate is a **serverless, pay-as-you-go compute engine** that lets you focus on building
+> applications **without managing servers.**
+
+**ECS의 단위는 태스크다** — https://aws.amazon.com/ecs/faqs/
+> **Tasks are the smallest unit of compute in Amazon ECS** and allow you to define a set of
+> containers you would like to place together, their properties, and how they may be linked.
+
+**주의**: 같은 FAQ에 **태스크 실행 시간의 상한을 명시한 문장이 없다.** 구현자가 "무제한"이라고
+단정하지 않고 "두 시간을 못 버틸 이유가 없다"는 소극적 표현에 그친 것이 옳다.
+
+**콜드 스타트** — https://docs.aws.amazon.com/lambda/latest/dg/lambda-runtime-environment.html
+> the first two steps of downloading the code and setting up the environment are frequently
+> referred to as a **"cold start"**. **You are charged for this time**, and it adds latency to your
+> overall invocation duration.
+
+> After the invocation completes, the execution environment is **frozen**. … if another request
+> arrives for the same function, Lambda can **reuse** the environment. … This is called a
+> **"warm start"**.
+
+**상태를 얹을 수 없는 이유의 결정적 근거:**
+> Lambda **terminates execution environments every few hours** to allow for runtime updates and
+> maintenance—even for functions that are invoked continuously. **You should not assume that the
+> execution environment will persist indefinitely.**
+
+### 🚨 V9의 함정이 이 페이지에서 또 반복된다
+
+같은 페이지 서두에 이런 문장이 있다:
+> Lambda execution environments support both **standard functions (up to 15 minutes)** and
+> **Durable Functions (up to one year)**.
+
+그리고 `Lambda Managed Instances`라는 별도 항목도 있다. **V9의 MicroVM(8시간)과 같은 구조다.**
+
+**"Lambda는 X가 최대"라는 형태의 문장은 이 서비스에 대해 쓸 수 없다.** 대상을 **"Lambda 함수의
+타임아웃"**으로 좁히는 것만이 안전하다. 구현자가 이 셋(MicroVM·Durable Functions·Managed
+Instances)을 전부 본문 밖에 두고 900초로만 쓴 것이 정확한 판단이다.
+
+12장이 같은 페이지를 참조하게 되면 이 경고를 다시 읽을 것.
+
 ## 검증 요약
 
 | # | 대상 | 결과 |
@@ -699,6 +742,7 @@ management / Amazon RDS management`로 V10이 적어 둔 약칭과 문구가 다
 | V23 | 입구 넷이 하는 일 | 확인됨. IGW는 퍼블릭 주소를 가진 것만·라우팅 타깃 / NAT GW 단방향 / **ALB 7계층·NLB 4계층** / LB 뒤 타깃은 퍼블릭 IP 불필요 |
 | V24 | ALB 규칙 조건 타입 | 확인됨. `host-header` `path-pattern` `http-request-method` `source-ip`. **확인 없이 쓴 것이 결과적으로 맞았던 경우 — 절차로는 V20·V22보다 나쁘다** |
 | V25 | "관리형"·"책임 공유 모델"의 출처 | 확인됨. **둘 다 AWS 자신의 용어**(페이지 소제목이 `Amazon RDS shared responsibility model`). 읽기 전용 복제본은 스케일링 쪽. V10 표 재확인 — 값 열한 행 일치 |
+| V26 | 컨테이너 단위 · 콜드 스타트 | 확인됨. ECS 단위는 태스크(**실행 시간 상한 문장은 없다 — 무제한이라 쓰면 안 된다**). 실행 환경은 몇 시간마다 종료된다. **같은 페이지에 Durable Functions(1년)·Managed Instances가 또 있다 — V9의 함정 반복** |
 
 ## 설계 문서에 반영할 것
 
