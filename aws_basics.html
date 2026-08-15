@@ -1215,6 +1215,58 @@ button:focus-visible, .pick:focus-visible, .term:focus-visible, a:focus-visible,
       </div>
     </section>
 
+    <section id="cost" data-title="요금">
+      <div class="sec-head">
+        <div class="kicker">12 · 청구서</div>
+        <h2 class="sec-title">💸 안 쓰는데 돈이 나간다 <span class="lvl must">🟢 필수</span></h2>
+      </div>
+      <p class="lead">1장은 아홉 조각이 "각각 따로 과금된다"고 했습니다. 그 말의 진짜 얼굴은 청구서를 펼쳐야 드러납니다. 김주임이 월말 청구서를 넘기다 손을 멈춥니다 — 지난주에 지운 인스턴스, 콘솔 목록에서는 분명 사라졌는데 그 자리에 낯선 항목 하나가 남아 있거든요. 지운 건 인스턴스인데, 청구서에 남은 이름은 EBS.</p>
+
+      <h3>미뤄 둔 여섯</h3>
+      <p>ENI도, 보안 그룹도, 키 페어도, 서브넷도, 라우팅 테이블도, 인터넷 게이트웨이도 — 1장은 이 여섯 조각의 요금 칸에 "12장에서 확인"이라는 말만 남겨 뒀습니다. 공식 문서가 실제로 그어 둔 선은 두 줄뿐입니다. VPC를 쓰는 것 자체에는 추가 요금이 없다는 것, 사설 IPv4 주소는 과금되지 않는다는 것. 요금이 붙는다고 이름을 올린 자리는 NAT 게이트웨이, IP Address Manager, 트래픽 미러링, Reachability Analyzer, Network Access Analyzer, 이렇게 다섯뿐입니다. 이 다섯 안에 ENI도 키 페어도 없습니다. 그렇다고 이 여섯이 전부 공짜라는 뜻은 아닌데, 문서가 쓴 표현 자체가 "이를테면"으로 여는 열린 나열이거든요.</p>
+      <p>목록에 없다고 무료라 읽는 것은 인용이 아니라 추측입니다. 특히 ENI와 키 페어는 공식 문서 어디를 뒤져도 요금 얘기가 나오지 않는데, 그 자리에 "무료"라는 도장을 섣불리 찍을 수는 없습니다. 찍을 수 있는 건 딱 하나, "확인되지 않음"뿐. 그래서 여섯 중 서브넷·라우팅 테이블·인터넷 게이트웨이·보안 그룹 넷은 이름이 오르지 않은 쪽에 남고, ENI와 키 페어 둘만 공식 문서 밖의 물음으로 남습니다.</p>
+
+      <div class="myth">
+        <div class="m-row no"><span class="m-x">✕</span><div class="m-txt">"안 쓰는 탄력적 IP만 돈이 나간다" — 어딘가 붙여 두면 공짜고, 떼어 놓은 채로 놀리면 그제야 요금이 붙기 시작한다는 생각.</div></div>
+        <div class="m-row yes"><span class="m-x">✓</span><div class="m-txt">2024년 2월 1일부터는 다릅니다. 붙어 있는 주소든 노는 주소든 시간당 값이 똑같아서, 축이 "붙였나 놀리나"가 아니라 <b>"몇 개나 갖고 있나"</b>로 바뀝니다. 그 값, 시간당 0.005달러. <span class="term" data-t="프리 티어">프리 티어</span>에는 첫 12개월 동안 월 750시간이 포함되고, BYOIP로 들여온 주소는 이 요금 밖입니다. EC2뿐 아니라 RDS나 EKS 노드처럼 퍼블릭 IPv4를 붙일 수 있는 곳이면 어디든 같은 값이 매겨집니다.</div></div>
+      </div>
+
+      <h3>시간당인가, 용량당인가, 요청당인가</h3>
+      <p>청구서에 나란히 뜬 항목들, 세는 단위가 정말 같을까요. 그렇지 않습니다. 시간당으로 세는 쪽에는 인스턴스, EBS 볼륨, 퍼블릭 IPv4, NAT 게이트웨이가 있습니다. 그다음은 용량과 요청, 각기 다른 셈법 둘. 용량당으로 세는 쪽에는 EBS 크기, S3에 쌓인 저장량, 스냅샷이 있습니다. 요청이나 처리량으로 세는 쪽에는 S3 요청, Lambda 실행, NAT 게이트웨이가 처리한 GB가 있습니다. 그리고 <span class="term" data-t="데이터 전송">데이터 전송</span>은 방향을 타는데, 나가는 쪽에만 값이 붙고 들어오는 쪽은 애초에 무료거든요.</p>
+
+      <h3>NAT 게이트웨이는 세 겹</h3>
+      <p>AZ 하나마다 NAT 게이트웨이를 하나씩 두는 구성이 보통입니다. 그래서 요금도 한 겹이 아니라 세 겹. 가용 영역을 셋으로 나눠 뒀다면 시간당 요금도 그 수만큼 곱해지고, 처리한 트래픽에는 GB당 값이 따로 붙습니다. 게다가 NAT 게이트웨이 자신도 퍼블릭 IPv4를 하나 쥐고 있어서, 시간당 0.005달러가 거기에 또 얹힙니다. 인스턴스 하나 켜 두는 값과는 자릿수부터 다른 셈. 9장에서 확인했듯, 로드밸런서 뒤에 선 인스턴스는 사설 IP 하나로도 응답할 수 있어 퍼블릭 IPv4가 필요 없습니다. 구조만의 문제가 아니라, 요금의 문제이기도 합니다.</p>
+      <p>그렇다면 정확한 값은 어디서 확인할 수 있을까요. 정확한 숫자는 리전마다, 계정마다 다릅니다. 이 문서가 손에 쥔 단가는 퍼블릭 IPv4 시간당 0.005달러, NAT 게이트웨이 시간당 0.045달러와 GB당 0.045달러, 이렇게 둘뿐입니다. 나머지 숫자가 필요할 때 열어야 할 곳은 콘솔의 <span class="term" data-t="Cost Explorer">Cost Explorer</span>.</p>
+
+      <div class="demo" id="costCalc">
+        <span class="demo-tag">청구서 시뮬레이터</span>
+        <p style="margin:0 0 4px">여섯 항목을 하나씩 켜고 꺼 가며, 무엇이 꺼도 나가는지 확인해 보세요.</p>
+        <div class="tog-col" id="costTogs">
+          <button class="tog on" data-k="ec2"><span class="sw"></span><span class="tg-t">EC2 인스턴스 1대 (running)</span></button>
+          <button class="tog" data-k="stopped"><span class="sw"></span><span class="tg-t">그 인스턴스를 중지했다</span></button>
+          <button class="tog on" data-k="ebs"><span class="sw"></span><span class="tg-t">EBS 30GB</span></button>
+          <button class="tog" data-k="orphan"><span class="sw"></span><span class="tg-t">지운 인스턴스가 남긴 EBS 30GB</span></button>
+          <button class="tog" data-k="eip"><span class="sw"></span><span class="tg-t">안 붙여 둔 EIP 1개</span></button>
+          <button class="tog" data-k="nat"><span class="sw"></span><span class="tg-t">NAT Gateway 1개</span></button>
+        </div>
+        <div id="costOut"></div>
+      </div>
+
+      <div class="oneline">
+        <div class="ol-ic">💸</div>
+        <div><div class="ol-t">12장 한 줄 요약</div><div class="ol-b"><b>붙어 있든 놀고 있든, 퍼블릭 IPv4는 개수만큼 시간당 나갑니다.</b> NAT 게이트웨이는 AZ 수·처리 GB·자신의 퍼블릭 IP까지 세 겹으로 붙고, 중지해 둔 인스턴스 밑에 남은 EBS 볼륨은 요금만은 그대로.</div></div>
+      </div>
+
+      <div class="quiz" data-qid="q-cost" data-answer="d">
+        <div class="q">인스턴스를 <b>중지</b>해 두었습니다. 이번 달 요금이 <b>계속 나가는</b> 것은?</div>
+        <button class="opt" data-opt="a">인스턴스 사용 시간</button>
+        <button class="opt" data-opt="b">인스턴스 스토어 용량</button>
+        <button class="opt" data-opt="c">그 인스턴스가 쓰던 퍼블릭 IPv4</button>
+        <button class="opt" data-opt="d">붙어 있는 EBS 볼륨</button>
+        <div class="explain"><b>정답은 D입니다.</b> 중지는 인스턴스 요금을 멈추지만, 디스크는 그대로 남습니다 — 6장에서 확인한 "따로 논다"의 청구서 쪽 얼굴입니다. A는 중지하는 순간 함께 멈추고, B는 인스턴스 스토어가 애초에 별도 과금 항목이 아닌 데다 중지하면 데이터 자체가 사라지는 쪽 — 5장에서 이미 확인한 그 결말. C는 중지하는 순간 그 주소가 해제되므로(7장) 더는 값이 붙지 않습니다. 다만 그 주소를 탄력적 IP로 잡아 뒀다면 이야기가 다른데, 그건 놓아주기 전까지 내 것이고 내 것인 동안은 값이 나갑니다.</div>
+      </div>
+    </section>
+
   </main>
 </div>
 
@@ -1285,6 +1337,9 @@ const GLOSSARY = {
   "Fargate": "컨테이너를 돌릴 서버를 직접 프로비저닝하지 않아도 되게 해 주는 서버리스 컴퓨팅 엔진입니다. ECS나 EKS와 함께 써서, 서버 대신 애플리케이션에만 집중하게 해 줍니다.",
   "Lambda": "코드를 함수 단위로 올려 두면 호출될 때만 실행되는 서비스입니다. 함수 하나의 타임아웃은 900초이고, 메모리는 128MB에서 10,240MB까지 늘릴 수 있습니다.",
   "콜드 스타트": "오랫동안 호출되지 않던 함수를 다시 부를 때, Lambda가 코드를 내려받고 실행 환경을 새로 준비하느라 걸리는 시간입니다. 이 구간만큼 응답이 늦어집니다.",
+  "프리 티어": "AWS가 신규 계정에 일정 사용량까지는 요금을 물리지 않는 프로그램입니다. 퍼블릭 IPv4 주소도 여기 포함되어, 첫 12개월 동안은 월 750시간까지 요금이 붙지 않습니다.",
+  "데이터 전송": "AWS 안팎으로 오가는 데이터의 이동입니다. 인터넷에서 AWS로 들어오는 방향에는 요금이 붙지 않고, AWS에서 나가는 방향에만 요금이 매겨집니다.",
+  "Cost Explorer": "AWS 콘솔에서 비용과 사용량을 기간별로 시각화해 보여 주는 도구입니다. 리소스를 하나하나 뒤지지 않아도 어디서 얼마가 나가는지 짚어 볼 수 있습니다.",
   // @GLOSSARY_END
 };
 
@@ -1979,6 +2034,77 @@ if(location.hash){
   }
   wirePicker('#computePicker', render);
   render('always');
+})();
+
+/* ============================================================
+   데모 12 — 청구서 시뮬레이터 (12장)
+   ============================================================ */
+(function(){
+  const out = $('#costOut'); if(!out) return;
+  // 퍼블릭 IPv4가 붙어 있어도 노는 것과 같은 시간당 $0.005가 붙는다는 것은
+  // facts V2 — "AWS charges for all public IPv4 addresses, including public IPv4 addresses
+  // associated with running instances and Elastic IP addresses." / "Hourly charge for In-use
+  // Public IPv4 Address $0.005" / "Hourly charge for Idle Public IPv4 Address $0.005" —
+  // 그대로다. 시행일(2024-02-01)·프리 티어 750시간·BYOIP 제외·EC2 밖(RDS·EKS 노드 등)에도
+  // 적용된다는 것도 V2 그대로.
+  // NAT 게이트웨이가 시간당(AZ 수만큼 곱해짐) + GB당 + 자신의 퍼블릭 IP까지 세 겹으로
+  // 붙는다는 것은 facts V4 — "NAT gateway per hour = $0.045 * 730 hours in a month * Number
+  // of Availability Zones the NAT gateways are in" / "NAT gateway public IPs = $0.005 * 730
+  // hours in a month * Number of IPs associated with your NAT gateways" / "NAT gateway
+  // transfer = $0.045 * Number of GBs..." 그대로다.
+  // 보존된 EBS 볼륨에 요금이 계속 나간다는 것은 facts V3 — "Preserved volumes continue to
+  // incur charges."로 확인했다.
+  // VPC 구성 요소 중 이름이 오른 다섯(NAT 게이트웨이·IPAM·트래픽 미러링·Reachability
+  // Analyzer·Network Access Analyzer)과 사설 IPv4 무과금은 facts V12 — "There's no additional
+  // charge for using a VPC. There are, however, charges for some VPC components, such as NAT
+  // gateways, IP Address Manager, traffic mirroring, Reachability Analyzer, and Network Access
+  // Analyzer." / "Private IPv4 addresses (RFC 1918) are not charged." 그대로다. ENI와 키
+  // 페어는 이 목록에도, 그리고 이 장을 쓰며 다시 확인한 "Elastic network interfaces"·
+  // "Amazon EC2 key pairs" 두 페이지 어디에도 요금 언급이 없다(report의 "확인한 사실" 절 참고).
+  // 로드밸런서 뒤의 대상이 사설 IP만으로 응답해 퍼블릭 IPv4가 필요 없다는 것은 facts V23 —
+  // "Both internet-facing and internal load balancers route requests to your targets using
+  // private IP addresses. Therefore, your targets do not need public IP addresses..." 그대로다.
+  // 데이터 전송이 나가는 방향에만 요금이 붙는다는 것은 이 장을 쓰며 새로 확인한
+  // "Understanding data transfer charges" 페이지 — "There's no charge for data transfer from
+  // the internet to AWS." — 로 확인했다(facts 파일에는 없어 report에만 적는다).
+  const ITEMS = [
+    {k:"ec2", label:"EC2 인스턴스", need:["ec2"],
+      row(s){ return s.stopped
+        ? {badge:"ok", t:"요금 멈춤", note:"중지하는 순간 인스턴스 요금은 멈춥니다."}
+        : {badge:"bad", t:"계속 나감", note:"켜 둔 시간만큼 계속 나갑니다."}; }},
+    {k:"ebs", label:"EBS 볼륨", need:["ebs"],
+      row(s){ return {badge:"bad", t:"계속 나감",
+        note: s.stopped ? "인스턴스는 멈췄어도 이 볼륨은 그대로 나갑니다." : "켜져 있든 꺼져 있든, 크기만큼 그대로 나갑니다."}; }},
+    {k:"orphan", label:"지운 인스턴스의 EBS", need:["orphan"],
+      row(){ return {badge:"bad", t:"계속 나감", note:"인스턴스는 이미 없어졌는데, 청구서에 남은 건 이 볼륨 하나."}; }},
+    {k:"eip", label:"안 붙여 둔 EIP", need:["eip"],
+      row(){ return {badge:"bad", t:"계속 나감", note:"시간당 $0.005 — 어딘가 붙어 있어도 같은 값입니다."}; }},
+    {k:"nat", label:"NAT Gateway", need:["nat"],
+      row(){ return {badge:"bad", t:"계속 나감", note:"시간당 $0.045에 처리한 GB당 $0.045, 거기에 자신의 퍼블릭 IPv4 시간당 $0.005까지 — 한 번에 세 겹."}; }}
+  ];
+  function render(state){
+    const active = ITEMS.filter(it => it.need.every(k => state[k]));
+    let body;
+    if(active.length === 0){
+      body = `<p>켜져 있는 항목이 없습니다.</p>`;
+    } else {
+      const rows = active.map(it => {
+        const r = it.row(state);
+        return `<tr><td>${esc(it.label)}</td><td><span class="badge ${r.badge}">${esc(r.t)}</span></td><td>${r.note}</td></tr>`;
+      }).join('');
+      let extra = '';
+      if(state.ec2 && state.ebs){
+        extra = state.stopped
+          ? `<p>인스턴스는 멈췄지만, 볼륨은 그대로 나가는 중.</p>`
+          : `<p>인스턴스도 볼륨도, 지금은 나란히 요금이 붙는 중.</p>`;
+      }
+      body = `<table class="t"><thead><tr><th>항목</th><th>꺼도 나가는가</th><th>비고</th></tr></thead><tbody>${rows}</tbody></table>${extra}`;
+    }
+    out.innerHTML = body;
+    out.classList.add('show');
+  }
+  const state = wireTogs('#costTogs', render);
+  if(state) render(state);
 })();
 
 </script>
