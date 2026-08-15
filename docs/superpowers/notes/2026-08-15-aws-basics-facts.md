@@ -329,6 +329,32 @@ S3 쪽이 European Sovereign Cloud를 포함해 더 최신으로 보이지만, *
 
 ---
 
+## V12 · VPC 구성 요소 중 무엇에 요금이 붙는가 — 부분 확인
+
+계획서 1장(해체기)이 ENI·보안 그룹·키 페어·서브넷·라우팅 테이블·인터넷 게이트웨이 여섯을
+"무료"라고 단정하려 했다. 근거를 찾은 것과 못 찾은 것이 갈린다.
+
+출처: [What is Amazon VPC?](https://docs.aws.amazon.com/vpc/latest/userguide/what-is-amazon-vpc.html)
+
+> **There's no additional charge for using a VPC.** There are, however, charges for some VPC
+> components, such as NAT gateways, IP Address Manager, traffic mirroring, Reachability Analyzer,
+> and Network Access Analyzer.
+
+> **Private IPv4 addresses (RFC 1918) are not charged.**
+
+**확인된 것**: VPC 사용 자체에 추가 요금이 없다. 사설 IPv4는 과금되지 않는다. 요금이 붙는 것으로
+공식 문서가 **이름을 든** 것은 NAT 게이트웨이·IPAM·트래픽 미러링·Reachability Analyzer·
+Network Access Analyzer 다섯이다.
+
+**확인되지 않은 것**: 위 문장은 `such as`로 열거하므로 **닫힌 목록이 아니다.** "목록에 없으니
+무료"는 부재로부터의 추론이지 인용이 아니다. ENI와 키 페어는 이 문서가 아예 언급하지 않는다.
+
+**따라서 1장에서는 여섯을 "무료"라고 쓰지 않는다.** 해체기의 요금 축은 근거가 있는 셋
+(EC2는 켜 둔 시간, EBS는 보존되는 동안, 탄력적 IP는 쥐고 있는 동안)만 값을 채우고,
+나머지 여섯은 **"12장에서 확인"으로 넘긴다.** 12장이 위 인용 두 줄을 근거로 답한다.
+
+넘기는 것이 손해가 아니다. 1장에서 아홉 개 중 여섯이 답을 미루면 12장까지 끌고 갈 것이 남는다.
+
 ## 검증 요약
 
 | # | 대상 | 결과 |
@@ -344,6 +370,7 @@ S3 쪽이 European Sovereign Cloud를 포함해 더 최신으로 보이지만, *
 | V9 | Lambda 한계 | 확인됨. **"15분이 최대"는 함수로 한정해야 한다** |
 | V10 | RDS가 안 주는 것 | 확인됨. 호스트 접근 불가 원문 확보 |
 | V11 | ARN 빈 칸 | 확인됨. **파티션 개수는 문서끼리 어긋나므로 쓰지 않는다** |
+| V12 | VPC 구성 요소 과금 | 부분 확인. VPC 자체·사설 IPv4는 무과금. **ENI·키 페어는 근거 없음 — 1장에서 "무료"라고 쓰지 않고 12장으로 넘긴다** |
 
 ## 설계 문서에 반영할 것
 
