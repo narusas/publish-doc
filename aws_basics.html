@@ -886,6 +886,70 @@ button:focus-visible, .pick:focus-visible, .term:focus-visible, a:focus-visible,
       </div>
     </section>
 
+    <section id="ebs" data-title="EBS">
+      <div class="sec-head">
+        <div class="kicker">06 · 디스크</div>
+        <h2 class="sec-title">💽 디스크가 따로 노는 이유 <span class="lvl must">🟢 필수</span></h2>
+      </div>
+      <p class="lead">"경우에 따라 남습니다." 5장의 종료 표에서 EBS 볼륨에만 붙어 있던 문구입니다. 인스턴스는 사라지고 인스턴스 스토어도 사라지고 퍼블릭 IPv4도 해제되는데, EBS만 조건부로 남아 있었다면 — 그 조건, 대체 무엇일까요.</p>
+
+      <h3>인스턴스보다 오래 사는 몸</h3>
+      <p><span class="term" data-t="EBS">EBS</span>가 인스턴스에 내주는 디스크는 인스턴스 안에 박힌 부품이 아닙니다. 붙였다 뗄 수 있고, 뗀 채로도 존재할 수 있어서 인스턴스보다 오래 사는 몸이기도 해요. 그렇다면 어디까지 따로 놀 수 있을까요.</p>
+      <p>아무 인스턴스에나 옮겨 붙는 것은 아닙니다. 붙는 자리는 볼륨이 놓인 가용 영역 하나로 한정되는데, <a class="link" href="#region">3장</a>에서 서브넷을 가둬 두던 바로 그 경계입니다. 공식 문서가 그어 둔 선도 한 줄 — 같은 가용 영역에 있는 인스턴스에만 붙일 수 있다는 것. 리전은커녕 같은 리전 안 다른 AZ로도 건너가지 못하는 볼륨입니다.</p>
+      <p>그럼 사라지기 전에 복사는 남겨 둘 수 있을까요. <span class="term" data-t="스냅샷">스냅샷</span>이 그 답인데, 볼륨을 통째로 다시 뜨는 게 아니라 지난 스냅샷 이후 바뀐 블록만 담는 증분 방식입니다. 그렇게 쌓인 조각들이 가는 곳은 다시 S3 — <a class="link" href="#s3">8장</a>에서 다시 만날 이름.</p>
+
+      <h3>콘솔로 하면, CLI로 하면</h3>
+      <p>김주임이 두 번째 인스턴스를 준비합니다. 이번엔 배포 스크립트로, 인스턴스를 띄우는 김에 로그용 데이터 볼륨 하나를 처음부터 같이 붙이기로 합니다. 지난주 콘솔에서 클릭 몇 번으로 인스턴스를 띄우며 데이터 볼륨을 붙였을 때와 하는 일 자체는 다르지 않은데, 달라진 것은 손끝뿐입니다 — 마우스 대신 터미널. 나중에 이 인스턴스를 지우면, 그 볼륨도 지난주 그 볼륨과 같은 운명일까요.</p>
+
+      <div class="myth">
+        <div class="m-row no"><span class="m-x">✕</span><div class="m-txt">"루트 볼륨은 지워지고, 따로 붙인 볼륨은 남는다" — 갈리는 축이 볼륨 종류 하나뿐일 거라는 요약.</div></div>
+        <div class="m-row yes"><span class="m-x">✓</span><div class="m-txt">갈리는 축은 <b>셋</b>입니다. 볼륨 종류만이 아니라 <b>언제 붙였는지</b>, <b>어느 방법으로 붙였는지</b>까지 겹쳐야 종료 후의 운명이 정해집니다.
+          <table class="t">
+            <thead><tr><th>볼륨</th><th>언제 붙였나</th><th>방법</th><th>종료하면</th></tr></thead>
+            <tbody>
+              <tr><td>루트</td><td>시작할 때</td><td>콘솔·CLI</td><td><b>삭제</b></td></tr>
+              <tr><td>루트</td><td>시작 후</td><td>콘솔·CLI</td><td>보존</td></tr>
+              <tr><td>데이터</td><td>시작할 때</td><td>콘솔</td><td>보존</td></tr>
+              <tr><td>데이터</td><td>시작할 때</td><td><b>CLI</b></td><td><b>삭제</b></td></tr>
+              <tr><td>데이터</td><td>시작 후</td><td>콘솔·CLI</td><td>보존</td></tr>
+            </tbody>
+          </table>
+          셋째 줄과 넷째 줄, 나란히 놓으면 무엇이 다를까요. 똑같이 "시작할 때 붙인 데이터 볼륨"인데, 콘솔은 남기고 CLI는 지웁니다.</div></div>
+      </div>
+
+      <p><a class="link" href="#doors">13장</a>에서는 "콘솔·CLI·API는 같은 문 세 개"라 말할 텐데, 이 갈림이 그 말과 정면으로 부딪히는 것처럼 보이지 않나요. 모순은 아닙니다. 문은 정말 하나이고, 그 문으로 들어갈 때 <b>콘솔이 대신 채워 넣는 기본값이 다를 뿐</b>입니다. 이 값에는 이름이 있습니다 — <span class="term" data-t="DeleteOnTermination">DeleteOnTermination</span>. 콘솔은 데이터 볼륨을 붙일 때 이 속성을 "아니오"로 채워 보내고, 배포 스크립트가 값을 따로 지정하지 않으면 CLI는 <code>true</code>를 채워 보냅니다.</p>
+      <p>그런데 이 값, 어디에도 고정돼 있지 않아요. 시작할 때 붙는 볼륨의 기본값을 최종적으로 정하는 것은 인스턴스도 콘솔도 아니라, <span class="term" data-t="루트 볼륨">루트 볼륨</span>을 포함해 인스턴스를 찍어 낸 AMI에 박힌 값입니다. "기본값은 삭제다", "기본값은 보존이다" — 어느 쪽으로 외워 둬도 다음 AMI에서 배신당할 수 있다는 뜻.</p>
+      <p>외우는 대신 확인하는 편이 낫습니다. 인스턴스 상세 화면의 <b>Storage</b> 탭 → <b>Block devices</b> → <b>Delete on termination</b> 열, 그 한 칸이 지금 이 볼륨의 실제 값을 보여줘요.</p>
+      <p>남는 쪽으로 확인됐다고 마음을 놓을 일도 아닙니다. 보존된 볼륨에도 요금은 계속 나가는데, 이 값은 <a class="link" href="#cost">12장</a>이 다시 붙잡습니다.</p>
+
+      <div class="demo" id="volLab">
+        <span class="demo-tag">볼륨 생사 확인기</span>
+        <p style="margin:0 0 4px">다섯 경로 중 하나를 눌러, 이 볼륨이 인스턴스를 지운 뒤에도 남는지 확인해 보세요.</p>
+        <div class="picker" id="volPicker">
+          <button class="pick on" data-k="root-launch">루트 · 시작할 때</button>
+          <button class="pick" data-k="root-after">루트 · 시작 후 교체</button>
+          <button class="pick" data-k="data-console">데이터 · 시작할 때 · 콘솔</button>
+          <button class="pick" data-k="data-cli">데이터 · 시작할 때 · CLI</button>
+          <button class="pick" data-k="data-after">데이터 · 시작 후</button>
+        </div>
+        <div id="volOut"></div>
+      </div>
+
+      <div class="oneline">
+        <div class="ol-ic">💽</div>
+        <div><div class="ol-t">6장 한 줄 요약</div><div class="ol-b"><b>기본값은 하나가 아니라 셋 갈래 — 볼륨 종류·붙인 시점·붙인 방법.</b> 같은 데이터 볼륨도 콘솔로 붙였는지 CLI로 붙였는지에 따라 생사가 갈리고, 최종 결정권은 AMI에 있으므로 Storage 탭의 Delete on termination 열을 확인하는 편이 낫습니다.</div></div>
+      </div>
+
+      <div class="quiz" data-qid="q-ebs" data-answer="b">
+        <div class="q">스크립트로 인스턴스를 띄우면서 데이터 볼륨을 함께 붙였습니다. 인스턴스를 <code>terminate</code>하면 그 볼륨은?</div>
+        <button class="opt" data-opt="a">데이터 볼륨이므로 남는다</button>
+        <button class="opt" data-opt="b">CLI로 붙였다면 함께 지워진다</button>
+        <button class="opt" data-opt="c">루트가 아니므로 남지만 요금은 멈춘다</button>
+        <button class="opt" data-opt="d">스냅샷이 자동으로 만들어진 뒤 지워진다</button>
+        <div class="explain"><b>정답은 B입니다.</b> A가 가장 흔한 오답인데, 얄궂게도 콘솔로 붙였다면 그 A가 맞는 답이 됩니다 — 함정이 바로 거기 있어요. 같은 일을 콘솔로 했는지 CLI로 했는지가 데이터 볼륨의 생사를 가릅니다. C는 보존된 볼륨에도 요금이 계속 나간다는 점에서(<a class="link" href="#cost">12장</a>), D는 자동으로 만들어지는 스냅샷 같은 게 없다는 점에서 틀렸습니다. 최종 결정권은 AMI에 있으니, 필요한 것은 외워 둘 답이 아니라 확인해 둘 습관.</div>
+      </div>
+    </section>
+
   </main>
 </div>
 
@@ -932,6 +996,10 @@ const GLOSSARY = {
   "인스턴스 스토어": "인스턴스에 물리적으로 붙어 있는 로컬 디스크입니다. 재부팅에서만 데이터가 남고, 중지·최대 절전·종료·타입 변경에서는 모두 사라집니다. EBS와 달리 나중에 붙였다 뗄 수 없습니다.",
   "키 페어": "인스턴스에 접속할 때 쓰는 공개키·개인키 한 쌍입니다. 만들 때 브라우저가 내려 주는 개인키 파일은 그 순간이 지나면 다시 받을 방법이 없습니다.",
   "퍼블릭 IPv4": "인스턴스에 인터넷에서 붙는 공인 IP 주소입니다. 공식 문서가 적어 둔 해제 사유는 중지·최대 절전·종료 세 가지뿐이고, 다시 시작하면 새 주소를 받습니다.",
+  "EBS": "Elastic Block Store의 줄임말로, 인스턴스에 붙여 쓰는 디스크를 내주는 서비스입니다. 인스턴스 안에 박힌 부품이 아니라 따로 붙였다 뗄 수 있어서, 인스턴스보다 오래 살 수 있습니다.",
+  "스냅샷": "EBS 볼륨을 특정 시점 그대로 떠 두는 백업입니다. 매번 통째로 다시 뜨는 게 아니라 지난 스냅샷 이후 바뀐 블록만 담는 증분 방식이고, S3에 저장됩니다.",
+  "DeleteOnTermination": "인스턴스를 종료할 때 EBS 볼륨을 함께 지울지 정하는 속성입니다. 붙인 시점과 방법에 따라 기본값이 갈리고, 최종적으로는 AMI가 정한 값을 따릅니다.",
+  "루트 볼륨": "인스턴스가 부팅하는 디스크입니다. AMI로부터 만들어지고, 시작할 때 함께 붙은 루트 볼륨은 인스턴스를 종료하면 기본적으로 함께 지워집니다.",
   // @GLOSSARY_END
 };
 
@@ -1298,6 +1366,41 @@ if(location.hash){
   }
   wirePicker('#lifePicker', render);
   render('reboot');
+})();
+
+/* ============================================================
+   데모 6 — 볼륨 생사 확인기 (6장)
+   ============================================================ */
+(function(){
+  const out = $('#volOut'); if(!out) return;
+  // 다섯 갈래는 EBS 사용자 안내서 "Preserve data when an instance is terminated" 페이지의
+  // 표(V3) 그대로다. 데이터 볼륨을 CLI로 시작할 때 붙이면 기본값이 삭제로 뒤집힌다는 것이
+  // 이 표에서 가장 놓치기 쉬운 자리.
+  // AZ 제약은 "Attach an Amazon EBS volume to an Amazon EC2 instance" 페이지의
+  // "You can attach volumes to instances that are in the same Availability Zone only."로 확인했다.
+  // 스냅샷의 증분·S3 저장은 "Amazon EBS snapshots" 페이지의 "A snapshot is an incremental
+  // backup... Snapshots are stored in Amazon S3..."로 확인했다.
+  const D = {
+    "root-launch": {t:"루트 · 시작할 때", vol:"루트", when:"시작할 때", how:"콘솔·CLI", c:"gone", label:"삭제",
+      x:"루트 볼륨은 인스턴스가 부팅하는 그 디스크입니다. 인스턴스와 한 몸으로 태어난 만큼, <b>종료하면 함께 지워지는 쪽이 기본값</b>이에요."},
+    "root-after": {t:"루트 · 시작 후 교체", vol:"루트", when:"시작 후", how:"콘솔·CLI", c:"keep", label:"보존",
+      x:"부팅 디스크를 나중에 갈아 끼운 경우입니다. 이때는 <b>보존이 기본값</b>이고, 보존된 볼륨에는 <b>요금이 계속</b> 나갑니다."},
+    "data-console": {t:"데이터 · 시작할 때 · 콘솔", vol:"데이터", when:"시작할 때", how:"콘솔", c:"keep", label:"보존",
+      x:"콘솔에서 인스턴스를 띄우며 데이터 볼륨을 같이 붙인 경우입니다. 인스턴스를 지워도 <b>이 볼륨은 남고</b>, 남는 동안 <b>요금도 계속</b> 나갑니다."},
+    "data-cli": {t:"데이터 · 시작할 때 · CLI", vol:"데이터", when:"시작할 때", how:"CLI", c:"gone", label:"삭제",
+      x:"콘솔과 똑같은 일을 CLI로 했을 뿐인데 결과가 뒤집힙니다. <b>여기가 사고가 나는 자리</b> — 콘솔이었다면 남았을 그 볼륨이, CLI에서는 인스턴스를 따라 함께 지워져요."},
+    "data-after": {t:"데이터 · 시작 후", vol:"데이터", when:"시작 후", how:"콘솔·CLI", c:"keep", label:"보존",
+      x:"인스턴스를 띄운 뒤에 나중에 붙인 데이터 볼륨입니다. 붙인 방법이 콘솔이든 CLI든 상관없이 <b>보존</b>되고, 여기도 <b>요금은 계속</b> 나갑니다."}
+  };
+  function render(k){
+    const d = D[k]; if(!d) return;
+    out.innerHTML = `<table class="t"><thead><tr><th>볼륨</th><th>언제 붙였나</th><th>방법</th><th>종료하면</th></tr></thead>
+      <tbody><tr><td>${esc(d.vol)}</td><td>${esc(d.when)}</td><td>${esc(d.how)}</td><td><span class="badge ${d.c}">${esc(d.label)}</span></td></tr></tbody></table>
+      <p>${d.x}</p>`;
+    out.classList.add('show');
+  }
+  wirePicker('#volPicker', render);
+  render('root-launch');
 })();
 
 </script>
