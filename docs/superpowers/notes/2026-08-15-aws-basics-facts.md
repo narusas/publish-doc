@@ -713,6 +713,34 @@ Instances)을 전부 본문 밖에 두고 900초로만 쓴 것이 정확한 판�
 
 12장이 같은 페이지를 참조하게 되면 이 경고를 다시 읽을 것.
 
+## V27 · 데이터 전송의 방향, Cost Explorer, 그리고 **ENI·키 페어는 세 소스로도 확인 안 됨**
+
+12장 구현자가 확인해 왔다.
+
+**데이터 전송은 나가는 방향에만 붙는다** — 출처: [Understanding data transfer charges](https://docs.aws.amazon.com/cur/latest/userguide/cur-data-transfers-charges.html)
+> There's **no charge for data transfer from the internet to AWS.**
+
+> There's no charge for the data transferred **into** the destination Region. The data transfer
+> charge is determined by the data transferred **out from** the source Region.
+
+**Cost Explorer** — 출처: [AWS Cost Explorer](https://aws.amazon.com/aws-cost-management/aws-cost-management/aws-cost-explorer/)
+> Visualize, understand, and manage your AWS costs and usage over time … create custom reports
+> that analyze cost and usage data.
+
+### 🚨 ENI·키 페어의 과금 — 세 소스를 뒤졌지만 여전히 언급이 없다
+
+V12가 "확인되지 않음"으로 남긴 것을 12장 구현자가 **독립 출처 셋으로 재확인**했다.
+
+- [Elastic network interfaces](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/using-eni.html) — 요금 문장이 **전혀 없다**
+- [Amazon EC2 key pairs](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ec2-key-pairs.html) — 마찬가지로 **없다**
+- [Amazon VPC Pricing](https://aws.amazon.com/vpc/pricing/) — ENI·보안 그룹·서브넷·라우팅 테이블·인터넷 게이트웨이·키 페어 **어느 것도 개별 항목으로 나오지 않는다**
+
+**뒤집을 근거를 못 찾았다는 것이 확인된 것이지, "무료"가 확인된 것이 아니다.** 부재는 부재다.
+12장은 이 둘을 **"공식 문서 밖의 물음"**으로 남겼다. 이 문서가 답할 수 없는 것을 답할 수 없다고
+쓰는 것이 정확한 처리다.
+
+**세 번 뒤져서 없었으므로 더 뒤지지 않는다.** 이후 어떤 장도 이 둘의 과금을 단정하지 않는다.
+
 ## 검증 요약
 
 | # | 대상 | 결과 |
@@ -743,6 +771,7 @@ Instances)을 전부 본문 밖에 두고 900초로만 쓴 것이 정확한 판�
 | V24 | ALB 규칙 조건 타입 | 확인됨. `host-header` `path-pattern` `http-request-method` `source-ip`. **확인 없이 쓴 것이 결과적으로 맞았던 경우 — 절차로는 V20·V22보다 나쁘다** |
 | V25 | "관리형"·"책임 공유 모델"의 출처 | 확인됨. **둘 다 AWS 자신의 용어**(페이지 소제목이 `Amazon RDS shared responsibility model`). 읽기 전용 복제본은 스케일링 쪽. V10 표 재확인 — 값 열한 행 일치 |
 | V26 | 컨테이너 단위 · 콜드 스타트 | 확인됨. ECS 단위는 태스크(**실행 시간 상한 문장은 없다 — 무제한이라 쓰면 안 된다**). 실행 환경은 몇 시간마다 종료된다. **같은 페이지에 Durable Functions(1년)·Managed Instances가 또 있다 — V9의 함정 반복** |
+| V27 | 데이터 전송 방향 · Cost Explorer · **ENI·키 페어 재확인** | 확인됨. 들어오는 쪽은 무과금, 나가는 쪽에 붙는다. **ENI·키 페어는 독립 출처 셋을 뒤져도 요금 언급이 없다 — 부재는 부재이지 무료가 아니다** |
 
 ## 설계 문서에 반영할 것
 
