@@ -614,6 +614,56 @@ button:focus-visible, .pick:focus-visible, .term:focus-visible, a:focus-visible,
       <p>다만 왜 하필 아홉인지는, 아직 아무도 답해 주지 않았습니다.</p>
     </section>
 
+    <section id="split" data-title="아홉 개로 쪼개졌다">
+      <div class="sec-head">
+        <div class="kicker">01 · 해체</div>
+        <h2 class="sec-title">🧩 아홉 개의 정체 <span class="lvl must">🟢 필수</span></h2>
+      </div>
+      <p class="lead">한 대를 빌렸는데 왜 아홉 개인가. 하나로 묶어 두면 안 되나 — 그럴 법한 물음입니다. <span class="term" data-t="온프렘">온프렘</span> 서버 한 대를 떠올려 보면 더 그럴지도 모릅니다. 랙에 박힌 그 상자 안에서 CPU도, 디스크도, 랜카드도, 방화벽 규칙도, 서버실 열쇠도 전부 한 몸이었으니까요. 전원을 넣으면 다 같이 켜지고, 뽑으면 다 같이 꺼졌습니다.</p>
+
+      <h3>따로 둔 까닭</h3>
+      <p>온프렘에서 그 모든 게 한 몸이었던 이유는 단순합니다. 나눌 필요가 없었으니까요. 클라우드에서는 사정이 다릅니다. <span class="term" data-t="인스턴스">인스턴스</span> 하나를 만드는 순간, 그 뒤에서 아홉 개의 리소스가 각자 자기 이름으로 태어납니다. 따로 두는 데는 까닭이 있는 듯합니다.</p>
+
+      <ol>
+        <li>첫째, 수명을 따로 두려는 쪽. 인스턴스를 지워도 <span class="term" data-t="볼륨">볼륨</span>은 남을 수 있습니다(6장에서 그 조건을 봅니다). 그러고 보면 방금 콘솔에서 본 EBS 루트 볼륨은, 인스턴스에 딸린 부속이 아니라 처음부터 따로 사는 몸이었던 셈입니다.</li>
+        <li>둘째, 값을 따로 매기려는 쪽. 인스턴스를 꺼 두면 그 자체엔 요금이 붙지 않지만, 밑에 남은 볼륨에는 크기만큼 여전히 붙습니다 — 켜져 있든 꺼져 있든 같은 값입니다(12장에서 정산합니다). 짚이는 데가 있습니다. 그렇다면 나머지 여섯, 랜카드도 방화벽 규칙도 열쇠도 서브넷도 라우팅 테이블도 게이트웨이도 저마다 값이 매겨져 있지 않을까요. 다만 지금 손에 쥔 근거로는 그 여섯에 아직 답하지 못합니다.</li>
+        <li>셋째, 다시 조립하려는 쪽. 같은 ENI를 다른 인스턴스에 옮겨 붙일 수 있는 것도(7장에서 직접 해봅니다) 이 쪼갬 덕분입니다. 다만 그 대가로, 아홉 개를 한 몸처럼 한 번에 지워버리고 싶다는 처음의 바람은 접어야 할 듯합니다. 쪼개진 것은 쪼개진 채로, 하나씩 지워야 합니다.</li>
+      </ol>
+
+      <p>셋 다 같은 쪽을 가리킵니다. 습관이 아니라 설계. 다만 아홉 조각 저마다의 정체는, 이름만으로는 아직 잡히지 않습니다.</p>
+
+      <div class="demo" id="splitMap">
+        <span class="demo-tag">해체기</span>
+        <p style="margin:0 0 4px">아홉 조각을 하나씩 눌러 보면, 온프렘 시절엔 무엇이었는지가 먼저 드러납니다.</p>
+        <div class="picker" id="splitPicker">
+          <button class="pick on" data-k="ec2">EC2 인스턴스</button>
+          <button class="pick" data-k="ebs">EBS 루트 볼륨</button>
+          <button class="pick" data-k="eni">ENI (네트워크 인터페이스)</button>
+          <button class="pick" data-k="sg">보안 그룹</button>
+          <button class="pick" data-k="key">키 페어</button>
+          <button class="pick" data-k="subnet">서브넷</button>
+          <button class="pick" data-k="rtb">라우팅 테이블</button>
+          <button class="pick" data-k="igw">인터넷 게이트웨이</button>
+          <button class="pick" data-k="eip">탄력적 IP</button>
+        </div>
+        <div id="splitOut"></div>
+      </div>
+
+      <div class="oneline">
+        <div class="ol-ic">🧩</div>
+        <div><div class="ol-t">1장 한 줄 요약</div><div class="ol-b"><b>아홉 개는 수명·요금·조립을 따로 매기려고 쪼갠 결과입니다.</b> 그중 여섯의 요금은 아직 이름과 근거만 있고, 값은 12장에서 나옵니다.</div></div>
+      </div>
+
+      <div class="quiz" data-qid="q-split" data-answer="c">
+        <div class="q">아홉 개로 쪼개 놓아서 <b>생기는 일</b>은 무엇일까요?</div>
+        <button class="opt" data-opt="a">관리할 것이 늘어나는 대신 성능이 좋아진다</button>
+        <button class="opt" data-opt="b">한 번에 만들고 한 번에 지울 수 있게 된다</button>
+        <button class="opt" data-opt="c">각 조각의 수명과 요금이 서로 독립해진다</button>
+        <button class="opt" data-opt="d">보안 경계가 조각 수만큼 늘어난다</button>
+        <div class="explain"><b>정답은 C.</b> 쪼개 놓았다는 것은 수명과 요금과 조립, 이 셋을 아홉 조각이 각자 따로 가진다는 뜻입니다. 수명이 갈리니 인스턴스를 지워도 EBS 루트 볼륨은 남을 수 있고(6장), 요금이 갈리니 꺼 둔 인스턴스에도 그 밑의 볼륨값은 그대로 나가며(12장), 조립이 갈리니 같은 ENI를 다른 인스턴스에 옮겨 붙일 수 있습니다(7장). 가장 많이들 고르는 오답은 B인데, 얼핏 그럴싸해 보입니다. 다만 정확히 반대입니다 — 쪼갠 대가로 아홉 개를 한 번에 지우기는 오히려 어려워졌고, 그 어려움을 메우려는 것이 14장의 IaC입니다. A는 쪼갬이 성능과는 무관하다는 점에서, D는 보안 경계가 조각 수가 아니라 계정·VPC·ENI라는 정해진 자리에 붙는다는 점에서 틀렸습니다.</div>
+      </div>
+    </section>
+
   </main>
 </div>
 
@@ -643,6 +693,9 @@ Prism.languages.json={property:{pattern:/(^|[^\\])"(?:\\.|[^\\"\r\n])*"(?=\s*:)/
 const GLOSSARY = {
   "리소스": "AWS에서 만들고 지우는 것 하나하나. 인스턴스도, 볼륨도, 네트워크 인터페이스도 각각 별개의 리소스이고 각각 따로 과금됩니다.",
   "콘솔": "브라우저로 쓰는 AWS 관리 화면. 13장에서 보듯 콘솔이 하는 일은 결국 API 호출이라, 콘솔에서 되는 것은 전부 자동화할 수 있습니다.",
+  "인스턴스": "EC2가 실행 중인 가상 서버 한 대를 가리키는 말입니다. 콘솔에 뜬 아홉 줄 중 첫 줄이지만, 나머지 여덟은 이 인스턴스에 딸린 부속이 아니라 각자 따로 사는 리소스입니다.",
+  "볼륨": "EBS가 인스턴스에 붙여 주는 디스크입니다. 인스턴스를 지운다고 함께 사라지지 않을 수 있어서, 둘의 수명은 따로 매겨집니다.",
+  "온프렘": "on-premises의 줄임말로, 클라우드가 아니라 회사가 직접 사서 운영하는 서버실의 물리 장비를 뜻합니다.",
   // @GLOSSARY_END
 };
 
@@ -842,6 +895,36 @@ if(location.hash){
       update();
     });
   });
+})();
+
+/* ============================================================
+   데모 1 — 해체기 (1장)
+   ============================================================ */
+(function(){
+  const out = $('#splitOut'); if(!out) return;
+  const D9 = {
+    ec2:    {n:"EC2 인스턴스", was:"본체 — CPU와 메모리", life:"terminate하면 사라진다", bill:"켜 둔 시간만큼", ch:"5장"},
+    ebs:    {n:"EBS 루트 볼륨", was:"안에 꽂힌 디스크", life:"인스턴스를 지워도 남을 수 있다", bill:"켜져 있든 꺼져 있든 크기만큼", ch:"6장"},
+    eni:    {n:"ENI (네트워크 인터페이스)", was:"랜카드", life:"인스턴스와 따로 살고 따로 죽는다", bill:"12장에서 확인", ch:"7장"},
+    sg:     {n:"보안 그룹", was:"방화벽 설정 파일", life:"인스턴스와 무관하게 존재한다", bill:"12장에서 확인", ch:"7장에서 이름만"},
+    key:    {n:"키 페어", was:"서버실 열쇠", life:"만들 때 받은 개인키는 다시 못 받는다", bill:"12장에서 확인", ch:"5장"},
+    subnet: {n:"서브넷", was:"랙이 놓인 층", life:"AZ 하나에 갇혀 옮길 수 없다", bill:"12장에서 확인", ch:"3장 · 7장"},
+    rtb:    {n:"라우팅 테이블", was:"스위치의 경로 설정", life:"서브넷에 붙였다 뗄 수 있다", bill:"12장에서 확인", ch:"9장"},
+    igw:    {n:"인터넷 게이트웨이", was:"건물 밖으로 나가는 회선", life:"VPC에 하나 붙는다", bill:"12장에서 확인", ch:"9장"},
+    eip:    {n:"탄력적 IP", was:"고정 공인 IP 한 개", life:"놓아주기 전까지 내 것이다", bill:"쥐고 있는 동안 시간당", ch:"7장 · 12장"}
+  };
+  function render(k){
+    const d = D9[k]; if(!d) return;
+    out.innerHTML = `
+      <div class="kv">
+        <dt>온프렘에서는</dt><dd>${esc(d.was)}</dd>
+        <dt>수명</dt><dd>${esc(d.life)}</dd>
+        <dt>요금</dt><dd>${esc(d.bill)}</dd>
+        <dt>정체를 밝히는 곳</dt><dd>${esc(d.ch)}</dd>
+      </div>`;
+  }
+  wirePicker('#splitPicker', render);
+  render('ec2');
 })();
 
 </script>
