@@ -1386,6 +1386,85 @@ DescribeInstancesResponse response = ec2.describeInstances(request);</code></pre
       </div>
     </section>
 
+    <section id="wrap" data-title="마무리">
+      <div class="sec-head">
+        <div class="kicker">15 · 회수</div>
+        <h2 class="sec-title">🏁 내 계정에는 지금 몇 개가 켜져 있나</h2>
+      </div>
+      <p class="lead">김주임이 배포 첫날 세어 두었던 아홉 줄, 그 자리에는 이름과 실루엣만 있었습니다. 인스턴스도 볼륨도, 이름조차 낯설던 항목들도 저마다 별개의 리소스라는 사실 말고는 아무것도 확정되지 않은 채였는데, 열네 장을 지나온 지금 그 줄을 다시 펴면 무엇이 보일까요.</p>
+
+      <h3>아홉 줄, 다시 펴 보면</h3>
+      <dl class="kv">
+        <dt>EC2 인스턴스</dt><dd>서버가 아니라 AMI 한 장에서 찍혀 나온 복제본이었고, 상태 넷을 오가는 사이 밑에 붙은 것들의 운명도 함께 갈렸습니다(<a class="link" href="#ec2">5장</a>).</dd>
+        <dt>EBS 루트 볼륨</dt><dd>인스턴스 안에 박힌 부품이 아니라 따로 사는 몸이라, 시작할 때 함께 붙었다면 인스턴스를 지울 때 같이 사라지고 나중에 갈아 끼웠다면 남는, 그 갈림(<a class="link" href="#ebs">6장</a>).</dd>
+        <dt>ENI (네트워크 인터페이스)</dt><dd>랜카드가 따로 선 리소스였고, 사설 IP는 거기 매여 살아남았지만 퍼블릭 IP는 Amazon 풀에서 빌려 온 값이라 중지·시작마다 새로 배정됐습니다(<a class="link" href="#eni">7장</a>).</dd>
+        <dt>보안 그룹</dt><dd>ENI에 매인 방화벽이라는 자리까지만 확인했을 뿐, 무엇을 허용하고 막을지는 여기서 끝내 답하지 않았네요(<a class="link" href="#eni">7장</a>).</dd>
+        <dt>키 페어</dt><dd>인스턴스로 들어가는 유일한 문이었고, 브라우저가 내려 준 그 개인키는 그 순간이 지나면 다시 받을 길이 없었습니다(<a class="link" href="#ec2">5장</a>).</dd>
+        <dt>서브넷</dt><dd>어느 건물에 세울지를 묻는 질문이었고, 고른 가용 영역 하나에 갇혀 그 밖으로는 끝내 옮겨 가지 못했습니다(<a class="link" href="#region">3장</a>).</dd>
+        <dt>라우팅 테이블</dt><dd>만든 기억조차 없던 그 줄, 실은 인터넷 게이트웨이로 가는 길을 올려야 그 서브넷이 비로소 닿는 문의 조건(<a class="link" href="#entry">9장</a>).</dd>
+        <dt>인터넷 게이트웨이</dt><dd>문이라도 달렸다는 짐작, 정확했습니다. 다만 퍼블릭 IP를 쥔 자원만 드나들 수 있는 문이었거든요(<a class="link" href="#entry">9장</a>).</dd>
+        <dt>탄력적 IP</dt><dd>'탄력적'의 정체는 반납과 재배정의 굴레를 끊는다는 뜻이었고, 붙여 두든 놀리든 개수만큼 시간당 값이 나가는 것도 그 대가였습니다(<a class="link" href="#eni">7장</a>·<a class="link" href="#cost">12장</a>).</dd>
+      </dl>
+
+      <p>그날 초록 점 하나가 뜨는 데 2분이 걸리지 않았던 것은, 이 아홉 개가 이미 각자의 자리에서 조용히 준비돼 있었기 때문입니다. 김주임의 손끝은 버튼 하나를 눌렀을 뿐인데, 그 뒤에서 아홉 걸음이 동시에 놓였던 셈이네요.</p>
+
+      <h3>내 계정은 지금 몇 개인가</h3>
+      <p>김주임의 아홉 개는 이제 이름을 얻었습니다. 그렇다면 지금 이 화면 앞에 앉은 계정, 그 아홉 개는 몇 개나 켜져 있을까요. 짐작 대신 확인이 필요한 여덟 자리를 적어 둡니다.</p>
+
+      <div class="ckl">
+        <div class="ck" data-k="az-id">
+          <span class="cb">✓</span>
+          <span class="ct">내 계정의 AZ 이름이 어느 AZ ID에 붙어 있는지 확인해 봤다 <span class="dim">— 3장</span> · <a class="link" href="#appendix-cli">확인 명령</a></span>
+        </div>
+        <div class="ck" data-k="inst-count">
+          <span class="cb">✓</span>
+          <span class="ct">지금 켜져 있는 인스턴스가 몇 대인지 안다 <span class="dim">— 5장</span> · <a class="link" href="#appendix-cli">확인 명령</a></span>
+        </div>
+        <div class="ck" data-k="orphan-ebs">
+          <span class="cb">✓</span>
+          <span class="ct"><b>아무 인스턴스에도 안 붙어 있는 EBS 볼륨</b>이 있는지 가려냈다 <span class="dim">— 6장·12장</span> · <a class="link" href="#appendix-cli">확인 명령</a></span>
+        </div>
+        <div class="ck" data-k="pub-ip">
+          <span class="cb">✓</span>
+          <span class="ct">갖고 있는 퍼블릭 IPv4가 몇 개인지 안다 <span class="dim">— 7장·12장</span> · <a class="link" href="#appendix-cli">확인 명령</a></span>
+        </div>
+        <div class="ck" data-k="nat-count">
+          <span class="cb">✓</span>
+          <span class="ct">NAT Gateway가 몇 개 떠 있는지 셀 수 있다 <span class="dim">— 9장·12장</span> · <a class="link" href="#appendix-cli">확인 명령</a></span>
+        </div>
+        <div class="ck" data-k="owner-tag">
+          <span class="cb">✓</span>
+          <span class="ct">소유자 태그가 없는 리소스가 있는지 확인했다 <span class="dim">— 14장</span> · <a class="link" href="#appendix-cli">확인 명령</a></span>
+        </div>
+        <div class="ck" data-k="console-only">
+          <span class="cb">✓</span>
+          <span class="ct">콘솔에서 손으로 만들고 파일로는 안 남긴 게 무엇인지 안다 <span class="dim">— 14장</span> · <a class="link" href="#appendix-cli">확인 명령</a></span>
+        </div>
+        <div class="ck" data-k="bill-top3">
+          <span class="cb">✓</span>
+          <span class="ct">청구서에서 가장 비싼 세 줄, 바로 짚을 수 있다 <span class="dim">— 12장</span> · <a class="link" href="#appendix-cli">확인 명령</a></span>
+        </div>
+        <div class="ck-score"></div>
+      </div>
+
+      <h3>두 문서로 넘깁니다</h3>
+      <p>아홉 개의 정체는 확인했지만, 그 정체를 실제로 누가 만지고 고칠 수 있는지는 다른 축의 물음이었습니다. 계정을 만든 순간 첫 문지기가 됐던 루트 사용자, 그 사람이 정확히 무엇을 할 수 있고 없는지는 <a class="link" href="iam_tutorial.html">IAM 튜토리얼</a>의 몫.</p>
+      <p>보안 그룹의 사정도 다르지 않네요. 7장은 이 그룹이 ENI에 매인 방화벽이라는 자리까지만 확인해 두었을 뿐, 정작 무엇을 들이고 막을지는 이름만 걸어 둔 채로 넘어갔는데, 그 이름이 본론으로 바뀌는 자리가 <a class="link" href="aws_network_security.html">네트워크 보안 문서</a>입니다. 패킷이 실제로 어디까지 갈 수 있는지, 그 답을 쥔 것은 이쪽이 아니라 저쪽이었거든요.</p>
+
+      <h3>하나는 접어 둡니다</h3>
+      <p>여덟 자리는 방금 적었지만, 아홉 줄을 처음 세던 그 자리에는 물음이 하나 더 있었습니다. 나뉜 까닭은 수명과 요금과 조립, 세 갈래로 이미 확인했는데(<a class="link" href="#split">1장</a>), 그 나뉜 조각이 정확히 아홉이어야 했던 까닭까지는 아무도 답해 주지 않았습니다.</p>
+      <p>맨 처음 눌러 보았던 그 여섯 문장, <a class="link" href="#diag">30초짜리 자가진단</a>을 한 번 더 눌러 보시면 어떨까요. 문항은 그대로인데, 이번엔 짚이는 자리가 사뭇 달라져 있을 겁니다.</p>
+
+      <div class="quiz" data-qid="q-wrap" data-answer="c">
+        <div class="q">이 문서를 한 문장으로 줄인다면?</div>
+        <button class="opt" data-opt="a">AWS는 서비스가 많으니 필요한 것만 골라 쓰면 된다</button>
+        <button class="opt" data-opt="b">클라우드는 온프렘보다 싸고 빠르다</button>
+        <button class="opt" data-opt="c">한 몸이던 것이 쪼개졌고, 쪼개진 것마다 수명과 값이 따로 붙는다</button>
+        <button class="opt" data-opt="d">콘솔보다 CLI를 쓰는 편이 정확하다</button>
+        <div class="explain"><b>정답은 C입니다.</b> 1장에서 세운 것 — 한 몸이던 것이 쪼개졌고, 그 아홉 조각마다 수명과 요금이 따로 붙는다는 것 — 이 열네 장을 지나서도 그대로 남아 있습니다. 가장 매섭게 걸리는 오답은 D인데, 13장의 요지를 정확히 뒤집어 놓은 자리입니다 — 콘솔도 CLI도 SDK도 두드리는 문은 하나뿐이고, 갈리는 건 그 문으로 들어갈 때 콘솔이 대신 채워 넣는 기본값일 뿐 손끝의 정확도 문제가 아니었습니다. A는 이 문서가 처음부터 붙잡고 있던 일 — 서비스를 고르는 요령이 아니라 부품과 부품의 관계 — 과 어긋나고, B는 이 문서가 단 한 번도 주장한 적 없는 비교입니다.</div>
+      </div>
+    </section>
+
   </main>
 </div>
 
@@ -2314,6 +2393,42 @@ if(location.hash){
   }
   wirePicker('#driftPicker', render);
   render('apply');
+})();
+
+/* ============================================================
+   체크리스트 — 15장 마무리 (awsbase:ckl)
+   ============================================================ */
+(function(){
+  const ckl = $('.ckl'); if(!ckl) return;
+  const items = $$('.ck', ckl);
+  const scoreEl = $('.ck-score', ckl);
+  const checked = new Set(LS.get('ckl', []));
+  function render(){
+    let n = 0;
+    items.forEach(it => {
+      const on = checked.has(it.dataset.k);
+      it.classList.toggle('on', on);
+      it.setAttribute('aria-checked', on ? 'true' : 'false');
+      if(on) n++;
+    });
+    if(scoreEl) scoreEl.textContent = `${n} / ${items.length} 확인`;
+  }
+  items.forEach(it => {
+    it.setAttribute('role', 'checkbox');
+    it.setAttribute('tabindex', '0');
+    function toggle(){
+      const k = it.dataset.k;
+      if(checked.has(k)) checked.delete(k); else checked.add(k);
+      LS.set('ckl', [...checked]);
+      render();
+    }
+    it.addEventListener('click', e => { if(e.target.closest('a')) return; toggle(); });
+    it.addEventListener('keydown', e => {
+      if(e.target.closest('a')) return;
+      if(e.key === 'Enter' || e.key === ' '){ e.preventDefault(); toggle(); }
+    });
+  });
+  render();
 })();
 
 </script>
