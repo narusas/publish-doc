@@ -784,6 +784,43 @@ V12가 "확인되지 않음"으로 남긴 것을 12장 구현자가 **독립 출
 **14장에 쓸 것**: 태그를 붙이는 것과 청구서가 갈리는 것은 **별개의 두 단계**다. 이 조건을
 빠뜨리면 독자가 태그만 붙이고 청구서를 기다리게 된다.
 
+## V30 · 태그 제한 50개·삭제 불가 규칙은 EC2 리소스 기준이다 — 확인됨
+
+최종 검수가 GLOSSARY "태그"(:1628)의 "리소스 하나에 최대 50개"와 14장(:1354)의 "태그만으로는
+안 되고 리소스 식별자를 하나하나 짚어야 한다"는 두 주장의 근거가 소스 코드 주석(드리프트
+시뮬레이터, :2446 부근)에만 있고 이 파일에는 없다고 잡았다. 컨트롤러가 WebFetch로 원문을
+확인해 등재한다.
+
+출처: [Tag your Amazon EC2 resources](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/Using_Tags.html) — "Tag restrictions" 절
+
+> The following basic restrictions apply to tags:
+> + **Maximum number of tags per resource – 50**
+> + For each resource, each tag key must be unique, and each tag key can have only one value.
+> + Maximum key length – 128 Unicode characters in UTF-8
+> + Maximum value length – 256 Unicode characters in UTF-8
+> + …
+> + **Tag keys and values are case-sensitive.**
+
+> **You can't terminate, stop, or delete a resource based solely on its tags; you must specify the
+> resource identifier.** For example, to delete snapshots that you tagged with a tag key called
+> `DeleteMe`, you must use the `DeleteSnapshots` action with the resource identifiers of the
+> snapshots, such as `snap-1234567890abcdef0`.
+
+**같은 페이지에 EIP 제외 규칙도 다시 나온다 — V29와 일치.**
+> Elastic IP addresses that are tagged do not appear on your cost allocation report.
+
+**범위를 좁혀야 하는 이유.** 이 페이지의 제목 자체가 "Tag **your Amazon EC2 resources**"다. 50개
+한도와 "식별자가 있어야 삭제된다"는 규칙 둘 다 EC2 리소스를 대상으로 확인됐을 뿐이고, 이
+페이지는 S3 버킷이나 IAM 사용자 같은 다른 서비스까지 같은 한도인지 답하지 않는다. S3 태그
+제한 페이지를 이번에 별도로 열어 보려 했으나 WebFetch가 실제 본문을 받아 오지 못해 대조하지
+못했다 — **"다른 서비스도 같다"고 넓힐 근거가 없다.** V27이 이미 세운 규칙 그대로: 확인 안 된
+것은 확인 안 된 것으로 남긴다.
+
+**GLOSSARY·14장에 쓸 것**: GLOSSARY "태그" 항목(:1628)의 "리소스 하나에"는 "EC2 리소스
+하나에"로 좁힌다. 14장(:1354)의 "리소스 식별자를 하나하나 짚어야 한다"는 문장은 13장
+`tag:Owner` 필터가 EC2 인스턴스를 대상으로 쓰인 자리를 그대로 이어받으므로 맥락상 이미 EC2로
+좁혀져 있고, 문장 자체는 고치지 않는다 — 근거만 이 V30으로 잇는다.
+
 ## 검증 요약
 
 | # | 대상 | 결과 |
@@ -817,6 +854,7 @@ V12가 "확인되지 않음"으로 남긴 것을 12장 구현자가 **독립 출
 | V27 | 데이터 전송 방향 · Cost Explorer · **ENI·키 페어 재확인** | 확인됨. 들어오는 쪽은 무과금, 나가는 쪽에 붙는다. **ENI·키 페어는 독립 출처 셋을 뒤져도 요금 언급이 없다 — 부재는 부재이지 무료가 아니다** |
 | V28 | 콘솔·CLI·SDK는 같은 API | 확인됨. **단서: `at launch or within 180 days` — "전부 자동화할 수 있다"를 무조건으로 쓰면 그 단서를 지운다.** 자격 증명 우선순위도 확인(환경변수 → 프로필 → 인스턴스 역할) |
 | V29 | 비용 할당 태그 활성화 | 확인됨. **붙이는 것과 청구서가 갈리는 것은 별개의 두 단계.** 그리고 태그 붙인 탄력적 IP는 비용 할당 보고서에서 제외된다 |
+| V30 | 태그 50개 한도 · 삭제 불가 규칙 | 확인됨. **EC2 리소스 기준**(페이지 제목이 "Tag your Amazon EC2 resources") — 리소스당 최대 50개, 태그만으로는 종료·중지·삭제 불가(식별자 필요). **S3 등 다른 서비스로 넓힐 근거는 확보하지 못했다** |
 
 ## 설계 문서에 반영할 것
 
