@@ -449,6 +449,21 @@ Network Access Analyzer 다섯이다.
 `failures`라고만 적혀 있고, 그 이상은 지어낸 것이 된다. 그리고 문서 자신이 `Although rare`와
 `engineered to be`라고 쓴다 — **보장이 아니라 설계 목표**다. 3장도 그 온도를 지켜야 한다.
 
+## V17 · 인스턴스 타입을 바꾸려면 먼저 중지해야 한다 — 확인됨
+
+계획서 5장 데모의 `resize` 항목이 "먼저 중지해야 하므로 중지의 결과가 그대로 따라온다"는
+인과 사슬을 썼는데 근거가 없었다. 5장 구현자가 직접 확인해 인용을 가져왔다.
+
+출처: [Change the instance type of an EBS-backed instance](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/change-instance-type-of-ebs-backed-instance.html)
+
+> **You must stop your instance before you can change its instance type.**
+
+**따라서 쓸 수 있다**: 타입 변경은 중지를 거치므로 **중지의 결과가 그대로 따라온다** — 인스턴스
+스토어는 사라지고(V8이 따로 못 박기도 한다), 퍼블릭 IPv4는 해제됐다가 새로 받는다(V1).
+
+V8의 표가 타입 변경 행을 따로 두고 "The data does not persist"라고 적은 것과, 여기서 확인된
+"중지를 거친다"가 같은 결론에 이른다. **두 경로가 일치하므로 5장은 인과를 써도 된다.**
+
 ## 검증 요약
 
 | # | 대상 | 결과 |
@@ -469,6 +484,7 @@ Network Access Analyzer 다섯이다.
 | V14 | 계정 경계를 넘는 조건 | 확인됨. **양쪽 평가가 모두 Allow일 때만** 통과. 정책 종류·이름은 IAM 문서의 몫이라 쓰지 않는다 |
 | V15 | 리전 격리 · 글로벌 서비스 명단 | 확인됨. 리전 간 리소스는 독립. 글로벌 엔드포인트 명단에 CloudFront·IAM·Route 53이 있고 **S3는 없다** |
 | V16 | AZ의 장애 격리 | 확인됨. 단 **원인(정전·화재)은 문서에 없다.** `failures`까지만, 그리고 `engineered to be`이지 보장이 아니다 |
+| V17 | 타입 변경은 중지를 거치는가 | 확인됨. "You must stop your instance before you can change its instance type." 5장이 인과를 써도 된다 |
 
 ## 설계 문서에 반영할 것
 
