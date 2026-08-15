@@ -726,7 +726,7 @@ button:focus-visible, .pick:focus-visible, .term:focus-visible, a:focus-visible,
       <p>계정은 지난 장에서 이미 담장이었습니다. 리전은 그 담장 안에 또 하나 그어진 선입니다 — 같은 계정, 같은 로그인이라도 서울에서 만든 것은 도쿄 콘솔에서 처음부터 없던 물건. 리소스가 안 보인다는 문의 태반이 여기서 옵니다. 지웠다고 오해하거나 권한이 없다고 오해하는 쪽이 흔하지만, 실은 리전을 잘못 골랐을 뿐인 경우가 더 많습니다. 1장의 자가진단에 있던 그 항목 — 리전을 잘못 골라 리소스가 안 보였던 경험 — 이 가리키는 게 바로 이 순간.</p>
 
       <h3>AZ, 리전 속의 자리</h3>
-      <p>리전 하나는 다시 여러 <span class="term" data-t="가용 영역">가용 영역</span>으로 나뉩니다. 리전이 도시라면 가용 영역은 그 도시 안에 따로 떨어져 선 건물 여러 채인 셈인데, 한 건물이 정전으로 흔들려도 다른 건물까지 같이 흔들리지는 않습니다. 인스턴스를 만들 때 낯설게 골랐던 <span class="term" data-t="서브넷">서브넷</span> — 1장에서 처음 마주쳤던 그 항목 — 은 실은 "어느 건물에 세울지"를 묻는 질문이었던 셈.</p>
+      <p>리전 하나는 다시 여러 <span class="term" data-t="가용 영역">가용 영역</span>으로 나뉩니다. 리전이 도시라면 가용 영역은 그 도시 안에 따로 떨어져 선 건물 여러 채인 셈인데, 한 건물에 장애가 나도 다른 건물까지 함께 흔들리지 않도록 설계돼 있습니다. 인스턴스를 만들 때 낯설게 골랐던 <span class="term" data-t="서브넷">서브넷</span> — 1장에서 처음 마주쳤던 그 항목 — 은 실은 "어느 건물에 세울지"를 묻는 질문이었던 셈.</p>
       <p>서브넷은 그 건물 하나에 갇힙니다. 만들 때 고른 가용 영역을 벗어나 다른 건물로 옮겨 갈 수 없고, 그 안에 놓인 ENI도 같은 신세라 — 이 갇힘은 7장에서, 그리고 9장에서 다시 값을 합니다.</p>
 
       <p>그럼 그 "건물"이라는 이름, <code>ap-northeast-2a</code>가 정확히 어느 건물을 가리키는지도 정해져 있을까요. 지난 장에서 dev 계정과 prod 계정이 각각 만든 <code>ap-northeast-2a</code>를 나란히 놓고 물었을 때, 돌아온 답은 "아니오"였습니다. 이름은 같아도 가리키는 건물은 다를 수 있다는 뜻입니다.</p>
@@ -761,12 +761,12 @@ button:focus-visible, .pick:focus-visible, .term:focus-visible, a:focus-visible,
       </div>
 
       <div class="quiz" data-qid="q-region" data-answer="d">
-        <div class="q">동료가 "우리 서비스를 <code>ap-northeast-2a</code>에 몰아 두지 말고 <code>2a</code>와 <code>2c</code>에 나누자"고 합니다. 여기서 <b>틀린 것</b>은?</div>
+        <div class="q">다른 팀 계정을 쓰는 동료가 "우리 서비스를 <code>ap-northeast-2a</code>에 몰아 두지 말고 <code>2a</code>와 <code>2c</code>로 나누자"고 합니다. 여기서 <b>틀린 것</b>은?</div>
         <button class="opt" data-opt="a">AZ를 나누면 한 곳이 죽어도 다른 곳이 산다는 기대</button>
         <button class="opt" data-opt="b">서브넷을 AZ마다 따로 만들어야 한다는 전제</button>
         <button class="opt" data-opt="c">두 AZ가 같은 리전 안에 있다는 전제</button>
         <button class="opt" data-opt="d">동료의 2a와 내 2a가 같은 건물이라는 전제</button>
-        <div class="explain"><b>이건 틀린 것을 고르는 문제입니다.</b> 정답은 D. 같은 계정 안에서는 <code>2a</code>가 늘 같은 건물을 가리키지만, 계정이 갈리는 순간 그 보장은 사라집니다 — AWS가 가용 영역 이름을 계정마다 따로 섞기 때문인데, 동료가 다른 계정(다른 팀, 다른 조직)에서 일하고 있다면 그의 <code>2a</code>와 내 <code>2a</code>는 다른 건물일 수 있습니다. 계정을 넘어 같은 곳을 맞추려면 AZ ID를 확인해야 합니다. A·B·C는 전부 맞는 말이라 오답입니다 — A는 AZ를 나누는 목적 그 자체이고, B는 서브넷이 가용 영역 하나에 갇힌다는 사실(이 장, 그리고 7장에서 다시)에서 그대로 따라 나오며, C는 <code>2a</code>와 <code>2c</code>가 같은 <code>ap-northeast-2</code> 리전 안의 이름이라는, 이 장이 세운 전제 그대로.</div>
+        <div class="explain"><b>이건 틀린 것을 고르는 문제입니다.</b> 정답은 D. 동료는 다른 팀 계정을 쓰므로, AWS가 가용 영역 이름을 계정마다 따로 섞는 이상 그의 <code>2a</code>와 내 <code>2a</code>가 같은 건물이라는 보장은 없습니다. 계정을 넘어 같은 곳을 맞추려면 AZ ID를 확인해야 합니다. A·B·C는 전부 맞는 말이라 오답입니다 — A는 AZ를 나누는 목적 그 자체이고, B는 서브넷이 가용 영역 하나에 갇힌다는 사실(이 장, 그리고 7장에서 다시)에서 그대로 따라 나오며, C는 <code>2a</code>와 <code>2c</code>가 같은 <code>ap-northeast-2</code> 리전 안의 이름이라는, 이 장이 세운 전제 그대로.</div>
       </div>
     </section>
 
