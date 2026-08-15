@@ -958,7 +958,7 @@ button:focus-visible, .pick:focus-visible, .term:focus-visible, a:focus-visible,
       <p class="lead">5장에서 인스턴스를 껐다 켰더니 접속하던 IP가 바뀌어 있었습니다. 인스턴스 ID도, 사설 IP도, 보안 그룹도 그대로였는데 — 왜 그 IP 하나만 그랬을까요. 절반의 답은 이렇습니다. 사설 IP는 어딘가에 붙어 있고, 퍼블릭 IP는 애초에 아무 데도 붙어 있지 않기 때문입니다.</p>
 
       <h3>랜카드였던 것</h3>
-      <p>온프렘 서버였다면 이 자리는 랜카드 하나, 방화벽 규칙 몇 줄이었는데, 클라우드에서는 이 랜카드도 <span class="term" data-t="ENI">ENI</span>라는 이름의 리소스로 따로 섭니다 — 콘솔의 네트워크 인터페이스 메뉴에 뜨는 바로 그 줄. 인스턴스를 만드는 순간 자동으로 하나가 붙지만, 그 정체는 인스턴스에 박힌 부품이 아니라 서브넷 위에 따로 서는 제 몸입니다.</p>
+      <p>온프렘 서버였다면 이 자리는 랜카드 하나, 방화벽 규칙 몇 줄이었는데, 클라우드에서는 이 랜카드도 <span class="term" data-t="ENI">ENI</span>라는 이름의 리소스로 따로 섭니다 — 콘솔의 네트워크 인터페이스 메뉴에 뜨는 바로 그 줄. 인스턴스를 만드는 순간 자동으로 하나가 붙지만, 그 정체는 인스턴스에 박힌 부품이 아니라 서브넷 위에 따로 서는 제 몸입니다. 이 몸을 인스턴스와 함께 지울지, 따로 남겨 둘지도 정할 수 있는 값이에요.</p>
       <p>그 위에 얹힌 값 중 먼저 궁금한 건 무엇일까요. <span class="term" data-t="사설 IP">사설 IP</span>입니다. 이 값은 ENI에 매여, 인스턴스를 중지했다 시작해도, 최대 절전했다 시작해도 그대로 남습니다. 떨어져 나가는 때는 딱 하나 — 인스턴스를 종료하는 순간뿐.</p>
       <p>반대로 퍼블릭 IP는 이 ENI에도, 이 계정에도 속하지 않습니다. Amazon이 쥔 공인 IP 주소 풀에서 그때그때 빌려 오는 값이라, 인스턴스를 중지하거나 최대 절전하거나 종료하면 반납되고, 다시 시작할 때는 새 주소가 배정됩니다. 5장에서 겪은 그 낯섦의 정체, 바로 이 반납과 재배정.</p>
 
@@ -1480,6 +1480,11 @@ if(location.hash){
   // 탄력적 IP가 계정에 할당되어 놓아주기 전까지 내 것이라는 것은 "Elastic IP addresses" 페이지 —
   // "An Elastic IP address is allocated to your AWS account, and is yours until you release it." —
   // 로 확인했다. (facts V1·V18에는 없던 내용이라 이 장을 쓰며 새로 확인한 것들이다.)
+  // 1장 splitOut이 ENI를 "인스턴스와 따로 살고 따로 죽는다"고 예고해 둔 것("따로 죽는다" 쪽)은
+  // 같은 "Elastic network interfaces" 페이지의 "Termination behavior — You can set the termination
+  // behavior for a network interface that's attached to an instance. You can specify whether the
+  // network interface should be automatically deleted when you terminate the instance to which
+  // it's attached."로 확인해 첫 문단에 한 문장으로 반영했다.
   const CLS = {keep:"살아남는다", gone:"사라진다", fresh:"새로 받는다", warn:"조건부"};
   const D = {
     "stop-start": {t:"중지 → 시작", rows:[
