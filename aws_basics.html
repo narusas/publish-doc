@@ -1338,7 +1338,7 @@ DescribeInstancesResponse response = ec2.describeInstances(request);</code></pre
         <div class="kicker">14 · 기록</div>
         <h2 class="sec-title">🏷️ 손으로 만든 것은 사라진다 <span class="lvl must">🟢 필수</span></h2>
       </div>
-      <p class="lead"><a class="link" href="#cost">12장</a>에서 봤던 그 EBS 줄, 지운 인스턴스가 두고 간 흔적이라는 짐작은 있었지만 정작 누구 것인지는 청구서 어디에도 적혀 있지 않았습니다. 짐작과 확인은 다른 일입니다. 이름 없는 줄 하나를 되짚어 볼 방법은 하나뿐입니다 — 리소스마다 붙이는 이름표, <span class="term" data-t="태그">태그</span>. 태그가 없으면 청구서의 항목은 크기와 요금만 가진 채 남는, 이를테면 익명의 줄입니다.</p>
+      <p class="lead"><a class="link" href="#cost">12장</a>에서 봤던 그 EBS 줄, 지운 인스턴스가 두고 간 흔적이라는 짐작은 있었지만 — 정작 그게 누구 것인지는 어떻게 알 수 있을까요. 짐작과 확인은 다른 일입니다. 이름 없는 줄 하나를 되짚어 볼 방법은 하나뿐입니다 — 리소스마다 붙이는 이름표, <span class="term" data-t="태그">태그</span>. 태그가 없으면 청구서의 항목은 크기와 요금만 가진 채 남는, 이를테면 익명의 줄입니다.</p>
 
       <h3>태그가 청구서에 닿기까지</h3>
       <p>태그를 붙이면 청구서가 곧바로 태그별로 갈린다 — 그렇게 알고 있는 쪽이 많습니다. 정답은 절반뿐. 리소스에 태그를 다는 것과 그 태그로 비용을 갈라 보는 것 사이에는 한 단계가 더 있는데, AWS는 이를 비용 할당 태그라 부르고 따로 활성화하게 해 둡니다. Billing 콘솔에서 활성화하기 전까지는 아무리 태그를 꼼꼼히 붙여도 Cost Explorer에도 비용 할당 보고서에도 나타나지 않습니다.</p>
@@ -1361,7 +1361,7 @@ DescribeInstancesResponse response = ec2.describeInstances(request);</code></pre
 
       <div class="demo" id="driftSim">
         <span class="demo-tag">드리프트 시뮬레이터</span>
-        <p style="margin:0 0 4px">예로 드는 것은 보안 그룹의 인바운드 규칙 하나. 네 자리를 순서대로 눌러 보면, 같은 규칙이 파일과 실물 사이를 오가는 모습이 그대로 드러납니다.</p>
+        <p style="margin:0 0 4px">예로 드는 것은 태그 값 하나. 네 자리를 순서대로 눌러, 같은 값이 파일과 실물 사이를 오가는 모습을 확인해 보세요.</p>
         <div class="picker" id="driftPicker">
           <button class="pick on" data-k="apply">① 파일대로 만든다</button>
           <button class="pick" data-k="manual">② 콘솔에서 손으로 바꾼다</button>
@@ -2284,23 +2284,27 @@ if(location.hash){
   // tags" 페이지와 "Tag your Amazon EC2 resources" 페이지("Tag restrictions" 절 — 리소스당
   // 최대 50개, 키 128자·값 256자, 대소문자 구분)로 확인했다. 태그 필터(tag:Owner)로 걸러낸
   // 목록을 다음 명령의 재료로 쓴다는 것은 13장 doorCmp 데모가 이미 쓴 필터 그대로다.
+  // 데모 소재는 태그 값 자체다 — 트래픽을 허용·차단하는 규칙(포트·CIDR)은
+  // aws_network_security.html의 몫이라 이 문서(7장 GLOSSARY "보안 그룹" 항목)가 이미 선을
+  // 그어 둔 영역이고, 그 문서의 오프닝 장면과 겹치는 것도 피해야 해서 이 장 자신의 주제인
+  // Owner 태그 값으로 바꿨다(리뷰 반영).
   const STEPS = [
     {k:"apply", title:"① 파일대로 만든다",
-      file:"22/tcp ← 10.0.0.0/16 (사무실 대역)", real:"22/tcp ← 10.0.0.0/16 (사무실 대역)",
+      file:"Owner: team-a", real:"Owner: team-a",
       badge:"ok", bt:"일치",
-      note:"그대로, 사무실 대역 10.0.0.0/16뿐. 파일과 실물이 같은 값을 가리킵니다."},
+      note:"그대로, Owner는 team-a뿐. 파일과 실물이 같은 값을 가리킵니다."},
     {k:"manual", title:"② 콘솔에서 손으로 바꾼다",
-      file:"22/tcp ← 10.0.0.0/16 (사무실 대역)", real:"22/tcp ← 0.0.0.0/0 (전체 허용)",
+      file:"Owner: team-a", real:"Owner: team-b",
       badge:"warn", bt:"어긋남 · 아직 모름",
-      note:"0.0.0.0/0으로, 급한 밤에 콘솔에서 연 문 하나. 사무실 IP가 아니라 막혀 있었는데, 파일을 고칠 시간이 없어 콘솔부터 열었습니다. 급할 때 손을 대는 것 자체는 드문 일이 아니지만, 문제는 그 사실을 어디에도 적어 두지 않았다는 쪽."},
+      note:"다른 팀에 급히 넘겨야 하는 리소스, 콘솔에서 먼저 바꾼 태그 값 하나. 파일을 고칠 시간이 없어 Owner를 team-b로 콘솔부터 바꿔 뒀습니다. 급할 때 손을 대는 것 자체는 드문 일이 아니지만, 문제는 그 사실을 어디에도 적어 두지 않았다는 쪽."},
     {k:"replan", title:"③ 다시 계획을 본다",
-      file:"22/tcp ← 10.0.0.0/16 (사무실 대역)", real:"22/tcp ← 0.0.0.0/0 (전체 허용)",
+      file:"Owner: team-a", real:"Owner: team-b",
       badge:"bad", bt:"드리프트 확인",
-      note:"드러난 것은 벌어진 차이 하나. 계획을 다시 보는 것은 아직 아무것도 고치지 않고, 파일과 실물을 나란히 놓고 비교만 합니다. 그 사이 누군가 손을 댔다는 사실이 이제야 드러나는 순간."},
+      note:"드러난 것은 벌어진 차이 하나. 계획을 다시 보는 것은 아직 아무것도 고치지 않고, 파일과 실물을 나란히 놓고 비교만 합니다. 그 사이 누군가 태그 값을 바꿔 놓았다는 사실이 이제야 드러나는 순간."},
     {k:"reapply", title:"④ 다시 적용한다",
-      file:"22/tcp ← 10.0.0.0/16 (사무실 대역)", real:"22/tcp ← 10.0.0.0/16 (사무실 대역)",
+      file:"Owner: team-a", real:"Owner: team-a",
       badge:"ok", bt:"일치 · 복구됨",
-      note:"남는 건 다시 사무실 대역뿐. 다시 적용을 누르면 규칙은 파일이 적어 둔 값으로 되돌아갑니다. 0.0.0.0/0이 사라진, 원래의 모습."}
+      note:"남는 건 다시 team-a뿐. 다시 적용을 누르면 태그 값은 파일이 적어 둔 값으로 되돌아갑니다. team-b라는 값은 사라진, 원래의 모습."}
   ];
   function render(k){
     const idx = STEPS.findIndex(s => s.k === k);
