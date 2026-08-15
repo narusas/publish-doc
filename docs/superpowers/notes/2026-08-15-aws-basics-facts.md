@@ -488,6 +488,59 @@ V8의 표가 타입 변경 행을 따로 두고 "The data does not persist"라�
 **주의**: 스냅샷이 S3에 있다고 해서 8장에서 다룰 **내 버킷**에 보이는 것은 아니다. 원문이
 `you can't access directly`라고 못 박는다. 8장이 버킷을 다룰 때 이 둘을 섞지 않아야 한다.
 
+## V19 · ENI의 부착·이동과 탄력적 IP의 소유 — 확인됨
+
+7장 구현자가 계획서의 근거 없는 주장들을 직접 확인해 인용을 가져왔다.
+
+**기본 ENI는 뗄 수 없다.**
+> Each instance has a default network interface, called the **primary network interface**.
+> **You can't detach a primary network interface from an instance.**
+
+**떼었다 붙이면 속성이 따라간다.**
+> The attributes of a network interface **follow it** as it's attached or detached from an instance
+> and reattached to another instance.
+
+**ENI도 같은 AZ 안에서만 붙는다** — V18(볼륨)과 같은 제약이다.
+> You can create and configure network interfaces and attach them to instances that you launch
+> **in the same Availability Zone**.
+
+**자동 할당 퍼블릭 IPv4는 기본 인터페이스에만 붙는다.**
+> When you launch an instance, the IP address is assigned to the **primary** network interface.
+
+**탄력적 IP는 계정 소유다** — V1의 "퍼블릭 IP는 계정 것이 아니다"와 정확히 대비된다.
+> An Elastic IP address is **allocated to your AWS account, and is yours until you release it.**
+
+> When you associate an Elastic IP address with an instance, it is also associated with the
+> instance's primary network interface.
+
+**7·12장에 쓸 것**: 이 대비가 EIP의 존재 이유를 설명한다. 자동 퍼블릭 IP는 빌려 온 것이라
+놓으면 남에게 가고, EIP는 **놓아주기 전까지 내 것**이다. 12장의 "몇 개나 갖고 있나"(V2)가
+바로 이 소유 때문에 성립한다.
+
+**아직 안 쓴 확인 사실**: 보조 사설 IP는 인스턴스 사이에서 개별 재할당이 가능하다. 7장의 네
+항목에 안 맞아 쓰지 않았다. 나중에 필요하면 이 줄을 근거로 쓴다.
+
+**AZ 제약이 이제 셋을 묶는다** — 서브넷(V6·3장) · 볼륨(V18·6장) · ENI(여기·7장). 9장이
+로드밸런서가 서브넷 둘을 요구하는 이유를 이 셋 위에 세운다.
+
+## V20 · ENI도 인스턴스와 따로 죽는다 — 확인됨
+
+1장 해체기가 ENI를 "인스턴스와 따로 살고 따로 죽는다"고 예고했는데, "따로 죽는다" 쪽의 근거가
+없었다. 7장 구현자가 확인해 왔다.
+
+출처: Elastic network interfaces — Termination behavior
+
+> **Termination behavior** — You can set the termination behavior for a network interface that's
+> attached to an instance. You can **specify whether the network interface should be automatically
+> deleted** when you terminate the instance to which it's attached.
+
+**주의 — 이 항목은 7장 리뷰에서 절차 위반으로 잡혔다.** 구현자가 확인은 했지만 근거를 코드
+주석에만 남기고 이 파일에 등재하지 않아, 리뷰어가 "근거 파일에 없는 주장"으로 Important를
+매겼다. **내용은 맞고 절차만 빠졌다.** 컨트롤러가 여기 등재해 닫는다.
+
+**규칙 재확인**: 확인한 사실은 **반드시 이 파일에 등재한다.** 코드 주석은 보조이지 근거가 아니다.
+검증 게이트는 "구현자가 WebFetch를 했는가"가 아니라 **"이 파일에 있는가"**다.
+
 ## 검증 요약
 
 | # | 대상 | 결과 |
@@ -510,6 +563,8 @@ V8의 표가 타입 변경 행을 따로 두고 "The data does not persist"라�
 | V16 | AZ의 장애 격리 | 확인됨. 단 **원인(정전·화재)은 문서에 없다.** `failures`까지만, 그리고 `engineered to be`이지 보장이 아니다 |
 | V17 | 타입 변경은 중지를 거치는가 | 확인됨. "You must stop your instance before you can change its instance type." 5장이 인과를 써도 된다 |
 | V18 | EBS의 AZ 제약 · 스냅샷 | 확인됨. 볼륨은 **같은 AZ에만** 붙는다. 스냅샷은 증분이고 S3에 있지만 **직접 접근할 수 없다** |
+| V19 | ENI 부착·이동 · EIP 소유 | 확인됨. 기본 ENI는 못 뗀다, 속성은 ENI를 따라간다, 같은 AZ에서만 붙는다, **EIP는 놓아주기 전까지 내 것** |
+| V20 | ENI의 종료 동작 | 확인됨. 인스턴스 종료 시 함께 지울지 지정할 수 있다. **7장 리뷰에서 절차 위반(코드 주석에만 근거)으로 잡혀 여기 등재** |
 
 ## 설계 문서에 반영할 것
 
