@@ -1465,6 +1465,84 @@ DescribeInstancesResponse response = ec2.describeInstances(request);</code></pre
       </div>
     </section>
 
+    <section id="appendix-cli" data-title="부록 A · 진짜 명령어">
+      <div class="sec-head">
+        <div class="kicker">부록 A</div>
+        <h2 class="sec-title">⌨️ 진짜 명령어</h2>
+      </div>
+      <p class="lead">열다섯 장 체크리스트의 여덟 자리, 그 옆에 걸린 '확인 명령'이 실제로 가리키는 곳이 여기입니다. 전부 읽기 전용이라, 그대로 옮겨 쳐도 계정 안에서 바뀌는 것은 하나도 없습니다.</p>
+
+      <pre class="language-bash"><code class="language-bash"># 내가 지금 누구로 로그인해 있나
+aws sts get-caller-identity</code></pre>
+      <p>Account 칸에 뜬 번호가 지금 이 화면이 속한 계정이고, 나머지 일곱 개는 전부 그 번호 안에서 세는 것들입니다.</p>
+
+      <pre class="language-bash"><code class="language-bash"># 내 계정에서 AZ 이름이 어느 AZ ID에 붙어 있나 (3장)
+aws ec2 describe-availability-zones --region ap-northeast-2 \
+  --query 'AvailabilityZones[].{name:ZoneName,id:ZoneId}' --output table</code></pre>
+      <p>ZoneName과 ZoneId, 나란히 뜨는 그 두 칸의 실제 짝.</p>
+
+      <pre class="language-bash"><code class="language-bash"># 켜져 있는 인스턴스 (5장)
+aws ec2 describe-instances \
+  --filters Name=instance-state-name,Values=running \
+  --query 'Reservations[].Instances[].{id:InstanceId,type:InstanceType,az:Placement.AvailabilityZone}' \
+  --output table</code></pre>
+      <p>표에 뜬 줄 수가 곧 지금 이 계정에서 running 상태인 인스턴스의 정확한 대수입니다.</p>
+
+      <pre class="language-bash"><code class="language-bash"># 아무 데도 안 붙어 있는 볼륨 (6장·12장)
+aws ec2 describe-volumes --filters Name=status,Values=available \
+  --query 'Volumes[].{id:VolumeId,size:Size,az:AvailabilityZone,created:CreateTime}' \
+  --output table</code></pre>
+      <p>여기 뜬 줄 하나하나가 인스턴스 없이도 요금이 계속 나가는 볼륨입니다.</p>
+
+      <pre class="language-bash"><code class="language-bash"># 갖고 있는 탄력적 IP (7장·12장)
+aws ec2 describe-addresses \
+  --query 'Addresses[].{ip:PublicIp,attached:InstanceId}' --output table</code></pre>
+      <p>attached 칸이 비어 있으면, 그 주소는 놀고 있어도 시간당 값이 나가는 중이겠지요.</p>
+
+      <pre class="language-bash"><code class="language-bash"># NAT 게이트웨이 (9장·12장)
+aws ec2 describe-nat-gateways \
+  --query 'NatGateways[?State==`available`].{id:NatGatewayId,subnet:SubnetId}' \
+  --output table</code></pre>
+      <p>뜨는 줄 수만큼 시간당 값이 겹으로 붙는 중이니, NAT 게이트웨이 요금이 왜 자릿수부터 다른지 이 한 표로 짐작이 됩니다.</p>
+
+      <pre class="language-bash"><code class="language-bash"># 인스턴스에 붙은 볼륨의 DeleteOnTermination (6장)
+aws ec2 describe-instances --instance-ids i-0123456789abcdef0 \
+  --query 'Reservations[].Instances[].BlockDeviceMappings[].{dev:DeviceName,del:Ebs.DeleteOnTermination}' \
+  --output table</code></pre>
+      <p>del 칸의 true/false, <a class="link" href="#ebs">6장</a> 표에서 콘솔과 CLI가 갈라놓았던 그 값을 실제 계정에서 두 눈으로 확인하는 자리입니다.</p>
+
+      <pre class="language-bash"><code class="language-bash"># 소유자 태그가 없는 인스턴스 (14장)
+aws ec2 describe-instances \
+  --query 'Reservations[].Instances[?!not_null(Tags[?Key==`Owner`].Value)].{id:InstanceId,az:Placement.AvailabilityZone}' \
+  --output table</code></pre>
+      <p>id 칸에 뜨는 쪽이 소유자 태그 없이 떠 있는 인스턴스이고, <code>Owner</code> 자리에 다른 태그 키를 넣으면 같은 필터로 어떤 태그가 비어 있는지도 그대로 드러납니다.</p>
+    </section>
+
+    <section id="appendix-map" data-title="부록 B · 다른 이름 같은 이야기">
+      <div class="sec-head">
+        <div class="kicker">부록 B</div>
+        <h2 class="sec-title">🗺️ 다른 이름, 같은 이야기</h2>
+      </div>
+      <p class="lead">AWS의 아홉 조각, GCP와 Azure에도 저마다 부르는 이름이 있습니다. 맞춰 놓은 것은 이름까지입니다.</p>
+
+      <table class="t">
+        <thead><tr><th>AWS</th><th>GCP</th><th>Azure</th></tr></thead>
+        <tbody>
+          <tr><td>계정</td><td>프로젝트</td><td>구독</td></tr>
+          <tr><td>리전</td><td>리전</td><td>지역</td></tr>
+          <tr><td>가용 영역</td><td>영역(zone)</td><td>가용성 영역</td></tr>
+          <tr><td>EC2 인스턴스</td><td>Compute Engine 인스턴스</td><td>가상 머신</td></tr>
+          <tr><td>EBS 볼륨</td><td>영속 디스크</td><td>관리 디스크</td></tr>
+          <tr><td>S3 버킷</td><td>Cloud Storage 버킷</td><td>Blob 컨테이너</td></tr>
+          <tr><td>VPC</td><td>VPC 네트워크</td><td>가상 네트워크</td></tr>
+          <tr><td>ARN</td><td>리소스 이름</td><td>리소스 ID</td></tr>
+          <tr><td>태그</td><td>라벨</td><td>태그</td></tr>
+        </tbody>
+      </table>
+
+      <p>다른 클라우드의 콘솔 앞에 앉아 낯선 이름과 마주쳤을 때, 짚어 볼 짝 하나쯤은 이제 손에 쥔 셈이네요.</p>
+    </section>
+
   </main>
 </div>
 
