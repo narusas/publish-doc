@@ -815,6 +815,8 @@ button:focus-visible, .pick:focus-visible, .term:focus-visible, a:focus-visible,
 
       <p>넷을 다 눌러 보면, 비는 칸이 리소스마다 다르다는 것이 확인됩니다. IAM은 리전만, S3는 리전과 계정까지, SNS와 VPC는 하나도. 우연이 아니라 그 리소스가 사는 세계의 모양 그대로.</p>
 
+      <p>IAM 정책의 <code>Resource</code> 자리에 들어가는 문자열도 결국 이 ARN이고, <a class="link" href="iam_tutorial.html">IAM 튜토리얼</a>이 다루는 정책 전부가 이 위에 서 있습니다. 13장에서 콘솔 대신 API를 직접 부를 때도, 리소스를 가리키는 자리엔 이 줄이 그대로 들어가는 식.</p>
+
       <div class="oneline">
         <div class="ol-ic">🏷️</div>
         <div><div class="ol-t">4장 한 줄 요약</div><div class="ol-b"><b>ARN은 리소스마다 붙는 이름표이고, 빈 칸에는 늘 이유가 있습니다.</b> IAM처럼 리전이 없어서 비거나, S3처럼 이름이 이미 유일해서 더 좁힐 게 없어서 비거나 — 콘솔의 이름과 ARN의 리소스 ID는 서로 다른 것을 가리킬 수 있습니다.</div></div>
