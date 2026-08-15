@@ -741,6 +741,33 @@ V12가 "확인되지 않음"으로 남긴 것을 12장 구현자가 **독립 출
 
 **세 번 뒤져서 없었으므로 더 뒤지지 않는다.** 이후 어떤 장도 이 둘의 과금을 단정하지 않는다.
 
+## V28 · 콘솔·CLI·SDK는 같은 API를 부른다 — 확인됨
+
+13장의 척추다. 6장이 심어 둔 모순("같은 일인데 콘솔과 CLI의 결과가 다르다")을 푸는 근거.
+
+출처: [What is the AWS Command Line Interface?](https://docs.aws.amazon.com/cli/latest/userguide/cli-chap-welcome.html)
+
+> the AWS CLI enables you to start running commands that implement **functionality equivalent to
+> that provided by the browser-based AWS Management Console**
+
+> **All IaaS … functions in the AWS Management Console are available in the AWS API and AWS CLI.**
+> New AWS IaaS features and services provide full AWS Management Console functionality through the
+> API and CLI **at launch or within 180 days of launch.**
+
+> The AWS CLI provides **direct access to the public APIs** of AWS services.
+
+출처: [Amazon EC2 API Reference](https://docs.aws.amazon.com/AWSEC2/latest/APIReference/Welcome.html)
+> Alternatively, use one of the following methods to **access the Amazon EC2 API**, instead of
+> using the Query API directly: AWS CLI · AWS CloudFormation · AWS Tools for PowerShell · AWS SDKs
+
+**13장에 쓸 것**: "문은 하나다"의 근거가 이것이다. 다만 두 번째 인용이 **`within 180 days`라는
+단서**를 달고 있다 — "콘솔에서 되는 것은 전부 자동화할 수 있다"를 무조건으로 쓰면 그 단서를
+지운다. 새 기능은 잠시 콘솔에만 있을 수 있다.
+
+**자격 증명의 우선순위**도 13장 구현자가 확인해 왔다(AWS CLI 공식 우선순위 표 — 환경변수가
+프로필·자격증명 파일보다 앞서고, EC2 인스턴스 프로필이 가장 뒤). **이 문서는 이름과 순서까지만
+쓰고 권한 이야기는 `iam_tutorial.html`로 넘긴다.**
+
 ## 검증 요약
 
 | # | 대상 | 결과 |
@@ -772,6 +799,7 @@ V12가 "확인되지 않음"으로 남긴 것을 12장 구현자가 **독립 출
 | V25 | "관리형"·"책임 공유 모델"의 출처 | 확인됨. **둘 다 AWS 자신의 용어**(페이지 소제목이 `Amazon RDS shared responsibility model`). 읽기 전용 복제본은 스케일링 쪽. V10 표 재확인 — 값 열한 행 일치 |
 | V26 | 컨테이너 단위 · 콜드 스타트 | 확인됨. ECS 단위는 태스크(**실행 시간 상한 문장은 없다 — 무제한이라 쓰면 안 된다**). 실행 환경은 몇 시간마다 종료된다. **같은 페이지에 Durable Functions(1년)·Managed Instances가 또 있다 — V9의 함정 반복** |
 | V27 | 데이터 전송 방향 · Cost Explorer · **ENI·키 페어 재확인** | 확인됨. 들어오는 쪽은 무과금, 나가는 쪽에 붙는다. **ENI·키 페어는 독립 출처 셋을 뒤져도 요금 언급이 없다 — 부재는 부재이지 무료가 아니다** |
+| V28 | 콘솔·CLI·SDK는 같은 API | 확인됨. **단서: `at launch or within 180 days` — "전부 자동화할 수 있다"를 무조건으로 쓰면 그 단서를 지운다.** 자격 증명 우선순위도 확인(환경변수 → 프로필 → 인스턴스 역할) |
 
 ## 설계 문서에 반영할 것
 
