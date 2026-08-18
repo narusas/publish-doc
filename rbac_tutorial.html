@@ -586,6 +586,176 @@ button:focus-visible, .pick:focus-visible, .term:focus-visible, a:focus-visible,
 .term:focus-visible{outline-offset:3px}
 /* 매트릭스 셀: 색 + 형태(테두리) 이중 인코딩 */
 .mx td .cell.on{box-shadow:inset 0 0 0 2px var(--ok)}
+
+/* ============================================================
+   단계 그림(.dia) — 시간이 흐르는 다이어그램
+   이 문서의 데모(.demo)는 "누르면 값이 바뀌는" 것이고, 그림(.dia)은
+   "가만 두면 저 혼자 한 단계씩 넘어가는" 것이다. 권한 이야기의 상당수는
+   순서가 곧 내용이라(요청이 검문소를 지나고, 권한이 계층을 타고 오르고,
+   청크가 걸러지고) 정지된 그림으로는 그 순서를 못 보여준다.
+
+   단계를 넘기는 일은 구동기(wireDia)가, 한 단계 안에서 건너가고 그어지는
+   일은 .vis가 붙는 순간 한 번 도는 애니메이션이 맡는다.
+   ============================================================ */
+.dia{
+  margin:22px 0; padding:14px 16px 12px;
+  background:linear-gradient(180deg,var(--bg-soft),var(--panel));
+  border:1px solid var(--border-2); border-radius:var(--radius);
+}
+.dia-top{display:flex; align-items:center; gap:10px; flex-wrap:wrap; margin:0 0 6px}
+.dia-tag{
+  font-family:var(--mono); font-size:10.5px; letter-spacing:1px; text-transform:uppercase;
+  color:var(--text-mut); border:1px solid var(--border); padding:3px 8px; border-radius:6px; background:var(--bg);
+}
+.dia-sp{flex:1 1 auto}
+.dia-btn{padding:5px 11px; font-size:12px; font-family:var(--mono); min-width:74px}
+.dia-dots{display:flex; gap:6px; align-items:center}
+/* 전역 button 규칙의 padding:9px 15px를 도로 0으로 내려야 점이 점으로 보인다 */
+.dia-dot{
+  width:8px; height:8px; padding:0; line-height:0; flex:0 0 auto;
+  border-radius:50%; background:var(--panel-2);
+  border:1px solid var(--border-2); transition:background .2s, border-color .2s;
+}
+.dia-dot:hover{transform:none; border-color:var(--accent)}
+.dia-dot.on{background:var(--accent); border-color:var(--accent)}
+.dia svg{display:block; width:100%; height:auto; margin:2px 0 0}
+
+/* 단계 설명. figcaption과 갈라 둔다 — figcaption은 그림 하나가 주장하는 것이라
+   내내 같고, 이쪽은 단계마다 바뀐다. 루프가 도는 내내 낭독기가 떠들지 않게
+   여기는 aria-hidden으로 덮고, 그림의 뜻은 svg의 aria-label 한 벌이 진다. */
+.dia-cap{
+  min-height:3.1em; margin:8px 0 0; padding:9px 12px; border-radius:9px;
+  background:var(--bg); border:1px solid var(--border);
+  font-size:13.2px; line-height:1.6; color:var(--text-dim);
+}
+.dia-cap b{color:#fff}
+.dia-cap .hi{color:var(--accent)}
+.dia-cap .no{color:#fca5a5}
+.dia-cap .ye{color:#86efac}
+.dia figcaption{
+  margin:8px 2px 0; font-size:12.5px; line-height:1.65; color:var(--text-mut);
+  border-top:1px solid var(--border); padding-top:8px;
+}
+.dia figcaption b{color:var(--text-dim)}
+
+/* ---- 그림 안의 공통 부품 ---- */
+.dia .nd{fill:var(--bg); stroke:var(--border-2); stroke-width:1.2}
+.dia .nd.soft{fill:var(--panel-2)}
+.dia .nd.hot{stroke:var(--accent); stroke-width:1.8}
+.dia .nd.dead{stroke:rgba(248,113,113,.5); stroke-dasharray:4 3}
+.dia .nd.ghost{fill:none; stroke:var(--border); stroke-dasharray:4 4}
+.dia .nd.okb{stroke:rgba(52,211,153,.55)}
+.dia .nd.warnb{stroke:rgba(251,191,36,.55)}
+.dia .nd.purp{stroke:rgba(192,132,252,.55)}
+/* 테두리만 두르는 도형. .nd가 바탕색을 들고 있어 fill="none" 속성으로는 못 지운다 —
+   CSS 선언은 언제나 프레젠테이션 속성을 이기기 때문. 덮어쓸 땐 속성이 아니라 클래스로. */
+.dia .ring{fill:none}
+
+.dia text{font-family:var(--sans); fill:var(--text-dim)}
+.dia .t{fill:#fff; font-weight:700; font-size:12.5px}
+.dia .s{font-size:11.5px; fill:var(--text-dim)}
+/* 값은 고정폭, 말은 본문 활자 */
+.dia .m{font-family:var(--mono); font-size:10.5px; fill:var(--text-mut); letter-spacing:.3px}
+.dia .cap-l{font-family:var(--mono); font-size:9.5px; letter-spacing:.6px; fill:var(--text-mut)}
+/* 색 이름은 반드시 크기·서체 이름보다 뒤에 온다. 둘 다 클래스 하나짜리 선택자라
+   특정도가 같아서, 순서가 뒤집히면 .cap-l의 회색이 .ok의 초록을 덮어 버린다 —
+   판정 색이 통째로 사라져도 글자는 멀쩡히 보이므로 눈치채기 어렵다. */
+.dia .key{fill:var(--warn)}
+.dia .ok{fill:#86efac}
+.dia .no{fill:#fca5a5}
+.dia .hi{fill:var(--accent)}
+.dia .pu{fill:#dcb6fe}
+.dia .mut{fill:var(--text-mut)}
+
+.dia .wire{stroke:var(--border-2); stroke-width:1.4; fill:none}
+.dia .wire.dash{stroke-dasharray:5 4}
+.dia .wire.live{stroke:var(--accent); stroke-width:2}
+.dia .wire.bad{stroke:rgba(248,113,113,.75); stroke-width:2}
+.dia .wire.good{stroke:rgba(52,211,153,.75); stroke-width:2}
+.dia .wire.warn{stroke:rgba(251,191,36,.75); stroke-width:2}
+.dia .wire.purp{stroke:rgba(192,132,252,.7); stroke-width:2}
+.dia .wire.mut{stroke:var(--text-mut)}
+.dia .wire.hair{stroke-width:1; stroke:var(--border)}
+
+/* 움직이는 것 = 언제나 요청·응답·데이터 조각 하나. 모양을 하나로 묶어 두면
+   어느 그림에서든 눈이 같은 것을 좇는다. */
+.dia .pk{fill:var(--panel-2); stroke:var(--accent); stroke-width:1.4}
+.dia .pkt{font-family:var(--mono); font-size:10px; fill:#fff; letter-spacing:.2px}
+
+/* ---- 구동기가 쓰는 것 ----
+   data-at 하나다. 그 단계에서만 보여야 할 것에 붙이고, 목록 판정은 JS가,
+   보임과 숨김은 여기가 맡는다. */
+.dia [data-at]{opacity:0; transition:opacity .28s ease}
+.dia [data-at].vis{opacity:1}
+
+/* ---- 한 단계 안에서 일어나는 움직임 ----
+   거리(--fx/--fy)는 CSS가 아니라 요소에 직접 적는다. 그 값은 옆에 적힌 x·y에서
+   빼서 나온 수라, 좌표와 떨어뜨려 두면 도형을 옮길 때 같이 고칠 것을 놓친다. */
+.dia .fly{opacity:0}
+.dia .fly.vis{animation:diaFly var(--ft,1s) cubic-bezier(.36,.06,.24,1) forwards}
+@keyframes diaFly{
+  0%  {opacity:0; transform:translate(0,0)}
+  14% {opacity:1}
+  100%{opacity:1; transform:translate(var(--fx,0px), var(--fy,0px))}
+}
+/* 가다가 막히는 것 — 검문소에서 튕겨 나오는 요청 */
+.dia .fly.stop.vis{animation:diaFlyStop var(--ft,1.1s) cubic-bezier(.36,.06,.24,1) forwards}
+@keyframes diaFlyStop{
+  0%  {opacity:0; transform:translate(0,0)}
+  14% {opacity:1}
+  62% {opacity:1; transform:translate(var(--fx,0px), var(--fy,0px))}
+  74% {transform:translate(calc(var(--fx,0px) * .93), var(--fy,0px))}
+  100%{opacity:1; transform:translate(calc(var(--fx,0px) * .96), var(--fy,0px))}
+}
+/* 새로 생긴 것 */
+.dia .pop{transform-box:fill-box; transform-origin:center}
+.dia .pop.vis{animation:diaPop .42s cubic-bezier(.2,.9,.3,1.25) both}
+@keyframes diaPop{
+  0%  {opacity:0; transform:scale(.55)}
+  62% {opacity:1; transform:scale(1.07)}
+  100%{opacity:1; transform:scale(1)}
+}
+/* 지금 보라는 표시. 깜빡임이 아니라 숨쉬기여야 한다 — 대비가 크게 오르내리면
+   옆의 본문을 못 읽는다. */
+.dia .breathe.vis{animation:diaBreathe 1.9s ease-in-out infinite}
+@keyframes diaBreathe{0%,100%{opacity:1} 50%{opacity:.45}}
+/* 선이 그어진다 — 갔다 오는 것이 아니라 관계가 생기는 것 */
+.dia .draw{stroke-dasharray:var(--dl,300); stroke-dashoffset:var(--dl,300)}
+.dia .draw.vis{animation:diaDraw var(--ft,.7s) ease-out forwards}
+@keyframes diaDraw{to{stroke-dashoffset:0}}
+
+/* 멈춰 있는 동안에는 지금 단계가 어디인지가 더 중요해진다 */
+.dia.paused .dia-dot.on{background:var(--warn); border-color:var(--warn)}
+
+/* 움직임을 줄여 달라고 한 사람에게는 자동으로 돌지 않는다. 구동기가 자동 재생을
+   걸지 않고, 여기서는 사이를 잇는 보간만 끈다 — 손으로 넘기는 것은 남는다. */
+@media (prefers-reduced-motion: reduce){
+  .dia [data-at]{transition:none}
+  .dia .fly.vis, .dia .fly.stop.vis, .dia .pop.vis,
+  .dia .breathe.vis, .dia .draw.vis{animation:none}
+  /* 애니메이션을 끄면 시작 상태(투명·잘린 선)에 멈춘다. 끝난 모습으로 세운다. */
+  .dia .fly.vis{opacity:1; transform:translate(var(--fx,0px), var(--fy,0px))}
+  .dia .pop.vis, .dia .breathe.vis{opacity:1}
+  .dia .draw.vis{stroke-dashoffset:0}
+}
+
+/* 좁은 화면에서 글자가 뭉개지지 않게 그림에 최소 폭을 주고 가로로만 흘린다.
+   본문이 가로로 밀리면 안 되므로 스크롤은 그림 상자 안에서만 일어난다.
+   폭에 맞춰 통째로 줄이는 쪽은 택하지 않았다 — 720짜리 그림을 400에 밀어 넣으면
+   12.5px 글자가 7px가 되어 아무도 못 읽는다. 읽히는 크기를 지키고 미는 쪽을 고른다. */
+.dia-scroll{overflow-x:auto; overflow-y:hidden; scrollbar-width:thin; scrollbar-color:var(--border-2) transparent}
+.dia-scroll::-webkit-scrollbar{height:8px}
+.dia-scroll::-webkit-scrollbar-track{background:transparent}
+.dia-scroll::-webkit-scrollbar-thumb{background:var(--border-2); border-radius:99px}
+.dia-scroll::-webkit-scrollbar-thumb:hover{background:var(--text-mut)}
+
+/* 밀 수 있다는 표시. 넘치는 쪽이 상자 안이라 페이지 스크롤바로는 안 드러난다 */
+.dia-hint{display:none; font-family:var(--mono); font-size:10.5px; letter-spacing:.4px;
+  color:var(--text-mut); margin:0 0 4px}
+@media(max-width:700px){
+  .dia-scroll svg{min-width:600px}
+  .dia-hint{display:block}
+}
 </style>
 </head>
 <body>
@@ -717,6 +887,125 @@ button:focus-visible, .pick:focus-visible, .term:focus-visible, a:focus-visible,
         <p>회사 건물을 떠올려 보세요. 아침에 <b>정문 경비</b>가 사원증을 확인합니다 — "이 사람, 우리 직원 맞네." 이게 <b>인증</b>입니다. 한 번 통과하면 끝이죠. 그런데 건물에 들어왔다고 모든 방에 들어갈 수 있는 건 아닙니다. 서버실 문, 임원실 문, 인사팀 캐비닛에는 각각 <b>도어락</b>이 걸려 있고, 갈 때마다 "이 사람이 이 방에 들어가도 되나?"를 따로 확인합니다. 이게 <b>인가</b>예요. 정문을 통과한 것(인증)과 특정 방에 들어갈 자격(인가)은 완전히 별개입니다. 그래서 인증은 하루 한 번, 인가는 문 앞에 설 때마다 — 즉 <b>요청마다</b> 일어납니다.</p>
       </div>
 
+      <figure class="dia" id="diaGate">
+        <div class="dia-top">
+          <span class="dia-tag">정문 한 번 · 도어락 매번</span>
+          <span class="dia-sp"></span>
+          <div class="dia-dots" role="group" aria-label="단계 이동"></div>
+          <button class="sm ghost dia-btn" type="button">▶ 재생</button>
+        </div>
+        <div class="dia-hint" aria-hidden="true">← 좌우로 밀어서 보세요 →</div>
+        <div class="dia-scroll">
+          <svg viewBox="0 0 720 254" role="img" aria-label="인증과 인가의 차이를 건물에 빗댄 그림. 김주임은 아침에 정문에서 사원증을 한 번 확인받고 통과하지만(인증), 건물 안의 위키실·비용실·급여실 문 앞에서는 설 때마다 도어락이 따로 판단한다(인가). 위키와 비용 신청은 열리고 급여실은 거부된다 — 정문을 통과했다는 사실이 급여실 앞에서는 아무 힘이 없다.">
+            <!-- 두 구역을 가르는 선 -->
+            <text class="cap-l hi" x="98" y="20" text-anchor="middle">① 인증 · 하루 한 번</text>
+            <text class="cap-l pu" x="452" y="20" text-anchor="middle">② 인가 · 문 앞에 설 때마다</text>
+            <line class="wire dash hair" x1="196" y1="30" x2="196" y2="244"/>
+
+            <!-- 복도 -->
+            <line class="wire dash hair" x1="10" y1="200" x2="120" y2="200"/>
+            <line class="wire dash hair" x1="188" y1="200" x2="710" y2="200"/>
+
+            <!-- 정문과 경비 -->
+            <rect class="nd warnb" x="120" y="164" width="68" height="72" rx="11"/>
+            <text class="t" x="154" y="190" text-anchor="middle">정문</text>
+            <text class="cap-l key" x="154" y="210" text-anchor="middle">🛡 경비</text>
+            <text class="cap-l mut" x="154" y="152" text-anchor="middle" data-at="0">사원증 확인 중…</text>
+            <text class="cap-l ok" x="154" y="152" text-anchor="middle" data-at="1+">✓ 확인 완료</text>
+
+            <!-- 한 번 찍히고 하루 종일 그대로인 도장. 왼쪽 구역이 비어 있는 것 자체가
+                 "인증은 여기서 끝났다"는 말이라, 그 빈자리에 이것만 남긴다 -->
+            <rect class="nd" x="42" y="62" width="124" height="56" rx="10" data-at="0+"/>
+            <text class="s" x="104" y="86" text-anchor="middle" data-at="0+">🪪 사원증</text>
+            <text class="cap-l mut" x="104" y="106" text-anchor="middle" data-at="0">아직 확인 전</text>
+            <text class="cap-l ok pop" x="104" y="106" text-anchor="middle" data-at="1+">09:02 확인 · 1회</text>
+            <text class="cap-l mut" x="104" y="136" text-anchor="middle" data-at="2+">이 도장은 하루 종일 그대로다</text>
+
+            <!-- 세 개의 방 -->
+            <rect class="nd soft" x="234" y="42" width="132" height="62" rx="11"/>
+            <text class="t" x="300" y="70" text-anchor="middle">📚 위키실</text>
+            <text class="m" x="300" y="90" text-anchor="middle">wiki:read</text>
+
+            <rect class="nd soft" x="386" y="42" width="132" height="62" rx="11"/>
+            <text class="t" x="452" y="70" text-anchor="middle">🧾 비용실</text>
+            <text class="m" x="452" y="90" text-anchor="middle">expense:submit</text>
+
+            <rect class="nd soft" x="538" y="42" width="132" height="62" rx="11"/>
+            <text class="t" x="604" y="70" text-anchor="middle">💰 급여실</text>
+            <text class="m" x="604" y="90" text-anchor="middle">payroll:read</text>
+
+            <!-- 방과 도어락을 잇는 기둥 -->
+            <line class="wire hair" x1="300" y1="104" x2="300" y2="130"/>
+            <line class="wire hair" x1="452" y1="104" x2="452" y2="130"/>
+            <line class="wire hair" x1="604" y1="104" x2="604" y2="130"/>
+
+            <!-- 도어락 세 개 -->
+            <g>
+              <rect class="nd" x="248" y="130" width="104" height="28" rx="9" data-at="0,1"/>
+              <text class="cap-l mut" x="300" y="148" text-anchor="middle" data-at="0,1">🔒 잠김</text>
+              <rect class="nd okb pop" x="248" y="130" width="104" height="28" rx="9" data-at="2+"/>
+              <text class="cap-l ok" x="300" y="148" text-anchor="middle" data-at="2+">✓ 열림</text>
+            </g>
+            <g>
+              <rect class="nd" x="400" y="130" width="104" height="28" rx="9" data-at="0-2"/>
+              <text class="cap-l mut" x="452" y="148" text-anchor="middle" data-at="0-2">🔒 잠김</text>
+              <rect class="nd okb pop" x="400" y="130" width="104" height="28" rx="9" data-at="3+"/>
+              <text class="cap-l ok" x="452" y="148" text-anchor="middle" data-at="3+">✓ 열림</text>
+            </g>
+            <g>
+              <rect class="nd" x="552" y="130" width="104" height="28" rx="9" data-at="0-3"/>
+              <text class="cap-l mut" x="604" y="148" text-anchor="middle" data-at="0-3">🔒 잠김</text>
+              <rect class="nd dead pop" x="552" y="130" width="104" height="28" rx="9" data-at="4"/>
+              <text class="cap-l no breathe" x="604" y="148" text-anchor="middle" data-at="4">✕ 거부</text>
+            </g>
+
+            <!-- 문 앞에서 올려다보는 물음 -->
+            <g data-at="2">
+              <line class="wire live" x1="300" y1="184" x2="300" y2="166"/>
+              <polygon fill="var(--accent)" points="295,170 300,162 305,170"/>
+            </g>
+            <g data-at="3">
+              <line class="wire live" x1="452" y1="184" x2="452" y2="166"/>
+              <polygon fill="var(--accent)" points="447,170 452,162 457,170"/>
+            </g>
+            <g data-at="4">
+              <line class="wire bad" x1="604" y1="184" x2="604" y2="166"/>
+              <polygon fill="var(--bad)" points="599,170 604,162 609,170"/>
+            </g>
+
+            <!-- 걸어가는 김주임. 단계마다 출발 좌표가 달라서 요소를 따로 둔다 -->
+            <g data-at="0">
+              <rect class="nd hot" x="18" y="186" width="76" height="28" rx="9"/>
+              <text class="t" x="56" y="205" text-anchor="middle">👤 김주임</text>
+            </g>
+            <g class="fly" style="--fx:184px; --ft:1.05s" data-at="1">
+              <rect class="nd hot" x="18" y="186" width="76" height="28" rx="9"/>
+              <text class="t" x="56" y="205" text-anchor="middle">👤 김주임</text>
+            </g>
+            <g class="fly" style="--fx:60px; --ft:.8s" data-at="2">
+              <rect class="nd hot" x="202" y="186" width="76" height="28" rx="9"/>
+              <text class="t" x="240" y="205" text-anchor="middle">👤 김주임</text>
+            </g>
+            <g class="fly" style="--fx:152px; --ft:.9s" data-at="3">
+              <rect class="nd hot" x="262" y="186" width="76" height="28" rx="9"/>
+              <text class="t" x="300" y="205" text-anchor="middle">👤 김주임</text>
+            </g>
+            <g class="fly" style="--fx:152px; --ft:.9s" data-at="4">
+              <rect class="nd hot" x="414" y="186" width="76" height="28" rx="9"/>
+              <text class="t" x="452" y="205" text-anchor="middle">👤 김주임</text>
+            </g>
+
+            <!-- 문마다 다시 던져지는 질문 -->
+            <text class="cap-l ok" x="300" y="238" text-anchor="middle" data-at="2">can(김주임, read, wiki) → 허용</text>
+            <text class="cap-l ok" x="452" y="238" text-anchor="middle" data-at="3">can(김주임, submit, expense) → 허용</text>
+            <text class="cap-l no" x="604" y="238" text-anchor="middle" data-at="4">can(김주임, read, payroll) → 거부</text>
+            <text class="cap-l mut" x="452" y="238" text-anchor="middle" data-at="1">통과했다 — 그런데 아직 아무 방에도 못 들어갔다</text>
+          </svg>
+        </div>
+        <div class="dia-cap" aria-hidden="true"></div>
+        <figcaption>정문은 <b>한 번</b>이고 도어락은 <b>문마다</b>입니다. 마지막 칸을 보세요 — 급여실 앞에서 "아침에 정문 통과했는데요"는 <b>아무 근거도 되지 못합니다.</b></figcaption>
+      </figure>
+
       <p>이 비유가 중요한 이유는, 초보자가 가장 많이 하는 실수가 바로 "정문만 잘 지키면 끝"이라고 생각하는 것이기 때문입니다. 로그인 화면을 멋지게 만들고 비밀번호를 안전하게 해싱해도, 정작 <b>각 방의 도어락(=각 API의 권한 검사)</b>을 달지 않으면 건물 안은 무방비입니다. 이 튜토리얼이 다루는 건 정문(인증)이 아니라, <b>건물 안 수많은 도어락</b>을 어떻게 체계적으로 설계하고 다느냐 — 즉 인가입니다.</p>
 
       <div class="callout key">
@@ -804,6 +1093,132 @@ button:focus-visible, .pick:focus-visible, .term:focus-visible, a:focus-visible,
         <div class="callout warn" id="exNote" style="margin-bottom:0"><p style="margin:0">아직은 9개. 머리로 관리할 만합니다. 버튼을 더 눌러 보세요.</p></div>
       </div>
 
+      <figure class="dia" id="diaExplode">
+        <div class="dia-top">
+          <span class="dia-tag">곱셈이 덧셈이 되는 순간</span>
+          <span class="dia-sp"></span>
+          <div class="dia-dots" role="group" aria-label="단계 이동"></div>
+          <button class="sm ghost dia-btn" type="button">▶ 재생</button>
+        </div>
+        <div class="dia-hint" aria-hidden="true">← 좌우로 밀어서 보세요 →</div>
+        <div class="dia-scroll">
+          <svg viewBox="0 0 720 268" role="img" aria-label="사용자에게 권한을 직접 연결할 때의 폭발과, 역할을 끼웠을 때의 축소를 비교한 그림. 직원 3명과 기능 3개일 때 연결선은 9개지만, 직원과 기능이 둘씩 늘면 25개가 된다. 신입이 들어올 때 옆 사람 권한을 복사하면 안 줘도 될 권한까지 딸려 온다. 사이에 역할 3개를 끼우면 사용자에서 역할로 5개, 역할에서 권한으로 7개, 합쳐 12개로 줄어든다.">
+            <text class="cap-l hi" x="75" y="20" text-anchor="middle">직원</text>
+            <text class="cap-l pu" x="360" y="20" text-anchor="middle" data-at="3+">역할 (조직의 직무)</text>
+            <text class="cap-l key" x="642" y="20" text-anchor="middle">기능(권한)</text>
+
+            <!-- ===== 직접 연결 메시: 핵심 3×3 ===== -->
+            <g data-at="0-2">
+              <line class="wire hair" x1="130" y1="86"  x2="584" y2="86"/>
+              <line class="wire hair" x1="130" y1="86"  x2="584" y2="126"/>
+              <line class="wire hair" x1="130" y1="86"  x2="584" y2="166"/>
+              <line class="wire hair" x1="130" y1="126" x2="584" y2="86"/>
+              <line class="wire hair" x1="130" y1="126" x2="584" y2="126"/>
+              <line class="wire hair" x1="130" y1="126" x2="584" y2="166"/>
+              <line class="wire hair" x1="130" y1="166" x2="584" y2="86"/>
+              <line class="wire hair" x1="130" y1="166" x2="584" y2="126"/>
+              <line class="wire hair" x1="130" y1="166" x2="584" y2="166"/>
+            </g>
+            <!-- ===== 늘어난 만큼 새로 생기는 16선 ===== -->
+            <g data-at="1,2">
+              <line class="wire hair" x1="130" y1="46"  x2="584" y2="46"/>
+              <line class="wire hair" x1="130" y1="46"  x2="584" y2="86"/>
+              <line class="wire hair" x1="130" y1="46"  x2="584" y2="126"/>
+              <line class="wire hair" x1="130" y1="46"  x2="584" y2="166"/>
+              <line class="wire hair" x1="130" y1="46"  x2="584" y2="206"/>
+              <line class="wire hair" x1="130" y1="206" x2="584" y2="46"/>
+              <line class="wire hair" x1="130" y1="206" x2="584" y2="86"/>
+              <line class="wire hair" x1="130" y1="206" x2="584" y2="126"/>
+              <line class="wire hair" x1="130" y1="206" x2="584" y2="166"/>
+              <line class="wire hair" x1="130" y1="206" x2="584" y2="206"/>
+              <line class="wire hair" x1="130" y1="86"  x2="584" y2="46"/>
+              <line class="wire hair" x1="130" y1="86"  x2="584" y2="206"/>
+              <line class="wire hair" x1="130" y1="126" x2="584" y2="46"/>
+              <line class="wire hair" x1="130" y1="126" x2="584" y2="206"/>
+              <line class="wire hair" x1="130" y1="166" x2="584" y2="46"/>
+              <line class="wire hair" x1="130" y1="166" x2="584" y2="206"/>
+            </g>
+            <!-- ===== 신입 한 명을 손으로 채우는 순간 ===== -->
+            <g data-at="2">
+              <line class="wire warn" x1="130" y1="46" x2="584" y2="46"/>
+              <line class="wire warn" x1="130" y1="46" x2="584" y2="86"/>
+              <line class="wire warn" x1="130" y1="46" x2="584" y2="126"/>
+              <line class="wire warn" x1="130" y1="46" x2="584" y2="166"/>
+              <line class="wire bad breathe" x1="130" y1="46" x2="584" y2="206" data-at="2"/>
+              <text class="cap-l no" x="360" y="245" text-anchor="middle">↑ 옆 사람 것을 복사하다 payroll:read까지 딸려 왔다 (과다 부여)</text>
+            </g>
+
+            <!-- ===== 역할을 끼운 뒤 ===== -->
+            <g data-at="3+">
+              <line class="wire live" x1="130" y1="46"  x2="298" y2="126"/>
+              <line class="wire live" x1="130" y1="86"  x2="298" y2="86"/>
+              <line class="wire live" x1="130" y1="126" x2="298" y2="126"/>
+              <line class="wire live" x1="130" y1="166" x2="298" y2="126"/>
+              <line class="wire live" x1="130" y1="206" x2="298" y2="166"/>
+            </g>
+            <g data-at="4">
+              <line class="wire good" x1="422" y1="86"  x2="584" y2="46"/>
+              <line class="wire good" x1="422" y1="86"  x2="584" y2="86"/>
+              <line class="wire good" x1="422" y1="126" x2="584" y2="86"/>
+              <line class="wire good" x1="422" y1="126" x2="584" y2="126"/>
+              <line class="wire good" x1="422" y1="126" x2="584" y2="166"/>
+              <line class="wire good" x1="422" y1="166" x2="584" y2="86"/>
+              <line class="wire good" x1="422" y1="166" x2="584" y2="206"/>
+            </g>
+
+            <!-- ===== 역할 노드 ===== -->
+            <g data-at="3+">
+              <rect class="nd purp pop" x="298" y="72"  width="124" height="28" rx="9"/>
+              <text class="t" x="360" y="91"  text-anchor="middle">팀장</text>
+              <rect class="nd purp pop" x="298" y="112" width="124" height="28" rx="9"/>
+              <text class="t" x="360" y="131" text-anchor="middle">개발팀 직원</text>
+              <rect class="nd purp pop" x="298" y="152" width="124" height="28" rx="9"/>
+              <text class="t" x="360" y="171" text-anchor="middle">인사담당</text>
+            </g>
+
+            <!-- ===== 직원 ===== -->
+            <g data-at="1+">
+              <rect class="nd hot pop" x="20" y="33" width="110" height="26" rx="8"/>
+              <text class="s" x="75" y="51" text-anchor="middle">👤 정신입</text>
+            </g>
+            <rect class="nd hot" x="20" y="73"  width="110" height="26" rx="8" data-at="0+"/>
+            <text class="s" x="75" y="91"  text-anchor="middle" data-at="0+">👤 박팀장</text>
+            <rect class="nd hot" x="20" y="113" width="110" height="26" rx="8" data-at="0+"/>
+            <text class="s" x="75" y="131" text-anchor="middle" data-at="0+">👤 김주임</text>
+            <rect class="nd hot" x="20" y="153" width="110" height="26" rx="8" data-at="0+"/>
+            <text class="s" x="75" y="171" text-anchor="middle" data-at="0+">👤 한대리</text>
+            <g data-at="1+">
+              <rect class="nd hot pop" x="20" y="193" width="110" height="26" rx="8"/>
+              <text class="s" x="75" y="211" text-anchor="middle">👤 이인사</text>
+            </g>
+
+            <!-- ===== 기능(권한) ===== -->
+            <g data-at="1+">
+              <rect class="nd warnb pop" x="584" y="33" width="116" height="26" rx="8"/>
+              <text class="m" x="642" y="50" text-anchor="middle">expense:approve</text>
+            </g>
+            <rect class="nd warnb" x="584" y="73"  width="116" height="26" rx="8" data-at="0+"/>
+            <text class="m" x="642" y="90"  text-anchor="middle" data-at="0+">wiki:read</text>
+            <rect class="nd warnb" x="584" y="113" width="116" height="26" rx="8" data-at="0+"/>
+            <text class="m" x="642" y="130" text-anchor="middle" data-at="0+">wiki:write</text>
+            <rect class="nd warnb" x="584" y="153" width="116" height="26" rx="8" data-at="0+"/>
+            <text class="m" x="642" y="170" text-anchor="middle" data-at="0+">expense:submit</text>
+            <g data-at="1+">
+              <rect class="nd warnb pop" x="584" y="193" width="116" height="26" rx="8"/>
+              <text class="m" x="642" y="210" text-anchor="middle">payroll:read</text>
+            </g>
+
+            <!-- ===== 관리 지점 계수기 ===== -->
+            <text class="t" x="360" y="264" text-anchor="middle" data-at="0">관리해야 할 연결선 <tspan class="key">9</tspan>개  (3 × 3)</text>
+            <text class="t" x="360" y="264" text-anchor="middle" data-at="1,2">관리해야 할 연결선 <tspan class="no">25</tspan>개  (5 × 5)</text>
+            <text class="t" x="360" y="264" text-anchor="middle" data-at="3">사용자 → 역할 <tspan class="hi">5</tspan>개</text>
+            <text class="t" x="360" y="264" text-anchor="middle" data-at="4">연결선 <tspan class="ok">12</tspan>개  —  곱셈(5 × 5)이 아니라 <tspan class="ok">덧셈(5 + 7)</tspan></text>
+          </svg>
+        </div>
+        <div class="dia-cap" aria-hidden="true"></div>
+        <figcaption>같은 다섯 명, 같은 다섯 기능인데 선이 <b>25개에서 12개</b>로 줍니다. 그런데 진짜 이득은 이 숫자가 아니라 <b>기울기</b>예요 — 직원이 100명이 돼도 역할 쪽 선(7개)은 그대로입니다.</figcaption>
+      </figure>
+
       <p>현실적인 규모를 넣어 볼까요. 직원 50명에 기능 40개라면, 연결선은 벌써 <b>2,000개</b>입니다. 이건 단순히 "숫자가 크다"는 겉보기 문제가 아니에요. <b>실제 사고로 이어지는 구조적 결함</b>입니다. 신입 한 명이 들어오면 누군가 40개 권한을 일일이 체크해 줘야 하는데, 바쁘면 "일단 옆 사람이랑 똑같이" 복사하다가 <b>안 줘도 될 권한까지</b> 줍니다(과다 부여). 반대로 기능 하나가 새로 생기면 50명을 손봐야 하는데, 그러다 몇 명을 <b>빠뜨립니다</b>(누락). 그리고 누군가 퇴사하면 2,000개 중 그 사람 것을 찾아 지워야 하는데, 보통 <b>안 지웁니다</b>(잔여 권한). 보안 사고 기사에 단골로 나오는 이 세 가지가 전부 이 곱셈 구조에서 태어나는 거예요.</p>
 
       <p>그래서 권한 모델이 존재합니다. 핵심 아이디어는 의외로 단순해요 — <b>곱셈을 덧셈으로 바꾸는 것.</b></p>
@@ -887,6 +1302,95 @@ button:focus-visible, .pick:focus-visible, .term:focus-visible, a:focus-visible,
       <p>DAC를 이해했으니 그 정반대를 보면 "축"이 더 또렷해집니다. MAC(<span class="term" data-t="MAC">강제적 접근제어</span>)은 소유자의 재량이라는 게 아예 없습니다. 대신 <b>시스템이 보안 등급(라벨)으로 접근을 강제</b>하고, 개인은 그걸 못 바꿔요. 영화에서 보던 "1급 비밀" 문서를 떠올리면 됩니다 — 그 문서는 "1급 열람 자격"을 받은 사람만 볼 수 있고, 설령 그 문서를 만든 사람이라도 등급을 멋대로 낮춰 친구에게 공유할 수 없습니다. 규칙이 위에서 강제되거든요. 군·정부 시스템이나 리눅스의 SELinux가 이 방식입니다.</p>
       <p>일반적인 웹 서비스에서 MAC을 통째로 도입할 일은 거의 없습니다. 그래서 🔵 심화로 가볍게만 다뤄요. 다만 한 가지 발상만큼은 꼭 챙겨 두세요.</p>
       <div class="callout key"><h4>🔑 주니어가 기억할 한 가지</h4><p>MAC의 특징은 <b>라벨이 '사람'이 아니라 '데이터'에 붙는다</b>는 점입니다. 일반 웹 서비스에서 MAC을 직접 쓸 일은 드물지만, <b>이 "데이터에 분류 라벨을 붙인다"는 발상은 <a class="link" href="#data">Part 8(데이터·RAG 권한)</a>에서 그대로 부활</b>합니다. 그때 다시 만나요.</p></div>
+
+      <figure class="dia" id="diaDacMac">
+        <div class="dia-top">
+          <span class="dia-tag">결정권이 어디 있나</span>
+          <span class="dia-sp"></span>
+          <div class="dia-dots" role="group" aria-label="단계 이동"></div>
+          <button class="sm ghost dia-btn" type="button">▶ 재생</button>
+        </div>
+        <div class="dia-hint" aria-hidden="true">← 좌우로 밀어서 보세요 →</div>
+        <div class="dia-scroll">
+          <svg viewBox="0 0 720 254" role="img" aria-label="DAC와 MAC의 차이를 나란히 놓은 그림. 왼쪽에서는 회의록의 소유자인 김주임이 자기 재량으로 박팀장을 편집자로 초대해 통과한다. 오른쪽에서는 급여표에 시스템이 붙인 기밀 라벨이 있어, 그 문서를 만든 이인사조차 박협력에게 내줄 수 없고 라벨을 낮추려는 시도도 막힌다.">
+            <text class="cap-l ok" x="180" y="20" text-anchor="middle">🟢 DAC — 소유자의 재량</text>
+            <text class="cap-l hi" x="542" y="20" text-anchor="middle">🔵 MAC — 시스템이 강제</text>
+            <rect class="nd ghost ring" x="8" y="30" width="344" height="186" rx="13"/>
+            <rect class="nd ghost ring" x="370" y="30" width="344" height="186" rx="13"/>
+
+            <!-- ===== 왼쪽: DAC ===== -->
+            <rect class="nd hot" x="28" y="56" width="104" height="28" rx="9"/>
+            <text class="s" x="80" y="75" text-anchor="middle">👤 김주임</text>
+            <text class="cap-l key" x="80" y="98" text-anchor="middle">소유자</text>
+
+            <rect class="nd okb" x="208" y="50" width="124" height="56" rx="10"/>
+            <text class="t" x="270" y="74" text-anchor="middle">📄 회의록</text>
+            <text class="m" x="270" y="93" text-anchor="middle">owner = 김주임</text>
+
+            <line class="wire good" x1="132" y1="70" x2="200" y2="70"/>
+            <polygon fill="rgba(52,211,153,.75)" points="200,65 210,70 200,75"/>
+
+            <rect class="nd" x="28" y="150" width="104" height="28" rx="9" data-at="0+"/>
+            <text class="s" x="80" y="169" text-anchor="middle" data-at="0+">👤 박팀장</text>
+
+            <g data-at="1+">
+              <path class="wire good draw" style="--dl:180; --ft:.8s" d="M 132 164 H 200 V 106"/>
+              <polygon fill="rgba(52,211,153,.75)" points="195,106 200,96 205,106"/>
+              <text class="cap-l ok pop" x="252" y="130" text-anchor="middle">editor ✓</text>
+              <text class="cap-l ok breathe" x="180" y="200" text-anchor="middle">소유자가 자기 재량으로 내줬다 → 허용</text>
+            </g>
+            <text class="cap-l mut" x="180" y="200" text-anchor="middle" data-at="0">김주임이 만든 문서 · 아직 아무에게도 안 줬다</text>
+
+            <!-- ===== 오른쪽: MAC ===== -->
+            <g data-at="1+">
+              <rect class="nd" x="390" y="56" width="104" height="28" rx="9"/>
+              <text class="s" x="442" y="75" text-anchor="middle">👤 이인사</text>
+              <text class="cap-l mut" x="442" y="98" text-anchor="middle">만든 사람</text>
+
+              <rect class="nd warnb" x="570" y="44" width="124" height="52" rx="10"/>
+              <text class="t" x="632" y="68" text-anchor="middle">📄 급여표</text>
+              <text class="m" x="632" y="87" text-anchor="middle">created by 이인사</text>
+
+              <rect class="nd dead" x="578" y="104" width="108" height="26" rx="8"/>
+              <text class="cap-l key" x="632" y="121" text-anchor="middle">🔒 기밀 · 시스템 라벨</text>
+
+              <line class="wire mut" x1="494" y1="70" x2="562" y2="70"/>
+              <polygon fill="var(--text-mut)" points="562,65 572,70 562,75"/>
+
+              <rect class="nd" x="390" y="150" width="104" height="28" rx="9"/>
+              <text class="s" x="442" y="169" text-anchor="middle">👤 박협력</text>
+            </g>
+
+            <!-- 만든 사람이 똑같이 내주려 한다 -->
+            <g data-at="2+">
+              <path class="wire bad draw" style="--dl:180; --ft:.7s" d="M 494 164 H 560"/>
+              <text class="t no breathe" x="574" y="170" text-anchor="middle">✕</text>
+              <text class="cap-l no pop" x="632" y="170" text-anchor="middle">라벨이 막는다</text>
+            </g>
+            <!-- 그럼 라벨을 내려 볼까 -->
+            <g data-at="3+">
+              <path class="wire bad" d="M 442 84 V 117 H 548"/>
+              <text class="t no breathe" x="558" y="123" text-anchor="middle">✕</text>
+              <text class="cap-l no" x="466" y="140" text-anchor="middle">등급 낮추기도 불가</text>
+            </g>
+            <text class="cap-l mut" x="542" y="200" text-anchor="middle" data-at="1">이 문서엔 시스템이 붙인 라벨이 있다</text>
+            <text class="cap-l no" x="542" y="200" text-anchor="middle" data-at="2">만든 사람인데도 못 내준다</text>
+            <text class="cap-l no breathe" x="542" y="200" text-anchor="middle" data-at="3,4">라벨은 데이터의 것이지 사람의 것이 아니다</text>
+
+            <!-- ===== 마무리: 축 한 줄 ===== -->
+            <g data-at="4">
+              <line class="wire dash hair" x1="40" y1="232" x2="680" y2="232"/>
+              <rect class="nd okb pop" x="70" y="220" width="150" height="24" rx="8"/>
+              <text class="cap-l ok" x="145" y="236" text-anchor="middle">결정권 = 소유자</text>
+              <rect class="nd hot pop" x="500" y="220" width="150" height="24" rx="8"/>
+              <text class="cap-l hi" x="575" y="236" text-anchor="middle">결정권 = 시스템</text>
+              <text class="cap-l mut" x="360" y="236" text-anchor="middle">← 축은 이 하나 →</text>
+            </g>
+          </svg>
+        </div>
+        <div class="dia-cap" aria-hidden="true"></div>
+        <figcaption>두 그림의 차이는 <b>화살표를 누가 그었느냐</b> 하나입니다. 왼쪽은 사람이, 오른쪽은 시스템이 그었어요 — 다섯 모델을 가르는 축이 바로 이겁니다.</figcaption>
+      </figure>
 
       <h3>🎮 같은 상황, 다른 판정 — 모델 비교 시뮬레이터</h3>
       <p>이제 RBAC·ABAC·ReBAC는 본문에서 한 장씩 깊게 볼 텐데, 그 전에 <b>모델들이 서로 어떻게 다른지 감</b>부터 잡고 가면 좋습니다. 중요한 건 "어느 모델이 정답이냐"가 아니에요. 모델은 서로 경쟁하는 게 아니라, 같은 문제를 다른 각도에서 푸는 도구들이거든요. 그래서 핵심 질문은 이것입니다 — <b>"똑같은 상황을 각 모델은 어떤 근거로 판단하는가?"</b></p>
@@ -974,6 +1478,116 @@ button:focus-visible, .pick:focus-visible, .term:focus-visible, a:focus-visible,
       <div class="card tight"><pre style="margin:0"><code class="language-bash">CEO  ⊃  팀장  ⊃  직원
 #         팀장은 직원의 모든 권한을 자동으로 가진다(상속).
 #         그래서 '팀장' 역할엔 '승인' 같은 추가분만 적으면 된다.</code></pre></div>
+      <figure class="dia" id="diaHier">
+        <div class="dia-top">
+          <span class="dia-tag">권한이 흐르는 방향</span>
+          <span class="dia-sp"></span>
+          <div class="dia-dots" role="group" aria-label="단계 이동"></div>
+          <button class="sm ghost dia-btn" type="button">▶ 재생</button>
+        </div>
+        <div class="dia-hint" aria-hidden="true">← 좌우로 밀어서 보세요 →</div>
+        <div class="dia-scroll">
+          <svg viewBox="0 0 720 250" role="img" aria-label="역할 계층에서 권한이 상속되는 방향을 보여주는 그림. 직원·팀장·CEO 세 역할이 처음에는 각자의 추가분만 갖고 있다가, 팀장이 직원을 포함한다고 선언하면 직원의 권한 세 개가 팀장으로 올라오고, CEO가 팀장을 포함하면 그 넷이 다시 CEO로 올라온다. 직원에 권한 하나를 더하면 위의 두 역할에 자동 반영된다. 반대 방향으로는 흐르지 않는다.">
+            <text class="t" x="120" y="22" text-anchor="middle">직원</text>
+            <text class="t" x="360" y="22" text-anchor="middle">팀장</text>
+            <text class="t" x="600" y="22" text-anchor="middle">CEO</text>
+
+            <rect class="nd" x="20"  y="32" width="200" height="182" rx="12"/>
+            <rect class="nd" x="260" y="32" width="200" height="182" rx="12"/>
+            <rect class="nd" x="500" y="32" width="200" height="182" rx="12"/>
+
+            <!-- ===== 직원 ===== -->
+            <rect class="nd warnb" x="36" y="44" width="168" height="22" rx="7"/>
+            <text class="m" x="120" y="59" text-anchor="middle">wiki:read</text>
+            <rect class="nd warnb" x="36" y="70" width="168" height="22" rx="7"/>
+            <text class="m" x="120" y="85" text-anchor="middle">wiki:write</text>
+            <rect class="nd warnb" x="36" y="96" width="168" height="22" rx="7"/>
+            <text class="m" x="120" y="111" text-anchor="middle">expense:submit</text>
+            <g data-at="3+">
+              <rect class="nd warnb pop" x="36" y="122" width="168" height="22" rx="7"/>
+              <text class="m key" x="120" y="137" text-anchor="middle">calendar:write ★</text>
+            </g>
+
+            <!-- ===== 팀장 ===== -->
+            <rect class="nd warnb" x="276" y="44" width="168" height="22" rx="7"/>
+            <text class="m" x="360" y="59" text-anchor="middle">expense:approve</text>
+            <g data-at="1+">
+              <rect class="nd okb pop" x="276" y="70" width="168" height="22" rx="7"/>
+              <text class="m ok" x="360" y="85" text-anchor="middle">wiki:read</text>
+              <rect class="nd okb pop" x="276" y="96" width="168" height="22" rx="7"/>
+              <text class="m ok" x="360" y="111" text-anchor="middle">wiki:write</text>
+              <rect class="nd okb pop" x="276" y="122" width="168" height="22" rx="7"/>
+              <text class="m ok" x="360" y="137" text-anchor="middle">expense:submit</text>
+            </g>
+            <g data-at="3+">
+              <rect class="nd okb pop" x="276" y="148" width="168" height="22" rx="7"/>
+              <text class="m ok" x="360" y="163" text-anchor="middle">calendar:write ★</text>
+            </g>
+
+            <!-- ===== CEO ===== -->
+            <rect class="nd warnb" x="516" y="44" width="168" height="22" rx="7"/>
+            <text class="m" x="600" y="59" text-anchor="middle">budget:sign</text>
+            <g data-at="2+">
+              <rect class="nd okb pop" x="516" y="70" width="168" height="22" rx="7"/>
+              <text class="m ok" x="600" y="85" text-anchor="middle">expense:approve</text>
+              <rect class="nd okb pop" x="516" y="96" width="168" height="22" rx="7"/>
+              <text class="m ok" x="600" y="111" text-anchor="middle">wiki:read</text>
+              <rect class="nd okb pop" x="516" y="122" width="168" height="22" rx="7"/>
+              <text class="m ok" x="600" y="137" text-anchor="middle">wiki:write</text>
+              <rect class="nd okb pop" x="516" y="148" width="168" height="22" rx="7"/>
+              <text class="m ok" x="600" y="163" text-anchor="middle">expense:submit</text>
+            </g>
+            <g data-at="3+">
+              <rect class="nd okb pop" x="516" y="174" width="168" height="22" rx="7"/>
+              <text class="m ok" x="600" y="189" text-anchor="middle">calendar:write ★</text>
+            </g>
+
+            <!-- ===== 상속 화살표 ===== -->
+            <g data-at="1+">
+              <line class="wire live draw" style="--dl:36; --ft:.5s" x1="222" y1="123" x2="252" y2="123"/>
+              <polygon fill="var(--accent)" points="252,118 262,123 252,128"/>
+              <text class="cap-l hi" x="240" y="112" text-anchor="middle">⊃</text>
+            </g>
+            <g data-at="2+">
+              <line class="wire live draw" style="--dl:36; --ft:.5s" x1="462" y1="123" x2="492" y2="123"/>
+              <polygon fill="var(--accent)" points="492,118 502,123 492,128"/>
+              <text class="cap-l hi" x="480" y="112" text-anchor="middle">⊃</text>
+            </g>
+            <!-- 한 번은 눈으로 건너가는 것을 보여 준다 -->
+            <g class="fly" style="--fx:240px; --ft:1s" data-at="1">
+              <rect class="pk" x="42" y="96" width="156" height="22" rx="7"/>
+              <text class="pkt" x="120" y="111" text-anchor="middle">직원 권한 3개 →</text>
+            </g>
+            <g class="fly" style="--fx:240px; --ft:1s" data-at="2">
+              <rect class="pk" x="282" y="96" width="156" height="22" rx="7"/>
+              <text class="pkt" x="360" y="111" text-anchor="middle">팀장 권한 4개 →</text>
+            </g>
+
+            <!-- ===== 실효 권한 수 ===== -->
+            <g data-at="0-3">
+              <text class="cap-l mut" x="120" y="234" text-anchor="middle" data-at="0-2">실효 3개</text>
+              <text class="cap-l key" x="120" y="234" text-anchor="middle" data-at="3">실효 4개 · 여기만 고쳤다</text>
+              <text class="cap-l mut" x="360" y="234" text-anchor="middle" data-at="0">실효 1개 (자기 추가분뿐)</text>
+              <text class="cap-l ok" x="360" y="234" text-anchor="middle" data-at="1,2">실효 4개</text>
+              <text class="cap-l ok" x="360" y="234" text-anchor="middle" data-at="3">실효 5개 · 자동</text>
+              <text class="cap-l mut" x="600" y="234" text-anchor="middle" data-at="0,1">실효 1개</text>
+              <text class="cap-l ok" x="600" y="234" text-anchor="middle" data-at="2">실효 5개</text>
+              <text class="cap-l ok" x="600" y="234" text-anchor="middle" data-at="3">실효 6개 · 자동</text>
+            </g>
+
+            <!-- ===== 방향을 뒤집으면 ===== -->
+            <g data-at="4">
+              <path class="wire bad draw" style="--dl:520; --ft:.9s" d="M 600 214 V 230 H 160"/>
+              <polygon fill="var(--bad)" points="160,225 150,230 160,235"/>
+              <text class="t no breathe" x="380" y="228" text-anchor="middle">✕</text>
+              <text class="cap-l no" x="380" y="246" text-anchor="middle">이 방향은 없다 — 있었다면 직원이 budget:sign을 갖는다</text>
+            </g>
+          </svg>
+        </div>
+        <div class="dia-cap" aria-hidden="true"></div>
+        <figcaption>화살표를 한 번 뒤집어 보면 왜 방향이 중요한지 바로 보입니다 — 상속이 아래로 흐르면 <b>직원이 CEO의 결재권을 갖게</b> 되니까요.</figcaption>
+      </figure>
+
       <div class="callout warn"><h4>헷갈림 주의 — 권한은 위로 흐른다</h4><p>상위 역할(팀장)이 하위 역할(직원)의 권한을 <b>포함</b>합니다. "직원이 팀장 권한을 받는" 게 아니에요. 화살표 방향을 반대로 생각하면 권한이 새어나갑니다.</p></div>
 
       <h3>③ 직무분리(SoD) — 한 사람이 다 못 하게 <span class="dim">(RBAC₂·₃ Constrained)</span></h3>
@@ -991,6 +1605,74 @@ button:focus-visible, .pick:focus-visible, .term:focus-visible, a:focus-visible,
           <p style="font-size:14px">두 역할을 <b>가질 수는</b> 있지만, <b>같은 세션에서 동시에 켜지</b> 못하게 막음. <br><b>시점: 런타임(세션).</b><br>예: 둘 다 가졌어도 한 결재 건에선 둘 중 하나만 활성. <span class="dim">(RBAC₃)</span></p>
         </div>
       </div>
+      <figure class="dia" id="diaSod">
+        <div class="dia-top">
+          <span class="dia-tag">같은 목적, 다른 시점</span>
+          <span class="dia-sp"></span>
+          <div class="dia-dots" role="group" aria-label="단계 이동"></div>
+          <button class="sm ghost dia-btn" type="button">▶ 재생</button>
+        </div>
+        <div class="dia-hint" aria-hidden="true">← 좌우로 밀어서 보세요 →</div>
+        <div class="dia-scroll">
+          <svg viewBox="0 0 720 254" role="img" aria-label="정적 직무분리와 동적 직무분리가 각각 어느 시점에서 막는지 비교한 그림. 위 레인의 SSD는 구매요청자와 구매승인자를 한 사람에게 배정하려는 순간, 즉 역할 부여 시점에서 막는다. 아래 레인의 DSD는 배정은 통과시키고 세션 활성화 시점에서 둘 중 하나만 켜지게 막는다.">
+            <!-- 두 개의 시점 -->
+            <text class="cap-l key" x="290" y="34" text-anchor="middle">① 역할 부여 시점</text>
+            <text class="cap-l key" x="530" y="34" text-anchor="middle">② 세션 활성화 시점</text>
+            <line class="wire dash hair" x1="290" y1="42" x2="290" y2="216"/>
+            <line class="wire dash hair" x1="530" y1="42" x2="530" y2="216"/>
+
+            <!-- ===== 위 레인: SSD ===== -->
+            <text class="cap-l no" x="22" y="70">SSD · 정적 — 할당 자체를 금지</text>
+            <line class="wire dash hair" x1="20" y1="104" x2="286" y2="104"/>
+            <g data-at="0">
+              <rect class="nd" x="30" y="82" width="160" height="44" rx="10"/>
+              <text class="cap-l" x="110" y="100" text-anchor="middle">구매요청자</text>
+              <text class="cap-l" x="110" y="118" text-anchor="middle">＋ 구매승인자</text>
+            </g>
+            <g class="fly stop" style="--fx:88px; --ft:1.1s" data-at="1+">
+              <rect class="nd dead" x="30" y="82" width="160" height="44" rx="10"/>
+              <text class="cap-l no" x="110" y="100" text-anchor="middle">구매요청자</text>
+              <text class="cap-l no" x="110" y="118" text-anchor="middle">＋ 구매승인자</text>
+            </g>
+            <g data-at="1+">
+              <text class="t no breathe" x="290" y="110" text-anchor="middle">✕</text>
+              <text class="cap-l no" x="470" y="110" text-anchor="middle">여기서 끝 — 애초에 둘 다 못 가진다</text>
+            </g>
+
+            <!-- ===== 아래 레인: DSD ===== -->
+            <text class="cap-l key" x="22" y="162">DSD · 동적 — 동시 활성화를 금지</text>
+            <line class="wire dash hair" x1="20" y1="190" x2="526" y2="190"/>
+            <g data-at="0,1">
+              <rect class="nd" x="30" y="168" width="160" height="44" rx="10"/>
+              <text class="cap-l" x="110" y="186" text-anchor="middle">구매요청자</text>
+              <text class="cap-l" x="110" y="204" text-anchor="middle">＋ 구매승인자</text>
+            </g>
+            <g class="fly" style="--fx:280px; --ft:1.2s" data-at="2+">
+              <rect class="nd okb" x="30" y="168" width="160" height="44" rx="10"/>
+              <text class="cap-l ok" x="110" y="186" text-anchor="middle">구매요청자</text>
+              <text class="cap-l ok" x="110" y="204" text-anchor="middle">＋ 구매승인자</text>
+            </g>
+            <text class="t ok" x="290" y="196" text-anchor="middle" data-at="2+">✓</text>
+            <text class="cap-l ok" x="410" y="160" text-anchor="middle" data-at="2">배정은 통과 — 둘 다 가진다</text>
+
+            <g data-at="3+">
+              <line class="wire live" x1="476" y1="190" x2="520" y2="190"/>
+              <polygon fill="var(--accent)" points="520,185 530,190 520,195"/>
+              <rect class="nd okb pop" x="548" y="158" width="162" height="22" rx="7"/>
+              <text class="cap-l ok" x="629" y="173" text-anchor="middle">✓ 구매요청자 · 활성</text>
+              <rect class="nd dead pop" x="548" y="188" width="162" height="22" rx="7"/>
+              <text class="cap-l no" x="629" y="203" text-anchor="middle">🚫 구매승인자 · 비활성</text>
+              <text class="cap-l no breathe" x="629" y="224" text-anchor="middle">이 세션에서는 승인을 못 한다</text>
+            </g>
+
+            <!-- ===== 마무리 ===== -->
+            <text class="t" x="360" y="246" text-anchor="middle" data-at="4">막는 <tspan class="hi">시점</tspan>이 다를 뿐, 막으려는 것은 같다 — <tspan class="no">SSD는 ①</tspan>에서, <tspan class="key">DSD는 ②</tspan>에서</text>
+          </svg>
+        </div>
+        <div class="dia-cap" aria-hidden="true"></div>
+        <figcaption>둘을 "직무분리" 한 덩어리로 외우면 이 그림의 <b>가로축</b>이 사라집니다. 설계에서 갈리는 건 결론이 아니라 <b>어느 시점에 막느냐</b>예요.</figcaption>
+      </figure>
+
       <div class="callout key"><h4>🔑 한 문장으로</h4><p><b>SSD = "둘 다 가질 수 없다"</b>(할당 금지) · <b>DSD = "가질 순 있어도 동시에 쓸 수 없다"</b>(활성화 금지). "직무분리"를 한 덩어리로 외우면 설계에서 틀립니다.</p></div>
 
       <h3>🧩 직접 만들어 보기 — 역할이 왜 이득인지 숫자로</h3>
@@ -1080,6 +1762,91 @@ button:focus-visible, .pick:focus-visible, .term:focus-visible, a:focus-visible,
        and  env.time in 09:00..18:00
        and  env.ip in 회사망
 -- 네 조건이 모두 참일 때만 허용 (그 외 기본 거부)</code></pre></div>
+
+      <figure class="dia" id="diaAbac">
+        <div class="dia-top">
+          <span class="dia-tag">네 갈래가 모여 한 줄이 된다</span>
+          <span class="dia-sp"></span>
+          <div class="dia-dots" role="group" aria-label="단계 이동"></div>
+          <button class="sm ghost dia-btn" type="button">▶ 재생</button>
+        </div>
+        <div class="dia-hint" aria-hidden="true">← 좌우로 밀어서 보세요 →</div>
+        <div class="dia-scroll">
+          <svg viewBox="0 0 720 254" role="img" aria-label="ABAC 정책이 네 조건의 AND로 평가되는 그림. 주체·리소스·행위·환경 네 갈래에서 온 속성이 각각 하나의 조건에 대응하고, 앞의 세 조건은 참이지만 요청 시각이 21시 40분이라 근무시간 조건이 거짓이 된다. AND로 묶여 있으므로 세 개가 참이어도 최종 판정은 거부다.">
+            <text class="cap-l mut" x="102" y="26" text-anchor="middle">4종 속성 — 판단에 쓸 정보</text>
+            <text class="cap-l pu" x="376" y="26" text-anchor="middle">정책 — 모두 참일 때만 allow</text>
+            <text class="cap-l key" x="636" y="26" text-anchor="middle">판정</text>
+
+            <!-- ===== 왼쪽: 네 갈래 속성 ===== -->
+            <rect class="nd hot" x="14" y="44" width="176" height="36" rx="9"/>
+            <text class="cap-l hi" x="26" y="60">👤 주체</text>
+            <text class="m" x="178" y="74" text-anchor="end">role=hr · dept=인사</text>
+
+            <rect class="nd warnb" x="14" y="90" width="176" height="36" rx="9"/>
+            <text class="cap-l key" x="26" y="106">📄 리소스</text>
+            <text class="m" x="178" y="120" text-anchor="end">class=internal</text>
+
+            <rect class="nd okb" x="14" y="136" width="176" height="36" rx="9"/>
+            <text class="cap-l ok" x="26" y="152">⚙️ 행위</text>
+            <text class="m" x="178" y="166" text-anchor="end">read</text>
+
+            <rect class="nd purp" x="14" y="182" width="176" height="36" rx="9"/>
+            <text class="cap-l pu" x="26" y="198">🌐 환경</text>
+            <text class="m key" x="178" y="212" text-anchor="end">21:40 · 카페 Wi-Fi</text>
+
+            <!-- ===== 속성 → 조건 ===== -->
+            <line class="wire mut" x1="190" y1="62"  x2="240" y2="62"/>
+            <polygon fill="var(--text-mut)" points="240,57 250,62 240,67"/>
+            <line class="wire mut" x1="190" y1="108" x2="240" y2="108"/>
+            <polygon fill="var(--text-mut)" points="240,103 250,108 240,113"/>
+            <line class="wire mut" x1="190" y1="154" x2="240" y2="154"/>
+            <polygon fill="var(--text-mut)" points="240,149 250,154 240,159"/>
+            <line class="wire mut" x1="190" y1="200" x2="240" y2="200"/>
+            <polygon fill="var(--text-mut)" points="240,195 250,200 240,205"/>
+
+            <!-- ===== 가운데: 정책 네 줄 ===== -->
+            <rect class="nd" x="250" y="44" width="252" height="36" rx="8"/>
+            <text class="m" x="262" y="67">subject.role == "hr"</text>
+            <rect class="nd" x="250" y="90" width="252" height="36" rx="8"/>
+            <text class="m" x="262" y="113">resource.class != "restricted"</text>
+            <rect class="nd" x="250" y="136" width="252" height="36" rx="8"/>
+            <text class="m" x="262" y="159">action == "read"</text>
+            <rect class="nd" x="250" y="182" width="252" height="36" rx="8"/>
+            <!-- 거짓으로 판정된 줄은 테두리째 갈아 끼운다. 덧칠 사각형은 아래 ✓·✗보다
+                 먼저 와야 한다 — 나중에 오면 .nd의 바탕색이 판정 기호를 지운다. -->
+            <rect class="nd dead" x="250" y="182" width="252" height="36" rx="8" data-at="3+"/>
+            <text class="m" x="262" y="205" data-at="0-2">env.time in 09:00..18:00</text>
+            <text class="m no" x="262" y="205" data-at="3+">env.time in 09:00..18:00</text>
+
+            <!-- 조건별 판정 -->
+            <text class="t ok pop" x="482" y="68"  text-anchor="middle" data-at="1+">✓</text>
+            <text class="t ok pop" x="482" y="114" text-anchor="middle" data-at="2+">✓</text>
+            <text class="t ok pop" x="482" y="160" text-anchor="middle" data-at="2+">✓</text>
+            <text class="t no pop breathe" x="482" y="206" text-anchor="middle" data-at="3+">✗</text>
+
+            <!-- AND 묶음 -->
+            <text class="cap-l mut" x="516" y="40" text-anchor="middle">AND</text>
+            <path class="wire mut" d="M 502 62 H 514 V 130 H 556"/>
+            <path class="wire mut" d="M 502 200 H 514 V 130"/>
+            <path class="wire mut" d="M 502 108 H 514"/>
+            <path class="wire mut" d="M 502 154 H 514"/>
+            <polygon fill="var(--text-mut)" points="556,125 566,130 556,135"/>
+
+            <!-- ===== 오른쪽: 판정 ===== -->
+            <rect class="nd" x="566" y="102" width="140" height="56" rx="11" data-at="0-2"/>
+            <text class="t mut" x="636" y="136" text-anchor="middle" data-at="0-2">평가 중…</text>
+            <rect class="nd dead pop" x="566" y="102" width="140" height="56" rx="11" data-at="3+"/>
+            <text class="t no" x="636" y="128" text-anchor="middle" data-at="3+">✕ 거부</text>
+            <text class="cap-l no" x="636" y="146" text-anchor="middle" data-at="3+">한 줄이 거짓이라서</text>
+            <text class="cap-l key breathe" x="636" y="178" text-anchor="middle" data-at="4">3승 1패가 아니다</text>
+
+            <!-- ===== 마무리 ===== -->
+            <text class="t" x="360" y="244" text-anchor="middle" data-at="4">AND는 <tspan class="no">다수결이 아니다</tspan> — 하나가 거짓이면 전체가 거짓</text>
+          </svg>
+        </div>
+        <div class="dia-cap" aria-hidden="true"></div>
+        <figcaption>맨 윗줄 <code>subject.role == "hr"</code> 하나만 남기면 그게 곧 <b>RBAC</b>입니다. ABAC가 RBAC를 <b>대체</b>하는 게 아니라 <b>품는다</b>는 말이 이 그림에 그대로 있어요.</figcaption>
+      </figure>
 
       <h3>🎛️ 정책 시뮬레이터 — 조건을 켜고 꺼 보세요</h3>
       <p>이 정책이 실제로 어떻게 작동하는지 손으로 만져봅시다. 시나리오는 <b>이인사(인사팀)가 인사 문서를 조회</b>하는 상황이에요. 이인사는 인사팀이니 역할 조건(<code>role==hr</code>)은 이미 충족된 상태고, 나머지 세 조건(부서·시간·네트워크)을 켜고 끌 수 있습니다. ABAC는 조건들을 <b>AND</b>로 묶기 때문에, 하나만 거짓이어도 전체가 거부로 떨어진다는 걸 직접 확인해 보세요.</p>
@@ -1236,6 +2003,82 @@ doc:회의록   # parent @ folder:기획     # 회의록 의 상위 = 기획</co
       <div class="callout why" style="margin-top:8px"><p style="margin:0"><b>💡 헷갈리기 쉬운 점 — 화살표 방향:</b> 튜플은 <code>doc:로드맵#parent@folder:기획</code>처럼 <b>자식(로드맵)이 부모(기획)를 가리키며</b> 기록합니다. 반면 위 그래프의 "포함" 화살표는 <b>권한이 흐르는 방향</b>(부모 폴더 → 자식 문서)으로 그렸어요. 같은 사실을 '기록 방향'과 '권한 흐름 방향', 두 각도에서 본 것뿐입니다.</p></div>
       <p>이제 권한 판단은 <b>이 그래프에서 길을 찾는 일</b>이 됩니다. "박팀장이 로드맵을 편집할 수 있나?"를 물으면, 엔진은 <span style="color:#38bdf8; font-weight:700">파란 화살표</span>를 따라갑니다 — <b>박팀장 →editor→ 기획 폴더 →포함→ 로드맵</b>. 길이 이어지므로 "가능". 박팀장에게 로드맵 권한을 <b>직접 준 적은 한 번도 없지만</b>, 관계의 길을 따라 권한이 도달한 거예요. 이게 바로 ReBAC가 말하는 "관계로 권한을 잇는다"입니다.</p>
 
+      <figure class="dia" id="diaRebacHop">
+        <div class="dia-top">
+          <span class="dia-tag">엔진이 길을 걷는다</span>
+          <span class="dia-sp"></span>
+          <div class="dia-dots" role="group" aria-label="단계 이동"></div>
+          <button class="sm ghost dia-btn" type="button">▶ 재생</button>
+        </div>
+        <div class="dia-hint" aria-hidden="true">← 좌우로 밀어서 보세요 →</div>
+        <div class="dia-scroll">
+          <svg viewBox="0 0 720 238" role="img" aria-label="ReBAC 엔진이 관계 그래프를 세 홉 따라가는 과정. 김주임이 개발팀의 member이고, 개발팀이 기획 폴더의 viewer이며, 로드맵의 상위가 기획 폴더이므로, 세 홉을 이으면 김주임은 로드맵을 볼 수 있다. 김주임과 로드맵을 직접 잇는 튜플은 저장돼 있지 않다.">
+            <text class="cap-l mut" x="20" y="24">질문: <tspan class="hi">김주임이 로드맵 문서를 볼 수 있나?</tspan>  —  직접 준 적은 한 번도 없다</text>
+
+            <!-- 노드 바탕 -->
+            <rect class="nd" x="10"  y="88" width="124" height="52" rx="11"/>
+            <rect class="nd" x="178" y="88" width="124" height="52" rx="11"/>
+            <rect class="nd" x="346" y="88" width="134" height="52" rx="11"/>
+            <rect class="nd" x="524" y="88" width="134" height="52" rx="11"/>
+            <!-- 닿은 노드에 불이 들어온다 -->
+            <rect class="nd hot" x="10"  y="88" width="124" height="52" rx="11" data-at="0+"/>
+            <rect class="nd hot pop" x="178" y="88" width="124" height="52" rx="11" data-at="1+"/>
+            <rect class="nd hot pop" x="346" y="88" width="134" height="52" rx="11" data-at="2+"/>
+            <rect class="nd hot pop" x="524" y="88" width="134" height="52" rx="11" data-at="3+"/>
+
+            <text class="t" x="72"  y="112" text-anchor="middle">👤 김주임</text>
+            <text class="m" x="72"  y="130" text-anchor="middle">user</text>
+            <text class="t" x="240" y="112" text-anchor="middle">👥 개발팀</text>
+            <text class="m" x="240" y="130" text-anchor="middle">team</text>
+            <text class="t" x="413" y="112" text-anchor="middle">📁 기획 폴더</text>
+            <text class="m" x="413" y="130" text-anchor="middle">folder</text>
+            <text class="t" x="591" y="112" text-anchor="middle">📄 로드맵</text>
+            <text class="m" x="591" y="130" text-anchor="middle">doc</text>
+
+            <!-- 세 홉 -->
+            <g data-at="1+">
+              <text class="cap-l pu" x="156" y="80" text-anchor="middle">member · 1홉</text>
+              <line class="wire purp draw" style="--dl:34; --ft:.5s" x1="134" y1="114" x2="166" y2="114"/>
+              <polygon fill="rgba(192,132,252,.7)" points="166,109 178,114 166,119"/>
+              </g>
+            <g data-at="2+">
+              <text class="cap-l pu" x="324" y="80" text-anchor="middle">viewer · 2홉</text>
+              <line class="wire purp draw" style="--dl:34; --ft:.5s" x1="302" y1="114" x2="334" y2="114"/>
+              <polygon fill="rgba(192,132,252,.7)" points="334,109 346,114 334,119"/>
+              </g>
+            <g data-at="3+">
+              <text class="cap-l pu" x="502" y="80" text-anchor="middle">포함 · 3홉</text>
+              <line class="wire purp draw" style="--dl:34; --ft:.5s" x1="480" y1="114" x2="512" y2="114"/>
+              <polygon fill="rgba(192,132,252,.7)" points="512,109 524,114 512,119"/>
+              </g>
+
+            <!-- 아직 안 걸은 길은 흐리게 -->
+            <text class="cap-l mut" x="360" y="52" text-anchor="middle" data-at="0">저장된 건 아래 세 줄뿐이다 — 이 셋을 이어 붙일 수 있을까?</text>
+            <text class="cap-l pu" x="360" y="52" text-anchor="middle" data-at="1,2">엔진이 한 홉씩 따라간다…</text>
+            <text class="cap-l ok breathe" x="360" y="52" text-anchor="middle" data-at="3,4">길이 이어졌다 — 3홉 만에 로드맵에 닿는다</text>
+
+            <!-- 판정 -->
+            <g data-at="3+">
+              <rect class="nd okb pop" x="524" y="152" width="134" height="44" rx="10"/>
+              <text class="t ok" x="591" y="172" text-anchor="middle">✓ 허용</text>
+              <text class="cap-l ok" x="591" y="188" text-anchor="middle">viewer 로 도달</text>
+            </g>
+
+            <!-- 저장된 튜플 -->
+            <text class="cap-l mut" x="20" y="160">저장된 관계 튜플</text>
+            <text class="m" x="20" y="178" data-at="0+">team:개발    # member @ user:김주임</text>
+            <text class="m" x="20" y="194" data-at="0+">folder:기획  # viewer @ team:개발</text>
+            <text class="m" x="20" y="210" data-at="0+">doc:로드맵   # parent @ folder:기획</text>
+            <g data-at="4">
+              <text class="m no breathe" x="20" y="230">doc:로드맵   # viewer @ user:김주임</text>
+              <text class="cap-l no" x="330" y="230">← 이런 줄은 <tspan class="no">없다.</tspan> 그런데도 권한은 닿았다</text>
+            </g>
+          </svg>
+        </div>
+        <div class="dia-cap" aria-hidden="true"></div>
+        <figcaption>ABAC라면 <code>subject.dept == resource.owner_dept</code>처럼 <b>한 번</b>만 비교합니다. 여기서는 <b>세 번</b> 갈아탔어요 — 그 갈아타기가 ReBAC의 전부입니다.</figcaption>
+      </figure>
+
       <h3>🕸️ 관계 그래프 탐색 — 직접 이어보기</h3>
       <p>방금 본 그래프에서, 박팀장이 로드맵에 닿는 길은 화살표 <b>두 개</b>로 이뤄져 있었죠 — <b>박팀장 →editor→ 기획 폴더 →포함→ 로드맵</b>. 그럼 이 두 화살표 중 하나가 사라지면 어떻게 될까요? 아래 그래프에서 <b>관계 버튼을 눌러 화살표를 끊어</b> 보세요. 화살표가 끊기면 그 너머의 노드는 <b>흐려지고(도달 불가)</b>, 박팀장의 편집 권한도 사라집니다. 직접 권한을 준 적이 없으니, 길이 끊기면 권한도 끊기는 거예요 — 이 "경로 따라가기"가 ABAC엔 없는 ReBAC만의 능력입니다.</p>
       <div class="demo">
@@ -1320,6 +2163,89 @@ doc:회의록   # parent @ folder:기획     # 회의록 의 상위 = 기획</co
         </div>
       </div>
       <p>곁가지로 둘이 더 있습니다 — <span class="term" data-t="PIP">PIP</span>(판단에 필요한 속성을 공급하는 정보원: 부서·등급·시간)와 <span class="term" data-t="PAP">PAP</span>(정책을 작성·관리하는 곳). 주니어가 코드에서 매일 만나는 건 <b>PEP(미들웨어)와 PDP(정책 함수)</b> 둘뿐이에요. 이건 <a class="link" href="#why">Part 1의 철칙 ③ "서버가 진짜 게이트"</a>를 구조로 구현한 것 — 그 게이트가 바로 PEP입니다.</p>
+
+      <figure class="dia" id="diaPepPdp">
+        <div class="dia-top">
+          <span class="dia-tag">집행과 판단은 다른 일</span>
+          <span class="dia-sp"></span>
+          <div class="dia-dots" role="group" aria-label="단계 이동"></div>
+          <button class="sm ghost dia-btn" type="button">▶ 재생</button>
+        </div>
+        <div class="dia-hint" aria-hidden="true">← 좌우로 밀어서 보세요 →</div>
+        <div class="dia-scroll">
+          <svg viewBox="0 0 720 266" role="img" aria-label="비용 승인 요청 한 건이 처리되는 순서 그림. 클라이언트의 요청을 PEP가 가로채고, PEP는 스스로 판단하지 않고 PDP에 묻는다. PDP는 PIP에서 요청자의 역할과 팀을 받아와 판단한 뒤 allow 또는 deny를 돌려주고, PEP가 그 답을 집행해 200 또는 403을 낸다. 요청자가 팀장에서 직원으로 바뀌어도 배관은 그대로이고 PDP의 답 한 줄만 달라진다.">
+            <text class="cap-l ok" x="66" y="22" text-anchor="middle" data-at="0-4">요청자: 박팀장 · manager</text>
+            <text class="cap-l no breathe" x="66" y="22" text-anchor="middle" data-at="5">요청자: 김주임 · 직원</text>
+
+            <!-- ===== 네 부품 ===== -->
+            <rect class="nd" x="14" y="32" width="104" height="42" rx="10"/>
+            <text class="t" x="66" y="52" text-anchor="middle">🖥 클라이언트</text>
+            <text class="cap-l mut" x="66" y="68" text-anchor="middle">요청을 보낸다</text>
+
+            <rect class="nd hot" x="166" y="32" width="118" height="42" rx="10"/>
+            <text class="t" x="225" y="52" text-anchor="middle">🛂 PEP</text>
+            <text class="cap-l hi" x="225" y="68" text-anchor="middle">미들웨어 · 집행만</text>
+
+            <rect class="nd purp" x="356" y="32" width="118" height="42" rx="10"/>
+            <text class="t" x="415" y="52" text-anchor="middle">⚖️ PDP</text>
+            <text class="cap-l pu" x="415" y="68" text-anchor="middle">can() · 판단만</text>
+
+            <rect class="nd warnb" x="560" y="32" width="118" height="42" rx="10"/>
+            <text class="t" x="619" y="52" text-anchor="middle">🗂 PIP</text>
+            <text class="cap-l key" x="619" y="68" text-anchor="middle">속성 공급</text>
+
+            <line class="wire dash hair" x1="66"  y1="74" x2="66"  y2="240"/>
+            <line class="wire dash hair" x1="225" y1="74" x2="225" y2="240"/>
+            <line class="wire dash hair" x1="415" y1="74" x2="415" y2="240"/>
+            <line class="wire dash hair" x1="619" y1="74" x2="619" y2="240"/>
+
+            <!-- ① 요청이 검문소에 걸린다 -->
+            <g data-at="1+">
+              <text class="cap-l hi" x="145" y="90" text-anchor="middle">① POST /expenses/77/approve</text>
+              <line class="wire live" x1="66" y1="98" x2="213" y2="98"/>
+              <polygon fill="var(--accent)" points="213,93 225,98 213,103"/>
+            </g>
+            <!-- ② 검문소는 스스로 판단하지 않는다 -->
+            <g data-at="2+">
+              <text class="cap-l pu" x="320" y="118" text-anchor="middle">② can(user, approve, #77) ?</text>
+              <line class="wire purp" x1="225" y1="126" x2="403" y2="126"/>
+              <polygon fill="rgba(192,132,252,.7)" points="403,121 415,126 403,131"/>
+            </g>
+            <!-- ③ 판단에 쓸 속성을 받아온다 -->
+            <g data-at="3+">
+              <text class="cap-l key" x="517" y="144" text-anchor="middle">③ 이 사람의 역할·팀은?</text>
+              <line class="wire warn" x1="415" y1="152" x2="607" y2="152"/>
+              <polygon fill="rgba(251,191,36,.75)" points="607,147 619,152 607,157"/>
+              <line class="wire warn dash" x1="619" y1="176" x2="427" y2="176"/>
+              <polygon fill="rgba(251,191,36,.75)" points="427,171 415,176 427,181"/>
+            </g>
+            <text class="cap-l key" x="517" y="168" text-anchor="middle" data-at="3,4">manager · 팀A</text>
+            <text class="cap-l no" x="517" y="168" text-anchor="middle" data-at="5">employee · 팀A</text>
+
+            <!-- ④ 판단 결과가 돌아온다 -->
+            <g data-at="4">
+              <text class="cap-l ok" x="320" y="192" text-anchor="middle">④ allow</text>
+              <line class="wire good dash" x1="415" y1="200" x2="237" y2="200"/>
+              <polygon fill="rgba(52,211,153,.75)" points="237,195 225,200 237,205"/>
+              <text class="cap-l ok" x="145" y="218" text-anchor="middle">⑤ 200 OK · 승인 처리</text>
+              <line class="wire good dash" x1="225" y1="226" x2="78" y2="226"/>
+              <polygon fill="rgba(52,211,153,.75)" points="78,221 66,226 78,231"/>
+            </g>
+            <g data-at="5">
+              <text class="cap-l no breathe" x="320" y="192" text-anchor="middle">④ deny</text>
+              <line class="wire bad dash" x1="415" y1="200" x2="237" y2="200"/>
+              <polygon fill="var(--bad)" points="237,195 225,200 237,205"/>
+              <text class="cap-l no" x="145" y="218" text-anchor="middle">⑤ 403 Forbidden</text>
+              <line class="wire bad dash" x1="225" y1="226" x2="78" y2="226"/>
+              <polygon fill="var(--bad)" points="78,221 66,226 78,231"/>
+              <text class="cap-l mut" x="360" y="258" text-anchor="middle">배관은 그대로다 — 바뀐 건 ④ 한 줄뿐</text>
+            </g>
+            <text class="cap-l mut" x="360" y="258" text-anchor="middle" data-at="0">PEP는 판단하지 않고, PDP는 집행하지 않는다 — 이 분업이 전부다</text>
+          </svg>
+        </div>
+        <div class="dia-cap" aria-hidden="true"></div>
+        <figcaption>마지막 두 칸을 견줘 보세요. 요청자가 바뀌어도 <b>화살표의 모양과 개수는 똑같습니다.</b> 달라지는 건 ④ 한 칸 — 그래서 판단을 한 함수에 모아 둘 수 있는 거예요.</figcaption>
+      </figure>
 
       <h3>🔎 요청 한 건이 판정되기까지 — 추적기</h3>
       <p>말로만 들으면 추상적이니, 실제 요청 하나가 이 부품들을 어떻게 거쳐 가는지 한 단계씩 따라가 봅시다. 상황은 <b>박팀장이 팀원의 비용을 승인</b>하는 요청이에요. 검문소(PEP)가 요청을 붙잡고, 정보원(PIP)이 필요한 속성을 모아오고, 판단기(PDP)가 결론을 내리고, 마지막에 검문소가 그 결론을 집행합니다. "다음 단계"를 눌러 차례로 보세요. 아래 체크박스로 <b>권한 없는 사용자</b>일 때 어디서 막히는지도 확인할 수 있습니다.</p>
@@ -1439,6 +2365,115 @@ route('POST', '/expenses/:id/approve', (req) => {
       <p>체크 위치는 세 군데가 가능합니다 — <b>미들웨어</b>(기능 단위), <b>서비스 계층</b>(객체 단위), <b>DB의 <span class="term" data-t="RLS">행 수준 보안(RLS)</span></b>(데이터 단위, <a class="link" href="#data">Part 8</a>). 함수 권한만으로는 부족한 이유가 바로 다음 세 함정입니다.</p>
 
       <p>그런데 미들웨어로 "이 기능을 쓸 권한이 있나"만 확인하면 충분할까요? 아쉽게도 아닙니다. 실제 보안 사고의 상당수는 그 검사를 <b>통과한 다음</b>에 터집니다. 권한 사고에는 전형적인 세 가지 유형이 있는데, 흔히 IDOR 하나만 알고 끝내는 경우가 많아요. 셋을 제대로 구분해 둡시다 — 이건 OWASP가 매년 API 보안 위험 1·3·5위로 꼽는 단골들입니다.</p>
+
+      <figure class="dia" id="diaBola">
+        <div class="dia-top">
+          <span class="dia-tag">숫자 하나만 바꿨을 뿐인데</span>
+          <span class="dia-sp"></span>
+          <div class="dia-dots" role="group" aria-label="단계 이동"></div>
+          <button class="sm ghost dia-btn" type="button">▶ 재생</button>
+        </div>
+        <div class="dia-hint" aria-hidden="true">← 좌우로 밀어서 보세요 →</div>
+        <div class="dia-scroll">
+          <svg viewBox="0 52 720 188" role="img" aria-label="BOLA가 생기는 자리를 보여주는 그림. 김주임의 비용 조회 요청은 미들웨어의 기능 권한 검사를 통과한다. 요청의 번호를 남의 것으로 바꿔도 기능 권한은 그대로 통과하므로, 객체 단위 검사가 없으면 박팀장의 비용이 그대로 응답에 나온다. 객체를 로드한 뒤 소유자를 다시 확인하면 403으로 막힌다. 기능 검사 자리는 BFLA, 객체 검사 자리는 BOLA, 요청 본문을 통째로 저장하는 자리는 BOPLA에 대응한다.">
+            <!-- ===== 요청 ===== -->
+            <rect class="nd" x="12" y="86" width="160" height="64" rx="10" data-at="0"/>
+            <rect class="nd dead" x="12" y="86" width="160" height="64" rx="10" data-at="1+"/>
+            <text class="cap-l mut" x="92" y="106" text-anchor="middle">as 김주임 (직원)</text>
+            <text class="m hi" x="92" y="128" text-anchor="middle" data-at="0">GET /expenses/77</text>
+            <text class="m no" x="92" y="128" text-anchor="middle" data-at="1+">GET /expenses/78</text>
+            <text class="cap-l ok" x="92" y="146" text-anchor="middle" data-at="0">내 비용이다</text>
+            <text class="cap-l no breathe" x="92" y="146" text-anchor="middle" data-at="1+">숫자만 바꿨다</text>
+
+            <line class="wire live" x1="172" y1="118" x2="188" y2="118"/>
+            <polygon fill="var(--accent)" points="188,113 200,118 188,123"/>
+
+            <!-- ===== ① 기능 권한 (미들웨어) ===== -->
+            <rect class="nd okb" x="200" y="86" width="150" height="64" rx="10"/>
+            <text class="t" x="275" y="108" text-anchor="middle">① 미들웨어</text>
+            <text class="cap-l" x="275" y="126" text-anchor="middle">expense:read 있나?</text>
+            <text class="cap-l ok" x="275" y="144" text-anchor="middle">✓ 통과</text>
+            <text class="cap-l key breathe" x="275" y="72" text-anchor="middle" data-at="1+">번호가 바뀌어도 여긴 그대로 통과</text>
+
+            <line class="wire live" x1="350" y1="118" x2="362" y2="118"/>
+            <polygon fill="var(--accent)" points="362,113 374,118 362,123"/>
+
+            <!-- ===== ② 객체 검사 — 없을 때 / 있을 때 ===== -->
+            <g data-at="0">
+              <rect class="nd okb" x="378" y="86" width="182" height="64" rx="10"/>
+              <text class="t" x="469" y="108" text-anchor="middle">② 객체 검사</text>
+              <text class="m" x="469" y="127" text-anchor="middle">can(김주임, read, #77)</text>
+              <text class="cap-l ok" x="469" y="145" text-anchor="middle">✓ owner = 김주임</text>
+            </g>
+            <g data-at="1,2">
+              <rect class="nd ghost" x="378" y="86" width="182" height="64" rx="10"/>
+              <text class="t mut" x="469" y="112" text-anchor="middle">② 객체 검사</text>
+              <text class="cap-l no breathe" x="469" y="134" text-anchor="middle">— 없음 —</text>
+              <line class="wire bad dash" x1="378" y1="118" x2="560" y2="118"/>
+            </g>
+            <g data-at="3,4">
+              <rect class="nd okb" x="378" y="86" width="182" height="64" rx="10"/>
+              <text class="t" x="469" y="108" text-anchor="middle">② 객체 검사</text>
+              <text class="m" x="469" y="127" text-anchor="middle">can(김주임, read, #78)</text>
+              <text class="cap-l no" x="469" y="145" text-anchor="middle">✕ owner ≠ 김주임</text>
+            </g>
+
+            <g data-at="0-2">
+              <line class="wire live" x1="560" y1="118" x2="572" y2="118"/>
+              <polygon fill="var(--accent)" points="572,113 584,118 572,123"/>
+            </g>
+            <g data-at="3,4">
+              <line class="wire bad" x1="560" y1="118" x2="570" y2="118"/>
+              <text class="t no breathe" x="578" y="124" text-anchor="middle">✕</text>
+            </g>
+
+            <!-- ===== 저장소 ===== -->
+            <rect class="nd" x="588" y="62" width="120" height="112" rx="10"/>
+            <text class="cap-l mut" x="648" y="80" text-anchor="middle">expenses</text>
+            <!-- 칸의 테두리를 먼저 다 깔고 글자를 나중에 얹는다. 강조용 덧칠 사각형이
+                 글자 뒤에 오면 .nd의 바탕색이 글자를 덮어 지워 버린다. -->
+            <rect class="nd soft" x="596" y="88" width="104" height="34" rx="7"/>
+            <rect class="nd soft" x="596" y="130" width="104" height="34" rx="7"/>
+            <rect class="nd okb" x="596" y="88" width="104" height="34" rx="7" data-at="0"/>
+            <rect class="nd dead breathe" x="596" y="130" width="104" height="34" rx="7" data-at="2"/>
+            <text class="m" x="648" y="103" text-anchor="middle">#77</text>
+            <text class="cap-l mut" x="648" y="117" text-anchor="middle">owner=김주임</text>
+            <text class="m" x="648" y="145" text-anchor="middle">#78</text>
+            <text class="cap-l mut" x="648" y="159" text-anchor="middle">owner=박팀장</text>
+            <text class="m no" x="648" y="145" text-anchor="middle" data-at="2">#78</text>
+            <text class="cap-l no" x="648" y="159" text-anchor="middle" data-at="2">owner=박팀장</text>
+
+            <!-- ===== 응답 ===== -->
+            <g data-at="0">
+              <rect class="nd okb" x="180" y="184" width="400" height="44" rx="10"/>
+              <text class="t ok" x="380" y="212" text-anchor="middle">200 OK — #77 · 내 비용이 나왔다</text>
+            </g>
+            <g data-at="2">
+              <rect class="nd dead" x="180" y="184" width="400" height="44" rx="10"/>
+              <text class="t no breathe" x="380" y="206" text-anchor="middle">200 OK — #78 · 박팀장의 비용이 그대로 나왔다</text>
+              <text class="cap-l no" x="380" y="222" text-anchor="middle">이게 BOLA · 흔히 IDOR라 부르는 그것</text>
+            </g>
+            <g data-at="3">
+              <rect class="nd okb" x="180" y="184" width="400" height="44" rx="10"/>
+              <text class="t ok" x="380" y="206" text-anchor="middle">403 Forbidden</text>
+              <text class="cap-l ok" x="380" y="222" text-anchor="middle">기능 권한은 있어도, 이 객체는 내 것이 아니다</text>
+            </g>
+
+            <!-- ===== 세 함정이 각각 어느 자리인가 ===== -->
+            <g data-at="4">
+              <rect class="nd dead" x="12" y="180" width="160" height="26" rx="8"/>
+              <text class="cap-l no" x="92" y="197" text-anchor="middle">본문 통째 저장 → BOPLA</text>
+              <rect class="nd dead" x="200" y="180" width="150" height="26" rx="8"/>
+              <text class="cap-l no" x="275" y="197" text-anchor="middle">① 빠뜨리면 BFLA</text>
+              <rect class="nd dead" x="378" y="180" width="182" height="26" rx="8"/>
+              <text class="cap-l no" x="469" y="197" text-anchor="middle">② 빠뜨리면 BOLA (=IDOR)</text>
+              <text class="t" x="360" y="228" text-anchor="middle">셋은 <tspan class="hi">막는 자리</tspan>가 다르다 — 속성 · 기능 · 객체</text>
+            </g>
+          </svg>
+        </div>
+        <div class="dia-cap" aria-hidden="true"></div>
+        <figcaption>①은 <b>"비용을 조회할 수 있나"</b>를, ②는 <b>"이 비용을 조회할 수 있나"</b>를 묻습니다. 한 글자 차이인데 ②가 없으면 ①은 아무것도 못 지켜요.</figcaption>
+      </figure>
 
       <h4>🧨 3대 인가 함정 — IDOR 하나로 끝나지 않는다 (OWASP API 2023)</h4>
       <table class="t">
@@ -1581,6 +2616,132 @@ const hits = vectorDB.search({
 });
 // 민감 청크는 애초에 hits에 들어오지 않는다 → LLM이 볼 수조차 없다</code></pre>
 
+      <figure class="dia" id="diaRag">
+        <div class="dia-top">
+          <span class="dia-tag">필터를 어디에 두느냐</span>
+          <span class="dia-sp"></span>
+          <div class="dia-dots" role="group" aria-label="단계 이동"></div>
+          <button class="sm ghost dia-btn" type="button">▶ 재생</button>
+        </div>
+        <div class="dia-hint" aria-hidden="true">← 좌우로 밀어서 보세요 →</div>
+        <div class="dia-scroll">
+          <svg viewBox="0 0 720 282" role="img" aria-label="RAG 챗봇에서 권한 필터의 위치에 따른 차이를 보여주는 그림. 벡터 저장소에는 공개 청크 둘과 인사 전용 청크 둘이 있다. 필터를 검색 뒤에 두면 성과급 규정 청크가 검색 결과에 올라와 메모리와 로그에 닿은 뒤에야 제거된다. 필터를 검색 앞으로 옮기면 권한 없는 청크는 후보에 등장조차 하지 않아 LLM이 볼 수 없다.">
+            <text class="cap-l mut" x="12" y="24">질문: "우리 회사 성과급 지급 기준이 뭐야?"  ·  묻는 사람: 김주임 (직원 · role=employee)</text>
+
+            <!-- ===== ① 벡터 저장소 ===== -->
+            <rect class="nd" x="12" y="40" width="192" height="200" rx="11"/>
+            <text class="cap-l mut" x="108" y="58" text-anchor="middle">① 벡터 저장소 · 청크</text>
+
+            <rect class="nd okb" x="22" y="66" width="172" height="36" rx="8"/>
+            <text class="s" x="108" y="84" text-anchor="middle">복리후생 안내</text>
+            <text class="m" x="108" y="97" text-anchor="middle">roles: all</text>
+            <rect class="nd okb" x="22" y="150" width="172" height="36" rx="8"/>
+            <text class="s" x="108" y="168" text-anchor="middle">휴가 규정</text>
+            <text class="m" x="108" y="181" text-anchor="middle">roles: all</text>
+
+            <!-- 민감 청크 — 걸러지기 전 / 걸러진 뒤 -->
+            <g data-at="0-2">
+              <rect class="nd warnb" x="22" y="108" width="172" height="36" rx="8"/>
+              <text class="s key" x="108" y="126" text-anchor="middle">🔒 성과급 규정</text>
+              <text class="m key" x="108" y="139" text-anchor="middle">roles: hr, ceo</text>
+              <rect class="nd warnb" x="22" y="192" width="172" height="36" rx="8"/>
+              <text class="s key" x="108" y="210" text-anchor="middle">🔒 임원 연봉표</text>
+              <text class="m key" x="108" y="223" text-anchor="middle">roles: ceo</text>
+            </g>
+            <g data-at="3,4">
+              <rect class="nd ghost" x="22" y="108" width="172" height="36" rx="8"/>
+              <text class="s mut" x="108" y="126" text-anchor="middle">🔒 성과급 규정</text>
+              <text class="cap-l ok" x="108" y="139" text-anchor="middle">✕ 후보에서 제외됨</text>
+              <rect class="nd ghost" x="22" y="192" width="172" height="36" rx="8"/>
+              <text class="s mut" x="108" y="210" text-anchor="middle">🔒 임원 연봉표</text>
+              <text class="cap-l ok" x="108" y="223" text-anchor="middle">✕ 후보에서 제외됨</text>
+            </g>
+
+            <!-- ===== 관문 A (검색 이전) ===== -->
+            <line class="wire dash hair" x1="224" y1="40" x2="224" y2="240" data-at="0-2"/>
+            <line class="wire good" x1="224" y1="40" x2="224" y2="240" data-at="3,4"/>
+
+            <!-- ===== ③ 검색 결과 ===== -->
+            <rect class="nd" x="244" y="40" width="184" height="200" rx="11"/>
+            <text class="cap-l mut" x="336" y="58" text-anchor="middle">③ 검색 결과 (hits)</text>
+            <text class="cap-l mut" x="336" y="146" text-anchor="middle" data-at="0">아직 검색 전</text>
+
+            <g data-at="1,2">
+              <rect class="nd dead" x="254" y="66" width="164" height="36" rx="8"/>
+              <text class="s no" x="336" y="84" text-anchor="middle">🔒 성과급 규정</text>
+              <text class="m no" x="336" y="97" text-anchor="middle">sim 0.91 · 1위</text>
+              <rect class="nd soft" x="254" y="108" width="164" height="36" rx="8"/>
+              <text class="s" x="336" y="126" text-anchor="middle">복리후생 안내</text>
+              <text class="m" x="336" y="139" text-anchor="middle">sim 0.74</text>
+              <rect class="nd soft" x="254" y="150" width="164" height="36" rx="8"/>
+              <text class="s" x="336" y="168" text-anchor="middle">휴가 규정</text>
+              <text class="m" x="336" y="181" text-anchor="middle">sim 0.68</text>
+            </g>
+            <g data-at="2">
+              <text class="cap-l no breathe" x="336" y="208" text-anchor="middle">이미 읽혔다 — 메모리 · 검색 로그 ·</text>
+              <text class="cap-l no" x="336" y="224" text-anchor="middle">순위 계산에 닿은 뒤다</text>
+            </g>
+            <g data-at="3,4">
+              <rect class="nd okb" x="254" y="66" width="164" height="36" rx="8"/>
+              <text class="s" x="336" y="84" text-anchor="middle">복리후생 안내</text>
+              <text class="m" x="336" y="97" text-anchor="middle">sim 0.74</text>
+              <rect class="nd okb" x="254" y="108" width="164" height="36" rx="8"/>
+              <text class="s" x="336" y="126" text-anchor="middle">휴가 규정</text>
+              <text class="m" x="336" y="139" text-anchor="middle">sim 0.68</text>
+              <text class="cap-l ok breathe" x="336" y="176" text-anchor="middle">민감 청크는 여기 등장조차 없다</text>
+            </g>
+
+            <!-- ===== 관문 B (검색 이후) ===== -->
+            <line class="wire dash hair" x1="448" y1="40" x2="448" y2="240" data-at="0,1,3,4"/>
+            <line class="wire warn" x1="448" y1="40" x2="448" y2="240" data-at="2"/>
+            <text class="t no breathe" x="448" y="90" text-anchor="middle" data-at="2">✕</text>
+
+            <!-- ===== ④ LLM 컨텍스트 ===== -->
+            <rect class="nd purp" x="468" y="40" width="184" height="136" rx="11"/>
+            <text class="cap-l pu" x="560" y="58" text-anchor="middle">④ LLM 컨텍스트</text>
+            <text class="cap-l mut" x="560" y="116" text-anchor="middle" data-at="0,1,3">(아직 비어 있음)</text>
+            <g data-at="2,4">
+              <rect class="nd soft" x="478" y="70" width="164" height="30" rx="7"/>
+              <text class="s" x="560" y="90" text-anchor="middle">복리후생 안내</text>
+              <rect class="nd soft" x="478" y="108" width="164" height="30" rx="7"/>
+              <text class="s" x="560" y="128" text-anchor="middle">휴가 규정</text>
+              <text class="cap-l mut" x="560" y="160" text-anchor="middle">LLM은 이 둘만 본다</text>
+            </g>
+
+            <!-- ===== ⑤ 답변 ===== -->
+            <rect class="nd ghost" x="468" y="186" width="184" height="54" rx="11" data-at="0,1,3"/>
+            <g data-at="2">
+              <rect class="nd dead" x="468" y="186" width="184" height="54" rx="11"/>
+              <text class="s no" x="560" y="208" text-anchor="middle">⑤ 답변은 안전해 보인다</text>
+              <text class="cap-l no" x="560" y="226" text-anchor="middle">그러나 유출은 이미 일어났다</text>
+            </g>
+            <g data-at="4">
+              <rect class="nd okb" x="468" y="186" width="184" height="54" rx="11"/>
+              <text class="s ok" x="560" y="208" text-anchor="middle">⑤ "근거가 없습니다"</text>
+              <text class="cap-l ok" x="560" y="226" text-anchor="middle">인젝션으로도 못 끌어낸다</text>
+            </g>
+
+            <!-- ===== 두 관문의 이름표 ===== -->
+            <rect class="nd ghost" x="139" y="248" width="170" height="30" rx="8" data-at="0-2"/>
+            <text class="cap-l mut" x="224" y="267" text-anchor="middle" data-at="0-2">pre-filter 자리 — 비어 있음</text>
+            <g data-at="3,4">
+              <rect class="nd okb pop" x="139" y="248" width="170" height="30" rx="8"/>
+              <text class="cap-l ok" x="224" y="262" text-anchor="middle">② pre-filter · 검색 이전</text>
+              <text class="m ok" x="224" y="275" text-anchor="middle">allowed_roles ∋ employee</text>
+            </g>
+            <rect class="nd ghost" x="363" y="248" width="170" height="30" rx="8" data-at="0,1,3,4"/>
+            <text class="cap-l mut" x="448" y="267" text-anchor="middle" data-at="0,1,3,4">post-filter 자리 — 비어 있음</text>
+            <g data-at="2">
+              <rect class="nd dead pop" x="363" y="248" width="170" height="30" rx="8"/>
+              <text class="cap-l no" x="448" y="262" text-anchor="middle">② post-filter · 검색 이후</text>
+              <text class="cap-l no" x="448" y="275" text-anchor="middle">보안 게이트가 아니다</text>
+            </g>
+          </svg>
+        </div>
+        <div class="dia-cap" aria-hidden="true"></div>
+        <figcaption>두 그림의 <b>답변은 똑같습니다.</b> 다른 건 가운데 칸 — 민감 청크가 <b>한 번이라도 시스템 안으로 들어왔느냐</b>죠. 유출은 답변에서가 아니라 거기서 일어납니다.</figcaption>
+      </figure>
+
       <div class="callout key">
         <h4>🔑 pre-filter는 보안, post-filter는 성능</h4>
         <p>검색 <b>후</b> 결과를 거르는 <span class="term" data-t="postfilter">post-filter</span>는 <b>보안 게이트가 아닙니다</b> — 이미 민감 청크가 메모리·로그·LLM 컨텍스트에 닿았기 때문이에요. <b>인가는 반드시 pre-filter(또는 인덱스/네임스페이스 분리)로</b>. post-filter는 순위·성능 조정용으로만.</p>
@@ -1629,6 +2790,103 @@ const hits = vectorDB.search({
 
       <h3>① 라이프사이클 — 줬으면 거둬야 한다</h3>
       <p>위 사고의 교훈은 분명합니다. 권한에는 <b>수명</b>이 있어야 해요. 입사 때 부여하는 것(온보딩)만큼 중요한 게, 퇴사하거나 부서를 옮길 때 <b>거두는 것(오프보딩)</b>입니다. 그런데 이 회수가 빠지는 경우가 정말 흔해요. 그러면 <span class="term" data-t="권한크리프">권한 크리프</span>가 생깁니다 — 부서를 옮길 때마다 새 권한은 받는데 옛 권한은 안 지워져서, 몇 년 지나면 한 사람이 회사 절반을 들여다볼 수 있는 상태가 되는 거죠. 본인도 모르는 사이에요.</p>
+      <figure class="dia" id="diaCreep">
+        <div class="dia-top">
+          <span class="dia-tag">5년 치를 30초에</span>
+          <span class="dia-sp"></span>
+          <div class="dia-dots" role="group" aria-label="단계 이동"></div>
+          <button class="sm ghost dia-btn" type="button">▶ 재생</button>
+        </div>
+        <div class="dia-hint" aria-hidden="true">← 좌우로 밀어서 보세요 →</div>
+        <div class="dia-scroll">
+          <svg viewBox="0 0 720 250" role="img" aria-label="한 직원의 권한이 부서를 옮길 때마다 쌓이는 과정을 보여주는 그림. 2021년 개발팀에서 두 개, 2023년 마케팅으로 옮기며 하나가 더해지지만 옛 권한은 남고, 2025년 인사팀으로 옮기며 또 하나가 더해져 네 개가 된다. 오늘 이 계정 하나가 개발 위키·마케팅 캠페인·인사 급여 세 곳에 모두 닿는다. 이동할 때마다 옛 권한을 거뒀다면 닿는 곳은 하나뿐이다.">
+            <line class="wire dash hair" x1="20" y1="30" x2="700" y2="30"/>
+            <circle cx="94"  cy="30" r="4" fill="var(--accent)"/>
+            <circle cx="276" cy="30" r="4" fill="var(--accent)" data-at="1+"/>
+            <circle cx="458" cy="30" r="4" fill="var(--accent)" data-at="2+"/>
+            <circle cx="633" cy="30" r="4" fill="var(--warn)" data-at="3+"/>
+
+            <!-- ===== 2021 · 입사 ===== -->
+            <rect class="nd" x="14" y="42" width="160" height="170" rx="11"/>
+            <text class="cap-l key" x="94" y="62" text-anchor="middle">2021 · 입사</text>
+            <text class="t" x="94" y="80" text-anchor="middle">개발팀</text>
+            <rect class="nd okb" x="24" y="88" width="140" height="22" rx="7"/>
+            <text class="m ok" x="94" y="103" text-anchor="middle">wiki:write</text>
+            <rect class="nd okb" x="24" y="114" width="140" height="22" rx="7"/>
+            <text class="m ok" x="94" y="129" text-anchor="middle">expense:submit</text>
+
+            <!-- ===== 2023 · 마케팅 ===== -->
+            <rect class="nd ghost" x="196" y="42" width="160" height="170" rx="11" data-at="0"/>
+            <g data-at="1+">
+              <rect class="nd" x="196" y="42" width="160" height="170" rx="11"/>
+              <text class="cap-l key" x="276" y="62" text-anchor="middle">2023 · 부서 이동</text>
+              <text class="t" x="276" y="80" text-anchor="middle">마케팅팀</text>
+              <rect class="nd okb pop" x="206" y="88" width="140" height="22" rx="7"/>
+              <text class="m ok" x="276" y="103" text-anchor="middle">campaign:manage</text>
+              <rect class="nd dead" x="206" y="114" width="140" height="22" rx="7"/>
+              <text class="m no" x="276" y="129" text-anchor="middle">wiki:write</text>
+              <rect class="nd dead" x="206" y="140" width="140" height="22" rx="7"/>
+              <text class="m no" x="276" y="155" text-anchor="middle">expense:submit</text>
+              <text class="cap-l no" x="276" y="180" text-anchor="middle">↑ 옛 권한을 안 지웠다</text>
+            </g>
+
+            <!-- ===== 2025 · 인사 ===== -->
+            <rect class="nd ghost" x="378" y="42" width="160" height="170" rx="11" data-at="0,1"/>
+            <g data-at="2+">
+              <rect class="nd" x="378" y="42" width="160" height="170" rx="11"/>
+              <text class="cap-l key" x="458" y="62" text-anchor="middle">2025 · 부서 이동</text>
+              <text class="t" x="458" y="80" text-anchor="middle">인사팀</text>
+              <rect class="nd okb pop" x="388" y="88" width="140" height="22" rx="7"/>
+              <text class="m ok" x="458" y="103" text-anchor="middle">payroll:read</text>
+              <rect class="nd dead" x="388" y="114" width="140" height="22" rx="7"/>
+              <text class="m no" x="458" y="129" text-anchor="middle">campaign:manage</text>
+              <rect class="nd dead" x="388" y="140" width="140" height="22" rx="7"/>
+              <text class="m no" x="458" y="155" text-anchor="middle">wiki:write</text>
+              <rect class="nd dead" x="388" y="166" width="140" height="22" rx="7"/>
+              <text class="m no" x="458" y="181" text-anchor="middle">expense:submit</text>
+            </g>
+
+            <!-- ===== 오늘 — 이 계정 하나가 닿는 곳 ===== -->
+            <rect class="nd ghost" x="560" y="42" width="146" height="170" rx="11" data-at="0-2"/>
+            <text class="cap-l mut" x="633" y="130" text-anchor="middle" data-at="0-2">…</text>
+            <g data-at="3">
+              <rect class="nd dead" x="560" y="42" width="146" height="170" rx="11"/>
+              <text class="cap-l no" x="633" y="62" text-anchor="middle">2026 · 오늘</text>
+              <text class="t no" x="633" y="80" text-anchor="middle">닿는 곳</text>
+              <rect class="nd dead pop" x="570" y="88" width="126" height="22" rx="7"/>
+              <text class="cap-l no" x="633" y="103" text-anchor="middle">📚 개발 위키</text>
+              <rect class="nd dead pop" x="570" y="114" width="126" height="22" rx="7"/>
+              <text class="cap-l no" x="633" y="129" text-anchor="middle">📣 마케팅 캠페인</text>
+              <rect class="nd dead pop" x="570" y="140" width="126" height="22" rx="7"/>
+              <text class="cap-l no" x="633" y="155" text-anchor="middle">💰 인사 급여</text>
+              <text class="cap-l no breathe" x="633" y="182" text-anchor="middle">본인도 모른다</text>
+            </g>
+            <g data-at="4">
+              <rect class="nd okb" x="560" y="42" width="146" height="170" rx="11"/>
+              <text class="cap-l ok" x="633" y="62" text-anchor="middle">2026 · 오늘</text>
+              <text class="t" x="633" y="80" text-anchor="middle">닿는 곳</text>
+              <rect class="nd ghost" x="570" y="88" width="126" height="22" rx="7"/>
+              <text class="cap-l mut" x="633" y="103" text-anchor="middle">📚 개발 위키 ✕</text>
+              <rect class="nd ghost" x="570" y="114" width="126" height="22" rx="7"/>
+              <text class="cap-l mut" x="633" y="129" text-anchor="middle">📣 마케팅 캠페인 ✕</text>
+              <rect class="nd okb pop" x="570" y="140" width="126" height="22" rx="7"/>
+              <text class="cap-l ok" x="633" y="155" text-anchor="middle">💰 인사 급여</text>
+              <text class="cap-l ok breathe" x="633" y="182" text-anchor="middle">지금 필요한 하나만</text>
+            </g>
+
+            <!-- ===== 보유 권한 수 ===== -->
+            <g data-at="0-3">
+              <text class="cap-l mut" x="94"  y="234" text-anchor="middle">보유 2개</text>
+              <text class="cap-l key" x="276" y="234" text-anchor="middle" data-at="1+">보유 3개 · 쓰는 건 1개</text>
+              <text class="cap-l no"  x="458" y="234" text-anchor="middle" data-at="2+">보유 4개 · 쓰는 건 1개</text>
+            </g>
+            <text class="t" x="360" y="238" text-anchor="middle" data-at="4">옮길 때마다 <tspan class="ok">거뒀다면</tspan> — 오늘 닿는 곳은 <tspan class="ok">하나</tspan>다</text>
+          </svg>
+        </div>
+        <div class="dia-cap" aria-hidden="true"></div>
+        <figcaption>어느 칸에서도 <b>잘못 준 권한은 없습니다.</b> 매번 필요한 것을 줬을 뿐이에요 — 다만 <b>거두지 않았을 뿐.</b> 크리프가 사고 조사에서 늦게 발견되는 이유가 이겁니다.</figcaption>
+      </figure>
+
       <div class="callout tip"><h4>실무 장치</h4><p><b>정기 <span class="term" data-t="접근검토">접근 검토</span>:</b> 분기마다 "이 사람이 아직 이 권한이 필요한가"를 점검·회수. <b>권한 만료(TTL):</b> 임시 권한엔 자동 만료를 걸어, 잊어도 시간이 거둬가게.</p></div>
 
       <h3>② 감사 로그 — 단, 지울 수 있으면 무의미</h3>
@@ -2092,6 +3350,108 @@ const LS = {
   get(k, d){ try{ return JSON.parse(localStorage.getItem("rbactut:"+k)) ?? d; }catch(e){ return d; } },
   set(k, v){ try{ localStorage.setItem("rbactut:"+k, JSON.stringify(v)); }catch(e){} }
 };
+
+/* ============================================================
+   단계 그림(.dia) 구동기
+   자동 재생은 화면에 들어와 있는 동안에만 돈다. 안 보이는 그림 열 개가 계속
+   타이머를 돌리면 배터리만 먹고, 스크롤을 내리다 눈에 걸린 그림이 이미 중간
+   단계에 가 있으면 앞을 못 본 채로 만나게 된다. 그래서 나가면 멈추고,
+   손으로 멈춘 것(hold)은 다시 들어와도 저절로 돌지 않는다.
+   ============================================================ */
+const DIA_MOTION = !(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
+
+/* data-at="0,2" · "1-3" · "2+" 세 표기를 받는다. 단계가 늘거나 줄 때
+   목록을 손으로 다시 세지 않아도 되게 범위 표기를 둔다. */
+function diaAt(spec, n){
+  const s = new Set();
+  String(spec).split(',').forEach(raw => {
+    const p = raw.trim(); if(!p) return;
+    if(p.endsWith('+')){ for(let i = +p.slice(0, -1); i < n; i++) s.add(i); }
+    else if(p.includes('-')){
+      const [a, b] = p.split('-').map(Number);
+      for(let i = a; i <= b; i++) s.add(i);
+    }
+    else s.add(+p);
+  });
+  return s;
+}
+
+function wireDia(id, steps){
+  const fig = $('#' + id); if(!fig) return;
+  const cap  = $('.dia-cap',  fig);
+  const dots = $('.dia-dots', fig);
+  const btn  = $('.dia-btn',  fig);
+  const n    = steps.length;
+
+  const marks = $$('[data-at]', fig).map(el => ({ el:el, at:diaAt(el.dataset.at, n) }));
+
+  // 한 번 도는 애니메이션은 .vis가 붙는 순간에만 시작한다. 그런데 구동기는
+  // [data-at]이 적힌 것에만 .vis를 건다 — 그래서 자기 data-at 없이 <g data-at> 안에
+  // 들어앉은 .draw 선은 잘린 채(dashoffset 그대로)로 영영 안 그려진다. 그림을 그릴
+  // 때마다 그걸 기억하게 하는 대신, 가장 가까운 조상의 단계를 물려받게 해 둔다.
+  const owned = new Set(marks.map(m => m.el));
+  $$('.fly, .draw, .pop, .breathe', fig).forEach(el => {
+    if(owned.has(el)) return;
+    const host = el.parentElement && el.parentElement.closest('[data-at]');
+    if(host) marks.push({ el:el, at:diaAt(host.dataset.at, n) });
+  });
+
+  // 단계 점의 개수는 steps에서 나온다. 손으로 적어 두면 단계를 하나 고칠 때마다
+  // 마크업도 함께 고쳐야 하고, 어긋나면 눈에 안 띄는 채로 남는다.
+  dots.innerHTML = '';
+  for(let k = 0; k < n; k++){
+    const b = document.createElement('button');
+    b.className = 'dia-dot';
+    b.type = 'button';
+    b.setAttribute('aria-label', (k + 1) + '단계로');
+    b.addEventListener('click', () => { hold = true; pause(); i = k; paint(); });
+    dots.appendChild(b);
+  }
+  const dotEls = $$('.dia-dot', dots);
+
+  let i = 0, timer = null, playing = false, hold = false;
+
+  function paint(){
+    fig.dataset.s = i;
+    cap.innerHTML = steps[i].c;
+    marks.forEach(m => m.el.classList.toggle('vis', m.at.has(i)));
+    dotEls.forEach((d, k) => d.classList.toggle('on', k === i));
+  }
+  function tick(){
+    i = (i + 1) % n;
+    paint();
+    timer = setTimeout(tick, steps[i].h || 2400);
+  }
+  function play(){
+    if(playing) return;
+    playing = true; fig.classList.remove('paused');
+    btn.textContent = '⏸ 멈춤'; btn.setAttribute('aria-pressed', 'true');
+    clearTimeout(timer);
+    timer = setTimeout(tick, steps[i].h || 2400);
+  }
+  function pause(){
+    playing = false; fig.classList.add('paused');
+    btn.textContent = '▶ 재생'; btn.setAttribute('aria-pressed', 'false');
+    clearTimeout(timer);
+  }
+
+  btn.setAttribute('aria-controls', id);
+  btn.addEventListener('click', () => {
+    if(playing){ hold = true; pause(); }
+    else { hold = false; play(); }
+  });
+
+  // 움직임을 줄여 달라고 한 사람에게는 마지막 단계를 세워 둔다. 0단계는 대개
+  // 아무 일도 일어나기 전이라, 그것만 남기면 그림이 아무 말도 하지 않는다.
+  if(!DIA_MOTION){ i = n - 1; hold = true; }
+  paint();
+  if(!DIA_MOTION){ pause(); return; }
+  pause();
+
+  new IntersectionObserver(es => {
+    es.forEach(e => { if(e.isIntersecting){ if(!hold) play(); } else pause(); });
+  }, { threshold: 0.3 }).observe(fig);
+}
 
 /* ============================================================
    목차 자동 생성 + 스크롤스파이
@@ -2727,6 +4087,99 @@ $$('#toc a').forEach(a => a.addEventListener('click', () => $('#sidebar').classL
 })();
 
 /* @@DEMOS@@ */
+
+/* ============================================================
+   단계 그림들 — 각 그림의 단계 수는 여기 배열 길이가 정한다.
+   h는 그 단계에 머무는 시간(ms). 읽을 글자가 많은 칸은 길게 준다.
+   ============================================================ */
+wireDia('diaGate', [
+  { c:'아침. 김주임이 사원증을 들고 <b>정문</b> 앞에 섭니다. 아직 아무 방에도 들어가지 않았어요.', h:2400 },
+  { c:'경비가 사원증을 확인하고 통과시킵니다. <span class="hi">여기까지가 인증</span> — 오늘 하루 <b>한 번</b>이면 끝입니다. 그런데 건물에 들어왔을 뿐, 열린 방은 아직 하나도 없어요.', h:3400 },
+  { c:'위키실 문 앞. 도어락이 <b>다시 묻습니다</b> — "이 사람, 이 방 돼?" <span class="ye">허용.</span> 정문을 통과했다는 사실이 자동으로 문을 열어 준 게 아니라, <b>여기서 따로 판단</b>한 겁니다.', h:3400 },
+  { c:'비용실 앞에서도 <b>또</b> 묻습니다. <span class="ye">허용.</span> 문이 열 개면 판단도 열 번 — 이게 <span class="hi">인가가 요청마다 일어난다</span>는 말의 뜻이에요.', h:3200 },
+  { c:'급여실 앞. 같은 사람, 같은 사원증인데 <span class="no">거부</span>됩니다. "아침에 정문 통과했는데요"는 여기서 <b>아무 근거도 되지 못해요.</b> 인증과 인가는 이렇게 <b>다른 질문</b>입니다.', h:4000 }
+]);
+
+wireDia('diaExplode', [
+  { c:'직원 3명 · 기능 3개. 각자에게 권한을 직접 붙이면 관리할 연결선은 <b>9개</b>입니다. 이 정도는 머리로도 됩니다.', h:2800 },
+  { c:'직원 둘, 기능 둘이 늘었습니다. 선은 <span class="no">25개</span> — 늘어난 건 2와 2인데 선은 <b>16개</b>가 생겼어요. 더하기가 아니라 <b>곱하기</b>거든요.', h:3600 },
+  { c:'그래서 사고는 <b>손으로 채우는 자리</b>에서 납니다. 신입 한 명에게 5칸을 일일이 체크하다 "일단 옆 사람이랑 똑같이" 복사하면, <span class="no">안 줘도 될 권한까지 딸려 옵니다.</span>', h:4200 },
+  { c:'해법은 사이에 <b>중간 묶음</b>을 끼우는 것. 사용자는 <span class="hi">역할에만</span> 연결합니다 — 다섯 명이니 <b>5선</b>이에요.', h:3200 },
+  { c:'권한도 <span class="ye">역할에만</span> 매답니다 — 7선. 합쳐서 <b>12선</b>이고, 무엇보다 두 수가 <b>곱해지지 않습니다.</b> 직원이 100명이 돼도 오른쪽 7선은 그대로예요.', h:4200 }
+]);
+
+wireDia('diaDacMac', [
+  { c:'김주임이 만든 회의록입니다. <b>소유자는 김주임</b> — 아직 아무에게도 공유하지 않았어요.', h:2600 },
+  { c:'김주임이 박팀장을 <span class="ye">editor로 초대</span>합니다. 아무도 허락해 주지 않았는데 그냥 됐죠 — <b>소유자의 재량</b>이 곧 권한의 근거이기 때문입니다. 이게 <span class="ye">DAC</span>예요.', h:3800 },
+  { c:'오른쪽에서 이인사가 <b>똑같은 일</b>을 하려 합니다. 급여표를 만든 사람도 이인사고요. 그런데 <span class="no">막힙니다</span> — 문서에 시스템이 붙인 <b>기밀 라벨</b>이 있거든요.', h:3800 },
+  { c:'그럼 라벨을 내려 볼까요? <span class="no">그것도 안 됩니다.</span> 라벨은 <b>데이터에 붙은 것</b>이지 사람이 쥔 게 아니에요. 만든 사람조차 못 뗍니다 — 이게 <span class="hi">MAC</span>입니다.', h:4000 },
+  { c:'두 그림의 차이는 딱 하나 — <b>화살표를 누가 그었나.</b> 소유자면 DAC, 시스템이면 MAC. 이어서 나올 RBAC·ABAC·ReBAC도 이 자리에 <b>역할·속성·관계</b>를 놓는 것뿐입니다.', h:4400 }
+]);
+
+wireDia('diaHier', [
+  { c:'세 직무가 있고, 지금은 각자 <b>자기 추가분만</b> 적혀 있습니다. 팀장 칸에 wiki:read가 없는 게 이상해 보이죠 — 아직 상속을 선언하지 않았거든요.', h:3200 },
+  { c:'<b>팀장 ⊃ 직원</b>을 선언합니다. 직원의 권한 세 개가 <span class="ye">팀장 쪽으로 올라옵니다.</span> 팀장 정의에 적힌 건 여전히 <code>expense:approve</code> 한 줄뿐인데도요.', h:3800 },
+  { c:'<b>CEO ⊃ 팀장</b>도 마찬가지. 팀장이 <b>상속받은 것까지 통째로</b> 올라옵니다 — 계층은 이렇게 <b>줄줄이 이어집니다.</b>', h:3400 },
+  { c:'이제 진짜 이득이 보입니다. 직원에게 <span class="ye">calendar:write</span> 하나를 더했을 뿐인데 팀장·CEO에도 자동으로 붙었어요. <b>세 칸이 아니라 한 칸만 고쳤습니다.</b>', h:4000 },
+  { c:'마지막으로 방향. 화살표를 <b>뒤집으면</b> 어떻게 될까요 — <span class="no">직원이 CEO의 budget:sign을 갖게 됩니다.</span> "상위가 하위를 품는다"를 거꾸로 외우면 권한이 이렇게 샙니다.', h:4200 }
+]);
+
+wireDia('diaSod', [
+  { c:'상충하는 두 역할이 있습니다 — <b>구매요청자</b>와 <b>구매승인자.</b> 한 사람이 둘 다 쥐면 자기가 신청한 걸 자기가 승인하게 되죠. 그리고 이걸 막을 수 있는 시점이 <b>둘</b> 있습니다.', h:3600 },
+  { c:'<span class="no">SSD</span>는 <b>①에서</b> 막습니다. 두 역할을 한 사람에게 배정하려는 순간 거절돼요. 그래서 이 사람의 계정에는 <b>애초에 승인 역할이 존재하지 않습니다.</b>', h:3800 },
+  { c:'<span class="ye">DSD</span>는 같은 자리를 <b>통과시킵니다.</b> 둘 다 배정받아요 — 여기까지만 보면 아무것도 안 막은 것 같죠.', h:3200 },
+  { c:'막는 건 <b>②</b>입니다. 세션을 열 때 <span class="ye">둘 중 하나만</span> 켜집니다. 가진 역할과 <b>지금 켜진 역할</b>이 다르다는 그 구분이 여기서 일을 해요.', h:3800 },
+  { c:'그래서 <b>"둘 다 가질 수 없다"(SSD)</b>와 <b>"가질 순 있어도 동시에 쓸 수 없다"(DSD)</b>는 다른 설계입니다. 겸직이 필요한 소규모 조직이라면 DSD가, 감사가 빡빡하면 SSD가 맞아요.', h:4400 }
+]);
+
+wireDia('diaAbac', [
+  { c:'이인사가 밤 <b>9시 40분</b>에 카페에서 인사 문서를 엽니다. 판단에 쓸 정보가 <b>네 갈래</b>에서 모여요 — 주체·리소스·행위·환경.', h:3200 },
+  { c:'① <code>subject.role == "hr"</code> — 이인사는 인사팀이니 <span class="ye">참.</span> 여기까지만 보면 RBAC와 똑같습니다.', h:3000 },
+  { c:'② 기밀 등급이 아니고, ③ 하려는 건 read. <span class="ye">둘 다 참</span>이에요. 세 줄이 통과했습니다.', h:3000 },
+  { c:'④ 그런데 <b>21:40</b>은 09–18 바깥입니다. <span class="no">거짓.</span> 네 줄 중 <b>한 줄</b>이 무너졌어요.', h:3400 },
+  { c:'그래서 최종은 <span class="no">거부</span>입니다. 셋이 참이고 하나가 거짓이면 <b>3승 1패</b>가 아니라 그냥 거짓이에요 — AND는 다수결이 아니니까요. ABAC 정책을 읽을 때 이 감각이 제일 중요합니다.', h:4400 }
+]);
+
+wireDia('diaRebacHop', [
+  { c:'저장된 건 튜플 <b>세 줄</b>뿐입니다. 김주임과 로드맵을 <b>직접 잇는 줄은 없어요.</b> 그래도 답할 수 있을까요?', h:3200 },
+  { c:'1홉 — 김주임은 개발팀의 <span class="hi">member</span>다. 아직 문서 근처에도 못 갔습니다.', h:2800 },
+  { c:'2홉 — 그 개발팀이 기획 폴더의 <span class="hi">viewer</span>다. 사람이 아니라 <b>팀이 주체 자리에</b> 들어간 게 여기서 일을 했어요.', h:3600 },
+  { c:'3홉 — 로드맵의 상위가 기획 폴더다. 길이 이어졌습니다. <span class="ye">허용.</span>', h:3000 },
+  { c:'마지막 줄을 보세요. <code>doc:로드맵#viewer@user:김주임</code>은 <b>어디에도 저장돼 있지 않습니다.</b> 권한이 <b>계산된</b> 거예요 — 이 갈아타기가 RBAC·ABAC엔 없는 능력입니다.', h:4600 }
+]);
+
+wireDia('diaPepPdp', [
+  { c:'부품은 넷입니다. 외울 건 하나뿐이에요 — <b>PEP는 판단하지 않고, PDP는 집행하지 않는다.</b> 나머지는 이 분업의 결과입니다.', h:3400 },
+  { c:'요청이 들어오면 <span class="hi">PEP</span>가 먼저 붙잡습니다. 그런데 PEP는 "이 사람이 되나"를 <b>모릅니다.</b> 알 필요도 없고요.', h:3400 },
+  { c:'그래서 <span class="pu">PDP</span>에 묻습니다 — <code>can(user, approve, #77)?</code> 이 한 줄이 시스템 전체에서 <b>권한을 판단하는 유일한 자리</b>예요.', h:3800 },
+  { c:'PDP도 혼자 못 답합니다. 요청자의 역할과 팀을 <span class="ye">PIP</span>에서 받아와야 하죠. 부서·등급·시간 같은 걸 공급하는 게 PIP입니다.', h:3600 },
+  { c:'PDP가 <span class="ye">allow</span>를 돌려주고, PEP가 그걸 <b>집행</b>합니다. 200 OK.', h:3000 },
+  { c:'이번엔 김주임입니다. <b>화살표의 모양도 개수도 똑같아요.</b> 바뀐 건 ④ 한 칸뿐 — 그래서 판단을 <code>can()</code> 한 함수에 모아 둘 수 있고, 검사를 미들웨어 한 곳에 걸 수 있는 겁니다.', h:4600 }
+]);
+
+wireDia('diaBola', [
+  { c:'김주임이 자기 비용 <b>#77</b>을 엽니다. 미들웨어가 기능 권한을 보고, 객체 검사가 소유자를 봅니다. <span class="ye">둘 다 통과 → 200.</span> 정상이에요.', h:3600 },
+  { c:'이제 주소의 숫자를 <b>78</b>로 바꿉니다. 남의 비용이에요. 그런데 <span class="no">①은 여전히 통과합니다</span> — "비용 조회 권한"은 진짜로 갖고 있으니까요.', h:4000 },
+  { c:'②가 없으면 여기서 끝입니다. <span class="no">박팀장의 비용이 그대로 나옵니다.</span> 인증도 멀쩡하고, 역할도 멀쩡하고, 로그에도 정상 요청으로 남아요. 이게 <b>BOLA</b>입니다.', h:4400 },
+  { c:'②를 넣으면 달라집니다. 객체를 <b>로드한 뒤</b> <code>can(김주임, read, #78)</code>을 다시 물어요. owner가 다르니 <span class="ye">403.</span> 기능 권한과 객체 권한은 <b>다른 질문</b>이거든요.', h:4400 },
+  { c:'세 함정은 <b>막는 자리</b>가 다릅니다 — 요청 본문을 통째로 저장하면 <span class="no">BOPLA</span>, ①을 빠뜨리면 <span class="no">BFLA</span>, ②를 빠뜨리면 <span class="no">BOLA</span>. 하나만 알고 넘어가면 나머지 둘이 남습니다.', h:4800 }
+]);
+
+wireDia('diaRag', [
+  { c:'저장소엔 청크 넷이 있고 그중 <b>둘은 인사 전용</b>입니다. 그리고 질문한 사람은 <b>김주임(직원)</b>이에요.', h:3200 },
+  { c:'필터 없이 검색하면 벡터 검색은 <b>의미만</b> 봅니다. "성과급 기준"에 가장 가까운 건 당연히 <span class="no">🔒 성과급 규정</span>이라, 그게 <b>1위로 올라옵니다.</b>', h:4000 },
+  { c:'답변 직전에 그 청크를 뺍니다(post-filter). 답변은 깨끗해 보이죠. <span class="no">그런데 이미 늦었습니다</span> — 그 조각은 벌써 프로세스 메모리·검색 로그·순위 계산에 닿았어요.', h:4600 },
+  { c:'필터를 <b>검색 앞으로</b> 옮깁니다. <code>allowed_roles ∋ employee</code>로 후보를 먼저 좁혀요. 권한 없는 청크는 <span class="ye">애초에 후보가 아닙니다.</span>', h:4000 },
+  { c:'그래서 LLM은 볼 수가 <b>없습니다.</b> 프롬프트에 "이전 지시 무시"를 심어도 없는 걸 꺼낼 수는 없어요 — <b>보안은 LLM이 아니라 검색 단계에서</b> 걸리는 겁니다.', h:4600 }
+]);
+
+wireDia('diaCreep', [
+  { c:'2021년 입사. 개발팀에 필요한 권한 <b>둘</b>을 받습니다. 아무 문제 없어요.', h:2800 },
+  { c:'2023년 마케팅으로 옮깁니다. 캠페인 권한을 <b>더</b> 받아요. 그런데 개발 시절 권한은 — <span class="no">아무도 지우지 않습니다.</span> 지울 사람이 정해져 있지 않거든요.', h:4200 },
+  { c:'2025년 인사팀. 또 <b>더합니다.</b> 이제 넷인데 실제로 쓰는 건 하나뿐이에요. 매번 "필요한 걸 줬을 뿐"인데 이렇게 됐습니다.', h:4000 },
+  { c:'오늘, 이 계정 <b>하나</b>가 개발 위키·마케팅 캠페인·인사 급여에 <span class="no">전부 닿습니다.</span> 본인도 모르고, 감사 전까지 아무도 모릅니다.', h:4200 },
+  { c:'고칠 곳은 부여가 아니라 <b>이동</b>입니다. 옮길 때 옛 권한을 <span class="ye">거뒀다면</span> 오늘 닿는 곳은 하나뿐이에요. 권한은 <b>줄 때가 아니라 거둘 때</b> 완성됩니다.', h:4800 }
+]);
 
 /* ============================================================
    접근성: 토글 버튼 aria-pressed 자동 동기화

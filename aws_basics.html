@@ -540,6 +540,125 @@ button:focus-visible, .pick:focus-visible, .term:focus-visible, a:focus-visible,
   }
 }
 </style>
+<style>
+/* ============================================================
+   그림(움직이는 다이어그램) — 1·3·5·7·8·9·10·12·14장 공용
+   ------------------------------------------------------------
+   원칙 셋.
+   1) SVG의 기본 상태가 곧 "답이 다 드러난 상태"다. 움직임은
+      Web Animations API로 그 상태를 향해 재생될 뿐이라,
+      스크립트가 안 돌거나 prefers-reduced-motion이 켜져 있어도
+      독자는 결론을 그대로 본다.
+   2) 좁은 화면에서 글자가 뭉개지지 않도록 축소 대신 가로 스크롤.
+   3) 색은 본문 토큰을 그대로 쓴다 — 수명 축(keep/gone/fresh),
+      책임 축(own-me/own-aws)이 표에서 쓰던 뜻 그대로 그림에서도 산다.
+   ============================================================ */
+.fig{
+  margin:22px 0; padding:16px 18px 14px;
+  background:linear-gradient(180deg,var(--bg-soft),var(--panel));
+  border:1px solid var(--border-2); border-radius:var(--radius);
+}
+/* 데모 안에 얹을 때는 패널을 겹치지 않는다 */
+.demo > .fig.bare{background:none; border:none; padding:0; margin:14px 0 4px}
+.demo > .fig.bare figcaption{border-top-style:solid}
+.fig-head{display:flex; align-items:center; gap:10px; flex-wrap:wrap; margin-bottom:12px}
+.fig-head .spacer{flex:1}
+.fig-tag{
+  font-family:var(--mono); font-size:10.5px; color:var(--text-mut); letter-spacing:.2px;
+  border:1px solid var(--border); padding:3px 8px;
+  border-radius:6px; background:var(--bg); white-space:nowrap;
+}
+.fig-ctl{display:flex; gap:7px; flex-wrap:wrap}
+.fig-ctl button{padding:6px 12px; font-size:12.5px; border-radius:99px}
+.fig-ctl button.on{background:linear-gradient(90deg,var(--accent),var(--accent-2)); color:#06121c; border-color:transparent}
+.fig-scroll{overflow-x:auto; overflow-y:hidden}
+.fig-scroll svg{display:block; width:100%; height:auto; min-width:700px; color:var(--text-dim)}
+.fig figcaption{
+  margin-top:12px; padding-top:11px; border-top:1px dashed var(--border);
+  font-size:13.5px; color:var(--text-mut); line-height:1.7;
+}
+.fig figcaption b{color:var(--text)}
+.fig figcaption code{font-size:.85em}
+
+/* --- SVG 공용 조각 --- */
+.d-box{fill:var(--panel); stroke:var(--border-2); stroke-width:1.5}
+.d-box.hollow{fill:rgba(255,255,255,.018)}
+.d-box.dash{fill:none; stroke:var(--border-2); stroke-dasharray:5 4}
+.d-t{font-family:var(--sans); font-size:13px; fill:var(--text); font-weight:600}
+.d-t.sm{font-size:11.5px; font-weight:500; fill:var(--text-dim)}
+.d-t.xs{font-size:10.5px; font-weight:500; fill:var(--text-mut)}
+.d-t.hd{font-family:var(--mono); font-size:10.5px; fill:var(--text-mut); letter-spacing:1.2px}
+.d-t.mono{font-family:var(--mono); font-size:11.5px; font-weight:500; fill:var(--text)}
+.d-t.big{font-size:30px; font-weight:800}
+.d-t.on-fill{fill:#06121c; font-weight:700}
+.d-edge{stroke:var(--border-2); stroke-width:1.5; fill:none}
+.d-edge.thin{stroke:var(--border); stroke-width:1}
+.d-head{fill:var(--border-2)}
+.d-head.ok{fill:var(--ok)} .d-head.bad{fill:var(--bad)} .d-head.acc{fill:var(--accent)}
+
+/* 의미 색 — 본문 배지와 같은 뜻 */
+.d-keep{fill:rgba(52,211,153,.14); stroke:var(--keep)}
+.d-gone{fill:rgba(248,113,113,.14); stroke:var(--gone)}
+.d-fresh{fill:rgba(251,191,36,.14); stroke:var(--fresh)}
+.d-warn{fill:rgba(251,191,36,.14); stroke:var(--warn)}
+.d-me{fill:rgba(244,114,182,.16); stroke:var(--own-me)}
+.d-aws{fill:rgba(56,189,248,.16); stroke:var(--own-aws)}
+.d-acc{fill:rgba(52,211,153,.14); stroke:var(--accent)}
+/* 뜻이 실린 색은 .d-t.sm/.xs/.mono의 fill(0-2-0)을 이겨야 하므로 같은 특정도로 적고 뒤에 둔다 */
+.d-t.tx-keep{fill:#86efac} .d-t.tx-gone{fill:#fca5a5} .d-t.tx-fresh{fill:#fde68a}
+.d-t.tx-me{fill:#f9a8d4} .d-t.tx-aws{fill:#7dd3fc} .d-t.tx-acc{fill:#6ee7b7} .d-t.tx-dim{fill:var(--text-mut)}
+
+/* 상태 전환은 CSS 트랜지션으로 — 색/투명도만 다루므로 축소모션에서도 안전 */
+.d-sw{transition:fill .35s ease, stroke .35s ease, opacity .35s ease}
+.d-fade{transition:opacity .3s ease}
+.d-off{opacity:0}
+
+/* 토큰(패킷·주소 칩)은 좌표가 아니라 transform으로만 움직인다 */
+.d-tok{transform-box:fill-box; transform-origin:center}
+.sp-chip,.s3-row,.rl-bar,.ct-bar{transform-box:fill-box; transform-origin:center}
+.ct-bar{transform-origin:left center}
+
+/* 1장 — 해체도 */
+#figSplit .sp-chip .cbox{fill:var(--panel-2); stroke:var(--border); stroke-width:1.2}
+
+/* 3장 — 이름과 건물 */
+#figAz .az-wire{stroke:var(--accent); stroke-width:2; fill:none; stroke-linecap:round}
+#figAz .az-wire.mute{stroke:var(--border-2); stroke-width:1.5}
+#figAz .az-bldg{fill:var(--panel-2); stroke:var(--border-2); stroke-width:1.5}
+#figAz .az-bldg.lit{fill:rgba(52,211,153,.10); stroke:var(--accent)}
+
+/* 5장 — 상태 기계 */
+#figLife .st{fill:var(--panel-2); stroke:var(--border-2); stroke-width:1.5; transition:fill .3s, stroke .3s}
+#figLife .st.lit{fill:rgba(52,211,153,.12); stroke:var(--accent)}
+#figLife .st.dead{fill:rgba(248,113,113,.10); stroke:var(--gone)}
+#figLife .ed{stroke:var(--border-2); stroke-width:1.6; fill:none; transition:stroke .3s, opacity .3s; opacity:.45}
+#figLife .ed.lit{stroke:var(--accent); opacity:1; stroke-width:2.4}
+#figLife .edl{transition:fill .3s; fill:var(--text-mut)}
+#figLife .edl.lit{fill:var(--accent)}
+
+/* 9장 — 문의 방향: 화살표는 방향이 바뀌면 제자리에서 뒤집힌다 */
+#figDoor .dw-a{transform-box:fill-box; transform-origin:center; transition:transform .3s ease}
+#figDoor svg.inb .dw-a{transform:scaleX(-1)}
+/* 인바운드에서 NAT 안쪽 구간은 아예 성립하지 않는 길이라 흐려 둔다 */
+#figDoor .nb{transition:opacity .3s ease}
+#figDoor svg.inb .nb{opacity:.15}
+
+/* 10장 — 분계선 */
+#figResp .rl-line{stroke:var(--accent); stroke-width:2; stroke-dasharray:7 5}
+#figResp .rl-move{transition:transform .55s cubic-bezier(.2,.8,.2,1)}
+#figResp .rl-bar{transition:fill .4s ease, stroke .4s ease}
+#figResp .rl-brace{stroke:var(--border-2); stroke-width:1.4; fill:none}
+
+/* 12장 — 한 달 타임라인 */
+#figCost .ct-track{fill:rgba(255,255,255,.035)}
+#figCost .ct-cursor{stroke:var(--warn); stroke-width:1.6; stroke-dasharray:4 4}
+#figCost .b-stop{fill:rgba(52,211,153,.45)}
+#figCost .b-run{fill:rgba(248,113,113,.45)}
+
+/* 14장 — 드리프트 */
+#figDrift .dr-zig{stroke:var(--bad); stroke-width:2; fill:none; stroke-linejoin:round}
+#figDrift .dr-eq{stroke:var(--ok); stroke-width:2; fill:none}
+</style>
 </head>
 <body>
 
@@ -655,6 +774,86 @@ button:focus-visible, .pick:focus-visible, .term:focus-visible, a:focus-visible,
 
       <p>셋 다 같은 쪽을 가리킵니다. 습관이 아니라 설계. 다만 아홉 조각 저마다의 정체는, 이름만으로는 아직 잡히지 않습니다.</p>
 
+      <figure class="fig" id="figSplit">
+        <div class="fig-head">
+          <span class="fig-tag">한 번의 클릭이 흩어지는 자리</span>
+          <span class="spacer"></span>
+          <div class="fig-ctl"><button data-a="replay">↺ 다시 보기</button></div>
+        </div>
+        <div class="fig-scroll">
+        <svg viewBox="0 0 780 306" role="img" aria-label="온프렘 서버 한 대는 전원 하나·수명 하나·청구서 하나로 묶여 있지만, 클라우드에서 인스턴스를 시작하면 같은 자리가 아홉 개의 리소스로 흩어지고 저마다 다른 수명과 요금을 갖는다">
+          <defs>
+            <marker id="arSplit" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+              <path class="d-head" d="M0 0 L10 5 L0 10 z"/>
+            </marker>
+          </defs>
+
+          <g class="sp-src">
+            <rect class="d-box" x="20" y="90" width="170" height="120" rx="12"/>
+            <text class="d-t hd" x="105" y="118" text-anchor="middle">ON-PREM</text>
+            <text class="d-t" x="105" y="146" text-anchor="middle">서버 한 대</text>
+            <text class="d-t xs" x="105" y="170" text-anchor="middle">전원 하나 · 수명 하나</text>
+            <text class="d-t xs" x="105" y="187" text-anchor="middle">청구서 하나</text>
+          </g>
+          <text class="d-t xs" x="105" y="240" text-anchor="middle">같이 켜지고 같이 꺼진다</text>
+
+          <path class="d-edge" d="M198 150 H256" marker-end="url(#arSplit)"/>
+          <text class="d-t xs tx-acc" x="227" y="138" text-anchor="middle">×9</text>
+
+          <g class="sp-chip" data-dx="-243" data-dy="93">
+            <rect class="cbox" x="268" y="28" width="160" height="58" rx="10"/>
+            <text class="d-t" x="281" y="52">EC2 인스턴스</text>
+            <text class="d-t xs" x="281" y="72">켜 둔 시간만큼</text>
+          </g>
+          <g class="sp-chip" data-dx="-415" data-dy="93">
+            <rect class="cbox" x="440" y="28" width="160" height="58" rx="10"/>
+            <text class="d-t" x="453" y="52">EBS 루트 볼륨</text>
+            <text class="d-t xs" x="453" y="72">지워도 남을 수 있다</text>
+          </g>
+          <g class="sp-chip" data-dx="-587" data-dy="93">
+            <rect class="cbox" x="612" y="28" width="160" height="58" rx="10"/>
+            <text class="d-t" x="625" y="52">ENI (랜카드)</text>
+            <text class="d-t xs" x="625" y="72">따로 살고 따로 죽는다</text>
+          </g>
+
+          <g class="sp-chip" data-dx="-243" data-dy="5">
+            <rect class="cbox" x="268" y="116" width="160" height="58" rx="10"/>
+            <text class="d-t" x="281" y="140">보안 그룹</text>
+            <text class="d-t xs" x="281" y="160">인스턴스와 무관하게 산다</text>
+          </g>
+          <g class="sp-chip" data-dx="-415" data-dy="5">
+            <rect class="cbox" x="440" y="116" width="160" height="58" rx="10"/>
+            <text class="d-t" x="453" y="140">키 페어</text>
+            <text class="d-t xs" x="453" y="160">개인키는 처음 한 번뿐</text>
+          </g>
+          <g class="sp-chip" data-dx="-587" data-dy="5">
+            <rect class="cbox" x="612" y="116" width="160" height="58" rx="10"/>
+            <text class="d-t" x="625" y="140">서브넷</text>
+            <text class="d-t xs" x="625" y="160">AZ 하나에 갇힌다</text>
+          </g>
+
+          <g class="sp-chip" data-dx="-243" data-dy="-83">
+            <rect class="cbox" x="268" y="204" width="160" height="58" rx="10"/>
+            <text class="d-t" x="281" y="228">라우팅 테이블</text>
+            <text class="d-t xs" x="281" y="248">붙였다 뗄 수 있다</text>
+          </g>
+          <g class="sp-chip" data-dx="-415" data-dy="-83">
+            <rect class="cbox" x="440" y="204" width="160" height="58" rx="10"/>
+            <text class="d-t" x="453" y="228">인터넷 게이트웨이</text>
+            <text class="d-t xs" x="453" y="248">VPC에 하나 붙는다</text>
+          </g>
+          <g class="sp-chip" data-dx="-587" data-dy="-83">
+            <rect class="cbox" x="612" y="204" width="160" height="58" rx="10"/>
+            <text class="d-t" x="625" y="228">탄력적 IP</text>
+            <text class="d-t xs" x="625" y="248">놓아주기 전까진 내 것</text>
+          </g>
+
+          <text class="d-t xs" x="268" y="288">아홉 개가 저마다 따로 갖는 것 — 수명 · 요금 · 조립</text>
+        </svg>
+        </div>
+        <figcaption>왼쪽 상자는 <b>한 몸</b>이라 전원을 뽑으면 안의 모든 것이 함께 꺼집니다. 오른쪽 아홉 개는 흩어진 뒤 각자의 문장을 하나씩 달고 있는데, 그 문장이 서로 다르다는 것이 곧 <b>수명·요금·조립이 갈렸다</b>는 뜻입니다. 한 번에 지우기 어려워진 것도 같은 이유고, 그 대가를 되갚는 자리가 <a class="link" href="#tag">14장</a>.</figcaption>
+      </figure>
+
       <div class="demo" id="splitMap">
         <span class="demo-tag">해체기</span>
         <p style="margin:0 0 4px">아홉 조각을 하나씩 눌러, 온프렘 시절엔 무엇이었는지부터 확인해 보세요.</p>
@@ -758,6 +957,53 @@ button:focus-visible, .pick:focus-visible, .term:focus-visible, a:focus-visible,
         <div class="m-row yes"><span class="m-x">✓</span><div class="m-txt">AWS는 물리적인 가용 영역을 계정마다 <b>무작위로</b> 이름에 매핑합니다. 그 결과 내 계정의 <code>us-east-1a</code>는 다른 계정의 <code>us-east-1a</code>와 같은 물리적 위치가 아닐 수 있습니다. 계정을 넘어 같은 곳을 가리키려면 <span class="term" data-t="AZ ID">AZ ID</span>를 씁니다 — <code>use1-az1</code>이 그 예로, <code>us-east-1</code> 리전의 한 가용 영역을 가리키면서 모든 계정에서 같은 물리적 위치를 나타내는 이름.</div></div>
       </div>
       <p>이 매핑은 계정 하나 안에서는 고정되어 있어서, 내가 만든 모든 것에게 <code>2a</code>는 늘 같은 건물을 뜻합니다. 흔들리는 자리는 계정과 계정 사이뿐. 그런데 왜 굳이 계정마다 섞어 둘까요? 이렇게 섞어 두면 리소스가 각 리전의 가용 영역 "a"에 몰리는 대신, 리전 안 여러 가용 영역에 고르게 흩어집니다. 모두가 습관처럼 "일단 a"를 고르는 쏠림을, 이름 자체로 막아 둔 셈입니다.</p>
+
+      <figure class="fig" id="figAz">
+        <div class="fig-head">
+          <span class="fig-tag">이름이 가리키는 건물</span>
+          <span class="spacer"></span>
+          <div class="fig-ctl">
+            <button class="on" data-k="a">이 계정</button>
+            <button data-k="b">다른 계정</button>
+          </div>
+        </div>
+        <div class="fig-scroll">
+        <svg viewBox="0 0 780 330" role="img" aria-label="us-west-2a라는 이름이 실제로 어느 건물에 연결되는지는 계정마다 다르다. 이 계정에서 us-west-2a는 usw2-az2를 가리키지만, 다른 계정에서는 같은 이름이 다른 건물로 이어진다. 건물 안에 놓인 서브넷은 그 건물을 벗어나지 못한다.">
+          <text class="d-t" x="20" y="52">이 계정에 보이는 이름</text>
+          <text class="d-t xs" x="20" y="72">ZoneName · 계정마다 다르게 붙는다</text>
+
+          <g id="azNames">
+            <g data-n="0"><rect class="az-bldg lit" x="215" y="38" width="120" height="44" rx="9"/><text class="d-t mono" x="275" y="65" text-anchor="middle">us-west-2a</text></g>
+            <g data-n="1"><rect class="az-bldg" x="355" y="38" width="120" height="44" rx="9"/><text class="d-t mono tx-dim" x="415" y="65" text-anchor="middle">us-west-2b</text></g>
+            <g data-n="2"><rect class="az-bldg" x="495" y="38" width="120" height="44" rx="9"/><text class="d-t mono tx-dim" x="555" y="65" text-anchor="middle">us-west-2c</text></g>
+            <g data-n="3"><rect class="az-bldg" x="635" y="38" width="120" height="44" rx="9"/><text class="d-t mono tx-dim" x="695" y="65" text-anchor="middle">us-west-2d</text></g>
+          </g>
+
+          <g id="azWires">
+            <path class="az-wire" data-w="0" d=""/>
+            <path class="az-wire mute" data-w="1" d=""/>
+            <path class="az-wire mute" data-w="2" d=""/>
+            <path class="az-wire mute" data-w="3" d=""/>
+          </g>
+
+          <text class="d-t" x="20" y="224">실제 건물</text>
+          <text class="d-t xs" x="20" y="244">ZoneId · 모든 계정에서 같다</text>
+
+          <rect class="d-box dash" x="195" y="176" width="570" height="134" rx="14"/>
+          <g id="azBldgs">
+            <g data-b="0"><rect class="az-bldg" x="215" y="206" width="120" height="76" rx="9"/><text class="d-t mono" x="275" y="232" text-anchor="middle">usw2-az1</text></g>
+            <g data-b="1"><rect class="az-bldg lit" x="355" y="206" width="120" height="76" rx="9"/><text class="d-t mono" x="415" y="232" text-anchor="middle">usw2-az2</text></g>
+            <g data-b="2"><rect class="az-bldg" x="495" y="206" width="120" height="76" rx="9"/><text class="d-t mono" x="555" y="232" text-anchor="middle">usw2-az3</text></g>
+            <g data-b="3"><rect class="az-bldg" x="635" y="206" width="120" height="76" rx="9"/><text class="d-t mono" x="695" y="232" text-anchor="middle">usw2-az4</text></g>
+          </g>
+          <rect class="d-box" x="225" y="246" width="100" height="26" rx="7"/>
+          <text class="d-t xs" x="275" y="263" text-anchor="middle">서브넷 · 못 박힘</text>
+
+          <text class="d-t xs" x="207" y="301">리전 us-west-2 — 건물은 그대로, 이름표만 계정마다 다시 섞인다</text>
+        </svg>
+        </div>
+        <figcaption id="azFigCap"></figcaption>
+      </figure>
 
       <div class="demo" id="azMap">
         <span class="demo-tag">리전·AZ 지도</span>
@@ -869,6 +1115,57 @@ button:focus-visible, .pick:focus-visible, .term:focus-visible, a:focus-visible,
           <button class="pick" data-k="term">종료 (terminate)</button>
           <button class="pick" data-k="resize">인스턴스 타입 변경</button>
         </div>
+
+        <figure class="fig bare" id="figLife">
+          <div class="fig-scroll">
+          <svg viewBox="0 0 780 380" role="img" aria-label="EC2 인스턴스의 네 상태와 그 사이를 잇는 동작. 재부팅은 running으로 돌아오고, 중지는 stopped로, 종료는 terminated로 간다. 인스턴스 타입 변경은 중지를 반드시 거치므로 중지의 결과가 그대로 따라온다. 각 동작 뒤에 인스턴스 스토어·퍼블릭 IPv4·EBS 볼륨의 운명이 갈린다.">
+            <defs>
+              <marker id="arLife" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="5.5" markerHeight="5.5" orient="auto-start-reverse">
+                <path class="d-head acc" d="M0 0 L10 5 L0 10 z"/>
+              </marker>
+            </defs>
+
+            <path class="ed" data-e="stop"  d="M336 92 C280 140, 220 160, 168 176" marker-end="url(#arLife)"/>
+            <path class="ed" data-e="start" d="M126 168 C136 110, 240 74, 314 70" marker-end="url(#arLife)"/>
+            <path class="ed" data-e="rbdn"  d="M375 92 L375 168" marker-end="url(#arLife)"/>
+            <path class="ed" data-e="rbup"  d="M405 168 L405 92" marker-end="url(#arLife)"/>
+            <path class="ed" data-e="term1" d="M462 90 L578 166" marker-end="url(#arLife)"/>
+            <path class="ed" data-e="term2" d="M130 222 C130 286, 650 286, 650 224" marker-end="url(#arLife)"/>
+
+            <text class="edl d-t xs" data-l="stop"  x="272" y="164" text-anchor="middle">stop</text>
+            <text class="edl d-t xs" data-l="start" x="192" y="86" text-anchor="middle">start</text>
+            <text class="edl d-t xs" data-l="reboot" x="422" y="134">reboot</text>
+            <text class="edl d-t xs" data-l="term1" x="536" y="114" text-anchor="middle">terminate</text>
+            <text class="edl d-t xs" data-l="term2" x="390" y="284" text-anchor="middle">terminate</text>
+
+            <g data-s="stopped"><rect class="st" x="60" y="170" width="140" height="50" rx="25"/><text class="d-t mono" x="130" y="201" text-anchor="middle">stopped</text></g>
+            <g data-s="rebooting"><rect class="st" x="320" y="170" width="140" height="50" rx="25"/><text class="d-t mono" x="390" y="201" text-anchor="middle">rebooting</text></g>
+            <g data-s="terminated"><rect class="st" x="580" y="170" width="140" height="50" rx="25"/><text class="d-t mono" x="650" y="201" text-anchor="middle">terminated</text></g>
+            <g data-s="running"><rect class="st lit" x="320" y="40" width="140" height="50" rx="25"/><text class="d-t mono" x="390" y="71" text-anchor="middle">running</text></g>
+
+            <g id="lifeTok" class="d-tok d-off"><circle cx="0" cy="0" r="8" fill="var(--accent)"/><circle cx="0" cy="0" r="14" fill="none" stroke="var(--accent)" stroke-width="1.5" opacity=".45"/></g>
+
+            <text class="d-t xs" id="lifeNote" x="40" y="302"></text>
+            <g data-f="store">
+              <rect class="d-box d-sw" x="40" y="312" width="210" height="52" rx="10"/>
+              <text class="d-t xs" x="54" y="333">인스턴스 스토어</text>
+              <text class="d-t d-sw" x="54" y="353" data-v="store">—</text>
+            </g>
+            <g data-f="pubip">
+              <rect class="d-box d-sw" x="285" y="312" width="210" height="52" rx="10"/>
+              <text class="d-t xs" x="299" y="333">퍼블릭 IPv4</text>
+              <text class="d-t d-sw" x="299" y="353" data-v="pubip">—</text>
+            </g>
+            <g data-f="ebs">
+              <rect class="d-box d-sw" x="530" y="312" width="210" height="52" rx="10"/>
+              <text class="d-t xs" x="544" y="333">EBS 볼륨</text>
+              <text class="d-t d-sw" x="544" y="353" data-v="ebs">—</text>
+            </g>
+          </svg>
+          </div>
+          <figcaption>위의 네 버튼이 이 그림도 함께 움직입니다. <b>인스턴스 타입 변경</b>을 눌러 보면 화살표가 곧바로 제자리로 돌아오지 않고 <code>stopped</code>를 한 번 찍고 오는데, 5장이 "먼저 멈춰야 한다"고 적어 둔 절차가 그 우회로 그대로입니다 — 그래서 중지에서 잃는 것을 타입 변경에서도 똑같이 잃습니다.</figcaption>
+        </figure>
+
         <div id="lifeOut"></div>
       </div>
 
@@ -982,6 +1279,64 @@ button:focus-visible, .pick:focus-visible, .term:focus-visible, a:focus-visible,
           <button class="pick" data-k="eip">탄력적 IP 연결</button>
           <button class="pick" data-k="move-az">AZ 이동 시도</button>
         </div>
+
+        <figure class="fig bare" id="figEni">
+          <div class="fig-scroll">
+          <svg viewBox="0 0 780 362" role="img" aria-label="사설 IP와 보안 그룹은 ENI에 매여 있어 인터페이스를 따라 움직이지만, 퍼블릭 IP는 Amazon의 공인 IPv4 풀에서 빌려 온 값이라 중지하면 풀로 반납되고 다시 시작할 때 다른 주소가 배정된다. 탄력적 IP는 내 계정에 할당된 값이라 그 자리를 지킨다.">
+            <text class="d-t sm" x="120" y="42" text-anchor="middle">Amazon 공인 IPv4 풀</text>
+            <rect class="d-box hollow" x="20" y="54" width="200" height="194" rx="12"/>
+            <rect class="d-box" x="44" y="72" width="152" height="32" rx="7"/><text class="d-t mono tx-dim" x="120" y="93" text-anchor="middle">203.0.113.11</text>
+            <rect class="d-box" x="44" y="116" width="152" height="32" rx="7"/><text class="d-t mono tx-dim" x="120" y="137" text-anchor="middle">203.0.113.24</text>
+            <rect class="d-box" x="44" y="160" width="152" height="32" rx="7"/><text class="d-t mono tx-dim" x="120" y="181" text-anchor="middle">203.0.113.14</text>
+            <rect class="d-box" x="44" y="204" width="152" height="32" rx="7"/><text class="d-t mono tx-dim" x="120" y="225" text-anchor="middle">203.0.113.19</text>
+
+            <text class="d-t sm" x="120" y="270" text-anchor="middle">내 계정 · 탄력적 IP</text>
+            <rect class="d-box hollow" x="20" y="278" width="200" height="44" rx="12"/>
+            <rect class="d-box d-acc" x="44" y="286" width="152" height="28" rx="7"/><text class="d-t mono tx-acc" x="120" y="305" text-anchor="middle">203.0.113.77</text>
+
+            <g id="eniInstA">
+              <rect class="d-box hollow" x="320" y="54" width="210" height="250" rx="14"/>
+              <text class="d-t sm" x="336" y="80">EC2 인스턴스</text>
+              <text class="d-t xs" id="eniAz" x="336" y="98">ap-northeast-2a</text>
+            </g>
+
+            <g id="eniCard">
+              <rect class="d-box" x="340" y="108" width="170" height="180" rx="10"/>
+              <text class="d-t xs" x="354" y="128">ENI · 기본 인터페이스</text>
+              <rect class="d-box d-keep d-sw" id="eniPriv" x="354" y="136" width="142" height="44" rx="8"/>
+              <text class="d-t xs" x="366" y="155">사설 IP</text>
+              <text class="d-t mono tx-keep" x="366" y="173">10.0.1.25</text>
+              <rect class="d-box dash" x="354" y="186" width="142" height="44" rx="8"/>
+              <rect class="d-box d-keep" x="354" y="236" width="142" height="44" rx="8"/>
+              <text class="d-t xs" x="366" y="255">보안 그룹</text>
+              <text class="d-t mono tx-keep" x="366" y="273">sg-0a1b2c3d</text>
+              <g id="eniPub" class="d-tok">
+                <rect class="d-box d-fresh d-sw" x="354" y="186" width="142" height="44" rx="8"/>
+                <text class="d-t xs" x="366" y="205">퍼블릭 IP</text>
+                <text class="d-t mono tx-fresh" id="eniPubVal" x="366" y="223">203.0.113.12</text>
+              </g>
+            </g>
+
+            <g id="eniInstB">
+              <rect class="d-box dash" x="560" y="54" width="210" height="250" rx="14"/>
+              <text class="d-t sm tx-dim" x="576" y="80">다른 인스턴스</text>
+              <text class="d-t xs" id="eniBSub" x="576" y="98">같은 AZ여야 붙는다</text>
+              <rect class="d-box dash" x="580" y="108" width="170" height="180" rx="10"/>
+              <text class="d-t xs tx-dim d-fade" id="eniSlotTxt" x="665" y="205" text-anchor="middle">ENI 자리</text>
+            </g>
+
+            <g id="eniWall" class="d-fade d-off">
+              <path d="M545 54 V304" stroke="var(--bad)" stroke-width="2.5" stroke-dasharray="7 5"/>
+              <circle cx="545" cy="179" r="15" fill="var(--bg)" stroke="var(--bad)" stroke-width="2"/>
+              <path d="M539 173 L551 185 M551 173 L539 185" stroke="var(--bad)" stroke-width="2.2" stroke-linecap="round"/>
+            </g>
+
+            <text class="d-t xs" id="eniNote" x="20" y="348"></text>
+          </svg>
+          </div>
+          <figcaption>위의 네 버튼이 이 그림도 함께 움직입니다. <b>중지 → 시작</b>을 눌러 보면 퍼블릭 IP 칩만 왼쪽 풀로 날아갔다가 <b>다른 번호를 달고</b> 돌아옵니다 — 사설 IP와 보안 그룹은 그동안 한 번도 자리를 뜨지 않고요. 그 칩이 어디서 오느냐만 바꾼 것이 탄력적 IP입니다.</figcaption>
+        </figure>
+
         <div id="eniOut"></div>
       </div>
 
@@ -1023,6 +1378,54 @@ button:focus-visible, .pick:focus-visible, .term:focus-visible, a:focus-visible,
 
       <h3>폴더도, 반쪽짜리 수정도 없다</h3>
       <p>S3는 처음부터 <span class="term" data-t="객체 스토리지">객체 스토리지</span>였습니다. 버킷 하나를 열어 콘솔에서 폴더를 만들어 본 적 있으신가요. 화면은 분명 폴더처럼 그려지는데, 그 밑에 실제로 있는 건 폴더가 아니라 <span class="term" data-t="객체">객체</span>뿐입니다. 공식 문서가 밝혀 둔 그대로, 일반 파일시스템 같은 계층 구조 대신 평평한(flat) 구조 하나만 있습니다. <code>photos/2024/trip.jpg</code>처럼 슬래시가 낀 이름을 올리면 콘솔이 <code>photos</code>와 <code>2024</code>를 폴더로 그려 주지만, 그 슬래시는 경로 구분자가 아니라 그저 키 이름에 든 문자 하나일 뿐이에요. 폴더 속의 폴더는 눈속임이고, 실체는 슬래시가 든 긴 이름 하나입니다.</p>
+
+      <figure class="fig" id="figS3">
+        <div class="fig-head">
+          <span class="fig-tag">폴더가 접히는 자리</span>
+          <span class="spacer"></span>
+          <div class="fig-ctl"><button data-a="replay">↺ 다시 보기</button></div>
+        </div>
+        <div class="fig-scroll">
+        <svg viewBox="0 0 780 300" role="img" aria-label="콘솔은 photos와 2024를 폴더처럼 그려 주지만, 버킷 안에 실제로 저장된 것은 슬래시가 든 긴 이름을 가진 객체 셋뿐이다. 폴더 객체는 존재하지 않는다.">
+          <text class="d-t d-fade d-off" id="s3HeadTree" x="40" y="44">콘솔이 그려 주는 것</text>
+          <text class="d-t d-fade" id="s3HeadFlat" x="40" y="44">버킷 안에 실제로 있는 것</text>
+
+          <g id="s3Folders" class="d-fade d-off">
+            <text class="d-t sm tx-dim" x="60" y="80">▸ photos</text>
+            <text class="d-t sm tx-dim" x="86" y="112">▸ 2024</text>
+            <text class="d-t sm tx-dim" x="86" y="208">▸ 2023</text>
+          </g>
+
+          <g class="s3-row" data-dx="52" data-dy="32">
+            <text class="d-t mono d-fade d-off s3-short" x="60" y="112">trip.jpg</text>
+            <text class="d-t mono d-fade s3-full" x="60" y="112">photos<tspan class="tx-fresh">/</tspan>2024<tspan class="tx-fresh">/</tspan>trip.jpg</text>
+          </g>
+          <g class="s3-row" data-dx="52" data-dy="20">
+            <text class="d-t mono d-fade d-off s3-short" x="60" y="156">beach.jpg</text>
+            <text class="d-t mono d-fade s3-full" x="60" y="156">photos<tspan class="tx-fresh">/</tspan>2024<tspan class="tx-fresh">/</tspan>beach.jpg</text>
+          </g>
+          <g class="s3-row" data-dx="52" data-dy="40">
+            <text class="d-t mono d-fade d-off s3-short" x="60" y="200">ski.jpg</text>
+            <text class="d-t mono d-fade s3-full" x="60" y="200">photos<tspan class="tx-fresh">/</tspan>2023<tspan class="tx-fresh">/</tspan>ski.jpg</text>
+          </g>
+
+          <text class="d-t xs d-fade" id="s3Slash" x="60" y="248">노란 슬래시는 경로 구분자가 아니라, 키 이름에 든 문자 하나입니다</text>
+
+          <rect class="d-box hollow" x="430" y="76" width="330" height="124" rx="12"/>
+          <g id="s3RTree" class="d-fade d-off">
+            <text class="d-t sm" x="452" y="108">화면에 보이는 줄</text>
+            <text class="d-t big tx-dim" x="452" y="156">여섯</text>
+            <text class="d-t xs" x="452" y="182">폴더 셋에 파일 셋이 들어 있는 것처럼 보입니다</text>
+          </g>
+          <g id="s3RFlat" class="d-fade">
+            <text class="d-t sm" x="452" y="108">실제로 저장된 객체</text>
+            <text class="d-t big tx-acc" x="452" y="156">셋</text>
+            <text class="d-t xs" x="452" y="182">폴더라는 객체는 저장되지 않습니다</text>
+          </g>
+        </svg>
+        </div>
+        <figcaption>줄이 접히면서 사라지는 세 줄이 <b>폴더</b>입니다. 남는 것은 슬래시가 낀 긴 이름 셋뿐인데, 그러니 <code>photos/2024/</code>를 지운다는 동작도 실은 그 접두사로 시작하는 객체를 하나씩 지우는 일이지 폴더 하나를 지우는 일이 아닙니다.</figcaption>
+      </figure>
 
       <p>그럼 그 객체, 한 글자만 고쳐 쓸 수 있을까요. 안 됩니다. 공식 API 문서가 못을 박아 둔 자리인데, PUT 요청이 성공했다는 응답을 받았다면 그건 객체 전체가 통째로 들어갔다는 뜻이지 일부만 들어갔다는 뜻이 아닙니다. 메타데이터 한 조각만 바꾸고 싶어도 사정은 같아서, 바뀐 값을 포함해 객체 전체를 다시 올려야 해요. 부분 수정이라는 동작 자체가 이 API에는 없거든요.</p>
 
@@ -1072,6 +1475,71 @@ button:focus-visible, .pick:focus-visible, .term:focus-visible, a:focus-visible,
       <h3>문 두 개, 방향이 다르다</h3>
       <p>그 앞에 처음 놓이는 것은 <span class="term" data-t="인터넷 게이트웨이">인터넷 게이트웨이</span>입니다. 이 게이트웨이, 아무나 들이는 문일까요. 아닙니다 — 공식 문서가 그어 둔 선은 또렷한데, 퍼블릭 IP 주소를 쥔 자원만 이 문을 통해 인터넷과 오갈 수 있고 반대편에서 먼저 걸어 오는 연결도 똑같이 그런 자원에게만 닿습니다. 사설 IP 하나만 쥔 인스턴스는 이 문 앞에 설 자격조차 없는 셈이거든요. 이 문은 혼자 서 있지 않은데, 서브넷에 딸린 라우팅 테이블에 이 게이트웨이로 가는 길이 올라 있어야 그 서브넷의 자원이 비로소 이 문에 닿습니다. 1장에서 이름만 얹혀 있던 라우팅 테이블, 쓸모를 드러내는 자리는 바로 여기.</p>
       <p>그런데 서버가 인터넷으로 나가야 할 일은 있어도, 인터넷이 서버로 들어와야 할 일은 없는 경우도 흔합니다. 이때 쓰는 문은 따로 있는데, 이름은 <span class="term" data-t="NAT 게이트웨이">NAT 게이트웨이</span>. 방향이 하나뿐인 문이라, 사설 서브넷의 인스턴스는 밖으로 나가는 연결을 시작할 수 있어도 밖에서 걸어 오는 연결은 시작조차 되지 않습니다. 나가는 문은 열려 있고, 들어오는 문은 처음부터 없는 구조. 이 문 하나에 얼마가 나가는지는 12장이 마저 정산합니다.</p>
+
+      <figure class="fig" id="figDoor">
+        <div class="fig-head">
+          <span class="fig-tag">문의 방향</span>
+          <span class="spacer"></span>
+          <div class="fig-ctl">
+            <button class="on" data-k="out">나가는 연결</button>
+            <button data-k="in">들어오는 연결</button>
+          </div>
+        </div>
+        <div class="fig-scroll">
+        <svg viewBox="0 0 780 344" role="img" aria-label="인터넷 게이트웨이는 퍼블릭 IP를 쥔 자원에 한해 양방향으로 오갈 수 있게 하지만, NAT 게이트웨이는 나가는 연결만 성립하고 밖에서 걸어 오는 연결은 시작조차 되지 않는다.">
+          <text class="d-t sm" id="doorDir" x="390" y="24" text-anchor="middle">나가는 연결 — 서버가 먼저 말을 건다</text>
+
+          <rect class="d-box dash" x="20" y="40" width="250" height="110" rx="12"/>
+          <text class="d-t xs" x="36" y="62">퍼블릭 서브넷</text>
+          <rect class="d-box hollow" x="40" y="72" width="210" height="62" rx="10"/>
+          <text class="d-t sm" x="56" y="96">EC2 인스턴스</text>
+          <text class="d-t xs tx-keep" x="56" y="116">퍼블릭 IP 있음</text>
+
+          <text class="d-t xs" x="390" y="56" text-anchor="middle">퍼블릭 IP를 쥔 것만 통과</text>
+          <rect class="d-box hollow" x="310" y="68" width="160" height="70" rx="10"/>
+          <text class="d-t sm" x="390" y="97" text-anchor="middle">인터넷 게이트웨이</text>
+          <text class="d-t xs" x="390" y="118" text-anchor="middle">양쪽 다 열려 있다</text>
+
+          <rect class="d-box hollow" x="610" y="68" width="150" height="70" rx="10"/>
+          <text class="d-t" x="685" y="109" text-anchor="middle">인터넷</text>
+
+          <path class="d-edge" d="M250 103 H310"/>
+          <path class="d-edge" d="M470 103 H610"/>
+          <polygon class="dw-a d-head" points="274,97 286,103 274,109"/>
+          <polygon class="dw-a d-head" points="534,97 546,103 534,109"/>
+          <text class="d-t sm tx-keep" id="doorVa" x="390" y="166" text-anchor="middle">통과</text>
+
+          <rect class="d-box dash" x="20" y="194" width="250" height="110" rx="12"/>
+          <text class="d-t xs" x="36" y="216">프라이빗 서브넷</text>
+          <rect class="d-box hollow" x="40" y="226" width="210" height="62" rx="10"/>
+          <text class="d-t sm" x="56" y="250">EC2 인스턴스</text>
+          <text class="d-t xs" x="56" y="270">사설 IP만</text>
+
+          <text class="d-t xs" x="390" y="210" text-anchor="middle">나가는 쪽만 있다</text>
+          <rect class="d-box hollow" x="310" y="222" width="160" height="70" rx="10"/>
+          <text class="d-t sm" x="390" y="251" text-anchor="middle">NAT 게이트웨이</text>
+          <text class="d-t xs" x="390" y="272" text-anchor="middle">들어오는 문은 없다</text>
+
+          <rect class="d-box hollow" x="610" y="222" width="150" height="70" rx="10"/>
+          <text class="d-t" x="685" y="263" text-anchor="middle">인터넷</text>
+
+          <path class="d-edge nb" d="M250 257 H310"/>
+          <path class="d-edge" d="M470 257 H610"/>
+          <polygon class="dw-a d-head nb" points="274,251 286,257 274,263"/>
+          <polygon class="dw-a d-head" points="534,251 546,257 534,263"/>
+          <text class="d-t sm tx-keep" id="doorVb" x="390" y="320" text-anchor="middle">통과</text>
+
+          <g id="doorBlock" class="d-fade d-off">
+            <circle cx="540" cy="257" r="16" fill="var(--bg)" stroke="var(--bad)" stroke-width="2.2"/>
+            <path d="M533 250 L547 264 M547 250 L533 264" stroke="var(--bad)" stroke-width="2.4" stroke-linecap="round"/>
+          </g>
+
+          <g id="doorTok" class="d-tok d-off"><circle cx="0" cy="0" r="7" fill="var(--accent)"/><circle cx="0" cy="0" r="13" fill="none" stroke="var(--accent)" stroke-width="1.4" opacity=".45"/></g>
+          <g id="doorTok2" class="d-tok d-off"><circle cx="0" cy="0" r="7" fill="var(--accent)"/><circle cx="0" cy="0" r="13" fill="none" stroke="var(--accent)" stroke-width="1.4" opacity=".45"/></g>
+        </svg>
+        </div>
+        <figcaption><b>나가는 연결</b>에서는 두 줄이 똑같이 움직입니다. <b>들어오는 연결</b>로 바꾸면 위쪽은 그대로 인스턴스까지 닿는데, 아래쪽은 NAT 게이트웨이에서 멈춥니다 — 막혔다기보다, 밖에서 걸어 오는 연결이라는 것이 이 문에는 <b>처음부터 없습니다</b>. 방화벽 규칙으로 닫아 둔 것과는 다른 이야기라, 규칙을 아무리 열어도 이 화살표는 생기지 않습니다.</figcaption>
+      </figure>
 
       <h3>서브넷 요구가 갈리는 자리</h3>
       <p>로드밸런서를 하나 세우려는데, 콘솔이 서브넷을 최소 두 개 고르라고 요구합니다. 인스턴스 하나 세울 때는 서브넷 하나로 충분했는데, 여기서는 왜 개수가 늘어날까요.</p>
@@ -1148,6 +1616,37 @@ button:focus-visible, .pick:focus-visible, .term:focus-visible, a:focus-visible,
           <button class="pick" data-k="ec2">EC2 — 인스턴스에 직접 설치한다</button>
           <button class="pick" data-k="rds">RDS — 관리형으로 띄운다</button>
         </div>
+
+        <figure class="fig bare" id="figResp">
+          <div class="fig-scroll">
+          <svg viewBox="0 0 780 420" role="img" aria-label="열한 개 운영 항목을 아래에서 위로 쌓고, 고객 몫과 AWS 몫을 가르는 분계선이 배포 방식에 따라 위로 올라간다. 온프렘은 열한 줄 모두 고객 몫이고, EC2는 아래 세 줄이 AWS로 넘어가며, RDS는 맨 윗줄 하나만 고객 몫으로 남는다.">
+            <text class="d-t xs" x="150" y="18">열한 항목 — 위로 갈수록 애플리케이션에 가깝다</text>
+
+            <g data-r="0"><rect class="rl-bar d-me" x="150" y="30" width="510" height="28" rx="7"/><text class="d-t sm" x="164" y="49">애플리케이션 최적화</text><text class="d-t xs tx-me" data-o="0" x="646" y="49" text-anchor="end">고객</text></g>
+            <g data-r="1"><rect class="rl-bar d-me" x="150" y="62" width="510" height="28" rx="7"/><text class="d-t sm" x="164" y="81">스케일링</text><text class="d-t xs tx-me" data-o="1" x="646" y="81" text-anchor="end">고객</text></g>
+            <g data-r="2"><rect class="rl-bar d-me" x="150" y="94" width="510" height="28" rx="7"/><text class="d-t sm" x="164" y="113">고가용성</text><text class="d-t xs tx-me" data-o="2" x="646" y="113" text-anchor="end">고객</text></g>
+            <g data-r="3"><rect class="rl-bar d-me" x="150" y="126" width="510" height="28" rx="7"/><text class="d-t sm" x="164" y="145">데이터베이스 백업</text><text class="d-t xs tx-me" data-o="3" x="646" y="145" text-anchor="end">고객</text></g>
+            <g data-r="4"><rect class="rl-bar d-me" x="150" y="158" width="510" height="28" rx="7"/><text class="d-t sm" x="164" y="177">데이터베이스 소프트웨어 패치</text><text class="d-t xs tx-me" data-o="4" x="646" y="177" text-anchor="end">고객</text></g>
+            <g data-r="5"><rect class="rl-bar d-me" x="150" y="190" width="510" height="28" rx="7"/><text class="d-t sm" x="164" y="209">데이터베이스 소프트웨어 설치</text><text class="d-t xs tx-me" data-o="5" x="646" y="209" text-anchor="end">고객</text></g>
+            <g data-r="6"><rect class="rl-bar d-me" x="150" y="222" width="510" height="28" rx="7"/><text class="d-t sm" x="164" y="241">OS 패치</text><text class="d-t xs tx-me" data-o="6" x="646" y="241" text-anchor="end">고객</text></g>
+            <g data-r="7"><rect class="rl-bar d-me" x="150" y="254" width="510" height="28" rx="7"/><text class="d-t sm" x="164" y="273">OS 설치</text><text class="d-t xs tx-me" data-o="7" x="646" y="273" text-anchor="end">고객</text></g>
+            <g data-r="8"><rect class="rl-bar d-me" x="150" y="286" width="510" height="28" rx="7"/><text class="d-t sm" x="164" y="305">서버 유지보수</text><text class="d-t xs tx-me" data-o="8" x="646" y="305" text-anchor="end">고객</text></g>
+            <g data-r="9"><rect class="rl-bar d-me" x="150" y="318" width="510" height="28" rx="7"/><text class="d-t sm" x="164" y="337">하드웨어 수명 주기</text><text class="d-t xs tx-me" data-o="9" x="646" y="337" text-anchor="end">고객</text></g>
+            <g data-r="10"><rect class="rl-bar d-me" x="150" y="350" width="510" height="28" rx="7"/><text class="d-t sm" x="164" y="369">전원 · 네트워크 · 냉각</text><text class="d-t xs tx-me" data-o="10" x="646" y="369" text-anchor="end">고객</text></g>
+
+            <g id="rlDiv" class="rl-move" transform="translate(0,386)">
+              <path class="rl-line" d="M112 0 H700"/>
+              <text class="d-t xs tx-acc" x="706" y="4">분계선</text>
+              <text class="d-t xs tx-me" x="136" y="-9" text-anchor="end">↑ 고객 몫</text>
+              <text class="d-t xs tx-aws d-fade" id="rlAws" x="136" y="19" text-anchor="end">↓ AWS 몫</text>
+            </g>
+
+            <text class="d-t xs" x="150" y="412">맨 윗줄은 세 번 다 고객 몫 — 분계선이 끝내 넘지 못하는 한 줄</text>
+          </svg>
+          </div>
+          <figcaption>위의 세 버튼이 이 분계선을 움직입니다. 선이 올라갈수록 내 손에 남는 줄은 줄어드는데, <b>맨 윗줄만은 세 번 다 선 위에 남습니다</b> — 쿼리 튜닝은 어디로 옮겨도 넘어가지 않는 몫이라, 관리형으로 갈아탄다고 느린 쿼리가 저절로 빨라지지는 않습니다.</figcaption>
+        </figure>
+
         <div id="respOut"></div>
       </div>
 
@@ -1239,6 +1738,49 @@ button:focus-visible, .pick:focus-visible, .term:focus-visible, a:focus-visible,
       <p>AZ 하나마다 NAT 게이트웨이를 하나씩 두는 구성이 보통입니다. 그래서 요금도 한 겹이 아니라 세 겹. 가용 영역을 셋으로 나눠 뒀다면 시간당 요금도 그 수만큼 곱해지고, 처리한 트래픽에는 GB당 값이 따로 붙습니다. 게다가 NAT 게이트웨이 자신도 퍼블릭 IPv4를 쥐고 있어서, 시간당 0.005달러가 거기에 또 얹힙니다. 인스턴스 하나 켜 두는 값과는 자릿수부터 다른 셈.</p>
       <p>9장에서 확인했듯, 로드밸런서 뒤에 선 인스턴스는 사설 IP 하나로도 응답할 수 있어 퍼블릭 IPv4가 필요 없습니다. 구조만의 문제가 아니라, 요금의 문제이기도 합니다.</p>
       <p>그렇다면 정확한 값은 어디서 확인할 수 있을까요. 정확한 숫자는 리전마다, 계정마다 다릅니다. 이 문서가 손에 쥔 단가는 퍼블릭 IPv4 시간당 0.005달러, NAT 게이트웨이 시간당 0.045달러와 GB당 0.045달러, 이렇게 둘뿐입니다. 나머지 숫자가 필요할 때 열어야 할 곳은 콘솔의 <span class="term" data-t="Cost Explorer">Cost Explorer</span>.</p>
+
+      <figure class="fig" id="figCost">
+        <div class="fig-head">
+          <span class="fig-tag">중지 버튼이 멈추는 것과 못 멈추는 것</span>
+          <span class="spacer"></span>
+          <div class="fig-ctl"><button data-a="replay">↺ 다시 보기</button></div>
+        </div>
+        <div class="fig-scroll">
+        <svg viewBox="0 0 780 300" role="img" aria-label="한 달치 요금이 쌓이는 모습. 달의 중간에 인스턴스를 중지하면 EC2 막대만 그 자리에서 멈추고, EBS 볼륨과 탄력적 IP와 NAT 게이트웨이의 막대는 달 끝까지 계속 자란다.">
+          <text class="d-t sm" x="20" y="26">한 달 동안 쌓이는 요금</text>
+          <text class="d-t xs" x="180" y="44">0h</text>
+          <text class="d-t xs tx-fresh" x="460" y="44" text-anchor="middle">365h · 인스턴스 중지</text>
+          <text class="d-t xs" x="740" y="44" text-anchor="end">730h</text>
+          <path class="ct-cursor" d="M460 52 V258"/>
+
+          <text class="d-t sm" x="20" y="83">EC2 인스턴스</text>
+          <text class="d-t xs" x="20" y="99">시간당 — 중지하면 멈춤</text>
+          <rect class="ct-track" x="180" y="66" width="560" height="22" rx="6"/>
+          <rect class="ct-bar b-stop" data-w="0.5" style="transform:scaleX(.5)" x="180" y="66" width="560" height="22" rx="6"/>
+          <text class="d-t xs tx-dim" x="474" y="82">← 여기서부터 인스턴스 요금 없음</text>
+
+          <text class="d-t sm" x="20" y="135">EBS 30GB</text>
+          <text class="d-t xs" x="20" y="151">크기만큼 — 계속</text>
+          <rect class="ct-track" x="180" y="118" width="560" height="22" rx="6"/>
+          <rect class="ct-bar b-run" data-w="1" x="180" y="118" width="560" height="22" rx="6"/>
+
+          <text class="d-t sm" x="20" y="187">탄력적 IP 1개</text>
+          <text class="d-t xs" x="20" y="203">시간당 $0.005 — 계속</text>
+          <rect class="ct-track" x="180" y="170" width="560" height="22" rx="6"/>
+          <rect class="ct-bar b-run" data-w="1" x="180" y="170" width="560" height="22" rx="6"/>
+
+          <text class="d-t sm" x="20" y="239">NAT 게이트웨이</text>
+          <text class="d-t xs" x="20" y="255">세 겹 — 계속</text>
+          <rect class="ct-track" x="180" y="222" width="560" height="22" rx="6"/>
+          <rect class="ct-bar b-run" data-w="1" x="180" y="222" width="560" height="6" rx="3"/>
+          <rect class="ct-bar b-run" data-w="1" x="180" y="230" width="560" height="6" rx="3"/>
+          <rect class="ct-bar b-run" data-w="1" x="180" y="238" width="560" height="6" rx="3"/>
+
+          <text class="d-t xs" x="20" y="284">초록 막대 하나만 중지 버튼에 반응합니다 — 빨간 셋은 손을 대지 않는 한 달 끝까지 자랍니다</text>
+        </svg>
+        </div>
+        <figcaption>NAT 게이트웨이가 세 줄로 그려진 것은 요금이 <b>세 겹</b>이기 때문입니다 — 시간당 $0.045가 AZ 수만큼, 처리한 GB당 $0.045, 거기에 자신이 쥔 퍼블릭 IPv4의 시간당 $0.005까지. 인스턴스를 껐다고 안심하기 어려운 이유가 이 그림에 다 있는데, 정작 <b>중지 버튼이 멈출 수 있는 것은 맨 윗줄 하나뿐</b>입니다.</figcaption>
+      </figure>
 
       <div class="demo" id="costCalc">
         <span class="demo-tag">청구서 시뮬레이터</span>
@@ -1370,6 +1912,40 @@ DescribeInstancesResponse response = ec2.describeInstances(request);</code></pre
           <button class="pick" data-k="replan">③ 다시 계획을 본다</button>
           <button class="pick" data-k="reapply">④ 다시 적용한다</button>
         </div>
+
+        <figure class="fig bare" id="figDrift">
+          <div class="fig-scroll">
+          <svg viewBox="0 0 780 250" role="img" aria-label="파일이 적어 둔 태그 값과 콘솔에서 손으로 바꾼 값이 어긋나는 과정. 손으로 바꾼 값은 다시 적용하는 순간 파일 쪽 값으로 되돌아가고, 바꿨다는 사실은 어디에도 남지 않는다.">
+            <rect class="d-box hollow" x="60" y="44" width="250" height="100" rx="12"/>
+            <text class="d-t sm" x="78" y="70">파일 (IaC)</text>
+            <rect class="d-box d-acc" x="80" y="84" width="210" height="42" rx="8"/>
+            <text class="d-t mono tx-acc" x="185" y="110" text-anchor="middle">Owner: team-a</text>
+
+            <rect class="d-box hollow" x="470" y="44" width="250" height="100" rx="12"/>
+            <text class="d-t sm" id="drRealHd" x="488" y="70">실물 (콘솔)</text>
+            <rect class="d-box d-keep d-sw" id="drRealBox" x="490" y="84" width="210" height="42" rx="8"/>
+            <text class="d-t mono tx-keep d-sw" id="drReal" x="595" y="110" text-anchor="middle">Owner: team-a</text>
+
+            <g id="drEq" class="d-fade"><path class="dr-eq" d="M352 88 H428 M352 100 H428"/></g>
+            <g id="drZig" class="d-fade d-off">
+              <path class="dr-zig" d="M320 94 L350 74 L370 114 L390 74 L410 114 L430 74 L460 94"/>
+              <text class="d-t xs tx-gone" x="390" y="136" text-anchor="middle">드리프트</text>
+            </g>
+
+            <g id="drTok" class="d-tok d-off">
+              <rect class="d-box d-acc" x="80" y="84" width="210" height="42" rx="8"/>
+              <text class="d-t mono tx-acc" x="185" y="110" text-anchor="middle">Owner: team-a</text>
+            </g>
+
+            <rect class="d-box" x="60" y="170" width="660" height="58" rx="10"/>
+            <text class="d-t sm" id="drStep" x="80" y="196">① 파일대로 만든다</text>
+            <text class="d-t sm tx-keep" id="drBadge" x="700" y="196" text-anchor="end">일치</text>
+            <text class="d-t xs" id="drNote" x="80" y="216">파일이 적어 둔 값이 그대로 실물에 올라갑니다.</text>
+          </svg>
+          </div>
+          <figcaption>위의 네 단계를 순서대로 눌러 보세요. ④에서 값이 <code>team-a</code>로 돌아가는 순간이 이 장의 요지입니다 — 되돌아간 것 자체는 파일이 하는 일이 맞지만, <b><code>team-b</code>였던 적이 있다는 사실은 어디에도 남지 않습니다</b>. 나무랄 쪽은 손을 댄 것이 아니라, 손댄 것을 적어 두지 않은 쪽.</figcaption>
+        </figure>
+
         <div id="driftOut"></div>
       </div>
 
@@ -2512,6 +3088,436 @@ if(location.hash){
     });
   });
   render();
+})();
+
+/* ============================================================
+   그림(움직이는 다이어그램) — 공용 도구
+   ------------------------------------------------------------
+   SVG의 기본 상태가 곧 "답이 다 드러난 상태"다. 여기서 하는 일은
+   그 상태를 향해 재생하는 것뿐이라, Web Animations API가 없거나
+   prefers-reduced-motion이 켜져 있으면 재생만 건너뛴다 — 독자가
+   끝에 보는 그림은 어느 쪽이든 같다.
+   그래서 애니메이션에는 fill을 걸지 않는다. 끝나면 CSS가 정해 둔
+   기본 상태로 돌아가는 것이 곧 정답 상태이기 때문. 예외는 두 곳뿐이고
+   (ENI 카드 이동, 분계선 위치) 둘 다 hold()·release()로 따로 다룬다.
+   ============================================================ */
+const FIG = (function(){
+  const mq = window.matchMedia ? window.matchMedia('(prefers-reduced-motion: reduce)') : null;
+  const still = () => !!(mq && mq.matches) || typeof Element === 'undefined' || !Element.prototype.animate;
+
+  function play(el, frames, opt){
+    if(!el || still()) return Promise.resolve();
+    try{
+      const a = el.animate(frames, Object.assign({easing:'cubic-bezier(.4,0,.2,1)'}, opt));
+      return a.finished.then(()=>{}, ()=>{});
+    }catch(e){ return Promise.resolve(); }
+  }
+  /* 끝난 자리에 그대로 머물러야 하는 움직임 */
+  function hold(el, frames, opt){
+    if(!el) return Promise.resolve();
+    if(still()){ el.style.transform = frames[frames.length-1].transform || ''; return Promise.resolve(); }
+    return play(el, frames, Object.assign({fill:'forwards'}, opt));
+  }
+  function release(el){
+    if(!el) return;
+    el.style.transform = '';
+    if(el.getAnimations) el.getAnimations().forEach(a => a.cancel());
+  }
+  /* 토큰: 나타나 → 좌표를 따라 이동 → 사라진다. 끝나면 흔적이 없다. */
+  function tokFrames(pts){
+    const n = pts.length, mk = (p,off,op) => ({offset:off, transform:`translate(${p[0]}px, ${p[1]}px)`, opacity:op});
+    const out = [mk(pts[0], 0, 0)];
+    pts.forEach((p,i) => out.push(mk(p, 0.09 + 0.86*(n===1?1:i/(n-1)), 1)));
+    out.push(mk(pts[n-1], 1, 0));
+    return out;
+  }
+  function token(el, pts, dur){
+    if(!el || still() || pts.length < 1) return Promise.resolve();
+    return play(el, tokFrames(pts), {duration:dur, easing:'ease-in-out'});
+  }
+  /* 선이 그려지는 효과 — stroke-dashoffset만 쓰므로 어디서나 돈다 */
+  function drawIn(path, dur, delay){
+    if(!path || still() || !path.getTotalLength) return;
+    let len = 0;
+    try{ len = path.getTotalLength(); }catch(e){ return; }
+    if(!len) return;
+    play(path, [{strokeDasharray:`${len} ${len}`, strokeDashoffset:len},
+                {strokeDasharray:`${len} ${len}`, strokeDashoffset:0}],
+         {duration:dur, delay:delay||0, easing:'ease-out'});
+  }
+  function show(el, on){ if(el) el.classList.toggle('d-off', !on); }
+  function setText(el, s){ if(el) el.textContent = s; }
+  function swap(el, off, on){ if(el){ el.classList.remove(off); el.classList.add(on); } }
+  /* 화면에 처음 들어올 때 한 번 재생 */
+  function onView(el, fn){
+    if(!el) return;
+    if(!('IntersectionObserver' in window)){ fn(); return; }
+    const io = new IntersectionObserver(es => {
+      es.forEach(e => { if(e.isIntersecting){ io.disconnect(); fn(); } });
+    }, {threshold:0.2, rootMargin:'0px 0px -10% 0px'});
+    io.observe(el);
+  }
+  function ctl(root, onPick){
+    if(!root) return;
+    const bs = $$('button[data-k]', root);
+    bs.forEach(b => b.addEventListener('click', () => {
+      bs.forEach(x => x.classList.toggle('on', x === b));
+      onPick(b.dataset.k);
+    }));
+  }
+  function replay(root, fn){
+    const b = root && root.querySelector('button[data-a="replay"]');
+    if(b) b.addEventListener('click', fn);
+  }
+  /* 본문 데모의 picker가 그림도 함께 움직이게 한다 (기존 배선은 건드리지 않고 하나 더 얹는다) */
+  function follow(sel, fn){ $$(sel + ' .pick').forEach(b => b.addEventListener('click', () => fn(b.dataset.k))); }
+  return {still, play, hold, release, token, drawIn, show, setText, swap, onView, ctl, replay, follow};
+})();
+
+/* ============================================================
+   그림 1장 — 한 대가 아홉 개로 흩어진다
+   ============================================================ */
+(function(){
+  const fig = $('#figSplit'); if(!fig) return;
+  const chips = $$('.sp-chip', fig);
+  function run(){
+    chips.forEach((g,i) => {
+      const dx = +g.dataset.dx, dy = +g.dataset.dy;
+      FIG.play(g, [
+        {transform:`translate(${dx}px, ${dy}px) scale(.2)`, opacity:0},
+        {transform:'none', opacity:1}
+      ], {duration:780, delay:120 + i*75, fill:'backwards', easing:'cubic-bezier(.2,.9,.25,1)'});
+    });
+  }
+  FIG.replay(fig, run);
+  FIG.onView(fig, run);
+})();
+
+/* ============================================================
+   그림 3장 — 같은 이름이 다른 건물을 가리킨다
+   ------------------------------------------------------------
+   'a' 배선은 AWS 공식 문서에 실린 describe-availability-zones 출력 그대로다
+   (us-west-2a→usw2-az2, 2b→az1, 2c→az3, 2d→az4).
+   'b'는 실제 어느 계정의 값도 아니라, "계정이 바뀌면 배선이 달라진다"는
+   사실만 보이려고 둔 예시다 — 그래서 캡션에도 예시라고 못 박아 둔다.
+   ============================================================ */
+(function(){
+  const fig = $('#figAz'); if(!fig) return;
+  const wires = $$('#azWires path', fig);
+  const names = $$('#azNames [data-n] rect', fig);
+  const bldgs = $$('#azBldgs [data-b] rect', fig);
+  const cap = $('#azFigCap');
+  const NX = [275, 415, 555, 695];   // 이름표 중심 x
+  const BX = [275, 415, 555, 695];   // 건물 중심 x
+  const MAP = {
+    a: {to:[1,0,2,3], real:true},
+    b: {to:[2,3,0,1], real:false}
+  };
+  const CAP = {
+    a: 'AWS 공식 문서에 실린 <code>describe-availability-zones</code> 출력 그대로입니다. <b>a가 az1이 아닙니다</b> — 이 계정에서 <code>us-west-2a</code>가 닿는 건물은 <code>usw2-az2</code>고, <code>usw2-az1</code>로 가는 선은 <code>us-west-2b</code>가 쥐고 있습니다.',
+    b: '계정을 바꾸면 <b>선만 다시 꽂힙니다</b> — 건물은 한 채도 움직이지 않았는데 <code>us-west-2a</code>가 닿는 곳이 달라졌습니다. 이쪽 배선은 실제 어느 계정의 값도 아닌, 어긋난다는 사실만 보이려고 둔 예시입니다. 내 계정의 진짜 배선은 저 명령으로 직접 확인해야 하고, 계정을 넘어 같은 곳을 가리키는 이름은 <b>AZ ID뿐</b>입니다.'
+  };
+  function render(k, animate){
+    const m = MAP[k] || MAP.a;
+    wires.forEach((w,i) => {
+      const nx = NX[i], bx = BX[m.to[i]];
+      w.setAttribute('d', `M${nx} 82 C${nx} 132, ${bx} 156, ${bx} 206`);
+      if(animate) FIG.drawIn(w, 520, i*70);
+    });
+    names.forEach((r,i) => r.classList.toggle('lit', i === 0));
+    bldgs.forEach((r,i) => r.classList.toggle('lit', i === m.to[0]));
+    if(cap) cap.innerHTML = CAP[k] || CAP.a;
+  }
+  FIG.ctl($('.fig-ctl', fig), k => render(k, true));
+  render('a', false);
+  FIG.onView(fig, () => render('a', true));
+})();
+
+/* ============================================================
+   그림 5장 — 상태 기계 (본문 picker가 함께 움직인다)
+   ------------------------------------------------------------
+   각 동작의 결과는 위 lifecycle 데모의 표와 같은 출처를 쓴다.
+   타입 변경이 stopped를 경유하는 것은 "먼저 중지해야 한다"는
+   공식 문서의 절차를 그대로 경로로 옮긴 것.
+   ============================================================ */
+(function(){
+  const fig = $('#figLife'); if(!fig) return;
+  const tok = $('#lifeTok', fig), note = $('#lifeNote', fig);
+  const P = {running:[390,65], stopped:[130,195], rebooting:[390,195], terminated:[650,195]};
+  const BOW_DOWN = [250,133], BOW_UP = [196,99];   // stop·start 곡선의 허리 — 토큰이 선을 따라가게
+  const V = {
+    reboot: {edges:['rbdn','rbup'], labels:['reboot'], lit:'running', dead:null,
+      path:[P.running, P.rebooting, P.running],
+      note:'재부팅은 running을 벗어나지 않습니다 — 그래서 넷 중 이 동작에서만 인스턴스 스토어가 삽니다.',
+      f:{store:['keep','살아남는다'], pubip:['keep','그대로'], ebs:['keep','그대로']}},
+    stop: {edges:['stop'], labels:['stop'], lit:'stopped', dead:null,
+      path:[P.running, BOW_DOWN, P.stopped],
+      note:'중지는 인스턴스를 남기지만, 그 밑에 붙어 있던 것들은 사정이 저마다 다릅니다.',
+      f:{store:['gone','전부 사라진다'], pubip:['fresh','새 주소를 받는다'], ebs:['keep','남고, 요금도 그대로']}},
+    term: {edges:['term1'], labels:['term1'], lit:null, dead:'terminated',
+      path:[P.running, P.terminated],
+      note:'종료는 되돌릴 수 없습니다. 조건부로 남는 줄이 하나 있는데, 그 갈림길은 6장의 몫.',
+      f:{store:['gone','사라진다'], pubip:['gone','해제된다'], ebs:['warn','경우에 따라 남는다']}},
+    resize: {edges:['stop','start'], labels:['stop','start'], lit:'running', dead:null,
+      path:[P.running, BOW_DOWN, P.stopped, BOW_UP, P.running],
+      note:'타입 변경은 stopped를 한 번 찍고 옵니다 — 그래서 중지에서 잃는 것을 여기서도 그대로 잃습니다.',
+      f:{store:['gone','사라진다'], pubip:['fresh','새 주소를 받는다'], ebs:['keep','그대로']}}
+  };
+  const TX = {keep:'tx-keep', gone:'tx-gone', fresh:'tx-fresh', warn:'tx-fresh'};
+  const BOX = {keep:'d-keep', gone:'d-gone', fresh:'d-fresh', warn:'d-warn'};
+  function render(k){
+    const d = V[k]; if(!d) return;
+    $$('.ed', fig).forEach(e => e.classList.toggle('lit', d.edges.indexOf(e.dataset.e) >= 0));
+    $$('.edl', fig).forEach(e => e.classList.toggle('lit', d.labels.indexOf(e.dataset.l) >= 0));
+    $$('[data-s] .st', fig).forEach(r => {
+      const s = r.parentNode.dataset.s;
+      r.classList.toggle('lit', s === d.lit);
+      r.classList.toggle('dead', s === d.dead);
+    });
+    Object.keys(d.f).forEach(key => {
+      const [c, label] = d.f[key];
+      const t = $(`[data-v="${key}"]`, fig);
+      if(t){ t.textContent = label; t.setAttribute('class', 'd-t d-sw ' + TX[c]); }
+      const box = $(`[data-f="${key}"] rect`, fig);
+      if(box) box.setAttribute('class', 'd-box d-sw ' + BOX[c]);
+    });
+    FIG.setText(note, d.note);
+    FIG.token(tok, d.path, d.path.length > 2 ? 1500 : 950);
+  }
+  let touched = false;
+  FIG.follow('#lifePicker', k => { touched = true; render(k); });
+  render('reboot');
+  FIG.onView(fig, () => { if(!touched) render('reboot'); });
+})();
+
+/* ============================================================
+   그림 7장 — 퍼블릭 IP는 어디서 오나 (본문 picker가 함께 움직인다)
+   ------------------------------------------------------------
+   주소는 전부 RFC 5737의 문서용 대역(203.0.113.0/24)에서 골랐다.
+   실제 계정에 배정되는 값이 아니라는 뜻.
+   ============================================================ */
+(function(){
+  const fig = $('#figEni'); if(!fig) return;
+  const pub = $('#eniPub', fig), val = $('#eniPubVal', fig), card = $('#eniCard', fig);
+  const wall = $('#eniWall', fig), note = $('#eniNote', fig);
+  const az = $('#eniAz', fig), bsub = $('#eniBSub', fig), priv = $('#eniPriv', fig);
+  const slotTxt = $('#eniSlotTxt', fig);   // 카드가 옮겨 앉으면 이 자리표시 글자와 겹친다
+  const TO_POOL = [-305, -54], TO_EIP = [-305, 92], HOME = [0, 0];
+  const NOTE = {
+    'stop-start': '퍼블릭 IP만 풀로 돌아갔다가, 다시 시작할 때 다른 번호를 달고 나옵니다 — 사설 IP와 보안 그룹은 그동안 자리를 뜨지 않습니다.',
+    'detach-attach': '인터페이스가 통째로 옮겨 가고, 그 위에 얹힌 값도 함께 따라갑니다 — 다만 같은 가용 영역 안에서만.',
+    'eip': '탄력적 IP는 내 계정에 할당된 값이라, 중지와 시작을 몇 번 반복해도 같은 주소가 그 자리를 지킵니다.',
+    'move-az': '서브넷도 볼륨도 ENI도 이 가용 영역에 박혀 있어서, 인스턴스도 처음 태어난 자리를 끝내 벗어나지 못합니다.'
+  };
+  async function render(k){
+    FIG.release(card);
+    FIG.show(wall, false);
+    FIG.show(slotTxt, k !== 'detach-attach');
+    if(az) az.setAttribute('class', 'd-t xs');
+    FIG.setText(bsub, '같은 AZ여야 붙는다');
+    FIG.setText(note, NOTE[k] || '');
+
+    if(k === 'stop-start'){
+      FIG.setText(val, '203.0.113.12');
+      if(priv) priv.setAttribute('class', 'd-box d-keep d-sw');
+      await FIG.play(pub, [{transform:'none'}, {transform:`translate(${TO_POOL[0]}px, ${TO_POOL[1]}px)`, opacity:0}],
+                     {duration:620, fill:'forwards'});
+      FIG.setText(val, '203.0.113.31');
+      await FIG.play(pub, [{transform:`translate(${TO_POOL[0]}px, ${TO_POOL[1]}px)`, opacity:0}, {transform:'none', opacity:1}],
+                     {duration:620, delay:220});
+      FIG.release(pub);
+    } else if(k === 'eip'){
+      FIG.setText(val, '203.0.113.77');
+      await FIG.play(pub, [{transform:`translate(${TO_EIP[0]}px, ${TO_EIP[1]}px)`, opacity:0}, {transform:'none', opacity:1}],
+                     {duration:700});
+      FIG.release(pub);
+    } else if(k === 'detach-attach'){
+      FIG.release(pub);
+      FIG.setText(val, '203.0.113.12');
+      FIG.hold(card, [{transform:'none'}, {transform:'translate(240px, 0)'}], {duration:820});
+    } else if(k === 'move-az'){
+      FIG.release(pub);
+      FIG.setText(val, '203.0.113.12');
+      if(az) az.setAttribute('class', 'd-t xs tx-gone');
+      FIG.setText(bsub, '다른 AZ');
+      FIG.show(wall, true);
+    }
+  }
+  FIG.follow('#eniPicker', render);
+  render('stop-start');
+})();
+
+/* ============================================================
+   그림 8장 — 폴더가 접히면 남는 것
+   ============================================================ */
+(function(){
+  const fig = $('#figS3'); if(!fig) return;
+  const rows = $$('.s3-row', fig);
+  const D = 900;
+  function run(){
+    rows.forEach((g,i) => {
+      const dx = +g.dataset.dx, dy = +g.dataset.dy;
+      FIG.play(g, [{transform:`translate(${dx}px, ${dy}px)`}, {transform:'none'}],
+               {duration:D, delay:520 + i*90, fill:'backwards'});
+      FIG.play($('.s3-short', g), [{opacity:1, offset:0}, {opacity:1, offset:.35}, {opacity:0, offset:.6}, {opacity:0}],
+               {duration:D, delay:520 + i*90, fill:'backwards'});
+      FIG.play($('.s3-full', g), [{opacity:0, offset:0}, {opacity:0, offset:.45}, {opacity:1, offset:.75}, {opacity:1}],
+               {duration:D, delay:520 + i*90, fill:'backwards'});
+    });
+    FIG.play($('#s3Folders', fig), [{opacity:1}, {opacity:1, offset:.35}, {opacity:0}], {duration:900, delay:400, fill:'backwards'});
+    FIG.play($('#s3HeadTree', fig), [{opacity:1}, {opacity:1, offset:.4}, {opacity:0}], {duration:900, delay:400, fill:'backwards'});
+    FIG.play($('#s3HeadFlat', fig), [{opacity:0}, {opacity:0, offset:.55}, {opacity:1}], {duration:900, delay:400, fill:'backwards'});
+    FIG.play($('#s3RTree', fig), [{opacity:1}, {opacity:1, offset:.4}, {opacity:0}], {duration:1100, delay:400, fill:'backwards'});
+    FIG.play($('#s3RFlat', fig), [{opacity:0}, {opacity:0, offset:.6}, {opacity:1}], {duration:1100, delay:400, fill:'backwards'});
+    FIG.play($('#s3Slash', fig), [{opacity:0}, {opacity:0, offset:.7}, {opacity:1}], {duration:1600, delay:400, fill:'backwards'});
+  }
+  FIG.replay(fig, run);
+  FIG.onView(fig, run);
+})();
+
+/* ============================================================
+   그림 9장 — 문의 방향
+   ------------------------------------------------------------
+   아래 줄에서 인바운드가 막히는 자리는 보안 그룹이 닫아 둔 것이 아니라,
+   NAT 게이트웨이에 그 방향 자체가 없다는 뜻이다. 그래서 ✕는 인스턴스
+   앞이 아니라 게이트웨이 오른쪽, 인터넷에서 오는 길목에 찍힌다.
+   ============================================================ */
+(function(){
+  const fig = $('#figDoor'); if(!fig) return;
+  const svg = $('svg', fig);
+  const t1 = $('#doorTok', fig), t2 = $('#doorTok2', fig);
+  const block = $('#doorBlock', fig);
+  const dir = $('#doorDir', fig), va = $('#doorVa', fig), vb = $('#doorVb', fig);
+  const OUT = {
+    dir:'나가는 연결 — 서버가 먼저 말을 건다',
+    a:[[250,103],[390,103],[610,103]], b:[[250,257],[390,257],[610,257]],
+    va:['통과','tx-keep'], vb:['통과','tx-keep'], block:false
+  };
+  const IN = {
+    dir:'들어오는 연결 — 인터넷이 먼저 말을 건다',
+    a:[[610,103],[390,103],[250,103]], b:[[610,257],[540,257]],
+    va:['통과 — 퍼블릭 IP가 있으니까','tx-keep'], vb:['시작조차 되지 않는다','tx-gone'], block:true
+  };
+  // ✕는 패킷이 도착한 뒤에 찍혀야 이야기가 성립한다. 다만 그 사이에 다시 render가
+  // 불릴 수 있으므로(연달아 누르거나, 스크롤 진입이 겹치거나) 세대 번호로 늦은 콜백을 버린다.
+  let gen = 0, touched = false;
+  function render(k){
+    const g = ++gen;
+    const d = (k === 'in') ? IN : OUT;
+    if(svg) svg.classList.toggle('inb', k === 'in');
+    FIG.setText(dir, d.dir);
+    if(va){ va.textContent = d.va[0]; va.setAttribute('class', 'd-t sm ' + d.va[1]); }
+    if(vb){ vb.textContent = d.vb[0]; vb.setAttribute('class', 'd-t sm ' + d.vb[1]); }
+    FIG.show(block, false);
+    FIG.token(t1, d.a, 1250);
+    FIG.token(t2, d.b, d.block ? 780 : 1250);
+    if(d.block) setTimeout(() => { if(g === gen) FIG.show(block, true); }, FIG.still() ? 0 : 700);
+  }
+  FIG.ctl($('.fig-ctl', fig), k => { touched = true; render(k); });
+  render('out');
+  FIG.onView(fig, () => { if(!touched) render('out'); });
+})();
+
+/* ============================================================
+   그림 10장 — 분계선 (본문 picker가 함께 움직인다)
+   ------------------------------------------------------------
+   열한 행과 세 열의 값은 위 respLine 데모의 ROWS와 같은 출처
+   ("What is Amazon RDS?" 비교표) 그대로라, 여기서도 같은 배열을 다시 쓴다.
+   경계 y는 '고객 몫 마지막 줄' 바로 아래 — onprem은 열한 줄 전부이므로 맨 밑.
+   ============================================================ */
+(function(){
+  const fig = $('#figResp'); if(!fig) return;
+  const div = $('#rlDiv', fig), aws = $('#rlAws', fig);
+  const OWN = {
+    onprem: 11,   // 고객 몫으로 남는 윗줄 개수
+    ec2: 8,
+    rds: 1
+  };
+  const TOP = 30, PITCH = 32;
+  function render(k){
+    const n = OWN[k]; if(n === undefined) return;
+    const y = (n >= 11) ? (TOP + 11*PITCH + 4) : (TOP + n*PITCH - 2);
+    if(div) div.style.transform = `translate(0px, ${y}px)`;
+    FIG.show(aws, n < 11);
+    $$('[data-r]', fig).forEach(g => {
+      const i = +g.dataset.r, me = i < n;
+      const rect = $('rect', g), lab = $('[data-o]', g);
+      if(rect){
+        rect.setAttribute('class', 'rl-bar ' + (me ? 'd-me' : 'd-aws'));
+        rect.style.transitionDelay = (Math.abs(i - n) * 28) + 'ms';
+      }
+      if(lab){
+        lab.textContent = me ? '고객' : 'AWS';
+        lab.setAttribute('class', 'd-t xs ' + (me ? 'tx-me' : 'tx-aws'));
+        lab.style.transitionDelay = (Math.abs(i - n) * 28) + 'ms';
+      }
+    });
+  }
+  FIG.follow('#respPicker', render);
+  render('onprem');
+})();
+
+/* ============================================================
+   그림 12장 — 한 달치가 쌓이는 모습
+   ------------------------------------------------------------
+   막대 길이는 시간의 비율일 뿐 금액의 비율이 아니다. 세로로 다른 줄끼리
+   길이를 비교하라는 그림이 아니라, "중지 버튼에 반응하는 줄이 몇 개인가"만
+   보라는 그림이라 단가는 캡션과 본문에만 적는다.
+   ============================================================ */
+(function(){
+  const fig = $('#figCost'); if(!fig) return;
+  const bars = $$('.ct-bar', fig);
+  function run(){
+    bars.forEach((b,i) => {
+      const w = parseFloat(b.dataset.w);
+      const frames = (w < 1)
+        ? [{transform:'scaleX(0)'}, {transform:`scaleX(${w})`, offset:w}, {transform:`scaleX(${w})`}]
+        : [{transform:'scaleX(0)'}, {transform:'scaleX(1)'}];
+      FIG.play(b, frames, {duration:2100, delay:200 + i*90, fill:'backwards', easing:'linear'});
+    });
+  }
+  FIG.replay(fig, run);
+  FIG.onView(fig, run);
+})();
+
+/* ============================================================
+   그림 14장 — 드리프트 (본문 picker가 함께 움직인다)
+   ============================================================ */
+(function(){
+  const fig = $('#figDrift'); if(!fig) return;
+  const tok = $('#drTok', fig), real = $('#drReal', fig), box = $('#drRealBox', fig);
+  const hd = $('#drRealHd', fig), eq = $('#drEq', fig), zig = $('#drZig', fig);
+  const step = $('#drStep', fig), badge = $('#drBadge', fig), note = $('#drNote', fig);
+  const S = {
+    apply: {v:'Owner: team-a', c:'keep', flow:true, hd:'실물 (콘솔)',
+      step:'① 파일대로 만든다', badge:['일치','tx-keep'],
+      note:'파일이 적어 둔 값이 그대로 실물에 올라갑니다.'},
+    manual: {v:'Owner: team-b', c:'fresh', flow:false, hd:'실물 (콘솔) — 손으로 바꿈',
+      step:'② 콘솔에서 손으로 바꾼다', badge:['어긋남 · 아직 아무도 모른다','tx-fresh'],
+      note:'급한 밤에 값 하나를 콘솔에서 먼저 바꿨습니다. 문제는 바꾼 것이 아니라, 바꿨다는 사실이 파일 어디에도 없다는 쪽.'},
+    replan: {v:'Owner: team-b', c:'gone', flow:false, hd:'실물 (콘솔) — 손으로 바꿈',
+      step:'③ 다시 계획을 본다', badge:['드리프트 확인','tx-gone'],
+      note:'계획을 다시 보는 것은 아무것도 고치지 않습니다 — 파일과 실물을 나란히 놓고 비교만 할 뿐.'},
+    reapply: {v:'Owner: team-a', c:'keep', flow:true, hd:'실물 (콘솔)',
+      step:'④ 다시 적용한다', badge:['일치 · 복구됨','tx-keep'],
+      note:'값은 파일 쪽으로 되돌아갑니다. team-b였던 적이 있다는 사실은 어디에도 남지 않은 채로.'}
+  };
+  const TX = {keep:'tx-keep', fresh:'tx-fresh', gone:'tx-gone'};
+  const BX = {keep:'d-keep', fresh:'d-fresh', gone:'d-gone'};
+  async function render(k){
+    const d = S[k]; if(!d) return;
+    FIG.setText(step, d.step);
+    FIG.setText(note, d.note);
+    FIG.setText(hd, d.hd);
+    if(badge){ badge.textContent = d.badge[0]; badge.setAttribute('class', 'd-t sm ' + d.badge[1]); }
+    FIG.show(eq, d.flow);
+    FIG.show(zig, !d.flow);
+    if(d.flow) await FIG.token(tok, [[0,0],[410,0]], 760);
+    if(real){ real.textContent = d.v; real.setAttribute('class', 'd-t mono d-sw ' + TX[d.c]); }
+    if(box) box.setAttribute('class', 'd-box d-sw ' + BX[d.c]);
+  }
+  FIG.follow('#driftPicker', render);
+  render('apply');
 })();
 
 </script>
