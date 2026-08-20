@@ -258,11 +258,18 @@ EXEMPT = [
     ('.seq-counter', '"3 / 16" 계기판(18px). 발표자용이다'),
     ('.step-n', '단계 번호(16px). 바로 옆 .lbl 이 단계 이름을 24px 로 말한다'),
     ('.seq-controls button', '◀ 이전 · 다음 ▶ 이송 버튼(18-20px). 발표자의 손잡이다'),
-    # SVG 는 크기의 단위 자체가 다르다. font-size 12.5px 는 viewBox 좌표이고,
-    # 화면에 몇 px 로 나오는지는 상자 너비 ÷ viewBox 너비가 정한다 — 같은 값이
-    # 슬라이드마다 달라진다. 그림이 나르는 '문장'은 SVG 안이 아니라 .dia-cap(26px)에
-    # 있고, 그쪽은 이 테스트가 그대로 잰다.
-    ('svg, svg *', 'SVG 텍스트의 font-size 는 viewBox 좌표라 화면 px 이 아니다'),
+    # SVG 는 두 가지가 겹친 자리라 근거를 나눠 적는다.
+    # (1) 단위: font-size 12.5 는 viewBox 좌표이지 화면 px 이 아니다. 화면 크기는
+    #     상자 너비 ÷ viewBox 너비가 정하므로 computed 값을 24 와 비교할 수 없다.
+    # (2) 그러면 실제로는 몇 px 인가 — 1280x720 에서 getScreenCTM 으로 197개를 재면
+    #     12.7~23.3px, 중앙값 15.6px 이다. 하한 아래다. 그러니 "못 읽어도 되는 표지"
+    #     라서 빼는 것이 아니다. s10 3프레임처럼 그 장의 요점 자체가 SVG 문자열
+    #     ('이 선은 없다', 14.9px)인 자리가 실제로 있다.
+    # 빼는 진짜 근거는 같은 말이 .dia-cap 에 26px 로 다시 실린다는 것이다. 뒷자리가
+    # 잃는 것은 뜻이 아니라 그 뜻이 그림의 어디를 가리키는가이고, 그건 발표자가 짚는다.
+    ('svg, svg *',
+     'SVG 의 font-size 는 viewBox 좌표라 화면 px 이 아니다(실측 12.7~23.3px, 중앙 15.6). '
+     '프레임의 문장은 .dia-cap 이 26px 로 다시 싣는다'),
 ]
 
 MEASURE_FONTS = """
@@ -355,3 +362,36 @@ def test_no_slide_overflows_the_720px_stage(page):
             if top < 0 or bottom > 720:
                 over.append('%s 비트%d: top=%.1f bottom=%.1f' % (sid, b, top, bottom))
     assert over == [], '무대 밖으로 나간 장 %d건:\n  %s' % (len(over), '\n  '.join(over[:10]))
+
+
+def test_the_two_jwt_demos_stay_identical_apart_from_their_button_rows(page):
+    """s44 와 s45 는 JWT 데모 마크업을 한 벌씩 따로 들고 있다.
+
+    Task 6 이 중복 id(jwtRaw·jwtDecoded·jwtChecks)를 클래스로 바꾸면서 두 벌을
+    합치지 않기로 했다 — 두 장은 버튼 줄과 제목이 실제로 다르고, 마크업을 JS 안으로
+    옮기면 SLIDES 블록만 읽어서는 그 장에 무엇이 있는지 알 수 없게 되기 때문이다.
+    그 판단이 성립하려면 '두 벌이 어긋나면 바로 안다'가 참이어야 한다. 지금은
+    s44 의 이름표를 고치고 s45 를 안 고쳐도 아무것도 잡지 않는다. 이 테스트가 그 자리다.
+
+    비교에서 빼는 것은 둘뿐이다:
+      - .btn-row  두 장이 다른 버튼을 보여 주는 것이 이 데모의 설계다
+      - 실행 중에 채워지는 세 곳(.jwt-raw · .jwt-decoded · .jwt-checks)의 내용
+    나머지(구조·제목·이름표·배지)가 한 글자라도 벌어지면 실패한다.
+    """
+    page.goto(DECK)
+    skeleton = """
+    (id) => {
+      const src = document.getElementById(id);
+      if (!src) return null;
+      const c = src.cloneNode(true);
+      c.removeAttribute('id');
+      c.querySelectorAll('.btn-row').forEach(e => e.remove());
+      c.querySelectorAll('.jwt-raw, .jwt-decoded, .jwt-checks').forEach(e => e.textContent = '');
+      return c.innerHTML.replace(/\\s+/g, ' ').trim();
+    }
+    """
+    a = page.evaluate(skeleton, 'jwtDemo44')
+    b = page.evaluate(skeleton, 'jwtDemo45')
+    assert a is not None and b is not None, 'jwtDemo44/45 를 찾지 못했다'
+    assert a == b, ('s44 와 s45 의 JWT 데모 마크업이 버튼 줄 말고도 벌어졌다.\n'
+                    's44: %s\ns45: %s' % (a[:400], b[:400]))
