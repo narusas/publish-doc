@@ -228,3 +228,130 @@ def test_presenter_window_mirrors_the_current_slide(page):
             '슬라이드를 넘겼는데 발표자 창이 따라가지 않는다'
     finally:
         pres.close()
+
+
+# --- 글자 크기 하한 (Task 6) --------------------------------------------------
+#
+# check_slides.py 의 check_font_floor 는 인라인 style 만 본다. Task 5 리뷰가 잰
+# 하한 미달 180개는 인라인이 하나도 없었다 — 전부 CSS 규칙이었다. 상속·구체성·
+# :has() 까지 풀어야 진짜 크기가 나오므로, 그건 정규식이 아니라 브라우저만 답할 수
+# 있다. 그래서 실제 강제는 여기서 한다.
+
+FONT_FLOOR = 24        # px, 1280 좌표계 본문 하한
+FONT_FLOOR_MONO = 20   # px, 코드 하한
+
+# 예외 목록. 각 줄의 근거는 oauth2_slides.html 의 DECK:STAGE:CSS 「활자 하한」
+# 주석과 짝을 이룬다 — 한쪽만 고치면 이 테스트가 잡는다.
+EXEMPT = [
+    ('.seq-cap',
+     '시퀀스 행 이름표(20px). 지도의 범례이고, 같은 말이 바로 아래 .seq-detail 의 '
+     '.lbl(24px)에 제 크기로 다시 나온다'),
+    ('.seq-legend, .seq-legend *',
+     '채널 색 범례(15px). "노란 파선이 프론트채널입니다"라고 발표자가 말한다'),
+    ('.dia-tag',
+     '그림 왼쪽 위 꼬리표(11px). 바로 옆 <h2> 가 같은 말을 44px 로 한다'),
+    ('.badge',
+     '"실제 HMAC-SHA256 서명/검증" 같은 부가 표지(16px). 내용이 아니라 표지다'),
+    ('.jwt-parts, .jwt-parts *',
+     '토큰 세 토막의 이름표(15px). 바로 위 .jwt-raw 의 세 가지 색이 같은 말을 한다'),
+    ('.seq-title', '시퀀스 제목 줄(18px). 그 장의 <h2> 가 같은 말을 크게 한다'),
+    ('.seq-counter', '"3 / 16" 계기판(18px). 발표자용이다'),
+    ('.step-n', '단계 번호(16px). 바로 옆 .lbl 이 단계 이름을 24px 로 말한다'),
+    ('.seq-controls button', '◀ 이전 · 다음 ▶ 이송 버튼(18-20px). 발표자의 손잡이다'),
+    # SVG 는 크기의 단위 자체가 다르다. font-size 12.5px 는 viewBox 좌표이고,
+    # 화면에 몇 px 로 나오는지는 상자 너비 ÷ viewBox 너비가 정한다 — 같은 값이
+    # 슬라이드마다 달라진다. 그림이 나르는 '문장'은 SVG 안이 아니라 .dia-cap(26px)에
+    # 있고, 그쪽은 이 테스트가 그대로 잰다.
+    ('svg, svg *', 'SVG 텍스트의 font-size 는 viewBox 좌표라 화면 px 이 아니다'),
+]
+
+MEASURE_FONTS = """
+(exempt) => {
+  const bad = [];
+  document.querySelectorAll('.slide').forEach(slide => {
+    slide.querySelectorAll('*').forEach(el => {
+      if (!el.getClientRects().length) return;          // 그려지지 않는 것은 읽히지도 않는다
+      if (exempt.some(sel => el.matches(sel))) return;
+      const own = Array.from(el.childNodes)
+        .filter(n => n.nodeType === 3 && n.textContent.trim())
+        .map(n => n.textContent.trim()).join(' ');
+      if (!own) return;                                 // 자식만 있는 상자는 글자를 안 나른다
+      const cs = getComputedStyle(el);
+      const px = parseFloat(cs.fontSize);
+      const mono = /mono|Menlo|Consolas|Courier/i.test(cs.fontFamily);
+      const floor = mono ? %d : %d;
+      if (px + 0.01 < floor) {
+        bad.push(slide.id + ' ' + el.tagName.toLowerCase() +
+                 (el.className ? '.' + String(el.className).trim().split(/\\s+/).join('.') : '') +
+                 '  ' + px + 'px < ' + floor + '  | ' + own.slice(0, 40));
+      }
+    });
+  });
+  return bad;
+}
+""" % (FONT_FLOOR_MONO, FONT_FLOOR)
+
+
+def test_every_visible_text_is_at_or_above_the_font_floor(page):
+    """슬라이드 전체를 돌며 실제 computed font-size 를 재고 하한과 대조한다.
+
+    특정 슬라이드를 가리키지 않는다 — 문서에 있는 .slide 를 전부 훑으므로 장이
+    늘어도 그대로 돈다. 예외는 EXEMPT 에 적힌 것뿐이고, 목록에 없는 것이 하한
+    아래로 내려가면 그 자리에서 실패한다."""
+    page.goto(DECK)
+    n = page.evaluate('Deck.slides.length')
+    # 도착해야 만들어지는 자산(s45 의 JWT 데모, 시퀀스)이 있어서 한 바퀴 깨워 둔다.
+    for i in range(n):
+        page.evaluate('i => Deck.go(i)', i)
+    page.evaluate('Deck.go(0)')
+    # 퀴즈 해설은 눌러야 열린다. 최악의 상태로 재려고 미리 펼친다.
+    page.evaluate("document.querySelectorAll('.slide .explain')"
+                  ".forEach(e => e.classList.add('show'))")
+    bad = page.evaluate(MEASURE_FONTS, [sel for sel, _ in EXEMPT])
+    assert bad == [], '하한 미만 %d개:\n  %s' % (len(bad), '\n  '.join(bad[:20]))
+
+
+def test_no_slide_overflows_the_720px_stage(page):
+    """어느 비트에서도 슬라이드 내용이 무대(0..720) 밖으로 나가지 않는다.
+
+    스크롤 상자(.demo · .win-body · .seq-rows · .jwt-checks …) 안의 내용은 그 상자가
+    가두므로 상자까지만 잰다. 넘치는 장은 줄일 것이 아니라 쪼갤 장이라는 신호다."""
+    page.goto(DECK)
+    n = page.evaluate('Deck.slides.length')
+    page.evaluate("document.querySelectorAll('.slide .explain')"
+                  ".forEach(e => e.classList.add('show'))")
+    box_js = """
+    () => {
+      const slide = Deck.slides[Deck.index];
+      const st = document.getElementById('stage').getBoundingClientRect();
+      // #stage 는 fitStage() 가 뷰포트에 맞춰 scale() 한다. 재는 값은 무대 좌표계
+      // (1280x720)로 되돌려야 720 이라는 숫자와 비교할 수 있다.
+      const k = st.width / 1280;
+      const inScroller = el => {
+        for (let e = el.parentElement; e && e !== slide; e = e.parentElement) {
+          const o = getComputedStyle(e);
+          if (/(auto|scroll|hidden)/.test(o.overflowY + ' ' + o.overflowX)) return true;
+        }
+        return false;
+      };
+      let top = Infinity, bottom = -Infinity;
+      slide.querySelectorAll('*').forEach(el => {
+        if (el.closest('svg') || inScroller(el)) return;
+        const r = el.getBoundingClientRect();
+        if (!r.width && !r.height) return;
+        top = Math.min(top, (r.top - st.top) / k);
+        bottom = Math.max(bottom, (r.bottom - st.top) / k);
+      });
+      return [slide.id, top, bottom];
+    }
+    """
+    over = []
+    for i in range(n):
+        page.evaluate('i => Deck.go(i)', i)
+        beats = page.evaluate('i => beatCount(Deck.slides[i])', i)
+        for b in range(beats):
+            page.evaluate('b => { Deck.beat = b; applyBeat(Deck.slides[Deck.index], b); }', b)
+            sid, top, bottom = page.evaluate(box_js)
+            if top < 0 or bottom > 720:
+                over.append('%s 비트%d: top=%.1f bottom=%.1f' % (sid, b, top, bottom))
+    assert over == [], '무대 밖으로 나간 장 %d건:\n  %s' % (len(over), '\n  '.join(over[:10]))
