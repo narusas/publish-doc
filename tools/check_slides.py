@@ -35,7 +35,6 @@ ID_ATTR = re.compile(r'''\bid\s*=\s*["']([^"']+)["']''')
 SCRIPT_BLOCK = re.compile(
     r'''<script\b[^>]*\bid\s*=\s*["']deck-script["'][^>]*>(.*?)</script>''', re.S)
 DECK_SCRIPT_OPEN = re.compile(r'''<script\b[^>]*\bid\s*=\s*["']deck-script["'][^>]*>''', re.I)
-SCRIPT_OPEN_ANY = re.compile(r'<script\b', re.I)
 CLOSE_SCRIPT = re.compile(r'</script', re.I)
 
 Deck = namedtuple('Deck', 'html slides script')
@@ -124,6 +123,35 @@ DIA_FIG = re.compile(
     re.S)
 DATA_AT = re.compile(r'''\bdata-at\s*=\s*["']([^"']+)["']''')
 WIRE_DIA = re.compile(r'''wireDia\(\s*['"](\w+)['"]\s*,\s*\[''')
+# registerBeats('s07', wireDia('diaGate', [...])) — 이 짝이 '그림이 어느 장에 사는가'를
+# 선언한다. 선언과 마크업이 어긋나도 화면에는 아무 표시가 없다.
+REGISTER_WIRE_DIA = re.compile(
+    r'''registerBeats\(\s*['"]([^'"]+)['"]\s*,\s*wireDia\(\s*['"](\w+)['"]''')
+SECTION_ANY = re.compile(r'''<section\b([^>]*)>|</section\s*>''', re.I)
+
+
+def _slide_spans(html):
+    """슬라이드 <section> 하나가 차지하는 문자 구간을 id 별로 돌려준다.
+
+    여는 태그를 만나면 쌓고 닫는 태그를 만나면 꺼내는 식으로 깊이를 센다. 슬라이드
+    안에 다른 <section> 이 들어 있어도 바깥쪽 슬라이드의 끝을 먼저 만난 </section>
+    으로 잘못 잡지 않는다."""
+    block = SLIDES_BLOCK.search(html)
+    region, base = (block.group(1), block.start(1)) if block else (html, 0)
+    spans, stack = {}, []
+    for m in SECTION_ANY.finditer(region):
+        if m.group(0).startswith('</'):
+            if stack:
+                sid, start = stack.pop()
+                if sid:
+                    spans[sid] = (base + start, base + m.end())
+        else:
+            attrs = m.group(1)
+            cm = CLASS_ATTR.search(attrs)
+            im = ID_ATTR.search(attrs)
+            ok = cm and 'slide' in cm.group(1).split() and im
+            stack.append((im.group(1) if ok else None, m.start()))
+    return spans
 
 
 def _max_at(segment):
@@ -177,6 +205,23 @@ def check_dia_frames(deck):
     for fid in counts:
         if not re.search(r'''id\s*=\s*["']%s["']''' % re.escape(fid), deck.html):
             problems.append('%s: wireDia 호출은 있는데 SVG 가 없다' % fid)
+
+    # registerBeats 가 선언한 '그림이 사는 장'과 마크업이 실제로 놓인 장이 같은지.
+    # 어긋나면 화면에는 아무 표시가 없다 — 등록된 장에는 그림이 없는데 비트 수만
+    # 그림의 프레임 수라 → 를 눌러도 아무 일이 없고, 그림이 실제로 놓인 장에는
+    # 구동기가 없어 첫 프레임에서 멈춘 채 넘어간다. 슬라이드 번호를 다시 매기는
+    # 작업(Task 6)에서 조용히 생기는 종류의 어긋남이다.
+    spans = _slide_spans(deck.html)
+    for sid, fid in REGISTER_WIRE_DIA.findall(deck.html):
+        span = spans.get(sid)
+        if span is None:
+            problems.append('%s: registerBeats 가 없는 슬라이드 %s 에 등록한다' % (fid, sid))
+            continue
+        segment = deck.html[span[0]:span[1]]
+        if not re.search(r'''\bid\s*=\s*["']%s["']''' % re.escape(fid), segment):
+            problems.append('%s: %s 에 등록됐는데 %s 안에 그 그림이 없다 — '
+                            '발표자는 그림 없는 장에서 → 를 %d번 누르게 된다'
+                            % (fid, sid, sid, counts.get(fid, 1)))
     return problems
 
 
@@ -200,16 +245,23 @@ def check_script_terminator(deck):
     """대본은 <script type="application/json" id="deck-script"> 안에 있다.
     그 안에 </script 가 한 번이라도 더 나오면 HTML 파서가 거기서 요소를 끊는다.
     덱은 아무 오류 메시지 없이 통째로 죽고, 원인은 대본 한 문장 안에 숨는다.
-    XSS 를 다루는 장에서 실제로 나올 수 있는 문자열이라 검사로 잡는다."""
+    XSS 를 다루는 장에서 실제로 나올 수 있는 문자열이라 검사로 잡는다.
+
+    검사 방법은 '세어 본다'가 아니라 '브라우저가 하는 대로 잘라 본다'이다. HTML 파서는
+    첫 </script 에서 요소를 끊으므로, 거기서 자른 조각이 온전한 JSON 이면 대본은
+    무사한 것이고 아니면 대본 안에 종결자가 들어간 것이다. 여는 태그(<script)는
+    파서를 끊지 않으므로 이 검사에 걸리지 않는다 — XSS 를 설명하는 대본은
+    "<script> 한 줄을 넣으면" 같은 문장을 실제로 쓴다."""
     m = DECK_SCRIPT_OPEN.search(deck.html)
     if not m:
         return []                     # read_deck 이 이미 걸렀다
-    nxt = SCRIPT_OPEN_ANY.search(deck.html, m.end())
-    region = deck.html[m.end():nxt.start() if nxt else len(deck.html)]
-    hits = CLOSE_SCRIPT.findall(region)
-    if len(hits) != 1:
-        return ['deck-script 블록 안에 </script 가 %d개 있다 — 닫는 것 하나만 있어야 한다. '
-                '대본에 그 문자열이 들어가면 HTML 파서가 거기서 대본을 끊는다' % len(hits)]
+    end = CLOSE_SCRIPT.search(deck.html, m.end())
+    if not end:
+        return ['deck-script 가 닫히지 않았다']
+    try:
+        json.loads(deck.html[m.end():end.start()])
+    except ValueError:
+        return ['대본 안에 </script 가 들어 있다 — HTML 파서가 거기서 대본을 끊는다']
     return []
 
 

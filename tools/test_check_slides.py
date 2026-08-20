@@ -64,6 +64,22 @@ def test_ok_fixture_has_no_dia_to_check():
     assert cs.check_dia_frames(deck('deck_ok.html')) == []
 
 
+def test_figure_registered_to_another_slide_is_reported():
+    """registerBeats('s01', wireDia('diaY',...)) 인데 diaY 의 마크업은 s02 에 있다.
+
+    프레임 수는 맞으므로 프레임 일치 검사는 통과한다. 그래도 발표는 깨진다 —
+    s01 은 그림 없이 비트만 셋이고, s02 는 그림이 있는데 구동기가 없다.
+    슬라이드 번호를 다시 매길 때 조용히 생기는 어긋남이라 검사로 잡는다."""
+    problems = cs.check_dia_frames(deck('deck_dia_wrong_slide.html'))
+    assert len(problems) == 1
+    assert 'diaY' in problems[0] and 's01' in problems[0]
+
+
+def test_figure_in_its_registered_slide_is_not_reported():
+    assert cs.check_dia_frames(deck('deck_frame_mismatch.html')) == [
+        'diaX: data-at 프레임 2개 ≠ wireDia 단계 3개']
+
+
 # --- 슬라이드 판별: 이름만 비슷한 section 을 세면 안 된다 (Task 5) -----------
 
 def test_lookalike_class_names_are_not_slides():
@@ -98,3 +114,12 @@ def test_close_script_inside_narration_is_reported():
 
 def test_ok_fixture_script_block_is_closed_exactly_once():
     assert cs.check_script_terminator(deck('deck_ok.html')) == []
+
+
+def test_open_script_tag_inside_narration_is_not_reported():
+    """XSS 를 설명하는 대본은 "<script> 한 줄을 넣으면" 이라고 쓴다.
+
+    여는 태그는 HTML 파서를 끊지 않으므로 대본은 멀쩡하다. '다음 <script 까지'로
+    구간을 잡던 옛 구현은 이 문장에서 구간이 잘려 "</script 가 0개 있다"고
+    엉뚱한 곳을 가리켰다."""
+    assert cs.check_script_terminator(deck('deck_script_open_in_narration.html')) == []

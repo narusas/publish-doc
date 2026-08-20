@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="ko"><head><meta charset="UTF-8"><title>fixture dia in wrong slide</title></head>
+<body>
+<!-- ==== SLIDES ==== -->
+<section class="slide" id="s00"><h2>표지</h2></section>
+<section class="slide" id="s01">
+  <h2>그림이 있어야 할 장</h2>
+  <p>여기에 diaY 가 있어야 하는데 없다. 발표자는 → 를 세 번 눌러도 아무 일이 없다.</p>
+</section>
+<section class="slide" id="s02">
+  <h2>그림이 잘못 놓인 장</h2>
+  <figure class="dia" id="diaY">
+    <div class="dia-top"><div class="dia-dots"></div></div>
+    <svg viewBox="0 0 720 200">
+      <text data-at="0" x="10" y="20">첫 프레임</text>
+      <text data-at="1" x="10" y="40">둘째 프레임</text>
+      <text data-at="2" x="10" y="60">셋째 프레임</text>
+    </svg>
+    <div class="dia-cap"></div>
+  </figure>
+</section>
+<!-- ==== /SLIDES ==== -->
+<script type="application/json" id="deck-script">
+{
+  "s00": ["안녕하세요. 오늘은 OAuth2와 OIDC를 한 시간 안에 훑어보려고 합니다. 로그인 버튼 하나를 누르면 그 뒤에서 무슨 일이 벌어지는지 따라가 보겠습니다."],
+  "s01": ["이 장에는 그림이 등록되어 있습니다. 그런데 마크업은 다음 장에 가 있습니다. 프레임 수는 맞으므로 프레임 일치 검사는 아무 말도 하지 않습니다."],
+  "s02": ["이 장에는 그림이 있지만 구동기가 없습니다. 첫 프레임에 멈춘 채로 넘어갑니다."]
+}
+</script>
+<script>
+function wireAssets(){
+  registerBeats('s01', wireDia('diaY',[
+    {c:'첫째 단계입니다.',h:2000},
+    {c:'둘째 단계입니다.',h:2000},
+    {c:'셋째 단계입니다.',h:2000}
+  ]));
+}
+</script>
+</body></html>

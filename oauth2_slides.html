@@ -14,6 +14,28 @@
   --accent:#2dd4bf; --warn:#fbbf24; --ok:#34d399; --no:#fb7185;
   --mono:"JetBrains Mono",ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
   --sans:"Pretendard Variable","Pretendard",-apple-system,BlinkMacSystemFont,system-ui,"Apple SD Gothic Neo","Noto Sans KR",sans-serif;
+
+  /* 등장인물 색과 채널 색. 출처: oauth2_tutorial.html 9-37 (:root).
+     이 열세 개는 덱마다 다른 '색 취향'이 아니라 공유 부품이 쓰는 값이다 —
+     시퀀스 플레이어의 채널 선(--front/--back/--ui)과 .dia 의 노드 색(--user 등)이
+     이것들을 직접 읽는다. 정의가 없으면 그 선언은 computed-value 시점에 통째로
+     무효가 되어 'stroke:var(--front)' 가 노란 파선이 아니라 아예 사라진다.
+     그래서 부품과 함께 코어가 들고 다니고, 색 언어가 정말 다른 덱은
+     ASSET:CSS 의 :root 에서 같은 이름을 덮어쓰면 된다.
+     --radius/--shadow 는 색이 아니라 상자 모양이라 같은 자리에 둔다. */
+  --bg-soft:#0e1626;
+  --user:#38bdf8;     /* 사용자 */
+  --browser:#22d3ee;  /* 브라우저 */
+  --client:#34d399;   /* 클라이언트/앱 */
+  --auth:#fbbf24;     /* 인증서버 */
+  --api:#fb7185;      /* API 서버 */
+  --oidc:#a78bfa;     /* OIDC */
+  --bad:#f87171;
+  --front:#fbbf24;    /* 프론트채널 */
+  --back:#34d399;     /* 백채널 */
+  --ui:#7c8aa3;       /* 사람 행동 */
+  --radius:14px;
+  --shadow:0 16px 40px rgba(0,0,0,.38);
 }
 *{box-sizing:border-box}
 html,body{margin:0;height:100%;overflow:hidden;background:#000}
@@ -102,12 +124,25 @@ body{font-family:var(--sans);color:var(--text);-webkit-font-smoothing:antialiase
 /* 튜토리얼의 section 규칙(margin-bottom:26px)이 절대배치된 .slide 의 높이를 갉아먹는다 */
 .slide{margin:0}
 
-/* 본문·코드 활자 하한 */
+/* ---- 활자 하한 ----
+   기준: 본문 24px, 코드 20px (1280x720 좌표계). 뒷자리에서 읽히는 최소치다.
+   내용을 나르는 요소는 예외 없이 이 선을 지킨다 — 그림의 캡션, 시퀀스의 단계 이름,
+   검증 결과 한 줄처럼 '이 슬라이드가 하려는 말' 자체인 것들이다.
+
+   아래 다섯 갈래는 일부러 하한 아래에 둔다. 발표자가 입으로 말하는 부수 표지라
+   뒷자리가 읽지 못해도 내용이 새지 않고, 하한까지 키우면 정작 내용이 들어갈
+   세로를 먹는다. 예외는 여기 적힌 것이 전부다:
+     .seq-legend  (15px) 채널 색 범례 — "노란 파선이 프론트채널입니다"라고 말한다
+     .dia-tag     (11px) 그림 왼쪽 위의 꼬리표 — 바로 옆 <h2> 가 같은 말을 크게 한다
+     .badge       (16px) "실제 HMAC-SHA256 서명/검증" 같은 부가 표지
+     .jwt-parts   (15px) 토큰 세 토막의 이름표 — 바로 위 .jwt-raw 의 색이 같은 말을 한다
+     .seq-title · .seq-counter · .step-n · button.sm (16-20px)
+                        발표자가 조작하는 부분. 청중이 읽을 것이 아니다 */
 .slide p,.slide li{font-size:24px;line-height:1.6}
 .slide label{font-size:24px;line-height:1.35}
 .slide pre{font-size:20px;line-height:1.55;padding:14px 16px;margin:10px 0}
 .slide h3{font-size:30px;margin:0 0 12px}
-.slide h4{font-size:22px;margin:0 0 6px}
+.slide h4{font-size:24px;margin:0 0 6px}
 .slide .demo,.slide .card,.slide .callout{margin:0 0 14px;padding:14px 16px}
 .slide > .demo:last-child{margin-bottom:0}
 .slide .card.compact{padding:12px 14px}
@@ -117,14 +152,14 @@ body{font-family:var(--sans);color:var(--text);-webkit-font-smoothing:antialiase
 .slide > .demo{min-height:0;overflow:auto}
 .slide .win{margin:6px 0;min-height:0}
 .slide .win-bar{padding:8px 12px}
-.slide .win-url{font-size:17px}
+.slide .win-url{font-size:20px}   /* 주소창 = 코드. 이 발표에서 주소창은 내용이다 */
 .slide .win-body{padding:12px 14px;min-height:0;overflow:auto}
 .slide .win-body pre{line-height:1.35}
 .slide .btn-row{margin:10px 0;gap:10px}
 /* 두 칸짜리 격자에 카드가 하나만 남으면 반 폭에서 글자가 두 줄씩 접힌다. 한 칸을 다 쓰게 둔다. */
 .slide .grid2 > :only-child{grid-column:1 / -1}
-.slide .note-inline{font-size:18px}
-.slide .badge{font-size:16px;padding:4px 11px}
+.slide .note-inline{font-size:24px}
+.slide .badge{font-size:16px;padding:4px 11px}   /* 하한 예외 — 위 목록 참고 */
 .slide input[type=text]{font-size:20px;padding:12px 13px}
 .slide input[type=checkbox]{width:22px;height:22px;vertical-align:-5px}
 /* 버튼은 .demo/.seq/.jwt-demo 안의 것만 키운다 — .dia-dot 은 9px 짜리 점이라
@@ -145,7 +180,7 @@ body{font-family:var(--sans);color:var(--text);-webkit-font-smoothing:antialiase
 /* 그림 슬라이드는 제목을 줄이고 여백을 좁혀 그림에 세로를 몰아준다.
    :has() 를 모르는 브라우저에서는 이 두 줄만 빠지고 그림이 조금 작아질 뿐이다. */
 .slide:has(.dia),.slide:has(.seq){padding:36px 40px 40px}
-.slide:has(.demo){padding:24px 40px 28px}
+.slide:has(.demo){padding:22px 40px 24px}
 .slide:has(.dia) h2,.slide:has(.seq) h2,.slide:has(.demo) h2{font-size:34px;margin:0 0 12px}
 
 /* ---- 시퀀스 플레이어 ----
@@ -158,14 +193,23 @@ body{font-family:var(--sans);color:var(--text);-webkit-font-smoothing:antialiase
 .slide .seq-mount{flex:1 1 auto;min-height:0;display:flex;flex-direction:column}
 .slide .seq{margin:0;flex:1 1 auto;min-height:0;display:flex;flex-direction:column;padding:12px 14px}
 .slide .seq-title{font-size:18px}
-.slide .seq-legend{font-size:15px}
+.slide .seq-legend{font-size:15px}   /* 하한 예외 — 위 목록 참고 */
 .slide .seq-actor{font-size:17px;padding:7px 4px}
 .slide .seq-actor .ic{font-size:24px}
-.slide .seq-actor .nm{font-size:17px}
+.slide .seq-actor .nm{font-size:24px}
 .slide .seq-track{flex:1 1 auto;min-height:0;display:flex;padding:10px 0 2px}
 .slide .seq-rows{flex:1 1 auto;min-height:0;overflow-y:auto;overflow-x:hidden;gap:6px;scrollbar-width:thin}
-.slide .seq-cap{font-size:17px}
-.slide .seq-num{width:24px;height:24px;font-size:13px}
+/* 단계 이름은 이 두 장의 '내용' 그 자체다. 24px 로 키우면 캡션(30px)이 원본의
+   42px 짜리 행 위로 12px 흘러나와 윗행과 겹친다. 행을 64px 로 넓혀 캡션이 행 안에
+   들어오게 했다 — 대신 한 화면에 보이는 단계가 5.1개에서 3.7개로 줄었다(257px 창에
+   64+6px 짜리 행). 나머지는 .seq-rows 가 현재 단계를 따라가며 스크롤한다. 16단계를
+   24px 로 한 화면에 담을 방법은 없다. 이 자리를 둘로 쪼갤지는 Task 6 이 정한다.
+   nowrap 도 풀어 둔다. 16단계 중 두 줄로 접히는 캡션은 지금 하나도 없지만, 대본이
+   길어졌을 때 가로로 잘려 사라지는 것보다 두 줄로 접히는 편이 낫다. */
+.slide .seq-cap{font-size:24px;white-space:normal;line-height:1.25;max-width:100%}
+.slide .seq-msg{height:64px}
+.slide .seq-row{min-height:64px}
+.slide .seq-num{width:32px;height:32px;font-size:20px}
 .slide .seq-detail{flex:0 0 auto;margin-top:10px}
 .slide .seq-detail-head .lbl{font-size:20px}
 .slide .seq-detail-head .step-n{font-size:16px}
@@ -182,10 +226,18 @@ body{font-family:var(--sans);color:var(--text);-webkit-font-smoothing:antialiase
 .slide .jwt-demo .grid2{flex:1 1 auto;min-height:0;grid-template-columns:0.78fr 1.22fr}
 .slide .jwt-demo .grid2>div{display:flex;flex-direction:column;min-height:0}
 .slide .jwt-raw{flex:0 0 auto;font-size:20px;line-height:1.55;padding:10px 14px;max-height:98px;overflow:auto}
-.slide .jwt-parts{font-size:15px;margin-top:6px}
-.slide .verify-row{font-size:19px;padding:3px 0}
+.slide .jwt-parts{font-size:15px;margin-top:6px}   /* 하한 예외 — 위 목록 참고 */
+/* 검증 다섯 줄과 마지막 결론 한 줄이 s44/s45 의 결론이다. 24px 로 키운 만큼
+   줄 사이 여백과 상자 안쪽 여백에서 되찾는다 — 글자를 줄이지 않고 줄을 붙인다. */
+.slide .verify-row{font-size:24px;padding:2px 0}
+/* ⚠ 이 두 줄은 id 선택자다. jwtRaw·jwtDecoded·jwtChecks 는 s44 와 s45 에 같은
+   이름으로 하나씩, 문서에 둘씩 있다 — renderJwt 가 컨테이너(#jwtDemo44/#jwtDemo45)를
+   기준으로 찾기 때문에 동작에는 문제가 없다(브라우저에서 확인). 그리고 s44·s45 가
+   720px 안에 들어가는 것은 자라는 두 곳을 여기서 flex 로 붙잡아 둔 덕이다.
+   id 를 유일하게 고치려면 이 두 줄도 같은 커밋에서 클래스 선택자로 바꿔야 한다.
+   한쪽만 고치면 세로가 조용히 무너진다. */
 .slide #jwtDecoded{flex:1 1 auto;min-height:0;overflow:auto;margin-top:6px}
-.slide #jwtChecks{flex:1 1 auto;min-height:0;overflow:auto}
+.slide #jwtChecks{flex:1 1 auto;min-height:0;overflow:auto;padding:8px 12px}
 .slide .split-line{margin:10px 0}
 /* ==== /DECK:STAGE:CSS ==== */
 
@@ -198,29 +250,16 @@ body{font-family:var(--sans);color:var(--text);-webkit-font-smoothing:antialiase
    423-431 @media(max-width:980px) 도 옮기지 않는다 — 튜토리얼 레이아웃(#sidebar·#content)을
            위한 규칙이고, 덱은 1280x720 좌표계를 통째로 확대·축소하므로 창 너비에 따라
            .grid2 가 한 줄로 접히면 뒷자리에서 보이는 그림이 자리마다 달라진다.
-   아래 블록은 원본과 한 줄씩 대조할 수 있어야 하므로 고치지 않는다.
-   무대에서 크기가 안 맞는 것은 DECK:STAGE:CSS 에서 덮어쓴다. */
+   아래 블록은 원본과 한 줄씩 대조할 수 있어야 하므로 고치지 않는다. 딱 한 줄만 뺐다 —
+   .dia-btn 규칙. 원본의 ▶ 재생 버튼은 덱에 실리지 않는다(→ 가 그 자리다). 마크업에서
+   지웠으므로 규칙도 함께 지운다. */
 
-/* 출처: oauth2_tutorial.html 9-37 (:root) 중, 아래 블록이 쓰는데 DECK:CORE:CSS 에는
-   없는 것만. 덱의 :root 는 무대용 열여섯 개짜리 축약본이라 그림·시퀀스가 쓰는 '색의
-   언어'(등장인물 색, 프론트/백채널 색)를 갖고 있지 않다. 정의되지 않은 커스텀 속성이
-   들어간 선언은 통째로 무효가 되므로 — stroke:var(--front) 는 노란 파선이 아니라
-   그냥 사라진다 — 이식한 CSS 옆에 같이 둔다. */
-:root{
-  --bg-soft:#0e1626;
-  --user:#38bdf8;     /* 사용자 */
-  --browser:#22d3ee;  /* 브라우저 */
-  --client:#34d399;   /* 클라이언트/앱 */
-  --auth:#fbbf24;     /* 인증서버 */
-  --api:#fb7185;      /* API 서버 */
-  --oidc:#a78bfa;     /* OIDC */
-  --bad:#f87171;
-  --front:#fbbf24;    /* 프론트채널 */
-  --back:#34d399;     /* 백채널 */
-  --ui:#7c8aa3;       /* 사람 행동 */
-  --radius:14px;
-  --shadow:0 16px 40px rgba(0,0,0,.38);
-}
+/* 원본 7-57 의 루트 변수 중 아래 블록이 쓰는 열세 개(--front --back --ui --user
+   --client --auth --api --oidc --bad --browser --bg-soft --radius --shadow)는
+   DECK:CORE:CSS 의 :root 로 옮겼다 — 시퀀스 플레이어와 .dia 가 직접 읽는 값이라
+   부품과 함께 템플릿이 들고 다녀야 한다. 색 언어가 다른 덱은 여기 :root 에서
+   같은 이름을 덮어쓰면 된다.
+   --fx --fy --ft --dl 은 옮기지 않았다 — var(--fx,0) 처럼 자기 대체값을 들고 다닌다. */
 
 /* ===== Content ===== */
 #content{flex:1;min-width:0;max-width:1080px;margin:0 auto;padding:40px 52px 120px}
@@ -418,7 +457,6 @@ pre b{color:var(--auth);font-weight:700}
   border:1px solid var(--border-2);background:var(--panel);border-radius:99px;padding:4px 10px;
 }
 .dia-sp{flex:1 1 auto}
-.dia-btn{padding:5px 11px;font-size:12px;font-family:var(--mono);min-width:76px}
 .dia-dots{display:flex;gap:6px;align-items:center}
 .dia-dot{
   width:9px;height:9px;padding:0;min-width:0;border-radius:50%;
@@ -586,7 +624,6 @@ pre b{color:var(--auth);font-weight:700}
         <span class="dia-tag">비밀번호가 지나는 경로</span>
         <span class="dia-sp"></span>
         <div class="dia-dots" role="group" aria-label="단계 이동"></div>
-        <button class="sm dia-btn" type="button">▶ 재생</button>
       </div>
       <div class="dia-hint" aria-hidden="true">← 좌우로 밀어서 보세요 →</div>
       <div class="dia-scroll">
@@ -672,7 +709,6 @@ pre b{color:var(--auth);font-weight:700}
         <span class="dia-tag">검사대 둘, 질문 둘</span>
         <span class="dia-sp"></span>
         <div class="dia-dots" role="group" aria-label="단계 이동"></div>
-        <button class="sm dia-btn" type="button">▶ 재생</button>
       </div>
       <div class="dia-hint" aria-hidden="true">← 좌우로 밀어서 보세요 →</div>
       <div class="dia-scroll">
@@ -733,7 +769,6 @@ pre b{color:var(--auth);font-weight:700}
         <span class="dia-tag">누가 누구와 말하는가</span>
         <span class="dia-sp"></span>
         <div class="dia-dots" role="group" aria-label="단계 이동"></div>
-        <button class="sm dia-btn" type="button">▶ 재생</button>
       </div>
       <div class="dia-hint" aria-hidden="true">← 좌우로 밀어서 보세요 →</div>
       <div class="dia-scroll">
@@ -811,7 +846,6 @@ pre b{color:var(--auth);font-weight:700}
         <span class="dia-tag">검증이 어디서 일어나는가</span>
         <span class="dia-sp"></span>
         <div class="dia-dots" role="group" aria-label="단계 이동"></div>
-        <button class="sm dia-btn" type="button">▶ 재생</button>
       </div>
       <div class="dia-hint" aria-hidden="true">← 좌우로 밀어서 보세요 →</div>
       <div class="dia-scroll">
@@ -899,7 +933,6 @@ pre b{color:var(--auth);font-weight:700}
         <span class="dia-tag">주소창이 바뀌는 순간</span>
         <span class="dia-sp"></span>
         <div class="dia-dots" role="group" aria-label="단계 이동"></div>
-        <button class="sm dia-btn" type="button">▶ 재생</button>
       </div>
       <div class="dia-hint" aria-hidden="true">← 좌우로 밀어서 보세요 →</div>
       <div class="dia-scroll">
@@ -989,7 +1022,6 @@ pre b{color:var(--auth);font-weight:700}
         <span class="dia-tag">주소창은 몇 군데에 남는가</span>
         <span class="dia-sp"></span>
         <div class="dia-dots" role="group" aria-label="단계 이동"></div>
-        <button class="sm dia-btn" type="button">▶ 재생</button>
       </div>
       <div class="dia-hint" aria-hidden="true">← 좌우로 밀어서 보세요 →</div>
       <div class="dia-scroll">
@@ -1062,7 +1094,6 @@ pre b{color:var(--auth);font-weight:700}
         <span class="dia-tag">자물쇠 먼저, 열쇠는 나중에</span>
         <span class="dia-sp"></span>
         <div class="dia-dots" role="group" aria-label="단계 이동"></div>
-        <button class="sm dia-btn" type="button">▶ 재생</button>
       </div>
       <div class="dia-hint" aria-hidden="true">← 좌우로 밀어서 보세요 →</div>
       <div class="dia-scroll">
@@ -1153,7 +1184,6 @@ pre b{color:var(--auth);font-weight:700}
         <span class="dia-tag">브라우저가 빠지는 지점</span>
         <span class="dia-sp"></span>
         <div class="dia-dots" role="group" aria-label="단계 이동"></div>
-        <button class="sm dia-btn" type="button">▶ 재생</button>
       </div>
       <div class="dia-hint" aria-hidden="true">← 좌우로 밀어서 보세요 →</div>
       <div class="dia-scroll">
@@ -1316,7 +1346,6 @@ pre b{color:var(--auth);font-weight:700}
         <span class="dia-tag">스크립트 한 줄이 집어가는 것</span>
         <span class="dia-sp"></span>
         <div class="dia-dots" role="group" aria-label="단계 이동"></div>
-        <button class="sm dia-btn" type="button">▶ 재생</button>
       </div>
       <div class="dia-hint" aria-hidden="true">← 좌우로 밀어서 보세요 →</div>
       <div class="dia-scroll">
@@ -1423,15 +1452,19 @@ const Deck={
   },
   go(i, beat=0){
     if(i<0||i>=this.slides.length)return;
-    this.slides[this.index].classList.remove('on');
+    // 떠나는 장을 먼저 정리한다. 스스로 도는 자산을 여기서 멈추지 않으면 화면 밖에서
+    // 계속 돌고, 나중에 다른 장의 자산까지 깨어나면 두 장이 동시에 진행한다.
+    const leaving=this.slides[this.index];
+    leaving.classList.remove('on');
+    if(ON_ENTER[leaving.id] && ON_ENTER[leaving.id].leave) ON_ENTER[leaving.id].leave();
     this.index=i;
     const slide=this.slides[i];
     slide.classList.add('on');
     this.beat = (beat==='last') ? beatCount(slide)-1 : 0;
     applyBeat(slide,this.beat);
-    // 이 슬라이드가 '들어오는 순간 스스로 도는' 자산을 갖고 있으면 여기서 깨운다.
+    // 이 장이 '도착한 순간의 상태'를 스스로 정하는 자산을 갖고 있으면 여기서 깨운다.
     // (시퀀스 자동재생 · 도착 시점에 이미 만들어져 있어야 하는 데모 상태)
-    if(AUTOPLAY[slide.id]) AUTOPLAY[slide.id].auto();
+    if(ON_ENTER[slide.id]) ON_ENTER[slide.id].enter();
     paint();
   }
 };
@@ -1440,7 +1473,15 @@ const Deck={
    오른쪽 화살표 하나로 발표가 굴러가야 한다. 프레임 전진과 슬라이드 넘김에
    다른 키를 배정하면 발표자가 발표 중에 어느 키인지를 생각해야 한다. */
 const BEATS={};                     // slideId -> {n, go(i)}
-const AUTOPLAY={};                  // slideId -> {auto()}  — Task 5 가 채운다
+/* 슬라이드의 '들어옴/나감' 생명주기. Deck.go 가 떠나는 장의 leave() 와 들어오는 장의
+   enter() 를 부른다. 두 갈래가 다 필요하다:
+   - 스스로 도는 것(시퀀스 자동재생)은 enter 에서 되감아 시작하고 leave 에서 멈춘다.
+     멈추는 짝이 없으면 떠난 장의 타이머가 계속 돌아 두 장이 동시에 진행한다.
+   - 스스로 돌지 않고 '놓이는' 상태(도착 시점에 이미 만들어져 있어야 하는 데모)는
+     leave 가 없고, enter 가 여러 번 불려도 같은 결과여야 한다. ← 로 되돌아왔을 때
+     발표자가 방금 보여 준 것을 지우면 안 되기 때문이다.
+   자산 쪽(ASSET:JS)이 채운다 — 코어에는 이 덱만의 슬라이드 id 가 남지 않는다. */
+const ON_ENTER={};                  // slideId -> {enter(), leave?()}
 function registerBeats(id,ctrl){ BEATS[id]=ctrl; }
 
 function beatCount(slide){
@@ -1628,14 +1669,17 @@ function onKey(e){
 function init(){
   Deck.slides=$$('.slide');
   Deck.script=JSON.parse($('#deck-script').textContent);
-  // 이식한 자산(ASSET:JS)이 registerBeats·AUTOPLAY 를 채울 자리. 반드시 첫 go(0) 보다
-  // 먼저다 — 뒤에 두면 첫 슬라이드의 applyBeat 가 컨트롤러 없이 돌아 첫 장만 규칙이
-  // 다르게 동작한다. 자산이 없는 덱에서는 함수 자체가 없으므로 건너뛴다.
-  if(typeof wireAssets==='function') wireAssets();
+  // 자산 등록(ASSET:JS)은 두 갈래로 나뉜다. 첫 go(0) 보다 반드시 먼저여야 하는 것은
+  // registerBeats·ON_ENTER 뿐이다 — 뒤에 두면 첫 슬라이드의 applyBeat 가 컨트롤러
+  // 없이 돌아 첫 장만 규칙이 다르게 동작한다.
+  if(typeof registerAssets==='function') registerAssets();
   Deck.go(0);
   addEventListener('keydown',onKey);
   addEventListener('resize',fitStage);
   fitStage(); paint();
+  // 이벤트 배선과 초기 렌더는 첫 화면이 그려진 뒤라도 늦지 않다. 여기 두면 배선 중에
+  // 예외가 나도 이미 덱은 굴러가는 상태다 — 데모 하나가 죽지, 화면이 검어지지 않는다.
+  if(typeof wireDemos==='function') wireDemos();
 }
 /* ==== /DECK:CORE:JS ==== */
 
@@ -1682,20 +1726,27 @@ function wireDia(id,steps){
     marks.forEach(m=>m.el.classList.toggle('vis',m.at.has(i)));
     dotEls.forEach((d,k)=>d.classList.toggle('on',k===i));
   }
-  if(btn) btn.remove();   // 자동재생 버튼은 덱에서 의미가 없다 — → 가 그 자리를 대신한다
+  // 자동재생 버튼은 덱에서 의미가 없다 — → 가 그 자리를 대신한다. 마크업에서 이미
+  // 빼 두었지만, 원본에서 그림을 새로 옮겨 오면 딸려 올 수 있어 안전망으로 남긴다.
+  if(btn) btn.remove();
   paintDia();
   return { n:n, el:fig, go(k){ i=Math.max(0,Math.min(n-1,k)); paintDia(); } };
 }
 
 /* 출처: oauth2_tutorial.html 2161-2232(createSequence)
-   변경점: 끝에서 render() 를 컨트롤러로 노출하고, auto() 로 자동재생을 시작한다.
-   s17·s51 의 mainSeq 만 auto() 를 쓴다 — 16단계를 키로 넘기면 3분 30초에
-   들어오지 않고, 이 두 자리의 목적은 세부가 아니라 흐름의 윤곽이다.
-   auto() 는 원본의 `.sq-auto` 를 그냥 누르지 않고 먼저 stop() 하고 처음으로 되감는다.
-   슬라이드를 떠났다 돌아오면 타이머가 아직 돌고 있을 수 있는데, 그때 그냥 누르면
-   토글이라 재생이 '멈춤'이 되어 버린다. */
+   변경점: 끝에서 render() 를 컨트롤러로 노출하고, enter()/leave() 로 슬라이드의
+   들어옴·나감에 자동재생을 매단다. s17·s51 의 mainSeq 만 이 갈래를 쓴다 —
+   16단계를 키로 넘기면 3분 30초에 들어오지 않고, 이 두 자리의 목적은 세부가 아니라
+   흐름의 윤곽이다.
+   enter() 는 원본의 `.sq-auto` 를 그냥 누르지 않고 먼저 stop() 하고 처음으로 되감는다.
+   원본 핸들러는 토글이라, 타이머가 돌고 있을 때 그냥 누르면 재생이 '멈춤'이 된다.
+   leave() 로 나갈 때 멈추는 짝을 함께 준다 — 이게 없으면 s17 을 떠나도 타이머가
+   계속 돌고, s51 까지 깨어나면 두 시퀀스가 동시에 단계를 넘긴다. */
 function createSequence(mountId,cfg){
-  const root=$('#'+mountId); if(!root)return;
+  // 마운트가 없으면 컨트롤러도 없다. wireDia 와 같은 모양으로 null 을 돌려준다 —
+  // 컨트롤러를 돌려주는 함수가 어떤 길에서는 undefined 를 돌려주면 부르는 쪽이
+  // 두 가지 '없음'을 구분해야 한다.
+  const root=$('#'+mountId); if(!root)return null;
   const A=cfg.actors, idx={}; A.forEach((a,i)=>idx[a.id]=i); const N=A.length;
   const wrap=document.createElement('div'); wrap.className='seq';
   wrap.innerHTML=`
@@ -1768,7 +1819,8 @@ function createSequence(mountId,cfg){
   return {
     n: steps.length,
     go(k){ stop(); cur=Math.max(0,Math.min(steps.length-1,k)); render(); },
-    auto(){ stop(); cur=0; render(); $('.sq-auto',wrap).click(); }
+    enter(){ stop(); cur=0; render(); $('.sq-auto',wrap).click(); },
+    leave(){ stop(); }
   };
 }
 
@@ -1905,11 +1957,14 @@ async function renderJwt(mode, root){
   ).join('')+`<div class="verify-row" style="border-top:1px solid var(--border);margin-top:6px;padding-top:10px"><span class="vi">${allOk?'🎉':'⛔'}</span><span class="${allOk?'ok-text':'bad-text'}"><strong>${allOk?'검증 통과 → 로그인 세션 생성 가능':'검증 실패 → 로그인 거부'}</strong></span></div>`+(tamperedNote?`<p class="note-inline" style="color:var(--bad)">${tamperedNote}</p>`:'');
 }
 
-/* ---------- 이식한 자산을 덱에 붙인다 ----------
-   DECK:CORE:JS 의 init() 이 Deck.go(0) 앞에서 이 함수를 부른다. 등록이 첫 go(0) 보다
+/* ---------- 이식한 자산을 덱에 붙인다 — 등록 ----------
+   DECK:CORE:JS 의 init() 이 Deck.go(0) '앞에서' 이 함수를 부른다. 등록이 첫 go(0) 보다
    늦으면 첫 슬라이드의 applyBeat 가 컨트롤러 없이 돌아 첫 장만 규칙이 다르게 동작한다.
-   registerBeats 와 AUTOPLAY 를 여기서 채우므로 DECK:CORE:JS 에는 이 덱만의 것이 남지 않는다. */
-function wireAssets(){
+   여기 있어야 하는 것은 registerBeats 와 ON_ENTER 뿐이다. 이벤트 배선과 초기 렌더는
+   go(0) 뒤라도 늦지 않으므로 wireDemos() 로 내렸다 — 전에는 한 함수에 다 있어서
+   데모 id 하나가 어긋나면 go(0) 전에 TypeError 가 나고 덱 전체가 검은 화면이 됐다.
+   registerBeats 와 ON_ENTER 를 여기서 채우므로 DECK:CORE:JS 에는 이 덱만의 것이 남지 않는다. */
+function registerAssets(){
   /* ---------- 애니메이션 다이어그램 ---------- */
   /* 출처: oauth2_tutorial.html 2435-2540 의 wireDia(...) steps 를 그대로 옮겼다.
      달라진 것은 registerBeats 로 감싼 것뿐이다. */
@@ -1993,35 +2048,63 @@ function wireAssets(){
 
   /* ---------- 시퀀스 플레이어 ----------
      마운트 id 를 mainSeq17·mainSeq51 로 나눈다. 같은 id 를 두 번 쓰면 둘째 것이 조용히 죽는다. */
-  AUTOPLAY['s17']=createSequence('mainSeq17',{title:'Authorization Code + PKCE (+ OIDC) Flow',actors:MAIN_ACTORS,steps:MAIN_STEPS});
-  AUTOPLAY['s51']=createSequence('mainSeq51',{title:'다시 한 바퀴',actors:MAIN_ACTORS,steps:MAIN_STEPS});
+  const seq17=createSequence('mainSeq17',{title:'Authorization Code + PKCE (+ OIDC) Flow',actors:MAIN_ACTORS,steps:MAIN_STEPS});
+  const seq51=createSequence('mainSeq51',{title:'다시 한 바퀴',actors:MAIN_ACTORS,steps:MAIN_STEPS});
+  if(seq17) ON_ENTER['s17']=seq17;   // enter(): 되감고 재생 · leave(): 멈춤
+  if(seq51) ON_ENTER['s51']=seq51;
 
-  /* ---------- 라이브 데모 ---------- */
-  /* 출처: oauth2_tutorial.html 2411-2421 의 이벤트 배선 */
-  ['useOidc','scopeProfile','scopeEmail','scopeRepo'].forEach(id=>$('#'+id).addEventListener('change',renderAuthUrl));
-  $('#stateGood').addEventListener('click',()=>renderState(true));
-  $('#stateBad').addEventListener('click',()=>renderState(false));
-  $('#pkceBtn').addEventListener('click',renderPkce);
-  $('#stealCodeBtn').addEventListener('click',()=>{$('#pkceOut').textContent='공격자가 가진 것: code=SplxlOBeZQQYbYS6WxSbIA (프론트채널에서 탈취)\n공격자가 모르는 것: code_verifier (앱만 보관)\n\nPOST /oauth/token  grant_type=authorization_code&code=Splx...&code_verifier=???\n\n🚨 인증 서버: SHA-256(verifier) != 저장된 challenge\n→ 400 invalid_grant. 토큰 발급 거부. PKCE가 막아냈습니다!';});
+  /* ---------- 도착한 순간의 데모 상태 ----------
+     s45 는 위변조가 무너뜨릴 '정상 상태'가 먼저 있어야 말이 된다. 그래서 그 장에
+     처음 들어오는 순간 정상 토큰을 한 번 만들어 둔다.
+     enter() 는 되돌아올 때마다 다시 불리므로 '한 번만'을 스스로 지켜야 한다. 발표자가
+     ②위변조를 보여 준 뒤 ↓ 로 나갔다 ↑ 로 돌아오면, 방금 보여 준 ⛔ 결과가 그대로
+     남아 있어야 한다. 그것을 정상 토큰으로 덮어써 버리면 이야기가 끊긴다.
+     leave() 는 없다 — 이건 도는 것이 아니라 놓인 상태다. */
+  const rj45=$('#jwtDemo45');
+  if(rj45) ON_ENTER['s45']={
+    enter(){
+      if(rj45.dataset.primed) return;   // 손대지 않은 첫 진입에서만 만든다
+      rj45.dataset.primed='1';
+      renderJwt('ok', rj45);
+    }
+  };
+}
+
+/* ---------- 이식한 자산을 덱에 붙인다 — 배선 ----------
+   init() 이 Deck.go(0) 과 키 배선을 끝낸 '뒤에' 부른다. 출처는 oauth2_tutorial.html
+   2411-2421 의 이벤트 배선과 초기 렌더 그대로이고, 달라진 것은 요소마다 있는지
+   확인하는 것뿐이다. 전에는 id 하나만 어긋나도 여기서 TypeError 가 나면서 뒤의 배선이
+   통째로 끊겼다 — 그리고 이 함수가 go(0) 앞에 있었으므로 화면은 통째로 검어졌다.
+   이제는 죽은 id 하나가 죽은 데모 하나로 끝난다. */
+function wireDemos(){
+  const on=(sel,ev,fn,root)=>{ const el=$(sel,root); if(el) el.addEventListener(ev,fn); return el; };
+
+  ['useOidc','scopeProfile','scopeEmail','scopeRepo'].forEach(id=>on('#'+id,'change',renderAuthUrl));
+  on('#stateGood','click',()=>renderState(true));
+  on('#stateBad','click',()=>renderState(false));
+  on('#pkceBtn','click',renderPkce);
+  on('#stealCodeBtn','click',()=>{const o=$('#pkceOut'); if(o)o.textContent='공격자가 가진 것: code=SplxlOBeZQQYbYS6WxSbIA (프론트채널에서 탈취)\n공격자가 모르는 것: code_verifier (앱만 보관)\n\nPOST /oauth/token  grant_type=authorization_code&code=Splx...&code_verifier=???\n\n🚨 인증 서버: SHA-256(verifier) != 저장된 challenge\n→ 400 invalid_grant. 토큰 발급 거부. PKCE가 막아냈습니다!';});
   $$('.api-call').forEach(b=>b.addEventListener('click',()=>{$$('.api-call').forEach(x=>x.classList.remove('primary'));b.classList.add('primary');renderApiCall(b.dataset.need,b.dataset.path);}));
   $$('.api-scope').forEach(cb=>cb.addEventListener('change',()=>{const a=$('.api-call.primary');renderApiCall(a?.dataset.need||'profile:read',a?.dataset.path||'/me');}));
   $$('.rot-step').forEach(b=>b.addEventListener('click',()=>renderRot(Number(b.dataset.step))));
 
   /* JWT 데모는 s44·s45 두 곳에 같은 마크업이 있다. 버튼을 걸 때 각자의 루트를 넘긴다. */
   const r44=$('#jwtDemo44'), r45=$('#jwtDemo45');
-  $('#jwtBuild',r44).addEventListener('click',()=>renderJwt('ok',r44));
-  $('#jwtTamper',r45).addEventListener('click',()=>renderJwt('tamper',r45));
-  $('#jwtBadNonce',r45).addEventListener('click',()=>renderJwt('nonce',r45));
+  if(r44) on('#jwtBuild','click',()=>renderJwt('ok',r44),r44);
+  if(r45){
+    on('#jwtTamper','click',()=>renderJwt('tamper',r45),r45);
+    on('#jwtBadNonce','click',()=>renderJwt('nonce',r45),r45);
+  }
 
-  /* s45 는 위변조가 무너뜨릴 '정상 상태'가 먼저 있어야 말이 된다. 그래서 그 슬라이드에
-     들어오는 순간 정상 토큰을 한 번 만들어 둔다. AUTOPLAY 는 Deck.go 가 슬라이드에
-     들어올 때 부르는 유일한 갈래라 여기에 얹는다 — 코어에 s45 를 박아 넣지 않는다. */
-  AUTOPLAY['s45']={ auto(){ renderJwt('ok', r45); } };
-
-  /* 첫 화면. 원본 init() 끝의 초기 렌더와 같다. */
-  renderAuthUrl(); renderState(true); renderPkce();
-  renderApiCall('profile:read','/me'); renderRot(0);
-  renderJwt('ok', r44);
+  /* 첫 화면. 원본 init() 끝의 초기 렌더와 같다. 각 렌더 함수는 자기 데모의 요소를
+     문서에서 직접 찾으므로, 그 데모가 이 덱에 없으면 부르지 않는다. */
+  const boot=(fn,...ids)=>{ if(ids.every(id=>$('#'+id))) fn(); };
+  boot(renderAuthUrl,'authUrl','useOidc','scopeProfile','scopeEmail','scopeRepo');
+  boot(()=>renderState(true),'stateOut');
+  boot(renderPkce,'pkceOut','verifierInput');
+  boot(()=>renderApiCall('profile:read','/me'),'apiOut');
+  boot(()=>renderRot(0),'rotOut');
+  if(r44) renderJwt('ok', r44);
 }
 /* ==== /ASSET:JS ==== */
 
