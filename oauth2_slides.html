@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>OAuth2 / OIDC — 발표 덱</title>
+<style>
+/* ==== DECK:CORE:CSS ==== */
+:root{
+  --stage-w:1280px; --stage-h:720px;
+  --bg:#070b12; --panel:#111a28; --panel-2:#172133;
+  --border:#233046; --border-2:#32425e;
+  --text:#e8eef7; --text-dim:#9fb0c6; --text-mut:#8698b3;
+  --accent:#2dd4bf; --warn:#fbbf24; --ok:#34d399; --no:#fb7185;
+  --mono:"JetBrains Mono",ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+  --sans:"Pretendard Variable","Pretendard",-apple-system,BlinkMacSystemFont,system-ui,"Apple SD Gothic Neo","Noto Sans KR",sans-serif;
+}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%;overflow:hidden;background:#000}
+body{font-family:var(--sans);color:var(--text);-webkit-font-smoothing:antialiased}
+
+/* 무대: 1280x720 고정 좌표계를 통째로 확대·축소한다.
+   반응형으로 글자가 커졌다 작아지면 뒷자리 가독성이 화면마다 달라진다. */
+#viewport{position:fixed;inset:0;display:grid;place-items:center;background:#000}
+#stage{
+  position:relative;width:var(--stage-w);height:var(--stage-h);
+  transform-origin:center center;background:var(--bg);overflow:hidden;
+}
+.slide{
+  position:absolute;inset:0;padding:72px 88px 88px;
+  display:flex;flex-direction:column;justify-content:center;
+  opacity:0;visibility:hidden;
+}
+.slide.on{opacity:1;visibility:visible}
+.slide h2{font-size:44px;line-height:1.25;letter-spacing:-1px;margin:0 0 28px;font-weight:800}
+.slide p{font-size:26px;line-height:1.7;color:var(--text-dim);margin:0 0 16px}
+.slide code{font-family:var(--mono);font-size:22px;color:var(--accent)}
+
+/* 상단 진행 바 두 줄 — 위는 위치, 아래는 예정 대비 실제 */
+#bars{position:absolute;left:0;right:0;top:0;height:6px;z-index:5}
+#barPos,#barTime{position:absolute;left:0;height:3px;transition:width .25s}
+#barPos{top:0;background:var(--accent)}
+#barTime{top:3px;background:var(--ok)}
+#barTime.behind{background:var(--warn)}
+
+#hud{
+  position:absolute;right:20px;top:16px;z-index:5;display:flex;gap:14px;align-items:center;
+  font-family:var(--mono);font-size:13px;color:var(--text-mut);
+}
+#hud .clock{color:var(--text-dim)}
+#hud .clock.running{color:var(--ok)}
+/* ==== /DECK:CORE:CSS ==== */
+
+/* ==== DECK:STAGE:CSS ==== */
+/* 무대용 명도 대비 상향. 회의실 조명이 밝아도 뒷자리에서 읽히도록. */
+:root{ --bg:#04070d; --text-dim:#c3d1e2; --text-mut:#a3b4c9; }
+/* ==== /DECK:STAGE:CSS ==== */
+
+/* ==== ASSET:CSS ← oauth2_tutorial.html ==== */
+/* ==== /ASSET:CSS ==== */
+</style>
+</head>
+<body>
+<div id="viewport"><div id="stage">
+  <div id="bars"><i id="barPos"></i><i id="barTime"></i></div>
+  <div id="hud"><span class="clock" id="clock">0:00</span><span id="counter">1 / 1</span></div>
+
+<!-- ==== SLIDES ==== -->
+  <section class="slide" id="s00">
+    <h2>OAuth2 / OIDC</h2>
+    <p>로그인 버튼 하나에 일어나는 열여섯 단계</p>
+  </section>
+  <section class="slide" id="s01">
+    <h2>둘째 장</h2>
+    <p>골격 확인용 더미입니다.</p>
+  </section>
+  <section class="slide" id="s02">
+    <h2>셋째 장</h2>
+    <p>골격 확인용 더미입니다.</p>
+  </section>
+<!-- ==== /SLIDES ==== -->
+</div></div>
+
+<script type="application/json" id="deck-script">
+{
+  "s00": ["안녕하세요. 오늘은 OAuth2와 OIDC를 한 시간 안에 훑어보려고 합니다. 로그인 버튼 하나를 누르면 그 뒤에서 무슨 일이 벌어지는지, 열여섯 단계를 전부 따라가 보겠습니다."],
+  "s01": ["이 장은 골격을 확인하려고 놓아 둔 더미입니다. 자산을 붙이기 전에 넘김과 타이머가 먼저 도는지 확인하는 자리입니다. 여기까지 확인되면 다음 단계로 넘어갑니다."],
+  "s02": ["마지막 더미 장입니다. 오른쪽 화살표로 여기까지 왔다면 슬라이드 전환은 동작하는 것입니다. 이제 자산을 이식할 차례입니다."]
+}
+</script>
+
+<script>
+/* ==== DECK:CORE:JS ==== */
+const $=(s,r=document)=>r.querySelector(s);
+const $$=(s,r=document)=>Array.from(r.querySelectorAll(s));
+
+// 검사기 tools/check_slides.py 의 SPEED 와 같은 값이어야 한다.
+const SPEED=5.5;
+
+const Deck={
+  slides:[], script:{}, index:0,
+  secOf(id){
+    const paras=this.script[id]||[];
+    const chars=paras.reduce((n,p)=>n+p.replace(/\s/g,'').length,0);
+    return chars/SPEED;
+  },
+  plannedUpTo(i){
+    let s=0; for(let k=0;k<i;k++) s+=this.secOf(this.slides[k].id); return s;
+  },
+  go(i){
+    if(i<0||i>=this.slides.length)return;
+    this.slides[this.index].classList.remove('on');
+    this.index=i;
+    this.slides[i].classList.add('on');
+    paint();
+  }
+};
+
+function fmt(sec){ sec=Math.max(0,Math.round(sec)); return `${Math.floor(sec/60)}:${String(sec%60).padStart(2,'0')}`; }
+
+let t0=null, elapsed=0, ticking=null;
+function elapsedSec(){ return elapsed + (t0!==null ? (performance.now()-t0)/1000 : 0); }
+function toggleTimer(){
+  if(t0!==null){ elapsed=elapsedSec(); t0=null; clearInterval(ticking); ticking=null; }
+  else { t0=performance.now(); ticking=setInterval(paint,500); }
+  paint();
+}
+
+function paint(){
+  const n=Deck.slides.length;
+  $('#counter').textContent=`${Deck.index+1} / ${n}`;
+  $('#barPos').style.width=((Deck.index+1)/n*100)+'%';
+
+  const total=Deck.plannedUpTo(n);
+  const planned=Deck.plannedUpTo(Deck.index)+Deck.secOf(Deck.slides[Deck.index].id);
+  const el=elapsedSec();
+  $('#barTime').style.width=(total?Math.min(100,el/total*100):0)+'%';
+  $('#barTime').classList.toggle('behind', el>planned);
+
+  const clock=$('#clock');
+  clock.textContent=fmt(el);
+  clock.classList.toggle('running', t0!==null);
+}
+
+function fitStage(){
+  const st=$('#stage');
+  const w=parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--stage-w'));
+  const h=parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--stage-h'));
+  const k=Math.min(innerWidth/w, innerHeight/h);
+  st.style.transform=`scale(${k})`;
+}
+
+function onKey(e){
+  if(e.metaKey||e.ctrlKey||e.altKey)return;
+  switch(e.key){
+    case 'ArrowRight': case ' ': case 'PageDown': e.preventDefault(); Deck.go(Deck.index+1); break;
+    case 'ArrowLeft': case 'PageUp': e.preventDefault(); Deck.go(Deck.index-1); break;
+    case 'ArrowDown': e.preventDefault(); Deck.go(Deck.index+1); break;
+    case 'ArrowUp': e.preventDefault(); Deck.go(Deck.index-1); break;
+    case 't': case 'T': toggleTimer(); break;
+    case 'f': case 'F': if(document.fullscreenElement)document.exitFullscreen(); else document.documentElement.requestFullscreen(); break;
+  }
+}
+
+function init(){
+  Deck.slides=$$('.slide');
+  Deck.script=JSON.parse($('#deck-script').textContent);
+  Deck.slides[0].classList.add('on');
+  addEventListener('keydown',onKey);
+  addEventListener('resize',fitStage);
+  fitStage(); paint();
+}
+/* ==== /DECK:CORE:JS ==== */
+
+/* ==== ASSET:JS ← oauth2_tutorial.html ==== */
+/* ==== /ASSET:JS ==== */
+
+if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init); else init();
+</script>
+</body>
+</html>
