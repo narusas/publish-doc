@@ -53,6 +53,41 @@ body{font-family:var(--sans);color:var(--text);-webkit-font-smoothing:antialiase
 /* 단계 공개 — data-beat 이상이 되면 .vis 가 붙는다 */
 .build{opacity:0;transform:translateY(6px);transition:opacity .22s,transform .22s}
 .build.vis{opacity:1;transform:none}
+
+/* 노트 서랍 — 발표자 창을 못 띄울 때의 대체 수단 */
+#notes{
+  position:absolute;left:0;right:0;bottom:0;max-height:38%;z-index:6;
+  background:rgba(7,11,18,.97);border-top:1px solid var(--border-2);
+  padding:18px 28px;overflow:auto;font-size:19px;line-height:1.75;color:var(--text-dim);
+  transform:translateY(101%);transition:transform .2s;
+}
+#notes.on{transform:none}
+#notes p{margin:0 0 10px;font-size:19px}
+
+/* 개요 그리드 — 글자만 빽빽한 슬라이드를 한눈에 찾아내는 자리 */
+#overview{
+  position:absolute;inset:0;z-index:7;background:rgba(4,7,13,.98);
+  padding:28px;overflow:auto;display:none;
+  grid-template-columns:repeat(6,1fr);gap:12px;align-content:start;
+}
+#overview.on{display:grid}
+.ov-cell{
+  border:1px solid var(--border);border-radius:8px;background:var(--panel);
+  padding:10px;cursor:pointer;font-size:12px;line-height:1.4;color:var(--text-mut);
+  min-height:74px;
+}
+.ov-cell:hover{border-color:var(--accent)}
+.ov-cell.cur{border-color:var(--accent);background:var(--panel-2)}
+.ov-cell .n{font-family:var(--mono);font-size:10px;color:var(--accent);display:block;margin-bottom:4px}
+.ov-cell .t{color:var(--text-dim);display:block;font-weight:600}
+.ov-cell .s{font-family:var(--mono);font-size:10px;display:block;margin-top:4px}
+
+#toast{
+  position:absolute;left:50%;bottom:36px;transform:translateX(-50%);z-index:8;
+  background:var(--panel-2);border:1px solid var(--border-2);border-radius:8px;
+  padding:10px 16px;font-size:15px;color:var(--text-dim);opacity:0;transition:opacity .2s;
+}
+#toast.on{opacity:1}
 /* ==== /DECK:CORE:CSS ==== */
 
 /* ==== DECK:STAGE:CSS ==== */
@@ -85,6 +120,9 @@ body{font-family:var(--sans);color:var(--text);-webkit-font-smoothing:antialiase
     <p>골격 확인용 더미입니다.</p>
   </section>
 <!-- ==== /SLIDES ==== -->
+  <div id="notes"></div>
+  <div id="overview"></div>
+  <div id="toast"></div>
 </div></div>
 
 <script type="application/json" id="deck-script">
@@ -185,6 +223,9 @@ function paint(){
   const clock=$('#clock');
   clock.textContent=fmt(el);
   clock.classList.toggle('running', t0!==null);
+
+  pushPresenter();
+  if($('#notes').classList.contains('on')) renderNotes();
 }
 
 function fitStage(){
@@ -193,6 +234,100 @@ function fitStage(){
   const h=parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--stage-h'));
   const k=Math.min(innerWidth/w, innerHeight/h);
   st.style.transform=`scale(${k})`;
+}
+
+/* ---------- 발표자 창 ----------
+   file:// 에서도 돌아야 해서 localStorage·BroadcastChannel 을 쓰지 않는다.
+   자식 창의 DOM 을 부모가 직접 갱신한다. */
+let pres=null;
+const PRES_HTML=`<!DOCTYPE html><html lang="ko"><head><meta charset="UTF-8">
+<title>발표자 화면</title><style>
+body{margin:0;background:#04070d;color:#e8eef7;font-family:system-ui,-apple-system,"Apple SD Gothic Neo",sans-serif}
+.wrap{padding:20px 24px}
+.row{display:flex;gap:20px;align-items:baseline;font-family:ui-monospace,Menlo,monospace;font-size:15px;color:#a3b4c9}
+#delta{font-weight:700}
+h3{margin:18px 0 6px;font-size:13px;letter-spacing:.5px;color:#8698b3;text-transform:uppercase}
+.now{font-size:26px;font-weight:700;color:#fff;margin:0}
+.next{font-size:17px;color:#9fb0c6;margin:0}
+#script p{font-size:20px;line-height:1.8;color:#c3d1e2;margin:0 0 12px}
+</style></head><body><div class="wrap">
+<div class="row"><span>경과 <b id="el">0:00</b></span><span>예정 <b id="pl">0:00</b></span><span id="delta"></span><span id="cnt"></span></div>
+<h3>지금</h3><p class="now" id="now"></p>
+<h3>다음</h3><p class="next" id="nxt"></p>
+<h3>대본</h3><div id="script"></div>
+</div></body></html>`;
+
+function openPresenter(){
+  pres=window.open('','deck-presenter','width=760,height=900');
+  if(!pres){ toast('팝업이 차단됐습니다. S 키로 노트 서랍을 여세요.'); return; }
+  pres.document.open(); pres.document.write(PRES_HTML); pres.document.close();
+  pushPresenter();
+}
+
+function titleOf(slide){ const h=slide.querySelector('h2'); return h?h.textContent.trim():slide.id; }
+
+function pushPresenter(){
+  if(!pres||pres.closed){ pres=null; return; }
+  const d=pres.document; if(!d.getElementById('now'))return;
+  const n=Deck.slides.length, i=Deck.index, slide=Deck.slides[i];
+  const planned=Deck.plannedUpTo(i)+Deck.secOf(slide.id);
+  const el=elapsedSec(), diff=planned-el;
+  d.getElementById('el').textContent=fmt(el);
+  d.getElementById('pl').textContent=fmt(planned);
+  const dl=d.getElementById('delta');
+  dl.textContent = diff>=0 ? `▲ ${fmt(diff)} 빠름` : `▼ ${fmt(-diff)} 늦음`;
+  dl.style.color = diff>=0 ? '#34d399' : '#fbbf24';
+  d.getElementById('cnt').textContent=`${i+1} / ${n}`;
+  d.getElementById('now').textContent=titleOf(slide);
+  d.getElementById('nxt').textContent = i+1<n ? titleOf(Deck.slides[i+1]) : '— 끝 —';
+  d.getElementById('script').innerHTML=(Deck.script[slide.id]||[])
+    .map(p=>`<p>${p.replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]))}</p>`).join('');
+}
+
+let toastTimer=null;
+function toast(msg){
+  const t=$('#toast'); t.textContent=msg; t.classList.add('on');
+  clearTimeout(toastTimer); toastTimer=setTimeout(()=>t.classList.remove('on'),2600);
+}
+
+function toggleNotes(){
+  const el=$('#notes');
+  el.classList.toggle('on');
+  if(el.classList.contains('on')) renderNotes();
+}
+function renderNotes(){
+  const id=Deck.slides[Deck.index].id;
+  $('#notes').innerHTML=(Deck.script[id]||[])
+    .map(p=>`<p>${p.replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]))}</p>`).join('');
+}
+
+function toggleOverview(){
+  const ov=$('#overview');
+  if(ov.classList.contains('on')){ ov.classList.remove('on'); return; }
+  ov.innerHTML=Deck.slides.map((s,i)=>{
+    const sec=Deck.secOf(s.id);
+    const warn = sec>110 ? 'color:#fb7185' : sec<25 ? 'color:#fbbf24' : 'color:#8698b3';
+    return `<div class="ov-cell${i===Deck.index?' cur':''}" data-i="${i}">
+      <span class="n">${i+1}</span><span class="t">${titleOf(s)}</span>
+      <span class="s" style="${warn}">${fmt(sec)}</span></div>`;
+  }).join('');
+  $$('.ov-cell',ov).forEach(c=>c.addEventListener('click',()=>{
+    ov.classList.remove('on'); Deck.go(+c.dataset.i);
+  }));
+  ov.classList.add('on');
+}
+
+/* ---------- 숫자 점프 ----------
+   화면에 보이는 번호가 1-기반이므로 입력도 1-기반으로 받는다.
+   버퍼를 세 자리로 자르는 것은 오타로 아주 큰 수가 쌓이는 것을 막기 위해서다. */
+let jumpBuf='';
+function jumpDigit(d){ jumpBuf=(jumpBuf+d).slice(-3); toast(`이동: ${jumpBuf}`); }
+function jumpCancel(){ jumpBuf=''; }
+function jumpCommit(){
+  if(!jumpBuf)return;
+  const n=parseInt(jumpBuf,10); jumpBuf='';
+  if(n>=1 && n<=Deck.slides.length) Deck.go(n-1);
+  else toast(`${n}번 슬라이드는 없습니다`);
 }
 
 function onKey(e){
@@ -204,6 +339,15 @@ function onKey(e){
     case 'ArrowUp': e.preventDefault(); Deck.go(Deck.index-1); break;
     case 't': case 'T': toggleTimer(); break;
     case 'f': case 'F': if(document.fullscreenElement)document.exitFullscreen(); else document.documentElement.requestFullscreen(); break;
+    case 'p': case 'P': openPresenter(); break;
+    case 's': case 'S': toggleNotes(); break;
+    case 'o': case 'O': toggleOverview(); break;
+    case 'Enter': jumpCommit(); break;
+    case 'Escape':
+      jumpCancel();
+      $('#overview').classList.remove('on'); $('#notes').classList.remove('on'); break;
+    default:
+      if(/^[0-9]$/.test(e.key)) jumpDigit(e.key);
   }
 }
 

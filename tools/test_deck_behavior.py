@@ -89,7 +89,8 @@ def test_builds_are_visible_exactly_up_to_the_current_beat(page):
     if i < 0:
         pytest.skip('.build 가 둘 이상인 슬라이드가 아직 없다')
     goto(page, i)
-    for beat in range(3):
+    n = page.evaluate('i => beatCount(Deck.slides[i])', i)
+    for beat in range(n):
         pairs = page.evaluate(
             'i => Array.from(Deck.slides[i].querySelectorAll(".build"))'
             '.map(e => [(+e.dataset.beat || 0), e.classList.contains("vis")])', i)
@@ -113,3 +114,87 @@ def test_cannot_go_before_the_first_slide(page):
     for _ in range(6):
         page.keyboard.press('ArrowLeft')
     assert at(page) == (0, 0)
+
+
+def test_down_arrow_at_the_last_slide_does_not_move(page):
+    page.goto(DECK)
+    n = state(page)['n']
+    page.evaluate('n => Deck.go(n - 1)', n)
+    page.keyboard.press('ArrowDown')
+    assert state(page)['i'] == n - 1
+
+
+def test_up_arrow_at_the_first_slide_does_not_move(page):
+    page.goto(DECK)
+    page.keyboard.press('ArrowUp')
+    assert at(page) == (0, 0)
+
+
+def on(pg, sel):
+    return pg.eval_on_selector(sel, 'e => e.classList.contains("on")')
+
+
+def test_s_toggles_the_notes_drawer(page):
+    page.goto(DECK)
+    assert on(page, '#notes') is False
+    page.keyboard.press('s')
+    assert on(page, '#notes') is True
+    assert page.inner_text('#notes').strip() != '', '노트 서랍이 비어 있다'
+    page.keyboard.press('s')
+    assert on(page, '#notes') is False
+
+
+def test_open_notes_drawer_follows_the_current_slide(page):
+    page.goto(DECK)
+    page.keyboard.press('s')
+    first = page.inner_text('#notes')
+    page.keyboard.press('ArrowDown')
+    assert page.inner_text('#notes') != first, '슬라이드를 넘겼는데 노트가 그대로다'
+
+
+def test_o_opens_one_overview_cell_per_slide(page):
+    page.goto(DECK)
+    page.keyboard.press('o')
+    assert on(page, '#overview') is True
+    assert page.eval_on_selector_all('.ov-cell', 'els => els.length') == state(page)['n']
+
+
+def test_overview_cell_click_jumps_to_that_slide(page):
+    page.goto(DECK)
+    page.keyboard.press('o')
+    page.click('.ov-cell[data-i="2"]')
+    assert state(page)['i'] == 2
+    assert on(page, '#overview') is False
+
+
+def test_escape_closes_overview_and_notes(page):
+    page.goto(DECK)
+    page.keyboard.press('o')
+    page.keyboard.press('s')
+    page.keyboard.press('Escape')
+    assert on(page, '#overview') is False
+    assert on(page, '#notes') is False
+
+
+def test_number_then_enter_jumps_to_that_slide(page):
+    page.goto(DECK)
+    page.keyboard.press('3')
+    page.keyboard.press('Enter')
+    assert state(page)['i'] == 2, '화면 번호는 1-기반, 인덱스는 0-기반이다'
+
+
+def test_out_of_range_number_does_not_move(page):
+    page.goto(DECK)
+    page.keyboard.press('9')
+    page.keyboard.press('9')
+    page.keyboard.press('9')
+    page.keyboard.press('Enter')
+    assert state(page)['i'] == 0
+
+
+def test_escape_discards_a_partially_typed_number(page):
+    page.goto(DECK)
+    page.keyboard.press('3')
+    page.keyboard.press('Escape')
+    page.keyboard.press('Enter')
+    assert state(page)['i'] == 0
