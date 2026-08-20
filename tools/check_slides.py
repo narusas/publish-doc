@@ -265,8 +265,36 @@ def check_script_terminator(deck):
     return []
 
 
+FONT_FLOOR = 24          # px, 1280 좌표계 기준 본문 하한
+FONT_FLOOR_MONO = 20     # px, 코드 하한
+INLINE_FONT = re.compile(
+    r'''<([a-zA-Z][\w-]*)\b[^>]*\bstyle\s*=\s*["'][^"']*font-size\s*:\s*(\d+(?:\.\d+)?)px''')
+
+
+def check_font_floor(deck):
+    """인라인 style 의 font-size 하한. 무대에서 뒷자리가 못 읽는 글자를 막는다.
+
+    이 검사가 잡는 것은 '손으로 박은 값'뿐이다. 실제로 화면에 나오는 크기는 CSS
+    규칙이 정하고, 그쪽은 정규식으로 셀 수 없다 — 상속·구체성·:has() 까지 따져야
+    진짜 크기가 나오기 때문이다. 그 몫은 브라우저가 쟀다:
+    tools/test_deck_behavior.py 의 test_every_visible_text_is_at_or_above_the_font_floor
+    가 슬라이드를 한 장씩 돌며 computed font-size 를 재고 예외 목록과 대조한다.
+    여기 이 함수는 그 앞의 그물이다 — 브라우저 없이도, 새로 박힌 인라인 값은 잡는다."""
+    problems = []
+    block = SLIDES_BLOCK.search(deck.html)
+    if not block:
+        return problems
+    for tag, size in INLINE_FONT.findall(block.group(1)):
+        floor = FONT_FLOOR_MONO if tag in ('code', 'pre') else FONT_FLOOR
+        if float(size) < floor:
+            problems.append('<%s> 인라인 font-size %spx — 하한 %dpx 미만'
+                            % (tag, size, floor))
+    return problems
+
+
 CHECKS = [check_script_present, check_slide_seconds, check_total,
-          check_dia_frames, check_no_external, check_script_terminator]
+          check_dia_frames, check_no_external, check_script_terminator,
+          check_font_floor]
 
 
 def main(argv):

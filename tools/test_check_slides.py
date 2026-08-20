@@ -123,3 +123,21 @@ def test_open_script_tag_inside_narration_is_not_reported():
     구간을 잡던 옛 구현은 이 문장에서 구간이 잘려 "</script 가 0개 있다"고
     엉뚱한 곳을 가리켰다."""
     assert cs.check_script_terminator(deck('deck_script_open_in_narration.html')) == []
+
+
+# --- 글자 크기 하한 (Task 6) --------------------------------------------------
+
+def test_inline_font_size_below_floor_is_reported():
+    problems = cs.check_font_floor(deck('deck_small_text.html'))
+    assert len(problems) == 1
+    assert '18' in problems[0]
+
+
+def test_ok_fixture_passes_font_floor():
+    assert cs.check_font_floor(deck('deck_ok.html')) == []
+
+
+def test_code_gets_the_lower_mono_floor():
+    """<pre>/<code> 는 20px 이 하한이다. 같은 20px 이 본문이면 위반, 코드면 통과."""
+    problems = cs.check_font_floor(deck('deck_small_text.html'))
+    assert not any('pre' in p for p in problems), '코드 20px 을 본문 하한으로 재고 있다'
