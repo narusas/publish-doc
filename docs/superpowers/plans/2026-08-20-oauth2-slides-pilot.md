@@ -88,7 +88,7 @@
 
 시퀀스 — `MAIN_STEPS` 16단계(본편 s17·s51), `CC_STEPS` 4(부록 a07), `OIDC_STEPS` 18(**미사용**), `NATIVE_STEPS` 9(부록 a02), `DEVICE_STEPS` 10(부록 a03).
 
-라이브 데모 마운트 id — 본편: `#authUrl`(s20), `#stateOut`(s28), `#pkceOut`(s31), `#apiOut`(s38), `#rotOut`(s40), `#jwtRaw`/`#jwtDecoded`/`#jwtChecks`(s44·s45). 부록: `#platPicks`(a05), `#tokenChoiceOut`(a10), `#consoleOut`(a11).
+라이브 데모 마운트 — 본편: `#authUrl`(s20), `#stateOut`(s28), `#pkceOut`(s31), `#apiOut`(s38), `#rotOut`(s40), `.jwt-raw`/`.jwt-decoded`/`.jwt-checks`(s44·s45 — Task 6 에서 중복 id 를 클래스로 바꿨다). 부록: `#platPicks`(a05), `#tokenChoiceOut`(a10), `#consoleOut`(a11).
 
 ---
 
@@ -140,8 +140,8 @@
 | `s41` | 사람이 없으면 흐름이 다르다 → 부록 | — | 1 |
 | `s42` | 그래서 누가 로그인했나 | — | 1 |
 | `s43` | OAuth2 / OIDC 두 질문 | — | 2 |
-| `s44` | `id_token` 해부 — 정상 생성·검증 | `#jwtChecks` ① | 1 |
-| `s45` | 위변조 · nonce 불일치 → 검증 실패 | `#jwtChecks` ②③ | 1 |
+| `s44` | `id_token` 해부 — 정상 생성·검증 | `.jwt-checks` ① | 1 |
+| `s45` | 위변조 · nonce 불일치 → 검증 실패 | `.jwt-checks` ②③ | 1 |
 | `s46` | 퀴즈 ③ | 퀴즈 | 2 |
 | `s47` | 자주 밟는 지뢰 다섯 | — | 5 |
 | `s48` | 토큰을 어디에 두나 | `diaStorage` | 6 |
