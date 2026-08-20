@@ -49,6 +49,10 @@ body{font-family:var(--sans);color:var(--text);-webkit-font-smoothing:antialiase
 }
 #hud .clock{color:var(--text-dim)}
 #hud .clock.running{color:var(--ok)}
+
+/* 단계 공개 — data-beat 이상이 되면 .vis 가 붙는다 */
+.build{opacity:0;transform:translateY(6px);transition:opacity .22s,transform .22s}
+.build.vis{opacity:1;transform:none}
 /* ==== /DECK:CORE:CSS ==== */
 
 /* ==== DECK:STAGE:CSS ==== */
@@ -71,8 +75,10 @@ body{font-family:var(--sans);color:var(--text);-webkit-font-smoothing:antialiase
     <p>로그인 버튼 하나에 일어나는 열여섯 단계</p>
   </section>
   <section class="slide" id="s01">
-    <h2>둘째 장</h2>
-    <p>골격 확인용 더미입니다.</p>
+    <h2>비트 확인용</h2>
+    <p class="build" data-beat="0">첫째 — 비트 0에서 보입니다.</p>
+    <p class="build" data-beat="1">둘째 — 오른쪽 화살표를 한 번 눌러야 나옵니다.</p>
+    <p class="build" data-beat="2">셋째 — 여기까지 소진해야 다음 장으로 넘어갑니다.</p>
   </section>
   <section class="slide" id="s02">
     <h2>셋째 장</h2>
@@ -107,13 +113,48 @@ const Deck={
   plannedUpTo(i){
     let s=0; for(let k=0;k<i;k++) s+=this.secOf(this.slides[k].id); return s;
   },
-  go(i){
+  go(i, beat=0){
     if(i<0||i>=this.slides.length)return;
     this.slides[this.index].classList.remove('on');
     this.index=i;
-    this.slides[i].classList.add('on');
+    const slide=this.slides[i];
+    slide.classList.add('on');
+    this.beat = (beat==='last') ? beatCount(slide)-1 : 0;
+    applyBeat(slide,this.beat);
     paint();
   }
+};
+
+/* ---------- 비트: 슬라이드 안의 단계 ----------
+   오른쪽 화살표 하나로 발표가 굴러가야 한다. 프레임 전진과 슬라이드 넘김에
+   다른 키를 배정하면 발표자가 발표 중에 어느 키인지를 생각해야 한다. */
+const BEATS={};                     // slideId -> {n, go(i)}
+const AUTOPLAY={};                  // slideId -> {auto()}  — Task 5 가 채운다
+function registerBeats(id,ctrl){ BEATS[id]=ctrl; }
+
+function beatCount(slide){
+  const ctrl=BEATS[slide.id];
+  const builds=$$('.build',slide).map(el=>+el.dataset.beat||0);
+  const fromBuilds=builds.length?Math.max(...builds)+1:1;
+  return Math.max(ctrl?ctrl.n:1, fromBuilds);
+}
+
+function applyBeat(slide,b){
+  $$('.build',slide).forEach(el=>el.classList.toggle('vis',(+el.dataset.beat||0)<=b));
+  const ctrl=BEATS[slide.id];
+  if(ctrl) ctrl.go(Math.min(b,ctrl.n-1));
+}
+
+Deck.beat=0;
+Deck.next=function(){
+  const slide=this.slides[this.index];
+  if(this.beat < beatCount(slide)-1){ this.beat++; applyBeat(slide,this.beat); paint(); return; }
+  if(this.index < this.slides.length-1) this.go(this.index+1, 0);
+};
+Deck.prev=function(){
+  const slide=this.slides[this.index];
+  if(this.beat>0){ this.beat--; applyBeat(slide,this.beat); paint(); return; }
+  if(this.index>0) this.go(this.index-1, 'last');
 };
 
 function fmt(sec){ sec=Math.max(0,Math.round(sec)); return `${Math.floor(sec/60)}:${String(sec%60).padStart(2,'0')}`; }
@@ -128,7 +169,11 @@ function toggleTimer(){
 
 function paint(){
   const n=Deck.slides.length;
-  $('#counter').textContent=`${Deck.index+1} / ${n}`;
+  const slide=Deck.slides[Deck.index];
+  const bn=beatCount(slide);
+  $('#counter').textContent = bn>1
+    ? `${Deck.index+1} / ${n}  ·  ${Deck.beat+1}/${bn}`
+    : `${Deck.index+1} / ${n}`;
   $('#barPos').style.width=((Deck.index+1)/n*100)+'%';
 
   const total=Deck.plannedUpTo(n);
@@ -153,9 +198,9 @@ function fitStage(){
 function onKey(e){
   if(e.metaKey||e.ctrlKey||e.altKey)return;
   switch(e.key){
-    case 'ArrowRight': case ' ': case 'PageDown': e.preventDefault(); Deck.go(Deck.index+1); break;
-    case 'ArrowLeft': case 'PageUp': e.preventDefault(); Deck.go(Deck.index-1); break;
-    case 'ArrowDown': e.preventDefault(); Deck.go(Deck.index+1); break;
+    case 'ArrowRight': case ' ': case 'PageDown': e.preventDefault(); Deck.next(); break;
+    case 'ArrowLeft': case 'PageUp': e.preventDefault(); Deck.prev(); break;
+    case 'ArrowDown': e.preventDefault(); Deck.go(Deck.index+1); break;   // 슬라이드 통째로
     case 'ArrowUp': e.preventDefault(); Deck.go(Deck.index-1); break;
     case 't': case 'T': toggleTimer(); break;
     case 'f': case 'F': if(document.fullscreenElement)document.exitFullscreen(); else document.documentElement.requestFullscreen(); break;
@@ -165,7 +210,7 @@ function onKey(e){
 function init(){
   Deck.slides=$$('.slide');
   Deck.script=JSON.parse($('#deck-script').textContent);
-  Deck.slides[0].classList.add('on');
+  Deck.go(0);
   addEventListener('keydown',onKey);
   addEventListener('resize',fitStage);
   fitStage(); paint();
