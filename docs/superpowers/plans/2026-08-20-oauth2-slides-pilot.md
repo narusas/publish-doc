@@ -690,6 +690,7 @@ git commit -m "덱 골격: 1280x720 무대·슬라이드 전환·진행바·타�
    오른쪽 화살표 하나로 발표가 굴러가야 한다. 프레임 전진과 슬라이드 넘김에
    다른 키를 배정하면 발표자가 발표 중에 어느 키인지를 생각해야 한다. */
 const BEATS={};                     // slideId -> {n, go(i)}
+const AUTOPLAY={};                  // slideId -> {auto()}  — Task 5 가 채운다
 function registerBeats(id,ctrl){ BEATS[id]=ctrl; }
 
 function beatCount(slide){
@@ -734,6 +735,8 @@ Task 2의 `go(i)`를 아래로 교체한다:
     paint();
   }
 ```
+
+Task 5 가 이 자리에 자동재생 훅 한 줄을 더한다 — `applyBeat` 다음이다. 지금은 넣지 않는다.
 
 `init()`의 첫 슬라이드 표시도 `Deck.go(0)`을 쓰도록 고친다 — 첫 장의 빌드가 적용되지 않으면 첫 장만 규칙이 다르게 동작한다.
 
@@ -1366,17 +1369,29 @@ async function renderJwt(mode, root){
   registerBeats('s35', wireDia('diaChannel',[/* ... */]));
   registerBeats('s48', wireDia('diaStorage',[/* ... */]));
 
-  const mainA=createSequence('mainSeq17',{title:'Authorization Code + PKCE (+ OIDC) Flow',actors:MAIN_ACTORS,steps:MAIN_STEPS});
-  const mainB=createSequence('mainSeq51',{title:'다시 한 바퀴',actors:MAIN_ACTORS,steps:MAIN_STEPS});
+  AUTOPLAY['s17']=createSequence('mainSeq17',{title:'Authorization Code + PKCE (+ OIDC) Flow',actors:MAIN_ACTORS,steps:MAIN_STEPS});
+  AUTOPLAY['s51']=createSequence('mainSeq51',{title:'다시 한 바퀴',actors:MAIN_ACTORS,steps:MAIN_STEPS});
 ```
+
+**등록은 최초 `Deck.go(0)` 보다 먼저 해야 한다.** 뒤에 두면 첫 슬라이드의 `applyBeat`가
+컨트롤러 없이 돌아 첫 장만 규칙이 다르게 동작한다. `init()` 의 순서는
+`Deck.slides/script 준비 → registerBeats·AUTOPLAY 등록 → Deck.go(0)` 이다.
 
 `mainSeq`는 두 슬라이드에 있으므로 **마운트 id를 `mainSeq17`·`mainSeq51`로 나눈다.** 같은 id를 두 번 쓰면 둘째 것이 조용히 죽는다.
 
-자동재생은 슬라이드에 들어올 때 시작한다. `Deck.go` 끝에 추가:
+자동재생 레지스트리는 `BEATS` 와 같은 모양으로 **`DECK:CORE:JS` 에** 둔다. `Deck.go` 는
+모듈 스코프 함수라 `init()` 안의 지역 변수를 볼 수 없다 — `const mainA` 를 만들어
+`Deck.go` 에서 부르면 `ReferenceError` 로 자동재생이 죽는다:
 
 ```js
-    if(slide.id==='s17') mainA.auto();
-    if(slide.id==='s51') mainB.auto();
+/* DECK:CORE:JS — BEATS 옆에 둔다 */
+const AUTOPLAY={};          // slideId -> {auto()}
+```
+
+`Deck.go` 의 `applyBeat(slide,this.beat);` 다음 줄에 추가:
+
+```js
+    if(AUTOPLAY[slide.id]) AUTOPLAY[slide.id].auto();
 ```
 
 - [ ] **Step 7: 프레임 일치 검사를 검사기에 추가한다 — 먼저 테스트**
@@ -1532,7 +1547,7 @@ git commit -m "자산 이식: 다이어그램 9개·시퀀스·라이브 데모 
 
 `s18`·`s33`·`s46`·`s52`에 원본 `.quiz` 마크업을 옮긴다. 원본 13개 중 각 위치에 맞는 것을 고른다: `s18`←`q-bigpic`, `s33`←`q-pkce`, `s46`←OIDC 퀴즈 하나, `s52`←`q-tokens`. 나머지 9개는 Task 8에서 `a12`·`a13`으로 간다.
 
-원본 `wireQuizzes`(2059 부근)를 `ASSET:JS`로 옮기고 `init()`에서 호출한다.
+원본 `wireQuizzes`(1964–1970)를 `ASSET:JS`로 옮기고 `init()`에서 호출한다.
 
 - [ ] **Step 3: 글자 크기 검사를 추가한다 — 먼저 테스트**
 
