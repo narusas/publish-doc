@@ -221,6 +221,22 @@ body{font-family:var(--sans);color:var(--text);-webkit-font-smoothing:antialiase
 .slide .dia-scroll{flex:1 1 auto;min-height:0;overflow:hidden}
 .slide .dia svg{width:100%;height:100%;margin:0}
 .slide .dia-cap{flex:0 0 auto;font-size:26px;line-height:1.45;min-height:92px;padding:12px 16px}
+/* 그림 안 이름표 .cap-l — 이식값 9.5 에서 12 로 올린다(viewBox 단위. 화면 환산은
+   상자 너비 ÷ viewBox 너비가 정하고, 이 덱에서는 15~19px 이 된다).
+   s13 의 "받은 것 · OPAQUE 문자열" / "받은 것 · JWT" 와 s48 의 세 저장 위치 이름은
+   이름표가 아니라 상자를 '가르는' 판별이다. 12~15px 로는 뒷자리에서 두 상자가
+   구별되지 않는다.
+   .fit 은 그 대가다. 키우면 긴 이름표 하나가 제 상자를 넘는다 — diaActors 의
+   AUTHORIZATION SERVER(21자)가 150 단위 상자에 156.5 로 들어가 양옆 3.2씩 삐져나왔다.
+   같은 열의 RESOURCE SERVER 와 상자를 맞춰야 해서 상자를 넓힐 수는 없다. 자간만
+   지운다 — 21자 x 0.6 = 12.6 단위가 회수되어 양옆 +2.8 로 들어간다.
+   이 덱에서 .fit 이 필요한 곳은 여기 하나뿐이다. 그림을 새로 옮겨 오거나 이 값을
+   또 건드린다면 눈으로 찾지 마라 — 91개 중 하나였다. getBBox() 로 이름표와 그것을
+   담은 rect 를 대조하는 훑기 스크립트가 task-6 보고서의 「Fix round 2」에 그대로
+   들어 있다. 프레임마다 다시 재야 하고(같은 상자에 프레임마다 다른 글자가 앉는다),
+   등장 애니메이션이 끝나기를 기다려야 한다(.pop 중에는 opacity 가 0 근처다). */
+.slide .dia .cap-l{font-size:12px}
+.slide .dia .cap-l.fit{letter-spacing:0}
 /* 그림 슬라이드는 제목을 줄이고 여백을 좁혀 그림에 세로를 몰아준다.
    :has() 를 모르는 브라우저에서는 이 두 줄만 빠지고 그림이 조금 작아질 뿐이다. */
 .slide:has(.dia),.slide:has(.seq){padding:36px 40px 40px}
@@ -591,11 +607,7 @@ pre b{color:var(--auth);font-weight:700}
 .dia .t{fill:#fff;font-weight:700;font-size:12.5px}
 .dia .s{font-size:11.5px;fill:var(--text-dim)}
 .dia .m{font-family:var(--mono);font-size:10.5px;fill:var(--text-mut);letter-spacing:.3px}
-/* Task 6 에서 9.5 → 12 (viewBox 단위). s13 의 "받은 것 · OPAQUE 문자열" 과 "받은 것 ·
-   JWT", s48 의 세 저장 위치 이름처럼 .cap-l 이 상자를 '가르는' 자리가 있다. 그때 이건
-   이름표가 아니라 그림의 판별 기준이라, 화면 환산 12~15px 로는 뒷자리에서 두 상자가
-   구별되지 않는다. */
-.dia .cap-l{font-family:var(--mono);font-size:12px;letter-spacing:.6px;fill:var(--text-mut)}
+.dia .cap-l{font-family:var(--mono);font-size:9.5px;letter-spacing:.6px;fill:var(--text-mut)}
 .dia .lane{font-family:var(--mono);font-size:10.5px;letter-spacing:.5px;fill:var(--text-dim)}
 .dia .key{fill:var(--warn)} .dia .ok{fill:#86efac} .dia .no{fill:#fca5a5} .dia .ye{fill:#86efac}
 .dia .hi{fill:var(--user)} .dia .mut{fill:var(--text-mut)}
@@ -933,7 +945,7 @@ pre b{color:var(--auth);font-weight:700}
 
           <rect class="nd au" x="534" y="84" width="150" height="62" rx="12"/>
           <text class="t ca" x="609" y="110" text-anchor="middle">🔐 인증 서버</text>
-          <text class="cap-l" x="609" y="130" text-anchor="middle">AUTHORIZATION SERVER</text>
+          <text class="cap-l fit" x="609" y="130" text-anchor="middle">AUTHORIZATION SERVER</text>
 
           <rect class="nd ap" x="534" y="250" width="150" height="62" rx="12"/>
           <text class="t cp" x="609" y="276" text-anchor="middle">📦 API 서버</text>
