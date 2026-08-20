@@ -348,6 +348,7 @@ function onKey(e){
       $('#overview').classList.remove('on'); $('#notes').classList.remove('on'); break;
     default:
       if(/^[0-9]$/.test(e.key)) jumpDigit(e.key);
+      break;
   }
 }
 

@@ -198,3 +198,33 @@ def test_escape_discards_a_partially_typed_number(page):
     page.keyboard.press('Escape')
     page.keyboard.press('Enter')
     assert state(page)['i'] == 0
+
+
+def test_presenter_window_mirrors_the_current_slide(page):
+    """발표자 창(P)이 부모의 DOM 을 직접 갱신하는 설계라서, 그 경로가 실제로
+    file:// 팝업에서 동작하는지가 이 테스트의 핵심이다 — localStorage 나
+    BroadcastChannel 을 안 쓰기 때문에 이것 말고는 검증할 수단이 없다.
+
+    슬라이드 내용에는 기대지 않는다: 특정 제목 문자열이 아니라 titleOf() 가
+    돌려주는 값과 발표자 창의 #now 가 같다는 '관계'만 확인한다.
+    """
+    page.goto(DECK)
+    with page.context.expect_page() as pop_info:
+        page.keyboard.press('p')
+    pres = pop_info.value
+    try:
+        pres.wait_for_load_state()
+        before = page.evaluate('titleOf(Deck.slides[Deck.index])')
+        assert pres.inner_text('#now') == before, \
+            '발표자 창의 "지금"이 현재 슬라이드 제목과 다르다'
+
+        page.keyboard.press('ArrowDown')
+        pres.wait_for_function(
+            'prev => document.getElementById("now").textContent !== prev',
+            arg=before,
+        )
+        after = page.evaluate('titleOf(Deck.slides[Deck.index])')
+        assert pres.inner_text('#now') == after, \
+            '슬라이드를 넘겼는데 발표자 창이 따라가지 않는다'
+    finally:
+        pres.close()
