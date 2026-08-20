@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<html lang="ko"><head><meta charset="UTF-8"><title>fixture external</title>
+<link rel="stylesheet" href="https://cdn.example.com/deck.css">
+<style>@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono&display=swap');</style>
+</head>
+<body>
+<!-- ==== SLIDES ==== -->
+<section class="slide" id="s00"><h2>표지</h2></section>
+<!-- ==== /SLIDES ==== -->
+<script type="application/json" id="deck-script">
+{
+  "s00": ["안녕하세요. 오늘은 OAuth2와 OIDC를 한 시간 안에 훑어보려고 합니다. 로그인 버튼 하나를 누르면 그 뒤에서 무슨 일이 벌어지는지, 열여섯 단계를 전부 따라가 보겠습니다. 오늘 다루는 내용은 전부 실제 서비스에서 매일 도는 것들입니다."]
+}
+</script>
+<script>
+function load(){ return fetch('https://api.example.com/slides'); }
+</script>
+</body></html>

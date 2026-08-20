@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="ko"><head><meta charset="UTF-8"><title>fixture frame mismatch</title></head>
+<body>
+<!-- ==== SLIDES ==== -->
+<section class="slide" id="s00"><h2>표지</h2></section>
+<section class="slide" id="s01">
+  <h2>프레임이 어긋난 그림</h2>
+  <figure class="dia" id="diaX">
+    <div class="dia-top"><div class="dia-dots"></div></div>
+    <svg viewBox="0 0 720 200">
+      <text data-at="0" x="10" y="20">첫 프레임</text>
+      <text data-at="1" x="10" y="40">둘째 프레임</text>
+    </svg>
+    <div class="dia-cap"></div>
+  </figure>
+</section>
+<!-- ==== /SLIDES ==== -->
+<script type="application/json" id="deck-script">
+{
+  "s00": ["안녕하세요. 오늘은 OAuth2와 OIDC를 한 시간 안에 훑어보려고 합니다. 로그인 버튼 하나를 누르면 그 뒤에서 무슨 일이 벌어지는지, 열여섯 단계를 전부 따라가 보겠습니다. 오늘 다루는 내용은 전부 실제 서비스에서 매일 도는 것들입니다."],
+  "s01": ["이 그림은 SVG 쪽에 프레임이 둘뿐인데 구동기에는 단계가 셋 적혀 있습니다. 마지막 단계에 들어가면 아무것도 새로 나타나지 않는 빈 화면이 뜨는데, 발표 중에는 그저 그림이 멈춘 것처럼 보여서 알아채기가 어렵습니다."]
+}
+</script>
+<script>
+function init(){
+  wireDia('diaX',[
+    {c:'첫째 단계입니다.',h:2000},
+    {c:'둘째 단계입니다.',h:2000},
+    {c:'셋째 단계 — SVG 에는 이 프레임이 없다.',h:2000}
+  ]);
+}
+</script>
+</body></html>

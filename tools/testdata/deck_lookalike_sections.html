@@ -1,0 +1,16 @@
+<!DOCTYPE html>
+<html lang="ko"><head><meta charset="UTF-8"><title>fixture lookalike</title></head>
+<body>
+<!-- ==== SLIDES ==== -->
+<section class="slide" id="s00"><h2>진짜 슬라이드</h2></section>
+<section class="slide-notes" id="n00"><p>슬라이드가 아니다 — 하이픈은 낱말 경계라 \b 로는 걸러지지 않는다.</p></section>
+<section class="not-slide" id="x00"><p>이것도 슬라이드가 아니다.</p></section>
+<section class="slide wide" id="s01"><h2>클래스가 여럿인 슬라이드</h2></section>
+<!-- ==== /SLIDES ==== -->
+<script type="application/json" id="deck-script">
+{
+  "s00": ["안녕하세요. 오늘은 OAuth2와 OIDC를 한 시간 안에 훑어보려고 합니다. 로그인 버튼 하나를 누르면 그 뒤에서 무슨 일이 벌어지는지, 열여섯 단계를 전부 따라가 보겠습니다. 오늘 다루는 내용은 전부 실제 서비스에서 매일 도는 것들입니다."],
+  "s01": ["클래스가 여럿 붙은 슬라이드도 슬라이드로 세어야 합니다. 반대로 이름만 비슷한 slide-notes 나 not-slide 는 세면 안 됩니다. 이 둘을 가르는 기준은 클래스 목록을 공백으로 쪼갠 뒤 slide 가 그 안에 있느냐입니다."]
+}
+</script>
+</body></html>
