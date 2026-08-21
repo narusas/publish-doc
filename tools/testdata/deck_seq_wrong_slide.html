@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="ko"><head><meta charset="UTF-8"><title>fixture sequence in wrong slide</title></head>
+<body>
+<!-- ==== SLIDES ==== -->
+<section class="slide" id="s00">
+  <h2>변수를 거쳐 등록한 장</h2>
+  <p>ON_ENTER 로 mainSeqA 를 얹었는데 마운트는 s03 에 가 있다.</p>
+</section>
+<section class="slide" id="s01">
+  <h2>registerBeats 로 등록한 장</h2>
+  <p>nativeSeq 를 등록했는데 마운트는 s02 에 가 있다.</p>
+</section>
+<section class="slide" id="s02">
+  <h2>마운트가 잘못 놓인 장</h2>
+  <div class="seq-mount" id="nativeSeq"></div>
+</section>
+<section class="slide" id="s03">
+  <h2>또 하나 잘못 놓인 장</h2>
+  <div class="seq-mount" id="mainSeqA"></div>
+</section>
+<section class="slide" id="s04">
+  <h2>제대로 놓인 장</h2>
+  <div class="seq-mount" id="ccSeq"></div>
+</section>
+<!-- ==== /SLIDES ==== -->
+<script type="application/json" id="deck-script">
+{
+  "s00": ["이 장에는 시퀀스가 등록되어 있습니다. 그런데 마운트는 다른 장에 가 있어서, 발표자는 플레이어 없는 화면에서 오른쪽 화살표만 누르게 됩니다."],
+  "s01": ["여기도 같은 어긋남입니다. registerBeats 는 이 장을 가리키는데 실제 마운트는 다음 장에 있습니다. 화면에는 아무 표시가 없습니다."],
+  "s02": ["이 장에는 마운트가 있지만 구동기가 없습니다. 첫 단계에 멈춘 채로 넘어가게 됩니다. 발표자는 왜 안 움직이는지 알 수 없습니다."],
+  "s03": ["여기도 마운트만 있고 구동기가 없는 장입니다. 두 장이 같은 방식으로 조용히 깨져 있습니다."],
+  "s04": ["이 장은 등록과 마크업이 같은 장에 있습니다. 검사기가 아무 말도 하지 않아야 하는 정상 사례입니다."]
+}
+</script>
+<script>
+function wireAssets(){
+  const seqA=createSequence('mainSeqA',{title:'변수를 거친 등록',actors:[],steps:[]});
+  ON_ENTER['s00']=seqA;
+  registerBeats('s01', createSequence('nativeSeq',{title:'직접 등록',actors:[],steps:[]}));
+  registerBeats('s04', createSequence('ccSeq',{title:'제대로 놓인 것',actors:[],steps:[]}));
+}
+</script>
+</body></html>

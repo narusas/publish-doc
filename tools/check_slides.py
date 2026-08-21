@@ -132,10 +132,26 @@ DIA_FIG = re.compile(
     re.S)
 DATA_AT = re.compile(r'''\bdata-at\s*=\s*["']([^"']+)["']''')
 WIRE_DIA = re.compile(r'''wireDia\(\s*['"](\w+)['"]\s*,\s*\[''')
-# registerBeats('s07', wireDia('diaGate', [...])) — 이 짝이 '그림이 어느 장에 사는가'를
-# 선언한다. 선언과 마크업이 어긋나도 화면에는 아무 표시가 없다.
-REGISTER_WIRE_DIA = re.compile(
-    r'''registerBeats\(\s*['"]([^'"]+)['"]\s*,\s*wireDia\(\s*['"](\w+)['"]''')
+
+# '이 자산이 어느 장에 사는가'를 선언하는 자리는 셋이고, 셋 다 같은 종류로 어긋난다.
+# 선언과 마크업이 갈라져도 화면에는 아무 표시가 없다 — 등록된 장에는 자산이 없는데
+# 비트 수만 자산의 것이라 → 를 눌러도 아무 일이 없고, 자산이 실제로 놓인 장에는
+# 구동기가 없어 첫 프레임에 멈춘 채 넘어간다.
+#   registerBeats('s07', wireDia('diaGate', [...]))
+#   registerBeats('a02', createSequence('nativeSeq', {...}))
+#   const seq17 = createSequence('mainSeq17', {...});  ON_ENTER['s17'] = seq17;
+# 한때 첫 줄만 검사했다. 그래서 <div class="seq-mount" id="nativeSeq"> 를 a02 에서
+# a03 으로 옮기면 검사기가 exit 0 · '✓ 통과' 를 내면서 a02 는 beatCount 9 짜리
+# 플레이어 없는 장이 됐다 — wireDia 쪽 절반이 막으려고 존재하는 바로 그 실패다.
+REGISTER_MOUNT = re.compile(
+    r'''registerBeats\(\s*['"]([^'"]+)['"]\s*,\s*(?:wireDia|createSequence)\(\s*['"](\w+)['"]''')
+# 변수를 거쳐 등록되는 길. const seq17=createSequence('mainSeq17',…) 로 마운트 id 를
+# 알아낸 뒤 ON_ENTER['s17']=seq17 의 슬라이드와 짝짓는다.
+ASSET_VAR = re.compile(
+    r'''\b(?:const|let|var)\s+(\w+)\s*=\s*(?:wireDia|createSequence)\(\s*['"](\w+)['"]''')
+# 오른쪽이 이름 하나일 때만 잡는다. ON_ENTER['s45']={enter(){…}} 처럼 그 자리에서
+# 만든 객체는 마운트 id 가 없어 대조할 것이 없다.
+ON_ENTER_ASSIGN = re.compile(r'''ON_ENTER\[\s*['"](\w+)['"]\s*\]\s*=\s*(\w+)\b''')
 SECTION_ANY = re.compile(r'''<section\b([^>]*)>|</section\s*>''', re.I)
 
 
@@ -198,6 +214,19 @@ def _wiredia_step_counts(html):
     return counts
 
 
+def _mount_bindings(html):
+    """(슬라이드 id, 마운트 id) 짝을 전부 모은다.
+
+    registerBeats 로 바로 등록한 것과, 변수를 거쳐 ON_ENTER 에 얹은 것 둘 다."""
+    pairs = list(REGISTER_MOUNT.findall(html))
+    by_var = dict(ASSET_VAR.findall(html))
+    for sid, var in ON_ENTER_ASSIGN.findall(html):
+        mount = by_var.get(var)
+        if mount:
+            pairs.append((sid, mount))
+    return pairs
+
+
 def check_dia_frames(deck):
     """SVG 의 data-at 최대 인덱스 + 1 과 wireDia 단계 수가 어긋나면 프레임이
     조용히 안 보이거나 빈 프레임이 생긴다. 눈에 잘 안 띄어서 검사로 잡는다."""
@@ -215,21 +244,18 @@ def check_dia_frames(deck):
         if not re.search(r'''id\s*=\s*["']%s["']''' % re.escape(fid), deck.html):
             problems.append('%s: wireDia 호출은 있는데 SVG 가 없다' % fid)
 
-    # registerBeats 가 선언한 '그림이 사는 장'과 마크업이 실제로 놓인 장이 같은지.
-    # 어긋나면 화면에는 아무 표시가 없다 — 등록된 장에는 그림이 없는데 비트 수만
-    # 그림의 프레임 수라 → 를 눌러도 아무 일이 없고, 그림이 실제로 놓인 장에는
-    # 구동기가 없어 첫 프레임에서 멈춘 채 넘어간다. 슬라이드 번호를 다시 매기는
-    # 작업(Task 6)에서 조용히 생기는 종류의 어긋남이다.
+    # 선언된 '자산이 사는 장'과 마크업이 실제로 놓인 장이 같은지. 세 갈래를 한
+    # 고리에서 본다 — 슬라이드 번호를 다시 매기는 작업에서 조용히 생기는 어긋남이다.
     spans = _slide_spans(deck.html)
-    for sid, fid in REGISTER_WIRE_DIA.findall(deck.html):
+    for sid, fid in _mount_bindings(deck.html):
         span = spans.get(sid)
         if span is None:
-            problems.append('%s: registerBeats 가 없는 슬라이드 %s 에 등록한다' % (fid, sid))
+            problems.append('%s: 없는 슬라이드 %s 에 등록한다' % (fid, sid))
             continue
         segment = deck.html[span[0]:span[1]]
         if not re.search(r'''\bid\s*=\s*["']%s["']''' % re.escape(fid), segment):
-            problems.append('%s: %s 에 등록됐는데 %s 안에 그 그림이 없다 — '
-                            '발표자는 그림 없는 장에서 → 를 %d번 누르게 된다'
+            problems.append('%s: %s 에 등록됐는데 %s 안에 그 자산이 없다 — '
+                            '발표자는 자산 없는 장에서 → 를 %d번 누르게 된다'
                             % (fid, sid, sid, counts.get(fid, 1)))
     return problems
 

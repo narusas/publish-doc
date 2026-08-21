@@ -82,6 +82,43 @@ def test_figure_in_its_registered_slide_is_not_reported():
         'diaX: data-at 프레임 2개 ≠ wireDia 단계 3개']
 
 
+def test_sequence_mounted_in_another_slide_is_reported():
+    """createSequence 로 마운트한 자산도 wireDia 와 같은 방식으로 어긋난다.
+
+    한때 REGISTER_WIRE_DIA 가 registerBeats(…, wireDia(…)) 만 잡았다. 그래서 부록의
+    세 시퀀스(registerBeats('a02', createSequence('nativeSeq', …)))와 ON_ENTER 로
+    얹은 두 시퀀스는 아무도 안 봤다 — <div class="seq-mount" id="nativeSeq"> 를 a02
+    에서 a03 으로 옮기면 검사기가 exit 0 · '✓ 통과' 를 내면서 a02 는 beatCount 9
+    짜리 플레이어 없는 장이 됐다. wireDia 쪽 절반이 막으려고 존재하는 그 실패다.
+
+    픽스처는 두 갈래를 다 들고 있다. registerBeats 로 직접 등록한 nativeSeq 와
+    변수를 거쳐 ON_ENTER 에 얹은 mainSeqA."""
+    problems = cs.check_dia_frames(deck('deck_seq_wrong_slide.html'))
+    assert len(problems) == 2, problems
+    joined = '\n'.join(problems)
+    assert 'nativeSeq' in joined and 's01' in joined      # registerBeats 갈래
+    assert 'mainSeqA' in joined and 's00' in joined       # ON_ENTER 갈래
+
+
+def test_sequence_mounted_in_its_own_slide_is_not_reported():
+    """같은 픽스처의 s04 는 등록과 마크업이 한 장에 있다. 여기까지 보고하면
+    검사가 '전부 위반'이라고 말하는 것과 같아 아무 신호가 아니다."""
+    problems = cs.check_dia_frames(deck('deck_seq_wrong_slide.html'))
+    assert not any('ccSeq' in p for p in problems), problems
+
+
+def test_on_enter_with_an_inline_object_has_no_mount_to_check():
+    """ON_ENTER['s45']={enter(){…}} 처럼 그 자리에서 만든 객체는 마운트 id 가 없다.
+
+    대조할 것이 없으므로 짝 목록에 들어오지 않아야 한다 — 들어오면 마운트 이름
+    자리에 변수 이름이 앉아 없는 id 를 찾다가 거짓 위반이 된다."""
+    html = """
+      ON_ENTER['s45']={ enter(){ build(); } };
+      const seqZ=createSequence('zMount',{}); ON_ENTER['s17']=seqZ;
+    """
+    assert cs._mount_bindings(html) == [('s17', 'zMount')]
+
+
 # --- 슬라이드 판별: 이름만 비슷한 section 을 세면 안 된다 (Task 5) -----------
 
 def test_lookalike_class_names_are_not_slides():
