@@ -650,6 +650,55 @@ def test_the_time_meter_counts_only_the_slides_that_get_presented(page):
     assert tim == pytest.approx(100, abs=0.5), '예정대로 끝냈는데 시간 막대가 %.1f%%' % tim
 
 
+def test_the_position_bar_and_the_counter_read_the_same_coordinate_system(page):
+    """막대와 그 옆의 숫자가 같은 것을 세야 한다.
+
+    무대 위에서 발표자는 이 둘을 한눈에 본다. 숫자가 "26 / 48"인데 막대가 64.6%
+    에 서 있으면 어느 쪽을 믿을지 정해야 하고, 그건 발표 중에 할 일이 아니다.
+
+    이 성질은 '지금 통과한다'만으로는 확인되지 않는다. 본편 53장이 전부 부록
+    14장보다 앞에 있는 동안에는 절대 index + 1 과 본편 번호가 우연히 같기 때문이다.
+    그 순서를 강제하는 것은 아무것도 없으므로, 여기서는 부록을 앞으로 끌어와
+    두 좌표계를 일부러 갈라 놓고 잰다."""
+    page.goto(DECK)
+    moved = page.evaluate("""() => {
+      // 앞쪽 본편 몇 장을 부록으로 다시 분류해 두 좌표계를 갈라 놓는다.
+      const mains = Deck.slides.filter(s => !s.classList.contains('appendix'));
+      const picked = mains.slice(0, 5).map(s => s.id);
+      picked.forEach(id => document.getElementById(id).classList.add('appendix'));
+      return picked;
+    }""")
+    assert moved, '본편 장이 없다'
+    try:
+        probes = page.evaluate("""() => {
+          const out = [];
+          Deck.slides.forEach((s, i) => { if (!s.classList.contains('appendix')) out.push(i); });
+          return [out[0], out[Math.floor(out.length / 2)], out[out.length - 1]];
+        }""")
+        bad = []
+        for i in probes:
+            page.evaluate('i => Deck.go(i)', i)
+            pos = page.eval_on_selector('#barPos', 'e => parseFloat(e.style.width)')
+            head = page.inner_text('#counter').split('·')[0].strip()
+            num, den = [int(x) for x in head.split('/')]
+            want = num / den * 100
+            if abs(pos - want) > 0.5:
+                bad.append('index %d: HUD "%s" = %.1f%% 인데 막대는 %.1f%%'
+                           % (i, head, want, pos))
+        assert bad == [], '막대와 숫자가 다른 좌표계를 쓴다:\n  %s' % '\n  '.join(bad)
+    finally:
+        page.evaluate("""ids => { ids.forEach(id =>
+          document.getElementById(id).classList.remove('appendix')); Deck.go(0); }""", moved)
+
+    # 되돌린 뒤에도 마지막 본편 장은 100% 다 — 위 조작이 새어 나가지 않았는지 같이 본다
+    last_main = page.evaluate(
+        'Deck.slides.map((s, i) => [i, s.classList.contains("appendix")])'
+        '.filter(([, a]) => !a).map(([i]) => i).pop()')
+    page.evaluate('i => Deck.go(i)', last_main)
+    assert page.eval_on_selector('#barPos', 'e => parseFloat(e.style.width)') \
+        == pytest.approx(100, abs=0.5)
+
+
 def test_form_controls_keep_the_keys_they_use(page):
     """<select> 에 포커스가 있을 때 ↓ 는 값을 바꾸지, 슬라이드를 넘기지 않는다.
 

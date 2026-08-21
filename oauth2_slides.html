@@ -2283,10 +2283,15 @@ function paint(){
   const bn=beatCount(slide);
   const head=counterText(Deck.index);
   $('#counter').textContent = bn>1 ? `${head}  ·  ${Deck.beat+1}/${bn}` : head;
-  // 위치 막대의 분모도 본편이다. s52 는 발표의 마지막 장이므로 100%여야 하고,
-  // 부록에 들어가면 그 너머라 100%에 붙어 있는다.
+  /* 위치 막대의 분자도 분모도 본편이다. s52 는 발표의 마지막 장이므로 100%여야 하고,
+     부록에 들어가면 그 너머라 100%에 붙어 있는다.
+     분자로 절대 index 를 쓰면 안 된다 — 그러면 분자는 67 좌표계, 분모는 53 좌표계다.
+     지금 우연히 맞는 이유는 본편 53장이 전부 부록 14장보다 앞에 있기 때문뿐이고,
+     그 순서를 강제하는 것은 아무것도 없다. 부록 한 장이 본편 앞으로 끼는 순간
+     옆의 HUD 는 "26 / 48"(54%)을 말하는데 막대는 64.6% 에 선다. numberOf 는
+     counterText·개요·숫자 점프가 이미 쓰는 그 좌표계다. */
   const mainN=Deck.mainSlides().length;
-  $('#barPos').style.width=Math.min(100,(Deck.index+1)/mainN*100)+'%';
+  $('#barPos').style.width=Math.min(100,Deck.numberOf(Deck.index)/mainN*100)+'%';
 
   const total=Deck.plannedTotal();
   const planned=Deck.plannedThrough(Deck.index);
