@@ -100,6 +100,17 @@ body{font-family:var(--sans);color:var(--text);-webkit-font-smoothing:antialiase
   position:absolute;inset:0;z-index:7;background:rgba(4,7,13,.98);
   padding:28px;overflow:auto;display:none;
   grid-template-columns:repeat(6,1fr);gap:12px;align-content:start;
+  /* 행 높이를 min-content 로 못 박는다. 기본값(auto)으로 두면 브라우저가 행 트랙을
+     정할 때 제목이 아직 한 줄이라 74px(= .ov-cell 의 min-height)에서 굳고, 그 뒤
+     실제 1fr 폭에서 제목이 두 줄로 접히면 칸 내용이 트랙을 넘겨 0:xx 시간 이름표가
+     칸 밖으로 밀려난다 — 예순일곱 칸 중 예순한 칸이 그랬다.
+     minmax(74px, auto|min-content|max-content) 로는 안 고쳐진다. 고정 최솟값이
+     들어가는 순간 같은 74px 경로로 되돌아간다. 바닥은 .ov-cell 의 min-height 가
+     이미 들고 있으므로(칸의 min-content 기여가 74px 아래로 못 내려간다) 여기서는
+     최댓값만 말한다.
+     이 화면은 설계 10절이 '눈 검사'의 도구로 지정한 자리다. 도구가 깨져 보이면
+     그 도구로 내린 판정도 못 믿는다. */
+  grid-auto-rows:min-content;
 }
 #overview.on{display:grid}
 .ov-cell{

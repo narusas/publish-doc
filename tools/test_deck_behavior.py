@@ -498,6 +498,46 @@ def test_overview_numbers_main_slides_from_one_and_appendix_apart(page):
     assert state(page)['i'] == apps[0], '부록 칸을 눌렀는데 안 갔다'
 
 
+def test_overview_cells_hold_their_time_label_inside(page):
+    """개요 칸의 0:xx 시간 이름표가 칸 밖으로 밀리지 않는다.
+
+    이 화면은 설계 10절이 '눈 검사'의 도구로 지정한 자리다. 도구가 깨져 보이면
+    그 도구로 내린 판정도 못 믿는다.
+
+    한때 예순일곱 칸 중 예순한 칸이 최대 23px 씩 넘쳤다. 원인은 .ov-cell 의
+    min-height 가 아니라 그리드 행 트랙이 '제목이 줄바꿈하기 전에' 74px 로 굳는
+    것이었다. 그래서 이 테스트는 min-height 를 재지 않고 실제 좌표를 잰다 —
+    #overview 의 grid-auto-rows 를 되돌리거나 minmax() 로 바꾸면(고정 최솟값이
+    들어가는 순간 같은 74px 경로로 되돌아간다) 여기서 잡힌다.
+
+    두 가지를 같이 본다. 이름표를 칸 안에 넣겠다고 칸만 늘리면 이번에는 칸이
+    아래 줄 칸을 덮는다 — 그것도 실패다."""
+    page.goto(DECK)
+    page.keyboard.press('o')
+    bad = page.evaluate("""() => {
+      const cells = [...document.querySelectorAll('.ov-cell')];
+      const cols = getComputedStyle(document.getElementById('overview'))
+        .gridTemplateColumns.split(' ').length;
+      const spill = [], collide = [];
+      cells.forEach((c, i) => {
+        const cb = c.getBoundingClientRect();
+        const s = c.querySelector('.s').getBoundingClientRect();
+        if (s.bottom - cb.bottom > 0.5)
+          spill.push(c.querySelector('.n').textContent.trim() +
+                     ' +' + (s.bottom - cb.bottom).toFixed(1) + 'px');
+        const below = cells[i + cols];
+        if (below && cb.bottom - below.getBoundingClientRect().top > 0.5)
+          collide.push(c.querySelector('.n').textContent.trim());
+      });
+      return {spill, collide, n: cells.length};
+    }""")
+    assert bad['spill'] == [], \
+        '%d 칸 중 %d 칸에서 시간 이름표가 칸 밖으로 밀렸다: %s' % (
+            bad['n'], len(bad['spill']), bad['spill'][:6])
+    assert bad['collide'] == [], \
+        '칸이 아래 줄 칸을 덮는다: %s' % bad['collide'][:6]
+
+
 # --- 글자 크기 하한 (Task 6) --------------------------------------------------
 #
 # check_slides.py 의 check_font_floor 는 인라인 style 만 본다. Task 5 리뷰가 잰
