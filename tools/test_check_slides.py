@@ -5,6 +5,8 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import check_slides as cs
 
 HERE = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'testdata')
+ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+DECK = os.path.join(ROOT, 'oauth2_slides.html')
 
 
 def deck(name):
@@ -202,3 +204,47 @@ def test_ok_fixture_has_no_appendix():
     """appendix 클래스가 없으면 전체와 본편이 같다."""
     d = deck('deck_ok.html')
     assert d.main_slides == d.slides
+
+
+# --- 실물 덱 (최종 점검) -----------------------------------------------------
+#
+# 여기까지의 테스트는 전부 픽스처를 본다. 그래서 `pytest tools/` 는 통과하는데
+# `check_slides.py oauth2_slides.html` 은 실패하는 상태가 만들어질 수 있었다 —
+# 두 관문을 잇는 것이 사람이 명령 두 개를 치는 습관뿐이었기 때문이다. 그림을 다른
+# 장으로 옮기기, wireDia 단계 수 어긋내기, 외부 <script src>·<img>·fetch() 넣기,
+# 합계를 ±3:00 밖으로 밀기, 25초 미만·110초 초과 장 만들기, 부록을 52:00 합계에
+# 넣기 — 열 가지가 전부 59/59 통과였다. 아래 한 줄이 그 열 가지를 다 닫는다.
+
+
+def test_the_shipped_deck_passes_every_check():
+    """실제로 배포하는 덱을 검사기 전부에 물린다.
+
+    이 테스트가 없으면 검사기와 테스트가 서로 다른 물건을 보고 각자 '통과'라고
+    말한다. 픽스처는 규칙 하나하나가 사는지를 보고, 이 줄은 그 규칙들이 실물에
+    실제로 걸리는지를 본다."""
+    deck = cs.read_deck(DECK)
+    problems = [p for check in cs.CHECKS for p in check(deck)]
+    assert problems == [], '배포하는 덱이 검사기를 통과하지 못한다:\n  %s' % (
+        '\n  '.join(problems[:20]))
+
+
+def test_every_check_function_is_wired_into_the_gate():
+    """CHECKS 에서 한 줄을 지우면 그 규칙은 조용히 사라진다.
+
+    위 test_the_shipped_deck_passes_every_check 는 CHECKS 를 돌기 때문에, 항목이
+    빠지면 '통과'가 더 쉬워질 뿐 아무 데도 걸리지 않는다. 목록 자체를 못으로 박는다."""
+    assert [c.__name__ for c in cs.CHECKS] == [
+        'check_script_present', 'check_slide_seconds', 'check_total',
+        'check_dia_frames', 'check_no_external', 'check_script_terminator',
+        'check_font_floor',
+    ], 'CHECKS 목록이 바뀌었다 — 규칙을 빼거나 더했다면 이 줄도 같이 고쳐라'
+
+
+def test_the_thresholds_are_the_ones_the_deck_was_built_to():
+    """허용 폭을 넓히는 것도 검사를 지우는 것과 같다.
+
+    TOTAL_TOL 을 열 배로 늘리면 합계 검사는 살아 있는 채로 아무것도 막지 않는다.
+    숫자를 바꾸는 것은 명세를 바꾸는 일이므로 여기서 한 번 멈추게 한다."""
+    assert (cs.TOTAL_TARGET, cs.TOTAL_TOL) == (3120, 180)   # 52:00 ±3:00
+    assert (cs.SLIDE_MIN, cs.SLIDE_MAX) == (25, 110)        # 초
+    assert cs.SPEED == 5.5                                  # 자/초
