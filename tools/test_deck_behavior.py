@@ -230,6 +230,167 @@ def test_presenter_window_mirrors_the_current_slide(page):
         pres.close()
 
 
+# --- 부록 (Task 8) ------------------------------------------------------------
+#
+# 부록의 판단 셋을 붙잡는다. 셋 다 지금은 주석으로만 지켜지고 있어서, 나중에
+# 뒤집어도 아무 테스트가 울지 않는 자리였다.
+
+
+def appendix_indexes(pg):
+    """부록 슬라이드의 번호 목록. 없으면 skip."""
+    got = pg.evaluate('Deck.slides.map((s, i) => [i, s.classList.contains("appendix")])'
+                      '.filter(([, a]) => a).map(([i]) => i)')
+    if not got:
+        pytest.skip('부록 슬라이드가 아직 없다')
+    return got
+
+
+def test_a_jumps_to_the_first_appendix_slide(page):
+    """s52 의 대본이 청중에게 "A 를 누르면 부록"이라고 예고한다.
+
+    그 약속이 코드에 남아 있는지 확인한다. 번호가 아니라 class 로 찾는다 —
+    본편이 한 장 늘어도 이 성질은 그대로여야 한다."""
+    page.goto(DECK)
+    first = appendix_indexes(page)[0]
+    for probe in (0, first // 2, first - 1, first):
+        goto(page, probe)
+        page.keyboard.press('a')
+        assert state(page)['i'] == first, '%d 번 장에서 A 가 부록 첫 장으로 안 갔다' % probe
+
+
+def test_appendix_sequences_do_not_play_by_themselves(page):
+    """부록의 시퀀스는 자동재생하지 않는다.
+
+    s17·s51 이 자동재생하는 이유는 열여섯 단계의 '모양'을 정해진 시간 안에 보여
+    주는 것이다. 부록은 반대 상황이다 — 질문이 나와서 여는 장이고, 발표자는 특정
+    단계에 멈춰 서서 답해야 한다. 자동재생은 답하는 동안 화면을 혼자 굴린다.
+
+    ON_ENTER 에 부록이 하나라도 들어가면 그 자리에서 실패한다. 그것만으로는
+    '등록하지 않았다'까지밖에 말하지 못하므로, 실제로 벽시계로도 재 본다."""
+    page.goto(DECK)
+    ids = page.evaluate('Deck.slides.map(s => s.id)')
+    leaked = [ids[i] for i in appendix_indexes(page)
+              if page.evaluate('id => id in ON_ENTER', ids[i])]
+    assert leaked == [], 'ON_ENTER 에 등록된 부록 장: %s — 자동재생이 걸린다' % leaked
+
+    seq_slides = [i for i in appendix_indexes(page)
+                  if page.evaluate('i => !!Deck.slides[i].querySelector(".seq-counter")', i)]
+    if not seq_slides:
+        pytest.skip('부록에 시퀀스가 아직 없다')
+    for i in seq_slides:
+        goto(page, i)
+        read = 'i => Deck.slides[i].querySelector(".seq-counter").textContent.trim()'
+        before = page.evaluate(read, i)
+        page.wait_for_timeout(2000)          # 자동재생은 1700ms 간격으로 한 칸 넘긴다
+        assert page.evaluate(read, i) == before, \
+            '%s 의 시퀀스가 저절로 넘어갔다 (%s)' % (ids[i], before)
+        # 손으로는 넘어가야 한다 — 멈춰 있는 것과 죽어 있는 것은 다르다
+        page.keyboard.press('ArrowRight')
+        assert page.evaluate(read, i) != before, '%s 의 시퀀스가 → 로도 안 넘어간다' % ids[i]
+        assert state(page)['i'] == i, '→ 가 단계를 넘기지 않고 슬라이드를 넘겼다'
+
+
+def test_appendix_quiz_bank_shows_exactly_one_question_per_beat(page):
+    """퀴즈 은행은 한 비트에 문제 하나만 세운다.
+
+    .build 로는 안 되는 일이다 — 쌓이는 공개라 마지막 비트에서 다섯 문제가 한꺼번에
+    서고, 720px 을 넘길뿐더러 청중이 발표자보다 먼저 다음 문제를 읽는다. 그래서
+    registerBeats 의 컨트롤러 자리에 갈아 끼우기를 넣었다. 이 테스트가 그것을 붙잡는다:
+    숨김이 opacity 로 바뀌거나(자리를 계속 먹는다) 누적 공개로 돌아가면 실패한다."""
+    page.goto(DECK)
+    banks = [i for i in appendix_indexes(page)
+             if page.evaluate('i => Deck.slides[i].querySelectorAll(".quiz").length > 1', i)]
+    if not banks:
+        pytest.skip('퀴즈가 둘 이상인 부록 장이 아직 없다')
+    for i in banks:
+        total = page.evaluate('i => Deck.slides[i].querySelectorAll(".quiz").length', i)
+        n = page.evaluate('i => beatCount(Deck.slides[i])', i)
+        assert n == total, '비트 %d 개 ≠ 문제 %d 개 — 손이 안 닿는 문제가 생긴다' % (n, total)
+        goto(page, i)
+        seen = []
+        for beat in range(n):
+            page.evaluate('b => { Deck.beat = b; applyBeat(Deck.slides[Deck.index], b); }', beat)
+            shown = page.evaluate(
+                'i => Array.from(Deck.slides[i].querySelectorAll(".quiz"))'
+                '.filter(q => q.offsetParent !== null).map(q => q.dataset.qid)', i)
+            assert len(shown) == 1, '비트 %d 에 보이는 문제가 %d 개다' % (beat, len(shown))
+            seen.append(shown[0])
+        assert len(set(seen)) == n, '비트마다 다른 문제가 나오지 않는다: %s' % seen
+
+
+def test_the_time_meter_counts_only_the_slides_that_get_presented(page):
+    """계측의 분모는 본편이다. 부록은 넘어가는 장이라 예정 시간에 들어가면 안 된다.
+
+    이 덱에 시간 막대가 있는 이유는 타이밍을 리허설에서 발견하는 대신 숫자로 아는
+    것이다. 부록까지 더한 분모는 52분에 정확히 끝낸 발표자에게 86%를 보여 준다.
+    14% 어긋난 계기는 없는 것보다 나쁘다 — 믿고 보기 때문이다.
+
+    tools/check_slides.py 의 check_total 과 같은 가름이고, 둘은 늘 같이 움직여야
+    한다. 한쪽만 고치면 검사기는 52:00 이라고 하는데 무대의 막대는 다른 말을 한다."""
+    page.goto(DECK)
+    all_sec = page.evaluate('Deck.slides.reduce((a, s) => a + Deck.secOf(s.id), 0)')
+    main_sec = page.evaluate(
+        'Deck.slides.filter(s => !s.classList.contains("appendix"))'
+        '.reduce((a, s) => a + Deck.secOf(s.id), 0)')
+    assert page.evaluate('Deck.plannedTotal()') == pytest.approx(main_sec), \
+        'plannedTotal 이 본편 합계와 다르다'
+    if appendix_indexes(page):
+        assert main_sec < all_sec, '픽스처에 부록이 있는데 두 합계가 같다'
+
+    # 본편 마지막 장에서 '예정대로 끝냈을 때' 두 막대가 100%를 가리켜야 한다.
+    last_main = page.evaluate(
+        'Deck.slides.map((s, i) => [i, s.classList.contains("appendix")])'
+        '.filter(([, a]) => !a).map(([i]) => i).pop()')
+    page.evaluate('([i, t]) => { Deck.go(i); elapsed = t; t0 = null; paint(); }',
+                  [last_main, main_sec])
+    pos = page.eval_on_selector('#barPos', 'e => parseFloat(e.style.width)')
+    tim = page.eval_on_selector('#barTime', 'e => parseFloat(e.style.width)')
+    assert pos == pytest.approx(100, abs=0.5), '본편 마지막 장인데 위치 막대가 %.1f%%' % pos
+    assert tim == pytest.approx(100, abs=0.5), '예정대로 끝냈는데 시간 막대가 %.1f%%' % tim
+
+
+def test_form_controls_keep_the_keys_they_use(page):
+    """<select> 에 포커스가 있을 때 ↓ 는 값을 바꾸지, 슬라이드를 넘기지 않는다.
+
+    동시에 덱의 손잡이는 살아 있어야 한다. tagName 만 보고 통째로 return 하면
+    select 를 한 번 클릭한 뒤로 O·P·A·Escape 가 전부 죽는다 — 원래 버그보다 나쁘다."""
+    page.goto(DECK)
+    sel = page.evaluate('Deck.slides.findIndex(s => s.querySelector("select"))')
+    if sel < 0:
+        pytest.skip('<select> 가 있는 슬라이드가 아직 없다')
+    goto(page, sel)
+    handle = page.eval_on_selector('.slide.on select', 'e => e.id')
+    page.focus('#' + handle)
+    # 덱이 이 키를 삼켰는지는 두 가지로 본다: 슬라이드가 안 넘어갔는가, 그리고
+    # preventDefault 가 안 걸렸는가. 값이 실제로 바뀌는 것은 브라우저의 몫이고
+    # headless 에서 합성 키로는 재현되지 않아 여기서 재지 않는다.
+    page.evaluate('window.__pd = null;'
+                  'addEventListener("keydown", e => { window.__pd = e.defaultPrevented; });')
+    page.keyboard.press('ArrowDown')
+    assert state(page)['i'] == sel, '<select> 에서 ↓ 를 눌렀는데 슬라이드가 넘어갔다'
+    assert page.evaluate('window.__pd') is False, \
+        '덱이 ↓ 에 preventDefault 를 걸어 <select> 가 값을 못 바꾼다'
+    # 포커스가 select 에 남아 있어도 덱의 키는 살아 있다
+    page.keyboard.press('o')
+    assert on(page, '#overview') is True, 'select 에 포커스가 있으면 O 가 죽는다'
+    page.keyboard.press('Escape')
+    assert on(page, '#overview') is False, 'select 에 포커스가 있으면 Escape 가 죽는다'
+    page.keyboard.press('ArrowRight')
+    assert state(page)['i'] == sel + 1, 'select 에 포커스가 있으면 → 가 죽는다'
+
+
+def test_overview_marks_appendix_cells_apart(page):
+    """개요 그리드에서 부록이 본편과 구별된다. 예순일곱 칸이 한 덩어리로 이어지면
+    어디까지가 오늘 발표인지 눈으로 잘리지 않는다."""
+    page.goto(DECK)
+    page.keyboard.press('o')
+    marked = page.eval_on_selector_all('.ov-cell.app', 'els => els.length')
+    assert marked == len(appendix_indexes(page))
+    # 표시는 앞이 아니라 뒤에 몰려 있어야 한다 — 부록은 본편 뒤에 온다
+    idx = page.eval_on_selector_all('.ov-cell.app', 'els => els.map(e => +e.dataset.i)')
+    assert idx == appendix_indexes(page)
+
+
 # --- 글자 크기 하한 (Task 6) --------------------------------------------------
 #
 # check_slides.py 의 check_font_floor 는 인라인 style 만 본다. Task 5 리뷰가 잰
@@ -246,6 +407,9 @@ EXEMPT = [
     ('.seq-cap',
      '시퀀스 행 이름표(20px). 지도의 범례이고, 같은 말이 바로 아래 .seq-detail 의 '
      '.lbl(24px)에 제 크기로 다시 나온다'),
+    ('.seq-msg.self .seq-pill',
+     'self 단계(from===to)의 이름표(20px). .seq-cap 의 짝이고, 같은 말이 바로 아래 '
+     '.seq-detail 의 .lbl(24px)에 제 크기로 다시 나온다'),
     ('.seq-legend, .seq-legend *',
      '채널 색 범례(15px). "노란 파선이 프론트채널입니다"라고 발표자가 말한다'),
     ('.dia-tag',

@@ -144,29 +144,53 @@ def test_code_gets_the_lower_mono_floor():
 
 
 # --- 부록은 합계에서 뺀다 (Task 8) ------------------------------------------
+#
+# 픽스처 deck_with_appendix.html 은 일부러 규칙을 어긴 부록 두 장을 들고 있다 —
+# 대본이 없는 a01 과 25초에 못 미치는 a02. '어기지 않은 것을 보고 통과라고 말하는'
+# 테스트는 구현을 아무리 망가뜨려도 통과하기 때문이다(합계에서 빼는 것과 대본을
+# 요구하는 것은 서로 다른 규칙인데, 둘 다 지키는 픽스처로는 구분이 안 된다).
 
 def test_appendix_slides_are_excluded_from_total():
     """부록은 발표하지 않는 장이다. 합계에 넣으면 읽지도 않을 분량 때문에
     본편을 깎게 된다."""
     d = deck('deck_with_appendix.html')
     assert 'a00' in d.script
-    assert d.main_slides == ['s00', 's01']        # 부록 제외
-    assert d.slides == ['s00', 's01', 'a00']      # 전체는 포함
+    assert d.main_slides == ['s00', 's01', 's02', 's03']       # 부록 제외
+    assert d.slides == ['s00', 's01', 's02', 's03',
+                        'a00', 'a01', 'a02']                   # 전체는 포함
 
 
-def test_appendix_slide_still_needs_script():
-    """꺼내 읽을 문장이 없으면 질문에 답할 수 없다. 대본 검사는 전체를 본다."""
+def test_lookalike_class_names_are_not_appendix():
+    """class="slide appendix-note" · "slide not-appendix" 는 부록이 아니다.
+
+    'appendix' 를 부분 문자열로 찾으면 둘 다 부록으로 세어져 합계에서 조용히
+    빠진다. 화면에는 아무 표시가 없고, 발표 분량이 줄어든 것은 리허설에서야
+    드러난다. 위 test_lookalike_class_names_are_not_slides 가 'slide' 에 대해
+    지키는 것과 같은 성질이다."""
     d = deck('deck_with_appendix.html')
-    assert cs.check_script_present(d) == []
+    assert 's02' in d.main_slides and 's03' in d.main_slides
 
 
-def test_appendix_slide_seconds_are_still_bounded():
-    """부록도 한 장에 25~110초를 지킨다 — 읽어 주는 장이기 때문이다."""
-    assert cs.check_slide_seconds(deck('deck_with_appendix.html')) == []
+def test_appendix_slide_without_script_is_reported():
+    """부록에도 대본은 있어야 한다 — 질문이 나와 꺼내는 순간 읽게 되는 문장이다.
+
+    대본 검사는 main_slides 가 아니라 slides 를 돈다. 이 테스트가 그것을 붙잡는다:
+    check_script_present 가 본편만 보게 되면 a01 의 빈 대본이 보고되지 않는다."""
+    problems = cs.check_script_present(deck('deck_with_appendix.html'))
+    assert problems == ['a01: 대본이 없다']
+
+
+def test_appendix_slide_below_the_floor_is_reported():
+    """부록도 한 장에 25~110초를 지킨다. a02 는 1초짜리라 하한에 걸려야 한다.
+
+    check_slide_seconds 가 main_slides 를 돌게 되면 이 위반이 사라진다."""
+    problems = cs.check_slide_seconds(deck('deck_with_appendix.html'))
+    assert len(problems) == 1
+    assert problems[0].startswith('a02:') and '하한 25초' in problems[0]
 
 
 def test_check_total_ignores_appendix_seconds():
-    """부록 대본을 더해도 합계는 본편 두 장의 합 그대로여야 한다."""
+    """부록 대본을 더해도 합계는 본편 장들의 합 그대로여야 한다."""
     d = deck('deck_with_appendix.html')
     main_only = sum(cs.seconds(d.script[s]) for s in d.main_slides)
     reported = cs.check_total(d)

@@ -146,6 +146,9 @@ body{font-family:var(--sans);color:var(--text);-webkit-font-smoothing:antialiase
      .seq-cap     (20px) 시퀀스 행 이름표 — 지도의 범례다. 같은 말이 바로 아래
                         .seq-detail 에 제 크기로 다시 나온다. 판정 근거는 아래
                         「시퀀스 플레이어」 절에 길게 적었다
+     .seq-pill    (20px) 자기 자신에게 보내는 단계(from===to)의 이름표. 위 .seq-cap
+                        의 짝이고 근거도 같다 — 같은 말이 .seq-detail 의 .lbl 에
+                        24px 로 다시 나온다. 부록 a02 에서 처음 쓰인다
      .seq-legend  (15px) 채널 색 범례 — "노란 파선이 프론트채널입니다"라고 말한다
      .dia-tag     (11px) 그림 왼쪽 위의 꼬리표 — 바로 옆 <h2> 가 같은 말을 크게 한다
      .badge       (16px) "실제 HMAC-SHA256 서명/검증" 같은 부가 표지
@@ -276,11 +279,16 @@ body{font-family:var(--sans);color:var(--text);-webkit-font-smoothing:antialiase
    나오지 않는다 — 아래에서 .seq-detail .note 를 display:none 으로 접는다.
    그래서 20px 로 두고 행 높이는 이식한 값(42px) 그대로 둔다. */
 .slide .seq-cap{font-size:20px}
-/* 자기 자신에게 보내는 단계(from===to)의 이름표. 같은 목록의 같은 슬롯에 앉는
-   .seq-cap 의 짝이라 크기를 맞춘다. 이쪽은 예외 목록에 넣을 필요가 없다 —
-   .seq-pill 은 var(--mono) 를 쓰므로 하한이 24 가 아니라 코드 하한 20 이고, 20px 은
-   그 선 위다. 이식값 10.5px 로 두면 부록 a02 의 "PKCE 생성 + 로컬 서버 기동" 같은
-   단계 이름이 뒷자리에서 사라진다. 본편에는 self 단계가 없어 이 규칙이 없었다. */
+/* 자기 자신에게 보내는 단계(from===to)의 이름표. 이식값 10.5px 로 두면 부록 a02 의
+   "PKCE 생성 + 로컬 서버 기동" 같은 단계 이름이 뒷자리에서 사라진다. 본편 MAIN_STEPS
+   에는 self 단계가 없어 여태 드러나지 않던 자리다.
+   24px 이 아니라 20px 인 근거는 .seq-cap 과 같다 — 같은 목록의 같은 슬롯에 앉고,
+   같은 말이 바로 아래 .seq-detail 의 .lbl 에 24px 로 다시 나온다. 그래서 위 예외
+   목록과 test_deck_behavior.py 의 EXEMPT 양쪽에 함께 적었다.
+   "var(--mono) 를 쓰니 코드 하한 20 이 적용된다"고 적어 둘 뻔했는데, 그건 근거가
+   못 된다. 그 논리면 아무 본문이나 monospace 로 바꿔 20px 로 내릴 수 있다. 이 알약이
+   싣는 것은 s.cap — 여기서는 한국어 문장이지 코드가 아니고, monospace 인 것은
+   이식해 온 알약 모양이 그렇게 생겼기 때문일 뿐이다. */
 .slide .seq-msg.self .seq-pill{font-size:20px;padding:3px 10px}
 .slide .seq-num{width:32px;height:32px;font-size:20px}
 .slide .seq-detail{flex:0 0 auto;margin-top:10px}
@@ -365,7 +373,7 @@ body{font-family:var(--sans);color:var(--text);-webkit-font-smoothing:antialiase
    font-size:12.5px 를 박아 두었고, 그 값은 .slide .verify-row 를 이긴다. renderPlat
    에서 인라인을 걷어냈으므로 폭만 여기서 준다. */
 .slide .pick{padding:12px 14px}
-.slide .pick .pt{font-size:22px;letter-spacing:0}
+.slide .pick .pt{font-size:24px;letter-spacing:0}
 .slide .pick .pn{font-size:24px;margin-top:4px}
 .slide #platOut h4{color:#fff;margin:0 0 8px}
 .slide .verify-row .pk-k{flex:0 0 210px;color:var(--text-mut)}
@@ -2179,9 +2187,25 @@ const Deck={
     const chars=paras.reduce((n,p)=>n+p.replace(/\s/g,'').length,0);
     return chars/SPEED;
   },
+  /* 계측은 '발표하는 장'만 센다. 부록은 넘어가는 장이라 예정 시간에 들어가면
+     안 된다 — 넣으면 52분에 정확히 끝낸 발표자의 초록 막대가 86%를 가리킨다.
+     14% 어긋난 계기는 없는 것보다 나쁘다. 믿고 보기 때문이다.
+     tools/check_slides.py 의 main_slides 와 같은 가름이고, SPEED 와 마찬가지로
+     한쪽만 고치면 계측이 어긋난다. 두 곳을 늘 같이 본다. */
+  isMain(el){ return el && !el.classList.contains('appendix'); },
+  mainSlides(){ return this.slides.filter(el=>this.isMain(el)); },
   plannedUpTo(i){
-    let s=0; for(let k=0;k<i;k++) s+=this.secOf(this.slides[k].id); return s;
+    let s=0;
+    for(let k=0;k<i;k++){ const el=this.slides[k]; if(this.isMain(el)) s+=this.secOf(el.id); }
+    return s;
   },
+  /* i 번 장을 '끝냈을 때'의 예정 누계. 부록에 서 있으면 그 장의 초는 더하지 않는다 —
+     부록에서는 시계가 멈춘 것이 맞다. 발표 일정은 s52 에서 끝났다. */
+  plannedThrough(i){
+    const el=this.slides[i];
+    return this.plannedUpTo(i) + (this.isMain(el) ? this.secOf(el.id) : 0);
+  },
+  plannedTotal(){ return this.plannedUpTo(this.slides.length); },
   go(i, beat=0){
     if(i<0||i>=this.slides.length)return;
     // 떠나는 장을 먼저 정리한다. 스스로 도는 자산을 여기서 멈추지 않으면 화면 밖에서
@@ -2258,10 +2282,13 @@ function paint(){
   $('#counter').textContent = bn>1
     ? `${Deck.index+1} / ${n}  ·  ${Deck.beat+1}/${bn}`
     : `${Deck.index+1} / ${n}`;
-  $('#barPos').style.width=((Deck.index+1)/n*100)+'%';
+  // 위치 막대의 분모도 본편이다. s52 는 발표의 마지막 장이므로 100%여야 하고,
+  // 부록에 들어가면 그 너머라 100%에 붙어 있는다.
+  const mainN=Deck.mainSlides().length;
+  $('#barPos').style.width=Math.min(100,(Deck.index+1)/mainN*100)+'%';
 
-  const total=Deck.plannedUpTo(n);
-  const planned=Deck.plannedUpTo(Deck.index)+Deck.secOf(Deck.slides[Deck.index].id);
+  const total=Deck.plannedTotal();
+  const planned=Deck.plannedThrough(Deck.index);
   const el=elapsedSec();
   $('#barTime').style.width=(total?Math.min(100,el/total*100):0)+'%';
   $('#barTime').classList.toggle('behind', el>planned);
@@ -2316,7 +2343,7 @@ function pushPresenter(){
   if(!pres||pres.closed){ pres=null; return; }
   const d=pres.document; if(!d.getElementById('now'))return;
   const n=Deck.slides.length, i=Deck.index, slide=Deck.slides[i];
-  const planned=Deck.plannedUpTo(i)+Deck.secOf(slide.id);
+  const planned=Deck.plannedThrough(i);
   const el=elapsedSec(), diff=planned-el;
   d.getElementById('el').textContent=fmt(el);
   d.getElementById('pl').textContent=fmt(planned);
@@ -2380,6 +2407,19 @@ function jumpCommit(){
 
 function onKey(e){
   if(e.metaKey||e.ctrlKey||e.altKey)return;
+  /* 포커스가 폼 컨트롤에 있으면, 그 컨트롤이 실제로 쓰는 키만 넘겨준다.
+     a10 의 <select> 는 ↓ 로 값을 바꾸는 것이 기본 동작인데 덱이 그 키를 가로채
+     슬라이드를 넘겨 버렸다. s31 의 텍스트 칸에서는 숫자를 칠 때마다 jumpDigit 이
+     불려 "이동: 123" 토스트가 떴다.
+     tagName 만 보고 통째로 return 하지 않는 이유가 있다. 그러면 select 를 한 번
+     클릭한 뒤로는 O·P·S·A·Escape 가 전부 죽는다 — 포커스가 거기 남아 있기
+     때문이다. 개요를 못 열고 발표자 창을 못 띄우는 쪽이 원래 버그보다 나쁘다.
+     그래서 '이 컨트롤이 소비하는 키'만 골라 비켜 준다. */
+  const t=e.target, tag=t?t.tagName:'';
+  const typing=(tag==='INPUT' && !/^(checkbox|radio|button|submit)$/.test(t.type)) || tag==='TEXTAREA';
+  if(tag==='SELECT' && /^(ArrowUp|ArrowDown|Home|End)$/.test(e.key)) return;
+  if(typing && (e.key.length===1 || /^(ArrowLeft|ArrowRight|Home|End)$/.test(e.key))) return;
+  if(tag==='INPUT' && t.type==='checkbox' && e.key===' ') return;   // 스페이스는 체크박스가 쓴다
   switch(e.key){
     case 'ArrowRight': case ' ': case 'PageDown': e.preventDefault(); Deck.next(); break;
     case 'ArrowLeft': case 'PageUp': e.preventDefault(); Deck.prev(); break;
