@@ -126,9 +126,10 @@ body{font-family:var(--sans);color:var(--text);-webkit-font-smoothing:antialiase
 :root{ --bg:#04070d; --text-dim:#c3d1e2; --text-mut:#a3b4c9; }
 
 /* ---- 이식한 자산을 1280x720 좌표계에 맞춘다 ----
-   ASSET:CSS 는 원본과 한 줄씩 대조할 수 있어야 해서 손대지 않는다. 무대에서 크기가
-   안 맞는 것만 여기서 덮어쓴다. 기준은 두 가지다: 본문 24px, 코드 20px 이 하한이고,
-   슬라이드는 스크롤이 없으므로 세로 720px 안에서 끝나야 한다. */
+   ASSET:CSS 는 이식해 온 규칙이고, 그 출처는 블록 머리의 주석이 줄 번호까지 밝힌다.
+   덱이 쓰지 않는 규칙은 거기서 지웠다 — 크기는 여기서 덮어쓴다. 기준은 두 가지다:
+   본문 24px, 코드 20px 이 하한이고, 슬라이드는 스크롤이 없으므로 세로 720px 안에서
+   끝나야 한다. */
 
 /* 튜토리얼의 section 규칙(margin-bottom:26px)이 절대배치된 .slide 의 높이를 갉아먹는다 */
 .slide{margin:0}
@@ -180,7 +181,7 @@ body{font-family:var(--sans);color:var(--text);-webkit-font-smoothing:antialiase
 .slide pre{font-size:20px;line-height:1.55;padding:14px 16px;margin:10px 0}
 .slide h3{font-size:30px;margin:0 0 12px}
 .slide h4{font-size:24px;margin:0 0 6px}
-.slide .demo,.slide .card,.slide .callout{margin:0 0 14px;padding:14px 16px}
+.slide .demo,.slide .card{margin:0 0 14px;padding:14px 16px}
 .slide > .demo:last-child{margin-bottom:0}
 .slide .card.compact{padding:12px 14px}
 /* 안전망: 데모가 세로를 넘기면 슬라이드 밖으로 흐르는 대신 상자 안에서 스크롤한다.
@@ -347,11 +348,10 @@ body{font-family:var(--sans);color:var(--text);-webkit-font-smoothing:antialiase
 /* ---- 퀴즈 ----
    원본의 크기(질문 16px·보기 13.5px)는 문서용이다. 무대에서는 청중이 보기를 읽고
    손을 들어야 하므로 셋 다 본문 하한까지 키우고, 대신 한 장에 문제 하나만 둔다.
-   .q-head("⚡ QUICK CHECK")는 덱에서 지운다 — 그 자리는 <h2> 가 이미 쓰고 있고,
-   퀴즈 장인지는 보기 세 개가 말한다. */
+   원본의 .q-head("⚡ QUICK CHECK")는 마크업에도 규칙에도 없다 — 그 자리는 <h2> 가
+   이미 쓰고 있고, 퀴즈 장인지는 보기 세 개가 말한다. */
 .slide:has(.quiz){padding:44px 88px 48px}
 .slide .quiz{margin:0}
-.slide .quiz .q-head{display:none}
 .slide .quiz .q{font-size:28px;line-height:1.45;margin:0 0 16px}
 .slide .quiz .opt{font-size:24px;line-height:1.45;padding:10px 18px;margin:8px 0}
 .slide .quiz .explain{font-size:24px;line-height:1.5;padding:12px 16px;margin-top:12px}
@@ -412,9 +412,23 @@ body{font-family:var(--sans);color:var(--text);-webkit-font-smoothing:antialiase
    423-431 @media(max-width:980px) 도 옮기지 않는다 — 튜토리얼 레이아웃(#sidebar·#content)을
            위한 규칙이고, 덱은 1280x720 좌표계를 통째로 확대·축소하므로 창 너비에 따라
            .grid2 가 한 줄로 접히면 뒷자리에서 보이는 그림이 자리마다 달라진다.
-   아래 블록은 원본과 한 줄씩 대조할 수 있어야 하므로 고치지 않는다. 딱 한 줄만 뺐다 —
-   .dia-btn 규칙. 원본의 ▶ 재생 버튼은 덱에 실리지 않는다(→ 가 그 자리다). 마크업에서
-   지웠으므로 규칙도 함께 지운다. */
+   위 줄 번호는 '어디서 왔는가'를 밝히는 출처 표시다. 한 줄씩 대조하는 사본은 아니다 —
+   덱이 쓰지 않는 규칙은 여기서 지웠기 때문이다.
+
+   지운 것과 그 이유:
+   - .dia-btn — 원본의 ▶ 재생 버튼. 덱에서는 → 가 그 자리다(마크업에서도 지웠다).
+   - 튜토리얼 전용 부품 — #content(레이아웃 컨테이너) · .kicker · .lead · .grid3 ·
+     .grid4 · .callout · .analogy(+.tag +.big) · .matrix · .term/#tooltip(마우스 오버
+     용어 설명) · .quiz .q-head · .token-card · .pill-row · .tl · .chip · .hl-* ·
+     .tabs/.tab/.tab-panel · .toggle-pill. 덱에 그 부품이 아예 없다.
+   - .dia.paused · .dia .nd.soft · .dia .nd.dead — 원본은 스스로 재생하다 멈출 수 있어
+     paused 상태가 있고, 덱은 비트가 몰아주므로 그 상태가 생기지 않는다. soft·dead 는
+     이식한 아홉 그림의 SVG 어디에도 붙어 있지 않다.
+
+   지우기 전에 셋 다 확인했다: 마크업의 class 속성, JS 의 classList 호출, 그리고
+   템플릿 리터럴 안에서 조립되는 class 문자열(`ch-${s.ch}` 같은 것). 세 번째를
+   tools/check_dead_css.py 는 구조적으로 못 본다 — 그래서 그 보고서만 믿고 지우면
+   .ch-front · .dir-left · .ok-text 처럼 살아 있는 규칙을 지우게 된다. */
 
 /* 원본 7-57 의 루트 변수 중 아래 블록이 쓰는 열세 개(--front --back --ui --user
    --client --auth --api --oidc --bad --browser --bg-soft --radius --shadow)는
@@ -424,43 +438,24 @@ body{font-family:var(--sans);color:var(--text);-webkit-font-smoothing:antialiase
    --fx --fy --ft --dl 은 옮기지 않았다 — var(--fx,0) 처럼 자기 대체값을 들고 다닌다. */
 
 /* ===== Content ===== */
-#content{flex:1;min-width:0;max-width:1080px;margin:0 auto;padding:40px 52px 120px}
 section{scroll-margin-top:20px;padding-top:30px;margin-bottom:26px;border-top:1px solid transparent}
-.kicker{display:inline-flex;align-items:center;gap:7px;font-family:var(--mono);font-size:11.5px;color:var(--user);letter-spacing:1px;text-transform:uppercase;margin-bottom:12px;padding:5px 11px;border:1px solid var(--border-2);border-radius:99px;background:var(--panel)}
-.kicker b{color:var(--text-mut);font-weight:500}
 h2{font-size:31px;line-height:1.25;margin:0 0 10px;letter-spacing:-.5px}
 h3{font-size:20px;margin:30px 0 10px;letter-spacing:-.25px}
 h4{font-size:14.5px;margin:0 0 8px;color:#fff}
 p{color:var(--text-dim);margin:13px 0}
-.lead{font-size:18px;color:var(--text);line-height:1.78}
 strong{color:#fff;font-weight:700}
 em{color:#ffd89a;font-style:normal;font-weight:600}
 ul,ol{color:var(--text-dim);padding-left:22px}
 li{margin:8px 0}
 .grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
-.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
-.grid4{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
 
-.card,.demo,.quiz,.callout,.analogy{
+.card,.demo,.quiz{
   background:var(--panel);border:1px solid var(--border);border-radius:var(--radius);
   box-shadow:var(--shadow);padding:22px;margin:18px 0;
 }
 .demo{background:linear-gradient(180deg,var(--bg-soft),var(--panel));border-color:var(--border-2)}
 .compact{padding:15px}
 .muted{color:var(--text-mut)}
-.callout{box-shadow:none;position:relative;overflow:hidden;padding-left:24px}
-.callout::before{content:"";position:absolute;left:0;top:0;bottom:0;width:4px;background:var(--user)}
-.callout.warn::before{background:var(--warn)} .callout.ok::before{background:var(--ok)}
-.callout.bad::before{background:var(--bad)} .callout.oidc::before{background:var(--oidc)}
-.callout h4{display:flex;align-items:center;gap:8px}
-.callout .ic{font-size:16px}
-
-/* analogy box */
-.analogy{background:linear-gradient(135deg,rgba(167,139,250,.08),rgba(56,189,248,.05));border-color:var(--border-2);position:relative}
-.analogy .tag{display:inline-flex;align-items:center;gap:6px;font-family:var(--mono);font-size:11px;letter-spacing:.5px;color:var(--oidc);text-transform:uppercase;margin-bottom:6px}
-.analogy h4{font-size:16px;margin-bottom:6px}
-.analogy .big{font-size:30px;line-height:1;margin-right:4px}
-
 /* devtools-style chrome */
 .win{border:1px solid var(--border-2);border-radius:12px;overflow:hidden;background:#070d18;margin:16px 0;box-shadow:var(--shadow)}
 .win-bar{display:flex;align-items:center;gap:8px;padding:9px 13px;background:linear-gradient(180deg,#16223a,#101a2e);border-bottom:1px solid var(--border)}
@@ -470,13 +465,6 @@ li{margin:8px 0}
 .win-url{flex:1;font-family:var(--mono);font-size:12px;color:var(--text-dim);background:#0a1220;border:1px solid var(--border);border-radius:7px;padding:5px 11px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .win-url .lock{color:var(--ok)} .win-url .lock.bad{color:var(--bad)}
 .win-body{padding:18px}
-
-.matrix{width:100%;border-collapse:collapse;margin:16px 0;border:1px solid var(--border);border-radius:10px;overflow:hidden}
-.matrix th,.matrix td{border-bottom:1px solid var(--border);padding:11px 13px;text-align:left;vertical-align:top}
-.matrix th{background:var(--bg-soft);font-size:12px;color:var(--text);font-family:var(--mono);font-weight:600}
-.matrix td{color:var(--text-dim);font-size:13.5px}
-.matrix tr:last-child td{border-bottom:0}
-.matrix tr:hover td{background:rgba(255,255,255,.015)}
 
 button{font-family:var(--sans);font-size:13.5px;font-weight:650;cursor:pointer;background:var(--panel-2);color:var(--text);border:1px solid var(--border-2);border-radius:9px;padding:9px 15px;transition:.15s}
 button:hover{border-color:var(--user);color:#fff;transform:translateY(-1px)}
@@ -496,13 +484,7 @@ pre b{color:var(--auth);font-weight:700}
 .badge.bad{color:var(--bad);border-color:rgba(248,113,113,.45)} .badge.oidc{color:var(--oidc);border-color:rgba(167,139,250,.45)}
 .badge.front{color:var(--front);border-color:rgba(251,191,36,.45)} .badge.back{color:var(--back);border-color:rgba(52,211,153,.4)}
 
-.term{color:#d9f2ff;border-bottom:1px dotted var(--user);cursor:help;white-space:nowrap}
-#tooltip{position:fixed;z-index:100;max-width:340px;background:#060d18;border:1px solid var(--border-2);border-radius:11px;padding:11px 13px;color:var(--text);font-size:13.5px;line-height:1.6;opacity:0;pointer-events:none;transform:translateY(5px);transition:.12s;box-shadow:0 16px 40px rgba(0,0,0,.5)}
-#tooltip.show{opacity:1;transform:translateY(0)}
-#tooltip b{color:var(--user)}
-
 /* quiz */
-.quiz .q-head{font-family:var(--mono);font-size:12px;color:var(--user);letter-spacing:1px;text-transform:uppercase}
 .quiz .q{font-weight:800;color:#fff;margin:8px 0 14px;font-size:16px}
 .quiz .opt{display:block;width:100%;text-align:left;margin:8px 0;line-height:1.5}
 .quiz .opt.correct{border-color:var(--ok);background:rgba(52,211,153,.12);color:#fff}
@@ -583,27 +565,8 @@ pre b{color:var(--auth);font-weight:700}
 .pick.active{border-color:var(--user);background:var(--panel-2);box-shadow:0 0 0 1px var(--user)}
 .pick .pt{font-family:var(--mono);font-size:10.5px;color:var(--text-mut);text-transform:uppercase;letter-spacing:.5px}
 .pick .pn{font-weight:750;color:#fff;margin-top:3px}
-.token-card{border:1px solid var(--border-2);border-radius:11px;padding:16px;background:rgba(255,255,255,.02)}
-.token-card h4{display:flex;justify-content:space-between;gap:8px;align-items:center;flex-wrap:wrap}
-.pill-row{display:flex;gap:7px;flex-wrap:wrap;margin:10px 0}
 .split-line{height:1px;background:var(--border);margin:18px 0}
-.tl{display:flex;gap:12px;margin:10px 0}
-.tl .n{flex:0 0 28px;height:28px;border-radius:50%;display:grid;place-items:center;font-family:var(--mono);font-size:12px;background:var(--panel-2);border:1px solid var(--border-2);color:var(--user);font-weight:700}
-.tl .c{flex:1}
-.chip{display:inline-block;font-family:var(--mono);font-size:11px;padding:2px 8px;border-radius:6px;background:var(--panel-2);border:1px solid var(--border);color:var(--text-dim);margin:2px 3px 2px 0}
-.hl-user{color:var(--user)} .hl-browser{color:var(--browser)} .hl-client{color:var(--client)} .hl-auth{color:var(--auth)} .hl-api{color:var(--api)} .hl-oidc{color:var(--oidc)}
-
-.tabs{display:flex;gap:4px;border-bottom:1px solid var(--border);margin-bottom:14px;flex-wrap:wrap}
-.tab{background:transparent;border:0;border-bottom:2px solid transparent;border-radius:0;padding:9px 13px;color:var(--text-mut)}
-.tab.active{color:#fff;border-bottom-color:var(--user)}
-.tab:hover{transform:none;color:var(--text)}
-.tab-panel{display:none} .tab-panel.active{display:block}
-
 .note-inline{font-size:12.5px;color:var(--text-mut);margin-top:6px}
-.toggle-pill{display:inline-flex;border:1px solid var(--border-2);border-radius:99px;overflow:hidden}
-.toggle-pill button{border:0;border-radius:0;background:transparent;padding:7px 14px}
-.toggle-pill button.on{background:var(--user);color:#06121c}
-
 /* ===== 애니메이션 다이어그램 (.dia) =====
    auth_basics.html과 같은 구동 규약을 쓴다 — 요소마다 data-at으로 "몇 단계에서 보일지"만
    적고, 목록 판정은 JS가, 보임과 숨김은 여기가 맡는다. 색은 이 문서의 언어를 그대로 따른다:
@@ -626,8 +589,6 @@ pre b{color:var(--auth);font-weight:700}
 }
 .dia-dot:hover{transform:none;border-color:var(--user)}
 .dia-dot.on{background:var(--user);border-color:var(--user)}
-/* 멈춰 있는 동안에는 지금 어느 단계인지가 더 중요해진다 */
-.dia.paused .dia-dot.on{background:var(--warn);border-color:var(--warn)}
 .dia svg{display:block;width:100%;height:auto;margin:2px 0 0}
 .dia-cap{
   min-height:46px;margin-top:10px;padding:9px 12px;border-radius:9px;
@@ -641,7 +602,6 @@ pre b{color:var(--auth);font-weight:700}
 
 /* 도형 — 테두리 색이 곧 등장인물이다 */
 .dia .nd{fill:var(--bg);stroke:var(--border-2);stroke-width:1.2}
-.dia .nd.soft{fill:var(--panel-2)}
 .dia .nd.us{stroke:rgba(56,189,248,.55)}   /* 사용자 */
 .dia .nd.br{stroke:rgba(34,211,238,.5)}    /* 브라우저 */
 .dia .nd.cl{stroke:rgba(52,211,153,.5)}    /* 클라이언트 */
@@ -650,7 +610,6 @@ pre b{color:var(--auth);font-weight:700}
 .dia .nd.oi{stroke:rgba(167,139,250,.5)}   /* OIDC */
 .dia .nd.hot{stroke:var(--user);stroke-width:1.8}
 .dia .nd.evil{fill:rgba(248,113,113,.06);stroke:rgba(248,113,113,.5)}
-.dia .nd.dead{stroke:rgba(248,113,113,.5);stroke-dasharray:4 3}
 /* 테두리만 두르는 도형. .nd가 바탕색을 들고 있어서 fill="none" 속성으로는 못 지운다 —
    CSS 선언은 언제나 프레젠테이션 속성을 이기기 때문이다. 칠을 그림 쪽에서 덮어쓰려면
    속성이 아니라 클래스로 해야 한다. */
