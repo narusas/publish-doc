@@ -591,6 +591,56 @@ def test_entering_an_autoplaying_slide_rewinds_and_starts_it(page):
     assert seq_step(page, sid) > 1, '%s 에 들어왔는데 자동재생이 시작되지 않았다' % sid
 
 
+def test_a_stray_right_arrow_during_autoplay_does_not_cost_the_slide(page):
+    """자동재생 중의 → 한 번은 장을 잃지 않는다.
+
+    두 장은 덱에서 가장 중요한 1분이다. 자동재생은 25.5초에 끝나는데 대본은 35초를
+    더 말하고, 그 정지 구간에서 급한 발표자는 → 로 시퀀스를 밀어 본다. 비트가
+    하나뿐이던 동안 그 한 번은 슬라이드를 넘겼고, ← 로 돌아오면 enter() 가 되감아
+    25.6초를 처음부터 다시 재생했다 — 열여섯 단계를 처음 설명하던 도중에.
+
+    지금은 → 가 '멈추고 마지막 단계에 선다'를 뜻한다. 자동재생이 어차피 가고 있던
+    자리이므로 잃는 것이 없다. 한 번 더 누르면 그때 넘어간다."""
+    page.goto(DECK)
+    sid, i = autoplaying_slide(page)
+    n = page.evaluate('i => beatCount(Deck.slides[i])', i)
+    assert n > 1, '%s 에 → 가 쓸 비트가 없다 — 한 번의 오타가 장을 통째로 넘긴다' % sid
+
+    goto(page, i)
+    page.wait_for_timeout(2200)
+    assert seq_step(page, sid) > 1, '자동재생이 돌지 않는다'
+
+    page.keyboard.press('ArrowRight')
+    assert state(page)['i'] == i, '자동재생 중의 → 한 번에 장을 잃었다'
+    last = page.evaluate('id => ON_ENTER[id].n', sid)
+    assert seq_step(page, sid) == last, \
+        '→ 가 마지막 단계(%d)로 가지 않았다 (%d)' % (last, seq_step(page, sid))
+    page.wait_for_timeout(2500)
+    assert seq_step(page, sid) == last, '→ 뒤에도 자동재생이 계속 돈다'
+
+    page.keyboard.press('ArrowRight')
+    assert state(page)['i'] == i + 1, '비트를 다 썼는데 → 가 넘어가지 않는다'
+
+
+def test_backing_into_an_autoplaying_slide_lands_on_the_beat_it_shows(page):
+    """← 로 들어온 장의 비트는 자산이 정한 상태와 같아야 한다.
+
+    '스스로 도는' 자산은 enter() 에서 되감아 다시 재생한다. 그런데 ← 는 원칙적으로
+    마지막 비트로 들어오므로, 그대로 두면 화면은 1단계인데 비트만 마지막이다.
+    HUD 가 '2/2'라고 거짓말을 하고, ← 를 한 번 더 눌러야 그 장을 빠져나간다.
+    가름은 leave() 의 유무다 — 스스로 도는 것만 leave() 를 갖는다."""
+    page.goto(DECK)
+    sid, i = autoplaying_slide(page)
+    goto(page, i + 1)
+    page.keyboard.press('ArrowLeft')
+    assert state(page)['i'] == i
+    assert state(page)['b'] == 0, \
+        '← 로 들어왔는데 비트가 %d 다 — 화면은 되감겼는데 HUD 만 끝에 서 있다' % state(page)['b']
+    assert seq_step(page, sid) == 1, '← 로 들어왔는데 되감기지 않았다'
+    page.keyboard.press('ArrowLeft')
+    assert state(page)['i'] == i - 1, '← 한 번으로 자동재생 장을 빠져나가지 못한다'
+
+
 def test_appendix_quiz_bank_shows_exactly_one_question_per_beat(page):
     """퀴즈 은행은 한 비트에 문제 하나만 세운다.
 
