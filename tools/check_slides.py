@@ -83,9 +83,21 @@ def read_deck(path):
 
 
 def seconds(paras):
-    """대본 문단 목록의 예상 소요 시간(초). 공백은 세지 않는다."""
+    """대본 문단 목록의 예상 소요 시간(초). 공백은 세지 않는다.
+
+    반올림하지 않고 원값을 돌려준다. 한때 여기서 소수 첫째 자리로 한 번 접고 _fmt 가
+    다시 접었는데, 그 중간값을 쓰는 곳이 아무 데도 없으면서 덱과 답만 갈랐다 —
+    파이썬의 round 는 .5 를 짝수로 붙이고 자바스크립트의 Math.round 는 위로 붙이므로,
+    같은 대본·같은 SPEED 로도 67장 중 9장이 1초씩 달랐다(s06·s26·s28·s29·s32·
+    a01·a03·a08·a10).
+
+    두 번 접지 않으면 두 구현이 완전히 같아진다. chars/5.5 = 2*chars/11 이 정확히
+    x.5 가 되려면 4*chars = 11*(2m+1) 이어야 하는데 오른쪽은 언제나 홀수다. 즉
+    .5 동점 자체가 생기지 않아 짝수 반올림 규칙이 발동할 자리가 없다.
+    tools/test_deck_behavior.py 의 test_the_deck_and_the_checker_agree_on_every_slide_time
+    이 67장을 한 장씩 대조한다."""
     chars = sum(len(re.sub(r'\s', '', p)) for p in paras)
-    return round(chars / SPEED, 1)
+    return chars / SPEED
 
 
 def _fmt(sec):

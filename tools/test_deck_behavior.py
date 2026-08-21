@@ -1,4 +1,7 @@
-"""덱의 키보드 동작 테스트. Playwright 브라우저가 없으면 통째로 skip 한다.
+"""덱의 키보드 동작 테스트. 브라우저가 없으면 skip 하지 않고 실패한다.
+
+활자 하한(24/20)·720px 넘침·키보드 계약을 강제하는 곳이 여기뿐이라, 물러서면
+그 계약들이 통째로 사라지면서 화면에는 초록불이 뜬다. 고치는 법은 한 줄이다:
 
   python3 -m playwright install chromium   # 한 번만
 
@@ -8,8 +11,12 @@
 """
 import os
 import re
+import sys
 
 import pytest
+
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import check_slides as cs        # noqa: E402  (같은 tools/ 안의 표준 라이브러리 전용 모듈)
 
 # 브라우저가 없으면 skip 이 아니라 실패다.
 #
@@ -37,6 +44,16 @@ except ImportError as exc:                           # pragma: no cover - 설치
 NO_BROWSER = ('덱 동작 테스트는 브라우저를 요구한다 — %s.\n'
               '활자 하한(24/20)·720px 넘침·키보드 계약을 강제하는 곳이 여기뿐이라 '
               'skip 하지 않는다.\n설치: python3 -m playwright install chromium')
+
+# 이 덱이 반드시 갖고 있는 성질을 못 찾았을 때 쓰는 말.
+#
+# skip 이면 안 되는 이유가 이 물결 전체의 이유와 같다. 예를 들어 createSequence 에서
+# leave(){ stop(); } 한 줄을 지우면 — I3 회귀의 자산 쪽 판박이다 — autoplaying_slide()
+# 가 아무것도 못 찾아 두 테스트가 skip 되고, 같은 술어를 쓰는 Deck.go 의 selfRunning
+# 도 함께 죽는다. 한 줄로 Important 두 개가 풀리는데 스위트는 초록이 된다.
+# '아직 그런 슬라이드가 없다'는 덱이 3장이던 시절의 말이고, 지금은 67장짜리 완성품이다.
+MUST_EXIST = ('%s — 이 덱에는 있어야 하는 성질이다. 못 찾았다면 덱이 아니라 그것을 '
+              '만드는 코드가 깨진 것이므로 skip 하지 않는다.')
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 DECK = 'file://' + os.path.join(ROOT, 'oauth2_slides.html')
@@ -74,7 +91,7 @@ def first_multi_beat_slide(pg):
     got = pg.evaluate(
         'Deck.slides.map((s, i) => [i, beatCount(s)]).find(([, n]) => n > 1) || null')
     if not got:
-        pytest.skip('비트가 둘 이상인 슬라이드가 아직 없다')
+        pytest.fail(MUST_EXIST % '비트가 둘 이상인 슬라이드')
     return got[0], got[1]
 
 
@@ -115,7 +132,7 @@ def test_builds_are_visible_exactly_up_to_the_current_beat(page):
     i = page.evaluate(
         'Deck.slides.findIndex(s => s.querySelectorAll(".build").length >= 2)')
     if i < 0:
-        pytest.skip('.build 가 둘 이상인 슬라이드가 아직 없다')
+        pytest.fail(MUST_EXIST % '.build 가 둘 이상인 슬라이드')
     goto(page, i)
     n = page.evaluate('i => beatCount(Deck.slides[i])', i)
     for beat in range(n):
@@ -207,7 +224,7 @@ def overflowing_notes_slide(pg):
       return found;
     }""")
     if i < 0:
-        pytest.skip('서랍을 넘치는 대본이 아직 없다')
+        pytest.fail(MUST_EXIST % '노트 서랍(273px)을 넘치는 대본')
     return i
 
 
@@ -493,7 +510,7 @@ def appendix_indexes(pg):
     got = pg.evaluate('Deck.slides.map((s, i) => [i, s.classList.contains("appendix")])'
                       '.filter(([, a]) => a).map(([i]) => i)')
     if not got:
-        pytest.skip('부록 슬라이드가 아직 없다')
+        pytest.fail(MUST_EXIST % '부록 슬라이드')
     return got
 
 
@@ -528,7 +545,7 @@ def test_appendix_sequences_do_not_play_by_themselves(page):
     seq_slides = [i for i in appendix_indexes(page)
                   if page.evaluate('i => !!Deck.slides[i].querySelector(".seq-counter")', i)]
     if not seq_slides:
-        pytest.skip('부록에 시퀀스가 아직 없다')
+        pytest.fail(MUST_EXIST % '부록의 시퀀스')
     for i in seq_slides:
         goto(page, i)
         read = 'i => Deck.slides[i].querySelector(".seq-counter").textContent.trim()'
@@ -565,7 +582,7 @@ def autoplaying_slide(pg):
       return null;
     }""")
     if not got:
-        pytest.skip('leave() 를 가진 자동재생 자산이 아직 없다')
+        pytest.fail(MUST_EXIST % 'leave() 를 가진 자동재생 자산')
     return got[0], got[1]
 
 
@@ -669,6 +686,37 @@ def test_backing_into_an_autoplaying_slide_lands_on_the_beat_it_shows(page):
     assert state(page)['i'] == i - 1, '← 한 번으로 자동재생 장을 빠져나가지 못한다'
 
 
+def test_leaving_an_autoplaying_slide_backwards_never_shows_a_beat_that_lies(page):
+    """스스로 도는 장에는 뒤로 가는 비트가 없다 — ← 는 비트를 거치지 않고 떠난다.
+
+    비트 1 은 '멈추고 마지막 단계에 선다'이고 비트 0 의 go() 는 일부러 아무것도
+    하지 않는다(도착 직후 enter() 가 덮어쓰기 때문이다). 그래서 → 로 비트 1 에
+    올라간 뒤 ← 로 비트만 되돌리면, 화면은 16/16 에 선 채로 HUD 만 1/2 로 돌아간다.
+    → 한 번이 지운 거짓말이 ← 한 번으로 되살아나는 셈이다. 거짓말하는 계기는
+    없느니만 못하다.
+
+    도착 규칙과 대칭이다. ← 로 들어올 때 비트를 거치지 않고 0 에서 시작하듯,
+    나갈 때도 비트를 거치지 않고 떠난다. 가름도 같은 술어(leave() 의 유무)를 쓴다."""
+    page.goto(DECK)
+    sid, i = autoplaying_slide(page)
+    goto(page, i)
+    page.wait_for_timeout(2200)
+
+    page.keyboard.press('ArrowRight')                 # 비트 1 — 멈추고 마지막 단계
+    last = page.evaluate('id => ON_ENTER[id].n', sid)
+    assert (state(page)['i'], state(page)['b']) == (i, 1)
+    assert seq_step(page, sid) == last
+
+    page.keyboard.press('ArrowLeft')
+    st = state(page)
+    if st['i'] == i:
+        # 남아 있다면 화면과 계기가 같은 말을 해야 한다 — 그러지 못하는 것이 이 결함이다
+        assert False, (
+            '← 가 비트만 되돌렸다: 화면은 %d / %d 인데 HUD 는 비트 %d 를 말한다'
+            % (seq_step(page, sid), last, st['b'] + 1))
+    assert st['i'] == i - 1, '← 한 번으로 자동재생 장을 빠져나가지 못한다'
+
+
 def test_appendix_quiz_bank_shows_exactly_one_question_per_beat(page):
     """퀴즈 은행은 한 비트에 문제 하나만 세운다.
 
@@ -680,7 +728,7 @@ def test_appendix_quiz_bank_shows_exactly_one_question_per_beat(page):
     banks = [i for i in appendix_indexes(page)
              if page.evaluate('i => Deck.slides[i].querySelectorAll(".quiz").length > 1', i)]
     if not banks:
-        pytest.skip('퀴즈가 둘 이상인 부록 장이 아직 없다')
+        pytest.fail(MUST_EXIST % '퀴즈가 둘 이상인 부록 장')
     for i in banks:
         total = page.evaluate('i => Deck.slides[i].querySelectorAll(".quiz").length', i)
         n = page.evaluate('i => beatCount(Deck.slides[i])', i)
@@ -785,7 +833,7 @@ def test_form_controls_keep_the_keys_they_use(page):
     page.goto(DECK)
     sel = page.evaluate('Deck.slides.findIndex(s => s.querySelector("select"))')
     if sel < 0:
-        pytest.skip('<select> 가 있는 슬라이드가 아직 없다')
+        pytest.fail(MUST_EXIST % '<select> 가 있는 슬라이드')
     goto(page, sel)
     handle = page.eval_on_selector('.slide.on select', 'e => e.id')
     page.focus('#' + handle)
@@ -1146,3 +1194,87 @@ def test_the_two_jwt_demos_stay_identical_apart_from_their_button_rows(page):
     assert a is not None and b is not None, 'jwtDemo44/45 를 찾지 못했다'
     assert a == b, ('s44 와 s45 의 JWT 데모 마크업이 버튼 줄 말고도 벌어졌다.\n'
                     's44: %s\ns45: %s' % (a[:400], b[:400]))
+
+
+# --- 검사기와 덱이 같은 초를 말한다 (M6 후속) ---------------------------------
+
+def test_the_deck_and_the_checker_agree_on_every_slide_time(page):
+    """예순일곱 장 전부에서 두 구현이 같은 초를 내야 한다.
+
+    한때 아니었다. 검사기가 `round(chars/SPEED, 1)` 로 한 번 접고 `_fmt` 가 다시
+    접는 동안, 덱은 원값에 `Math.round` 를 한 번만 했다. 파이썬의 round 는 .5 를
+    짝수로 붙이고 자바스크립트는 위로 붙이므로 아홉 장(s06·s26·s28·s29·s32·
+    a01·a03·a08·a10)이 1초씩 갈렸다. 합계는 안 움직였지만, 상수를 맞춰 놓고
+    "두 소비자가 같은 바이트를 읽으니 같은 답이 나온다"고 말하는 것은 그때
+    거짓이었다 — test_the_deck_and_the_checker_share_their_constants 가 지키는
+    것은 상수까지이지 답까지가 아니다.
+
+    중간 반올림을 지우면 둘이 완전히 같아진다. chars/5.5 = 2*chars/11 이 정확히
+    x.5 가 되려면 4*chars = 11*(2m+1) 이어야 하는데 오른쪽은 언제나 홀수라,
+    짝수 반올림 규칙이 발동할 동점 자체가 생기지 않는다.
+
+    개요 칸의 0:xx 도 같은 값을 쓰므로, 여기가 갈리면 화면과 검사기 출력이
+    한 장에서 다른 숫자를 말한다."""
+    page.goto(DECK)
+    deck = cs.read_deck(os.path.join(ROOT, 'oauth2_slides.html'))
+    mine = page.evaluate(
+        'Deck.slides.map(s => [s.id, Deck.secOf(s.id), fmt(Deck.secOf(s.id))])')
+    assert len(mine) == len(deck.slides), '장 수가 다르다'
+
+    bad = []
+    for sid, sec, shown in mine:
+        want = cs.seconds(deck.script[sid])
+        if abs(sec - want) > 1e-9:
+            bad.append('%s: 덱 %.4f초 ≠ 검사기 %.4f초' % (sid, sec, want))
+        elif shown != cs._fmt(want):
+            bad.append('%s: 덱은 %s 라 쓰고 검사기는 %s 라 쓴다' % (sid, shown, cs._fmt(want)))
+    assert bad == [], '두 구현이 다른 초를 말한다 (%d장):\n  %s' % (
+        len(bad), '\n  '.join(bad[:12]))
+
+
+# --- 넘치지 않는 서랍은 키를 먹지 않는다 (I1 후속) ----------------------------
+
+def non_overflowing_notes_slide(pg):
+    """대본이 서랍 안에 다 들어가는 슬라이드. 예순일곱 중 쉰한 장이 그렇다.
+
+    앞뒤 양쪽으로 움직일 수 있어야 네 키를 다 잴 수 있으므로 첫 장과 끝 장은 뺀다."""
+    i = pg.evaluate("""() => {
+      const n = document.getElementById('notes');
+      const keep = Deck.index, wasOn = n.classList.contains('on');
+      n.classList.add('on');
+      let found = -1;
+      for (let i = 1; i < Deck.slides.length - 1; i++) {
+        Deck.go(i); notesFor = null; renderNotes();
+        if (n.scrollHeight - n.clientHeight <= 1) { found = i; break; }
+      }
+      if (!wasOn) n.classList.remove('on');
+      Deck.go(keep);
+      return found;
+    }""")
+    if i < 0:
+        pytest.fail(MUST_EXIST % '대본이 서랍 안에 다 들어가는 슬라이드')
+    return i
+
+
+def test_a_notes_drawer_that_fits_does_not_eat_the_navigation_keys(page):
+    """넘치지 않는 서랍은 굴릴 것이 없으므로 키를 가져가면 안 된다.
+
+    열려 있다는 이유만으로 넘겨주면, 그 키는 창을 굴리지도 못하고 덱을 넘기지도
+    못한 채 그냥 죽는다. 서랍이 넘치는 장은 예순일곱 중 열여섯뿐이라 나머지
+    쉰한 장에서 네 키가 전부 무반응이었다. 그중 PageDown·PageUp 은 발표자용
+    리모컨이 보내는 키이고, 서랍은 발표하는 내내 열어 두는 물건이다."""
+    page.goto(DECK)
+    i = non_overflowing_notes_slide(page)
+    dead = []
+    for key, delta in (('PageDown', 1), ('ArrowDown', 1), ('PageUp', -1), ('ArrowUp', -1)):
+        goto(page, i)
+        page.keyboard.press('s')
+        assert on(page, '#notes') is True
+        assert page.eval_on_selector(
+            '#notes', 'e => e.scrollHeight - e.clientHeight <= 1'), '서랍이 넘친다'
+        page.keyboard.press(key)
+        if state(page)['i'] != i + delta:
+            dead.append(key)
+        page.keyboard.press('Escape')
+    assert dead == [], \
+        '넘치지 않는 서랍이 이 키들을 먹었다(창도 안 굴러가고 덱도 안 움직인다): %s' % dead
