@@ -1,4 +1,5 @@
 import os
+import re
 import sys
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
@@ -309,3 +310,37 @@ def test_the_browser_gate_does_not_skip_itself_away():
         assert form not in src, 'chromium 이 없을 때 skip 한다 — 실패해야 한다'
     assert 'pytest.fail(NO_BROWSER' in src, \
         '브라우저가 없을 때 시끄럽게 실패하는 자리가 없다'
+
+
+DECK_CONST = re.compile(r'^const\s+(SPEED|SLIDE_MIN|SLIDE_MAX)\s*=\s*([\d.]+)\s*;', re.M)
+
+
+def test_the_deck_and_the_checker_share_their_constants():
+    """같은 숫자를 두 파일이 들고 있으면 한쪽만 고쳐진다.
+
+    SPEED 는 대본 길이를 초로 바꾸는 값이고, SLIDE_MIN·SLIDE_MAX 는 개요 그리드가
+    칸의 시간 색을 정하는 선이다. 검사기 쪽에만 "덱과 같은 값이어야 한다"고 적혀
+    있었을 뿐 아무도 대조하지 않았다 — 덱의 const 만 고치면 검사기는 통과라고
+    하는데 무대의 계기가 다른 말을 하거나, 위반이 아닌 장이 빨갛게 칠해진다.
+
+    브라우저가 필요 없다. 두 파일의 텍스트를 읽어 비교할 뿐이다."""
+    with open(DECK, encoding='utf-8') as fh:
+        found = dict(DECK_CONST.findall(fh.read()))
+    assert set(found) == {'SPEED', 'SLIDE_MIN', 'SLIDE_MAX'}, \
+        '덱에서 못 찾은 상수가 있다: %s' % (
+            {'SPEED', 'SLIDE_MIN', 'SLIDE_MAX'} - set(found))
+    assert float(found['SPEED']) == cs.SPEED, \
+        '덱의 SPEED %s ≠ 검사기의 %s' % (found['SPEED'], cs.SPEED)
+    assert int(found['SLIDE_MIN']) == cs.SLIDE_MIN, \
+        '덱의 SLIDE_MIN %s ≠ 검사기의 %s' % (found['SLIDE_MIN'], cs.SLIDE_MIN)
+    assert int(found['SLIDE_MAX']) == cs.SLIDE_MAX, \
+        '덱의 SLIDE_MAX %s ≠ 검사기의 %s' % (found['SLIDE_MAX'], cs.SLIDE_MAX)
+
+
+def test_the_deck_does_not_hardcode_the_slide_length_limits_again():
+    """개요 그리드가 25·110 을 다시 박으면 위 대조가 아무것도 막지 못한다."""
+    with open(DECK, encoding='utf-8') as fh:
+        line = [l for l in fh if l.lstrip().startswith('const warn =')]
+    assert line, '개요 칸의 시간 색을 정하는 줄을 찾지 못했다'
+    assert 'SLIDE_MAX' in line[0] and 'SLIDE_MIN' in line[0], \
+        '개요 칸이 상수 대신 숫자를 다시 박았다: %s' % line[0].strip()

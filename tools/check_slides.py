@@ -18,9 +18,13 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import check_tutorial as ct        # noqa: E402  (같은 tools/ 안의 표준 라이브러리 전용 모듈)
 
 # 한국어 발표 속도. 덱의 DECK:CORE:JS도 같은 값을 쓴다 — 한쪽만 고치면 계측이 어긋난다.
-SPEED = 5.5          # 자/초
+SPEED = 5.5          # 자/초 — 덱의 const SPEED
 TOTAL_TARGET = 3120  # 52:00
 TOTAL_TOL = 180      # ±3:00
+# 장 하나의 길이 한계. 덱도 같은 두 값을 들고 있다(const SLIDE_MIN·SLIDE_MAX) —
+# 개요 그리드가 이 선으로 칸의 시간 색을 정한다. 한쪽만 고치면 검사기는 통과라고
+# 하는데 화면은 위반이 아닌 장을 빨갛게 칠한다. 세 값 다
+# test_the_deck_and_the_checker_share_their_constants 가 대조한다.
 SLIDE_MIN = 25       # 초
 SLIDE_MAX = 110      # 초 — 넘으면 슬라이드가 아니라 문서다
 

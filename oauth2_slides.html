@@ -2162,8 +2162,14 @@ Host: api.example.com
 const $=(s,r=document)=>r.querySelector(s);
 const $$=(s,r=document)=>Array.from(r.querySelectorAll(s));
 
-// 검사기 tools/check_slides.py 의 SPEED 와 같은 값이어야 한다.
-const SPEED=5.5;
+/* 아래 셋은 검사기 tools/check_slides.py 가 같은 이름으로 들고 있는 값이다.
+   한쪽만 고치면 조용히 갈라진다 — 검사기는 통과라고 하는데 무대의 계기가 다른 말을
+   하거나, 개요 그리드가 위반이 아닌 장을 빨갛게 칠한다.
+   tools/test_check_slides.py 의 test_the_deck_and_the_checker_share_their_constants
+   가 두 파일을 실제로 대조한다(브라우저 없이 도는 검사다). */
+const SPEED=5.5;        // 자/초 — check_slides.py 의 SPEED
+const SLIDE_MIN=25;     // 초 — check_slides.py 의 SLIDE_MIN
+const SLIDE_MAX=110;    // 초 — check_slides.py 의 SLIDE_MAX
 
 const Deck={
   slides:[], script:{}, index:0,
@@ -2417,7 +2423,9 @@ function toggleOverview(){
   if(ov.classList.contains('on')){ ov.classList.remove('on'); return; }
   ov.innerHTML=Deck.slides.map((s,i)=>{
     const sec=Deck.secOf(s.id);
-    const warn = sec>110 ? 'color:#fb7185' : sec<25 ? 'color:#fbbf24' : 'color:#8698b3';
+    // 개요 칸의 시간 색도 검사기와 같은 선을 쓴다. 여기에 숫자를 다시 박으면
+    // 검사기가 상한을 옮겼을 때 이 화면만 옛 기준으로 칠한다.
+    const warn = sec>SLIDE_MAX ? 'color:#fb7185' : sec<SLIDE_MIN ? 'color:#fbbf24' : 'color:#8698b3';
     // 부록은 흐리게. 예순일곱 칸이 한 줄로 이어지면 어디까지가 발표인지 안 보인다.
     const app = s.classList.contains('appendix') ? ' app' : '';
     // 칸의 번호도 HUD 와 같은 좌표계다. 발표자가 개요에서 "31"을 보고 창을 닫은 뒤
