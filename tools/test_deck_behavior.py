@@ -7,6 +7,7 @@
 가리키는 대신, 필요한 성질(비트가 둘 이상인 슬라이드 등)을 그때그때 찾아 쓴다.
 """
 import os
+import re
 
 import pytest
 
@@ -866,66 +867,167 @@ def test_overview_cells_hold_their_time_label_inside(page):
 FONT_FLOOR = 24        # px, 1280 좌표계 본문 하한
 FONT_FLOOR_MONO = 20   # px, 코드 하한
 
-# 예외 목록. 각 줄의 근거는 oauth2_slides.html 의 DECK:STAGE:CSS 「활자 하한」
-# 주석과 짝을 이룬다 — 한쪽만 고치면 이 테스트가 잡는다.
+# 예외 목록 — (셀렉터, 바닥, 근거) 세 칸.
+#
+# 한때는 두 칸이었고 바닥이 없었다. 예외 셀렉터에 걸리면 MEASURE_FONTS 가 측정
+# 자체를 건너뛰었으므로 .seq-cap · .badge · .dia-tag 를 1px 로 줄여도 아무 테스트가
+# 울지 않았다 — 근거("같은 말이 옆에서 제 크기로 다시 나온다")는 성립하는데 그
+# 근거가 지켜지는지를 아무도 재지 않는 상태였다. 지금은 줄마다 제 바닥이 있고,
+# 값은 전부 '지금 쓰는 크기 그대로'다. 즉 더 줄이는 것만 막는다.
+#
+# 이 목록은 oauth2_slides.html 의 DECK:STAGE:CSS 「활자 하한」 주석 안
+# '예외 목록 시작/끝' 블록과 한 글자씩 짝을 이룬다. 아래
+# test_the_font_floor_exemptions_match_their_css_comment 가 대조한다.
 EXEMPT = [
-    ('.seq-cap',
-     '시퀀스 행 이름표(20px). 지도의 범례이고, 같은 말이 바로 아래 .seq-detail 의 '
-     '.lbl(24px)에 제 크기로 다시 나온다'),
-    ('.seq-msg.self .seq-pill',
-     'self 단계(from===to)의 이름표(20px). .seq-cap 의 짝이고, 같은 말이 바로 아래 '
-     '.seq-detail 의 .lbl(24px)에 제 크기로 다시 나온다'),
-    ('.seq-legend, .seq-legend *',
-     '채널 색 범례(15px). "노란 파선이 프론트채널입니다"라고 발표자가 말한다'),
-    ('.dia-tag',
-     '그림 왼쪽 위 꼬리표(11px). 바로 옆 <h2> 가 같은 말을 44px 로 한다'),
-    ('.badge',
-     '"실제 HMAC-SHA256 서명/검증" 같은 부가 표지(16px). 내용이 아니라 표지다'),
-    ('.jwt-parts, .jwt-parts *',
-     '토큰 세 토막의 이름표(15px). 바로 위 .jwt-raw 의 세 가지 색이 같은 말을 한다'),
-    ('.seq-title', '시퀀스 제목 줄(18px). 그 장의 <h2> 가 같은 말을 크게 한다'),
-    ('.seq-counter', '"3 / 16" 계기판(18px). 발표자용이다'),
-    ('.step-n', '단계 번호(16px). 바로 옆 .lbl 이 단계 이름을 24px 로 말한다'),
-    ('.seq-controls button', '◀ 이전 · 다음 ▶ 이송 버튼(18-20px). 발표자의 손잡이다'),
-    # SVG 는 두 가지가 겹친 자리라 근거를 나눠 적는다.
-    # (1) 단위: font-size 12.5 는 viewBox 좌표이지 화면 px 이 아니다. 화면 크기는
-    #     상자 너비 ÷ viewBox 너비가 정하므로 computed 값을 24 와 비교할 수 없다.
-    # (2) 그러면 실제로는 몇 px 인가 — 1280x720 에서 getScreenCTM 으로 197개를 재면
-    #     12.7~23.3px, 중앙값 15.6px 이다. 하한 아래다. 그러니 "못 읽어도 되는 표지"
-    #     라서 빼는 것이 아니다. s10 3프레임처럼 그 장의 요점 자체가 SVG 문자열
-    #     ('이 선은 없다', 14.9px)인 자리가 실제로 있다.
-    # 빼는 진짜 근거는 같은 말이 .dia-cap 에 26px 로 다시 실린다는 것이다. 뒷자리가
-    # 잃는 것은 뜻이 아니라 그 뜻이 그림의 어디를 가리키는가이고, 그건 발표자가 짚는다.
-    ('svg, svg *',
-     'SVG 의 font-size 는 viewBox 좌표라 화면 px 이 아니다(실측 12.7~23.3px, 중앙 15.6). '
-     '프레임의 문장은 .dia-cap 이 26px 로 다시 싣는다'),
+    ('.seq-cap', 20,
+     '시퀀스 행 이름표. 지도의 범례이고, 같은 말이 바로 아래 .seq-detail 의 .lbl 에 24px 로 다시 나온다'),
+    ('.seq-msg.self .seq-pill', 20,
+     'self 단계(from===to)의 이름표. .seq-cap 의 짝이고 근거도 같다. 부록 a02 에서 처음 쓰인다'),
+    ('.seq-legend, .seq-legend *', 15,
+     '채널 색 범례. "노란 파선이 프론트채널입니다"라고 발표자가 말한다'),
+    ('.dia-tag', 11,
+     '그림 왼쪽 위 꼬리표. 바로 옆 <h2> 가 같은 말을 44px 로 한다'),
+    ('.badge', 16,
+     '"실제 HMAC-SHA256 서명/검증" 같은 부가 표지. 내용이 아니라 표지다'),
+    ('.jwt-parts, .jwt-parts *', 15,
+     '토큰 세 토막의 이름표. 바로 위 .jwt-raw 의 세 가지 색이 같은 말을 한다'),
+    ('.seq-title', 18,
+     '시퀀스 제목 줄. 그 장의 <h2> 가 같은 말을 크게 한다'),
+    ('.seq-counter', 18,
+     '"3 / 16" 계기판. 청중이 아니라 발표자가 보는 숫자다'),
+    ('.step-n', 16,
+     '단계 번호. 바로 옆 .lbl 이 단계 이름을 24px 로 말한다'),
+    ('.seq-controls button', 18,
+     '◀ 이전 · 다음 ▶ 이송 버튼. 발표자의 손잡이다'),
+    ('svg, svg *', 12,
+     '그림 속 글자. viewBox 좌표를 화면 px 로 환산해서 잰다. 같은 말을 .dia-cap 이 26px 로 다시 싣는다'),
 ]
 
+# CSS 주석 쪽의 한 줄: "     [.seq-cap] 바닥 20px — 근거"
+EXEMPT_BLOCK = re.compile(
+    r'====\s*예외 목록 시작\s*====(.*?)====\s*예외 목록 끝\s*====', re.S)
+EXEMPT_LINE = re.compile(r'^\s*\[([^\]]+)\]\s*바닥\s*(\d+)px\s*—\s*(.+?)\s*$')
+
 MEASURE_FONTS = """
-(exempt) => {
+(spec) => {
   const bad = [];
+  // #stage 는 fitStage() 가 뷰포트에 맞춰 scale() 한다. SVG 안의 글자를 화면 px 로
+  // 환산할 때 그 배율을 되나눠야 1280 좌표계의 숫자와 비교가 된다.
+  const k = document.getElementById('stage').getBoundingClientRect().width / 1280;
   document.querySelectorAll('.slide').forEach(slide => {
     slide.querySelectorAll('*').forEach(el => {
       if (!el.getClientRects().length) return;          // 그려지지 않는 것은 읽히지도 않는다
-      if (exempt.some(sel => el.matches(sel))) return;
       const own = Array.from(el.childNodes)
         .filter(n => n.nodeType === 3 && n.textContent.trim())
         .map(n => n.textContent.trim()).join(' ');
       if (!own) return;                                 // 자식만 있는 상자는 글자를 안 나른다
       const cs = getComputedStyle(el);
-      const px = parseFloat(cs.fontSize);
+      let px = parseFloat(cs.fontSize);
+      // SVG 의 font-size 는 viewBox 좌표다. 그대로 24 와 비교하면 다른 단위끼리
+      // 비교하는 것이므로, getScreenCTM 으로 화면 px 로 편 뒤 무대 배율을 되나눈다.
+      const sv = el.ownerSVGElement;
+      if (sv) { const m = sv.getScreenCTM(); if (m) px = px * m.d / k; }
       const mono = /mono|Menlo|Consolas|Courier/i.test(cs.fontFamily);
-      const floor = mono ? %d : %d;
+      let floor = mono ? spec.mono : spec.body;
+      // 예외에 걸리면 그 줄의 바닥으로 잰다 — 건너뛰지 않는다. 여러 줄에 걸리면
+      // 가장 낮은 바닥을 쓴다(목록의 순서에 답이 달리지 않게).
+      const hits = spec.exempt.filter(([sel]) => el.matches(sel)).map(([, f]) => f);
+      if (hits.length) floor = Math.min(...hits);
       if (px + 0.01 < floor) {
         bad.push(slide.id + ' ' + el.tagName.toLowerCase() +
-                 (el.className ? '.' + String(el.className).trim().split(/\\s+/).join('.') : '') +
-                 '  ' + px + 'px < ' + floor + '  | ' + own.slice(0, 40));
+                 (el.className ? '.' + String(el.className.baseVal !== undefined
+                    ? el.className.baseVal : el.className).trim().split(/\\s+/).join('.') : '') +
+                 '  ' + px.toFixed(1) + 'px < ' + floor + '  | ' + own.slice(0, 40));
       }
     });
   });
   return bad;
 }
-""" % (FONT_FLOOR_MONO, FONT_FLOOR)
+"""
+
+MEASURE_SPEC = {
+    'body': FONT_FLOOR,
+    'mono': FONT_FLOOR_MONO,
+    'exempt': [[sel, floor] for sel, floor, _ in EXEMPT],
+}
+
+
+def test_the_font_floor_exemptions_match_their_css_comment():
+    """예외 목록은 두 곳에 있고, 두 곳이 같아야 한다.
+
+    덱의 CSS 주석은 다음 덱을 짓는 사람이 먼저 읽는 자리이고, 이 파일의 EXEMPT 는
+    실제로 강제하는 자리다. 한때 둘은 이미 벌어져 있었다 — 주석은 "여섯 갈래"라고
+    적어 놓고 일곱 줄에 열 개의 셀렉터를 늘어놓았고, EXEMPT 에는 열한 줄이 있었으며,
+    노트는 "예외 열두 줄"이라고 했다. 셀렉터도 세 자리에서 달랐다(.seq-pill ↔
+    .seq-msg.self .seq-pill 등). 주석이 "한 글자씩 짝을 이룬다"고 약속하는 이상,
+    그 약속을 사람의 성실함이 아니라 이 테스트가 지켜야 한다.
+
+    브라우저가 필요 없는 검사라 chromium 이 없어도 돈다."""
+    with open(os.path.join(ROOT, 'oauth2_slides.html'), encoding='utf-8') as fh:
+        html = fh.read()
+    block = EXEMPT_BLOCK.search(html)
+    assert block, 'DECK:STAGE:CSS 에서 「예외 목록 시작/끝」 블록을 찾지 못했다'
+
+    parsed = []
+    for line in block.group(1).splitlines():
+        m = EXEMPT_LINE.match(line)
+        if m:
+            parsed.append((m.group(1), int(m.group(2)), m.group(3)))
+
+    assert parsed == EXEMPT, (
+        'CSS 주석의 예외 목록과 EXEMPT 가 다르다.\n'
+        'CSS  (%d줄): %s\nEXEMPT(%d줄): %s' % (
+            len(parsed), [p[:2] for p in parsed],
+            len(EXEMPT), [e[:2] for e in EXEMPT]))
+    assert len(EXEMPT) == 11, \
+        '예외가 %d줄이다 — CSS 주석·노트의 "열한 줄"도 같이 고쳐라' % len(EXEMPT)
+
+
+def warm_up(pg):
+    """측정 전에 덱을 한 바퀴 깨우고, 측정 함수를 페이지에 심는다.
+
+    도착해야 만들어지는 자산(s45 의 JWT 데모, 시퀀스)이 있어서 한 장씩 들른다 —
+    그 일을 하는 것이 ON_ENTER.enter() 다. 퀴즈 해설은 눌러야 열리므로 최악의
+    상태로 재려고 미리 펼친다."""
+    n = pg.evaluate('Deck.slides.length')
+    for i in range(n):
+        pg.evaluate('i => Deck.go(i)', i)
+    pg.evaluate('Deck.go(0)')
+    pg.evaluate("document.querySelectorAll('.slide .explain')"
+                ".forEach(e => e.classList.add('show'))")
+    pg.evaluate('fn => { window.__measure = eval(fn); }', MEASURE_FONTS)
+
+
+def test_every_exempted_selector_is_measured_against_a_real_floor(page):
+    """예외에도 바닥이 있다 — 건너뛰는 것이 아니라 낮춰서 잰다.
+
+    한때 예외 셀렉터에 걸리면 측정 자체를 건너뛰었다. 그래서 .seq-cap(20px)·
+    .badge(16px)·.dia-tag(11px)를 나중에 누가 1px 로 줄여도 아무 테스트가 울지
+    않았다. 근거("같은 말이 옆에서 제 크기로 다시 나온다")는 성립하는데, 그 근거가
+    지켜지는지를 아무도 재지 않는 상태였다.
+
+    바닥이 실제로 걸리는지를 줄마다 밟아 본다. 바닥을 1px 올려 다시 재서 그
+    셀렉터가 잡히면, 지금 크기가 바닥에 닿아 있다는 뜻이다 — 즉 더 줄이는 순간
+    잡힌다. 헐거우면(실제 크기가 바닥보다 크면) 그 틈만큼은 여전히 아무도 안 본다.
+
+    CSS 를 주입해서 확인할 수는 없다. 크롬은 지금 서 있지 않은 장의 숨은 요소를
+    다시 스타일링하지 않아서, 넣은 규칙이 그 장에는 닿지 않는다."""
+    page.goto(DECK)
+    warm_up(page)
+    slack = []
+    for sel, floor, _ in EXEMPT:
+        # 대상만 바닥을 1 올리고 나머지 예외는 0 으로 내린다. 그러면 보고되는 것은
+        # 이 셀렉터가 잡은 요소뿐이다 — 본문·코드 하한은 덱이 이미 지키고 있다.
+        spec = {
+            'body': FONT_FLOOR, 'mono': FONT_FLOOR_MONO,
+            'exempt': [[other, (floor + 1) if other == sel else 0]
+                       for other, _f, _r in EXEMPT],
+        }
+        if not page.evaluate('spec => window.__measure(spec)', spec):
+            slack.append('%s: 바닥 %dpx 인데 실제 크기가 그보다 커서 헐겁다 — '
+                         '실측에 맞춰 올려라' % (sel, floor))
+    assert slack == [], \
+        '예외의 바닥이 실제 크기에 닿아 있지 않다:\n  %s' % '\n  '.join(slack)
 
 
 def test_every_visible_text_is_at_or_above_the_font_floor(page):
@@ -935,15 +1037,8 @@ def test_every_visible_text_is_at_or_above_the_font_floor(page):
     늘어도 그대로 돈다. 예외는 EXEMPT 에 적힌 것뿐이고, 목록에 없는 것이 하한
     아래로 내려가면 그 자리에서 실패한다."""
     page.goto(DECK)
-    n = page.evaluate('Deck.slides.length')
-    # 도착해야 만들어지는 자산(s45 의 JWT 데모, 시퀀스)이 있어서 한 바퀴 깨워 둔다.
-    for i in range(n):
-        page.evaluate('i => Deck.go(i)', i)
-    page.evaluate('Deck.go(0)')
-    # 퀴즈 해설은 눌러야 열린다. 최악의 상태로 재려고 미리 펼친다.
-    page.evaluate("document.querySelectorAll('.slide .explain')"
-                  ".forEach(e => e.classList.add('show'))")
-    bad = page.evaluate(MEASURE_FONTS, [sel for sel, _ in EXEMPT])
+    warm_up(page)
+    bad = page.evaluate(MEASURE_FONTS, MEASURE_SPEC)
     assert bad == [], '하한 미만 %d개:\n  %s' % (len(bad), '\n  '.join(bad[:20]))
 
 
