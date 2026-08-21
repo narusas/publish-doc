@@ -11,7 +11,32 @@ import re
 
 import pytest
 
-playwright_api = pytest.importorskip('playwright.sync_api')
+# 브라우저가 없으면 skip 이 아니라 실패다.
+#
+# 활자 하한(본문 24px · 코드 20px)을 실제로 강제하는 것은 이 파일뿐이다.
+# check_slides.py 의 check_font_floor 는 인라인 style 만 보는데 이 덱에는 그런 값이
+# 하나도 없어서 0개를 잡는다 — 그리고 CSS 규칙 쪽은 정규식으로 답이 안 나온다.
+# ASSET:CSS 가 이식해 온 값(.seq-cap 11.5px, .dia .cap-l 9.5px …)을 DECK:STAGE:CSS 가
+# .slide 접두사로 덮어쓰는 구조라, 규칙만 훑으면 실제로는 지켜지는 38개를 위반이라고
+# 부른다. 구체성과 캐스케이드를 다시 구현하지 않는 한 그 길은 없다.
+#
+# 그래서 이 관문은 브라우저에만 있다. 예전처럼 임포트 단계에서 모듈을 통째로
+# 건너뛰거나 브라우저가 없다고 물러서면, 그런 기계에서는 24/20 계약이 통째로
+# 증발하면서 화면에는 초록불이 뜬다. 시끄럽게 실패하는 편이 낫다 — 고치는 법은 한 줄이다:
+#
+#     python3 -m playwright install chromium
+#
+# 모듈 자체는 playwright 없이도 임포트된다. 브라우저가 필요 없는 검사
+# (test_the_font_floor_exemptions_match_their_css_comment)는 그 기계에서도 돌아야 한다.
+try:
+    from playwright import sync_api as playwright_api
+except ImportError as exc:                           # pragma: no cover - 설치 안 된 기계
+    playwright_api = None
+    IMPORT_ERROR = exc
+
+NO_BROWSER = ('덱 동작 테스트는 브라우저를 요구한다 — %s.\n'
+              '활자 하한(24/20)·720px 넘침·키보드 계약을 강제하는 곳이 여기뿐이라 '
+              'skip 하지 않는다.\n설치: python3 -m playwright install chromium')
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 DECK = 'file://' + os.path.join(ROOT, 'oauth2_slides.html')
@@ -19,11 +44,13 @@ DECK = 'file://' + os.path.join(ROOT, 'oauth2_slides.html')
 
 @pytest.fixture(scope='module')
 def page():
+    if playwright_api is None:
+        pytest.fail(NO_BROWSER % ('playwright 가 설치돼 있지 않다(%s)' % IMPORT_ERROR))
     with playwright_api.sync_playwright() as p:
         try:
             browser = p.chromium.launch()
         except Exception as exc:                     # 브라우저 바이너리 없음
-            pytest.skip('chromium 없음: %s' % exc)
+            pytest.fail(NO_BROWSER % ('chromium 을 띄우지 못했다(%s)' % exc))
         pg = browser.new_page(viewport={'width': 1440, 'height': 900})
         yield pg
         browser.close()

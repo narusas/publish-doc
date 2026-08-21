@@ -309,12 +309,21 @@ INLINE_FONT = re.compile(
 def check_font_floor(deck):
     """인라인 style 의 font-size 하한. 무대에서 뒷자리가 못 읽는 글자를 막는다.
 
-    이 검사가 잡는 것은 '손으로 박은 값'뿐이다. 실제로 화면에 나오는 크기는 CSS
-    규칙이 정하고, 그쪽은 정규식으로 셀 수 없다 — 상속·구체성·:has() 까지 따져야
-    진짜 크기가 나오기 때문이다. 그 몫은 브라우저가 쟀다:
-    tools/test_deck_behavior.py 의 test_every_visible_text_is_at_or_above_the_font_floor
-    가 슬라이드를 한 장씩 돌며 computed font-size 를 재고 예외 목록과 대조한다.
-    여기 이 함수는 그 앞의 그물이다 — 브라우저 없이도, 새로 박힌 인라인 값은 잡는다."""
+    **이 함수는 지금 이 덱에서 0개를 잡는다.** 슬라이드 마크업에 손으로 박은
+    font-size 가 하나도 없기 때문이다. 그물은 쳐 두되, 그것이 활자 하한을 지키고
+    있다고 착각하면 안 된다.
+
+    CSS 규칙 쪽까지 정규식으로 훑는 길은 닫혀 있다. 이 덱은 ASSET:CSS 가 이식해 온
+    값(.seq-cap 11.5px · .dia .cap-l 9.5px …)을 DECK:STAGE:CSS 가 .slide 접두사로
+    덮어쓰는 구조라, 규칙만 세면 실제로는 지켜지는 38개를 위반이라고 부른다. 진짜
+    크기를 알려면 상속·구체성·캐스케이드를 다 풀어야 하고 그건 정규식이 아니라
+    브라우저의 일이다.
+
+    그래서 24/20 계약을 실제로 강제하는 곳은 하나뿐이다:
+    tools/test_deck_behavior.py 의 test_every_visible_text_is_at_or_above_the_font_floor.
+    그쪽은 chromium 이 없으면 skip 하지 않고 **실패한다** — 물러서면 계약이 통째로
+    증발하면서 초록불이 뜨기 때문이다. 여기 이 함수는 그 앞의 그물일 뿐이고,
+    잡는 것은 앞으로 누가 새로 박을 인라인 값이다."""
     problems = []
     block = SLIDES_BLOCK.search(deck.html)
     if not block:

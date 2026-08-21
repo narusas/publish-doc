@@ -285,3 +285,27 @@ def test_the_thresholds_are_the_ones_the_deck_was_built_to():
     assert (cs.TOTAL_TARGET, cs.TOTAL_TOL) == (3120, 180)   # 52:00 ±3:00
     assert (cs.SLIDE_MIN, cs.SLIDE_MAX) == (25, 110)        # 초
     assert cs.SPEED == 5.5                                  # 자/초
+
+
+def test_the_browser_gate_does_not_skip_itself_away():
+    """활자 하한(24/20)을 강제하는 곳은 브라우저 테스트뿐이다.
+
+    check_font_floor 는 인라인 style 만 보고, 이 덱에는 그런 값이 하나도 없어
+    0개를 잡는다. CSS 규칙 쪽은 정규식으로 답이 안 나온다 — ASSET:CSS 의 이식값을
+    DECK:STAGE:CSS 가 .slide 접두사로 덮어쓰는 구조라 규칙만 세면 실제로는 지켜지는
+    38개를 위반이라고 부른다.
+
+    그러니 test_deck_behavior.py 가 chromium 없다고 물러서면 그 계약은 통째로
+    증발하면서 초록불이 뜬다. 이 테스트는 그 물러섬이 다시 들어오는 것을 막는다.
+    브라우저가 필요 없으므로 chromium 없는 기계에서도 이 줄만은 돈다."""
+    with open(os.path.join(os.path.dirname(DECK), 'tools', 'test_deck_behavior.py'),
+              encoding='utf-8') as fh:
+        src = fh.read()
+    assert 'pytest.importorskip(' not in src, \
+        'test_deck_behavior.py 가 임포트 단계에서 통째로 물러선다 — 브라우저가 ' \
+        '없으면 24/20 계약이 조용히 사라진다'
+    assert 'pytest.skip(NO_BROWSER' not in src, 'NO_BROWSER 를 skip 으로 낸다'
+    for form in ("pytest.skip('chromium", 'pytest.skip("chromium'):
+        assert form not in src, 'chromium 이 없을 때 skip 한다 — 실패해야 한다'
+    assert 'pytest.fail(NO_BROWSER' in src, \
+        '브라우저가 없을 때 시끄럽게 실패하는 자리가 없다'
