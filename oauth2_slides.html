@@ -2194,6 +2194,27 @@ const Deck={
      한쪽만 고치면 계측이 어긋난다. 두 곳을 늘 같이 본다. */
   isMain(el){ return el && !el.classList.contains('appendix'); },
   mainSlides(){ return this.slides.filter(el=>this.isMain(el)); },
+  /* 화면에 보이는 번호도 같은 가름을 쓴다. 계기(막대)는 53장을 재는데 옆의
+     숫자만 67장을 세면, 무대에서 그 둘을 한눈에 보는 발표자는 "31 / 67"을
+     진행률로 읽는다 — 'N / M'은 좌표가 아니라 진행률로 읽히는 관용구다.
+     그래서 본편은 1..53, 부록은 그것과 섞이지 않는 별도 좌표계(부록 1..14)로
+     센다. 숫자 점프·개요 그리드·발표자 창이 전부 이 함수들을 쓴다. */
+  numberOf(i){
+    const main=this.isMain(this.slides[i]);
+    let n=0;
+    for(let k=0;k<=i;k++) if(this.isMain(this.slides[k])===main) n++;
+    return n;
+  },
+  countOf(i){
+    const main=this.isMain(this.slides[i]);
+    return this.slides.filter(el=>this.isMain(el)===main).length;
+  },
+  /* 본편 n 번째 장의 절대 index. 없으면 -1. 숫자 점프가 쓴다 — 발표자가
+     화면에서 읽은 번호를 그대로 쳐야 그 장에 간다. */
+  mainIndex(n){
+    const mains=this.slides.map((el,i)=>this.isMain(el)?i:-1).filter(i=>i>=0);
+    return (n>=1 && n<=mains.length) ? mains[n-1] : -1;
+  },
   plannedUpTo(i){
     let s=0;
     for(let k=0;k<i;k++){ const el=this.slides[k]; if(this.isMain(el)) s+=this.secOf(el.id); }
@@ -2275,13 +2296,19 @@ function toggleTimer(){
   paint();
 }
 
+/* 화면에 찍는 장 번호. 본편이면 "31 / 53", 부록이면 "부록 3 / 14".
+   HUD 와 발표자 창이 같은 문자열을 쓴다 — 두 화면이 다른 좌표를 말하면
+   발표자가 어느 쪽을 믿을지 정해야 한다. */
+function counterText(i){
+  const num=Deck.numberOf(i), den=Deck.countOf(i);
+  return Deck.isMain(Deck.slides[i]) ? `${num} / ${den}` : `부록 ${num} / ${den}`;
+}
+
 function paint(){
-  const n=Deck.slides.length;
   const slide=Deck.slides[Deck.index];
   const bn=beatCount(slide);
-  $('#counter').textContent = bn>1
-    ? `${Deck.index+1} / ${n}  ·  ${Deck.beat+1}/${bn}`
-    : `${Deck.index+1} / ${n}`;
+  const head=counterText(Deck.index);
+  $('#counter').textContent = bn>1 ? `${head}  ·  ${Deck.beat+1}/${bn}` : head;
   // 위치 막대의 분모도 본편이다. s52 는 발표의 마지막 장이므로 100%여야 하고,
   // 부록에 들어가면 그 너머라 100%에 붙어 있는다.
   const mainN=Deck.mainSlides().length;
@@ -2350,7 +2377,7 @@ function pushPresenter(){
   const dl=d.getElementById('delta');
   dl.textContent = diff>=0 ? `▲ ${fmt(diff)} 빠름` : `▼ ${fmt(-diff)} 늦음`;
   dl.style.color = diff>=0 ? '#34d399' : '#fbbf24';
-  d.getElementById('cnt').textContent=`${i+1} / ${n}`;
+  d.getElementById('cnt').textContent=counterText(i);
   d.getElementById('now').textContent=titleOf(slide);
   d.getElementById('nxt').textContent = i+1<n ? titleOf(Deck.slides[i+1]) : '— 끝 —';
   d.getElementById('script').innerHTML=(Deck.script[slide.id]||[])
@@ -2382,8 +2409,11 @@ function toggleOverview(){
     const warn = sec>110 ? 'color:#fb7185' : sec<25 ? 'color:#fbbf24' : 'color:#8698b3';
     // 부록은 흐리게. 예순일곱 칸이 한 줄로 이어지면 어디까지가 발표인지 안 보인다.
     const app = s.classList.contains('appendix') ? ' app' : '';
+    // 칸의 번호도 HUD 와 같은 좌표계다. 발표자가 개요에서 "31"을 보고 창을 닫은 뒤
+    // 31 을 치면 그 장에 가야 한다 — 두 곳이 다른 번호를 쓰면 점프가 빗나간다.
+    const num = app ? `부록 ${Deck.numberOf(i)}` : `${Deck.numberOf(i)}`;
     return `<div class="ov-cell${app}${i===Deck.index?' cur':''}" data-i="${i}">
-      <span class="n">${i+1}</span><span class="t">${titleOf(s)}</span>
+      <span class="n">${num}</span><span class="t">${titleOf(s)}</span>
       <span class="s" style="${warn}">${fmt(sec)}</span></div>`;
   }).join('');
   $$('.ov-cell',ov).forEach(c=>c.addEventListener('click',()=>{
@@ -2394,6 +2424,10 @@ function toggleOverview(){
 
 /* ---------- 숫자 점프 ----------
    화면에 보이는 번호가 1-기반이므로 입력도 1-기반으로 받는다.
+   숫자는 '본편 좌표'다 — HUD 가 "31 / 53"이라고 하면 31 은 서른한 번째 본편 장을
+   가리켜야 한다. 부록에는 번호로 가지 않는다. 부록은 질문이 나와서 여는 공간이고
+   A 키와 개요 칸 클릭이 그 문이다. 숫자까지 부록으로 이어 붙이면 본편 번호가
+   67 좌표계로 되돌아가고, 그러면 계기와 숫자가 다시 어긋난다.
    버퍼를 세 자리로 자르는 것은 오타로 아주 큰 수가 쌓이는 것을 막기 위해서다. */
 let jumpBuf='';
 function jumpDigit(d){ jumpBuf=(jumpBuf+d).slice(-3); toast(`이동: ${jumpBuf}`); }
@@ -2401,7 +2435,8 @@ function jumpCancel(){ jumpBuf=''; }
 function jumpCommit(){
   if(!jumpBuf)return;
   const n=parseInt(jumpBuf,10); jumpBuf='';
-  if(n>=1 && n<=Deck.slides.length) Deck.go(n-1);
+  const i=Deck.mainIndex(n);
+  if(i>=0) Deck.go(i);
   else toast(`${n}번 슬라이드는 없습니다`);
 }
 
@@ -2417,7 +2452,9 @@ function onKey(e){
      그래서 '이 컨트롤이 소비하는 키'만 골라 비켜 준다. */
   const t=e.target, tag=t?t.tagName:'';
   const typing=(tag==='INPUT' && !/^(checkbox|radio|button|submit)$/.test(t.type)) || tag==='TEXTAREA';
-  if(tag==='SELECT' && /^(ArrowUp|ArrowDown|Home|End)$/.test(e.key)) return;
+  // 스페이스는 <select> 가 목록을 펼치는 키다. 빼먹으면 a10 의 #callerType 에
+  // 포커스가 있을 때 스페이스가 목록 대신 슬라이드를 넘긴다.
+  if(tag==='SELECT' && /^(ArrowUp|ArrowDown|Home|End| )$/.test(e.key)) return;
   if(typing && (e.key.length===1 || /^(ArrowLeft|ArrowRight|Home|End)$/.test(e.key))) return;
   if(tag==='INPUT' && t.type==='checkbox' && e.key===' ') return;   // 스페이스는 체크박스가 쓴다
   switch(e.key){

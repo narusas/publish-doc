@@ -176,11 +176,44 @@ def test_escape_closes_overview_and_notes(page):
     assert on(page, '#notes') is False
 
 
+def type_number(pg, n):
+    for ch in str(n):
+        pg.keyboard.press(ch)
+    pg.keyboard.press('Enter')
+
+
+def main_indexes(pg):
+    return pg.evaluate('Deck.slides.map((s, i) => [i, s.classList.contains("appendix")])'
+                       '.filter(([, a]) => !a).map(([i]) => i)')
+
+
 def test_number_then_enter_jumps_to_that_slide(page):
     page.goto(DECK)
-    page.keyboard.press('3')
-    page.keyboard.press('Enter')
-    assert state(page)['i'] == 2, '화면 번호는 1-기반, 인덱스는 0-기반이다'
+    type_number(page, 3)
+    assert state(page)['i'] == main_indexes(page)[2], \
+        '화면 번호는 1-기반, 인덱스는 0-기반이다'
+
+
+def test_digit_jump_counts_main_slides_not_the_whole_file(page):
+    """숫자 점프의 좌표계는 HUD·개요와 같은 '본편 1..53'이다.
+
+    본편만 세는 계기(막대) 옆에서 숫자만 67 좌표계로 남으면, 발표자가 화면에서
+    읽은 번호와 쳐야 하는 번호가 갈린다. 부록이 앞에 없는 이 덱에서는 두 좌표계가
+    본편 구간에서 우연히 겹치므로, 겹치지 않는 자리 — 마지막 본편 장과 그 너머 —
+    에서 확인한다."""
+    page.goto(DECK)
+    mains = main_indexes(page)
+    n = len(mains)
+    type_number(page, n)
+    assert state(page)['i'] == mains[-1], \
+        '%d 을 쳤는데 마지막 본편 장(%d)이 아니라 %d 번 장에 있다' % (
+            n, mains[-1], state(page)['i'])
+    # 본편 마지막을 넘는 번호는 부록으로 이어지지 않는다 — 부록은 A 와 개요로 간다
+    here = state(page)['i']
+    type_number(page, n + 1)
+    assert state(page)['i'] == here, '본편 수를 넘는 번호가 부록으로 넘어갔다'
+    type_number(page, state(page)['n'])
+    assert state(page)['i'] == here, '전체 장 수를 쳤더니 움직였다 — 67 좌표계가 남아 있다'
 
 
 def test_out_of_range_number_does_not_move(page):
@@ -198,6 +231,46 @@ def test_escape_discards_a_partially_typed_number(page):
     page.keyboard.press('Escape')
     page.keyboard.press('Enter')
     assert state(page)['i'] == 0
+
+
+def counter_head(pg):
+    """HUD 숫자에서 비트 부분(· 3/7)을 뗀 앞부분."""
+    return pg.inner_text('#counter').split('·')[0].strip()
+
+
+def test_counter_measures_the_talk_not_the_file(page):
+    """HUD 의 숫자는 막대와 같은 것을 잰다 — 오늘 발표하는 본편 53장.
+
+    막대 둘이 53장을 재는 옆에서 숫자만 "31 / 67"이면, 그 둘을 한눈에 보는
+    발표자는 자기가 실제보다 덜 왔다고 읽는다. 'N / M'은 좌표가 아니라 진행률로
+    읽히는 관용구이기 때문이다. 재보정을 한 이유가 그 실패였고, 숫자를 그대로 두면
+    같은 실패가 옆 칸으로 옮겨 갈 뿐이다."""
+    page.goto(DECK)
+    mains = main_indexes(page)
+    apps = appendix_indexes(page)
+    n_main, n_app = len(mains), len(apps)
+
+    for k in (0, n_main // 2, n_main - 1):
+        goto(page, mains[k])
+        assert counter_head(page) == '%d / %d' % (k + 1, n_main), \
+            '%d 번째 본편 장의 숫자가 "%s"' % (k + 1, counter_head(page))
+
+    for k in (0, n_app // 2, n_app - 1):
+        goto(page, apps[k])
+        head = counter_head(page)
+        assert head == '부록 %d / %d' % (k + 1, n_app), \
+            '%d 번째 부록 장의 숫자가 "%s"' % (k + 1, head)
+        assert '/ %d' % state(page)['n'] not in head, \
+            '부록 숫자가 아직 전체 장 수를 분모로 쓴다'
+
+
+def test_counter_keeps_the_beat_sub_counter(page):
+    """비트 하위 숫자(· 3/7)는 좌표계와 무관하다 — 슬라이드 안의 단계 수다."""
+    page.goto(DECK)
+    i, n = first_multi_beat_slide(page)
+    goto(page, i)
+    assert page.inner_text('#counter').strip().endswith('· 1/%d' % n), \
+        '비트가 %d 개인 장인데 하위 숫자가 없다: %s' % (n, page.inner_text('#counter'))
 
 
 def test_presenter_window_mirrors_the_current_slide(page):
@@ -226,6 +299,15 @@ def test_presenter_window_mirrors_the_current_slide(page):
         after = page.evaluate('titleOf(Deck.slides[Deck.index])')
         assert pres.inner_text('#now') == after, \
             '슬라이드를 넘겼는데 발표자 창이 따라가지 않는다'
+
+        # 발표자 창의 번호는 무대의 HUD 와 같은 좌표계다. 두 화면이 다른 번호를
+        # 말하면 발표자가 발표 중에 어느 쪽을 믿을지를 정해야 한다. 본편에서만
+        # 보면 두 좌표계가 겹쳐 통과하므로, 갈리는 자리인 부록에서도 본다.
+        for probe in (main_indexes(page)[-1], appendix_indexes(page)[0]):
+            goto(page, probe)
+            assert pres.inner_text('#cnt').strip() == counter_head(page), \
+                '%d 번 장에서 발표자 창의 번호(%s)가 HUD(%s)와 다르다' % (
+                    probe, pres.inner_text('#cnt').strip(), counter_head(page))
     finally:
         pres.close()
 
@@ -370,6 +452,12 @@ def test_form_controls_keep_the_keys_they_use(page):
     assert state(page)['i'] == sel, '<select> 에서 ↓ 를 눌렀는데 슬라이드가 넘어갔다'
     assert page.evaluate('window.__pd') is False, \
         '덱이 ↓ 에 preventDefault 를 걸어 <select> 가 값을 못 바꾼다'
+    # 스페이스도 <select> 의 키다 — 목록을 펼친다. 화살표만 비켜 주고 스페이스를
+    # 가로채면, 값을 고르려던 발표자가 슬라이드를 넘긴다.
+    page.keyboard.press(' ')
+    assert state(page)['i'] == sel, '<select> 에서 스페이스를 눌렀는데 슬라이드가 넘어갔다'
+    assert page.evaluate('window.__pd') is False, \
+        '덱이 스페이스에 preventDefault 를 걸어 <select> 가 목록을 못 편다'
     # 포커스가 select 에 남아 있어도 덱의 키는 살아 있다
     page.keyboard.press('o')
     assert on(page, '#overview') is True, 'select 에 포커스가 있으면 O 가 죽는다'
@@ -389,6 +477,25 @@ def test_overview_marks_appendix_cells_apart(page):
     # 표시는 앞이 아니라 뒤에 몰려 있어야 한다 — 부록은 본편 뒤에 온다
     idx = page.eval_on_selector_all('.ov-cell.app', 'els => els.map(e => +e.dataset.i)')
     assert idx == appendix_indexes(page)
+
+
+def test_overview_numbers_main_slides_from_one_and_appendix_apart(page):
+    """개요 칸의 번호도 HUD·숫자 점프와 같은 좌표계다.
+
+    발표자는 개요에서 번호를 읽고 창을 닫은 뒤 그 번호를 친다. 여기가 67 좌표계로
+    남으면 그 점프가 통째로 빗나간다."""
+    page.goto(DECK)
+    page.keyboard.press('o')
+    nums = page.eval_on_selector_all(
+        '.ov-cell', 'els => els.map(e => e.querySelector(".n").textContent.trim())')
+    mains, apps = main_indexes(page), appendix_indexes(page)
+    assert [nums[i] for i in mains] == [str(k + 1) for k in range(len(mains))], \
+        '본편 칸이 1..%d 로 매겨지지 않았다' % len(mains)
+    assert [nums[i] for i in apps] == ['부록 %d' % (k + 1) for k in range(len(apps))], \
+        '부록 칸이 본편과 다른 표기를 쓰지 않는다: %s' % [nums[i] for i in apps]
+    # 부록은 번호로 못 가는 대신 칸을 눌러서 간다 — 그 문이 살아 있어야 한다
+    page.click('.ov-cell[data-i="%d"]' % apps[0])
+    assert state(page)['i'] == apps[0], '부록 칸을 눌렀는데 안 갔다'
 
 
 # --- 글자 크기 하한 (Task 6) --------------------------------------------------
