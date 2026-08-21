@@ -346,6 +346,42 @@ body{font-family:var(--sans);color:var(--text);-webkit-font-smoothing:antialiase
 /* 동의 화면·검증 목록의 아이콘. 판정(✅/❌)과 권한 종류(👤/✉️)를 나르므로 하한을 지킨다. */
 .slide .verify-row .vi{font-size:24px;width:30px}
 
+
+/* ---- 부록 (Task 8) ----
+   부록 열넷은 본편과 같은 무대 규칙을 받는다 — 장이 다르다고 글자 하한이 낮아지지
+   않는다. 발표 중에 넘어갈 뿐, 열리면 같은 방에서 같은 뒷자리가 읽는다.
+   아래는 부록에서만 처음 쓰이는 부품 셋에 대한 값이다. */
+
+/* 플랫폼 탐색기(a05). .pick 의 이식값은 유형 이름표 10.5px, 플랫폼 이름은 버튼
+   기본값 13.5px 이다. 둘 다 내용이다 — CONFIDENTIAL / PUBLIC 이 이 장의 판별이고,
+   플랫폼 이름이 그 판별의 대상이다. 하한까지 올린다.
+   .pk-k 는 표의 왼쪽 열(client_secret · 권장 흐름 …). 원본은 여기에 인라인
+   font-size:12.5px 를 박아 두었고, 그 값은 .slide .verify-row 를 이긴다. renderPlat
+   에서 인라인을 걷어냈으므로 폭만 여기서 준다. */
+.slide .pick{padding:12px 14px}
+.slide .pick .pt{font-size:22px;letter-spacing:0}
+.slide .pick .pn{font-size:24px;margin-top:4px}
+.slide #platOut h4{color:#fff;margin:0 0 8px}
+.slide .verify-row .pk-k{flex:0 0 210px;color:var(--text-mut)}
+/* 여섯 줄이 세로를 다투므로 줄 사이를 붙인다. 글자는 줄이지 않는다. */
+.slide #platOut .verify-row{padding:1px 0}
+
+/* 토큰 선택기(a10). <select> 는 이 덱에서 부록 한 장에만 나온다. 브라우저 기본
+   글자(13.3px)를 그대로 두면 이 장에서만 하한이 무너진다. <option> 도 함께 준다 —
+   펼친 목록은 운영체제가 그리지만, 닫힌 상태에서 보이는 글자는 이 값이다. */
+.slide select,.slide option{font-size:24px}
+.slide select{padding:10px 12px}
+
+/* 퀴즈 은행(a12·a13). 한 번에 한 문제만 자리를 차지한다. opacity 로 숨기면
+   보이지 않는 네 문제가 세로를 그대로 먹는다 — display 로 비켜 준다.
+   자세한 근거는 ASSET:JS 의 wireQuizBank 주석에 있다. */
+.slide .quiz.q-off{display:none}
+
+/* 개요 그리드에서 부록을 구분한다. 예순일곱 칸이 한 덩어리로 이어지면 어디까지가
+   오늘 발표인지 눈으로 잘리지 않는다. 테두리를 점선으로 바꾸고 바탕을 낮춘다. */
+.ov-cell.app{background:transparent;border-style:dashed;opacity:.72}
+.ov-cell.app .n{color:var(--text-mut)}
+
 /* ==== /DECK:STAGE:CSS ==== */
 
 /* ==== ASSET:CSS ← oauth2_tutorial.html ==== */
@@ -1794,6 +1830,251 @@ Host: api.example.com
       <div class="explain">정답은 <strong>B</strong>. Bearer = "지참인" — 팔찌처럼, 가진 사람이 곧 권한자입니다.</div>
     </div>
   </section>
+  <!-- ==== 부록 a00~a13 ====
+       발표에서는 넘어가는 장들이다. s52 의 대본이 "A 를 누르면 부록" 이라고 예고하고,
+       onKey 의 'a' 가 여기 첫 장으로 보낸다. class 에 appendix 를 다는 것이 그 표시이고,
+       tools/check_slides.py 의 check_total 이 같은 표시를 보고 52분 합계에서 뺀다 —
+       읽지도 않을 분량 때문에 본편을 깎으면 안 되기 때문이다. 대본은 그래도 쓴다.
+       질문이 나와 이 장을 띄우는 순간에는 결국 소리 내어 읽게 된다. -->
+  <section class="slide appendix" id="a00">
+    <h2>여기서부터는 부록입니다 — 질문이 나올 때만 펼칩니다</h2>
+    <ul class="params">
+      <li><b>CLI · 기기 로그인</b> — 브라우저 창을 못 띄우는 자리는 콜백을 어디로 받나</li>
+      <li><b>클라이언트 네 유형</b> — 웹서버 · SPA · 모바일 · CLI 를 가르는 기준 하나</li>
+      <li><b>머신 인증</b> — 사람이 아예 없는 호출은 무엇으로 하나</li>
+      <li><b>남겨 둔 퀴즈 아홉</b> — 발표에서 내지 못한 문제들</li>
+    </ul>
+    <p>본편으로 돌아갈 때는 <code>O</code> 로 개요를 열어 고르시면 됩니다.</p>
+  </section>
+  <section class="slide appendix" id="a01">
+    <h2><code>claude login</code> 은 콜백을 어디로 받을까요?</h2>
+    <p>CLI 에는 <code>redirect_uri</code> 를 받아 줄 웹서버가 없습니다. 그래서 <b>자기 안에 하나를 잠깐 띄웁니다.</b></p>
+    <pre>① 비어 있는 포트를 하나 잡는다        → 127.0.0.1:53219
+② 그 주소를 redirect_uri 로 적어 인가 요청을 만든다
+③ 시스템 브라우저를 연다               → 로그인 · 동의
+④ 브라우저가 127.0.0.1:53219/callback?code=… 로 돌아온다
+⑤ 코드를 받은 그 자리에서 로컬 서버를 닫는다</pre>
+    <p>포트를 고정하지 않는 것이 요점입니다. 그래서 인증 서버는 <b>루프백 주소에 한해서만</b> 포트를 뺀 일치를 허용합니다.</p>
+  </section>
+  <section class="slide appendix" id="a02">
+    <h2>CLI 로그인은 웹 로그인과 같은 흐름입니다 — 콜백 주소만 다릅니다</h2>
+    <div class="seq-mount" id="nativeSeq"></div>
+  </section>
+  <section class="slide appendix" id="a03">
+    <h2>브라우저조차 못 띄우는 기기는, 입력을 폰으로 넘깁니다</h2>
+    <div class="seq-mount" id="deviceSeq"></div>
+  </section>
+  <section class="slide appendix" id="a04">
+    <h2>네 유형을 가르는 기준은 하나입니다 — <code>client_secret</code> 을 숨길 수 있나</h2>
+    <figure class="dia" id="diaSecret">
+      <div class="dia-top">
+        <span class="dia-tag">secret이 사는 곳</span>
+        <span class="dia-sp"></span>
+        <div class="dia-dots" role="group" aria-label="단계 이동"></div>
+      </div>
+      <div class="dia-hint" aria-hidden="true">← 좌우로 밀어서 보세요 →</div>
+      <div class="dia-scroll">
+        <svg viewBox="0 0 720 268" role="img" aria-label="코드를 뜯어보는 사람을 위에 놓고 두 상자를 나란히 비교한 그림. 왼쪽 서버에서 도는 앱은 코드가 서버에만 있어 손이 닿지 않으므로 client_secret이 비밀로 남고, 오른쪽 사용자 기기에서 도는 앱은 번들과 바이너리가 사용자 손에 배포되므로 거기 박아 둔 값은 열어 보면 그대로 보인다. 그래서 오른쪽은 secret을 아예 쓰지 않고 흐름마다 새로 만드는 PKCE로 그 자리를 메운다.">
+          <rect class="nd evil" x="278" y="8" width="164" height="40" rx="11"/>
+          <text class="t" x="360" y="34" text-anchor="middle">🕵️ 코드를 뜯어보는 사람</text>
+
+          <path class="wire dash" d="M 300 48 L 179 48 L 179 60 M 420 48 L 541 48 L 541 60"/>
+
+          <!-- 왼쪽: 손이 닿지 않는다 -->
+          <path class="wire bad dash draw" style="--dl:140; --ft:.6s" d="M 300 48 L 179 48 L 179 60" data-at="1+"/>
+          <text class="ye" x="240" y="42" text-anchor="middle" font-size="16" data-at="1+">✕</text>
+
+          <rect class="nd cl" x="24" y="64" width="310" height="150" rx="13"/>
+          <text class="cap-l cc" x="179" y="86" text-anchor="middle">CONFIDENTIAL · 서버에서 돈다</text>
+          <text class="s" x="179" y="106" text-anchor="middle">웹 서버 앱 · 백엔드 서비스</text>
+          <rect class="nd ghost" x="44" y="118" width="270" height="42" rx="9"/>
+          <text class="cap-l" x="179" y="134" text-anchor="middle">client_secret이 사는 곳</text>
+          <text class="m key" x="179" y="152" text-anchor="middle">서버 환경변수 · secret manager</text>
+          <text class="s ye" x="179" y="180" text-anchor="middle" data-at="1+">사용자 손에 코드가 가지 않는다</text>
+          <text class="m ok" x="179" y="202" text-anchor="middle" data-at="4+">백채널에서 secret으로 자신을 인증</text>
+
+          <!-- 오른쪽: 손이 닿는다 -->
+          <path class="wire bad draw" style="--dl:140; --ft:.6s" d="M 420 48 L 541 48 L 541 60" data-at="2+"/>
+
+          <rect class="nd ap" x="386" y="64" width="310" height="150" rx="13"/>
+          <text class="cap-l cp" x="541" y="86" text-anchor="middle">PUBLIC · 사용자 기기에서 돈다</text>
+          <text class="s" x="541" y="106" text-anchor="middle">SPA · 모바일 앱 · 데스크톱 · CLI</text>
+          <rect class="nd ghost" x="406" y="118" width="270" height="42" rx="9"/>
+          <text class="cap-l" x="541" y="134" text-anchor="middle">코드가 배포되는 곳</text>
+          <text class="m mut" x="541" y="152" text-anchor="middle" data-at="0-2">JS 번들 · 앱 바이너리 · CLI</text>
+          <text class="m no pop" x="541" y="152" text-anchor="middle" data-at="3+">const SECRET = "sk_live_9f2c…"</text>
+          <text class="s no" x="541" y="180" text-anchor="middle" data-at="3+">여기 넣은 값은 비밀이 아니다</text>
+          <text class="m ok" x="541" y="202" text-anchor="middle" data-at="5+">secret 없이 PKCE로 그 자리를 메운다</text>
+
+          <text class="s mut" x="360" y="246" text-anchor="middle" data-at="5">갈리는 기준은 프레임워크가 아니라 <tspan class="hi">코드가 어디까지 배포되느냐</tspan> 하나다</text>
+        </svg>
+      </div>
+      <div class="dia-cap" aria-hidden="true"></div>
+      <figcaption>"SPA라서 PKCE를 쓴다"가 아니라 <b>"코드가 사용자 손에 가니까 숨길 데가 없고, 그래서 PKCE를 쓴다"</b>입니다.</figcaption>
+    </figure>
+  </section>
+  <section class="slide appendix" id="a05">
+    <h2>같은 질문에 네 플랫폼의 답이 이렇게 갈립니다</h2>
+    <div class="demo">
+      <h4>🧭 플랫폼별 설계 탐색기</h4>
+      <div class="pick-row" id="platPicks">
+        <button class="pick active" data-plat="web"><div class="pt">Confidential</div><div class="pn">🖥️ 웹 서버 앱</div></button>
+        <button class="pick" data-plat="spa"><div class="pt">Public</div><div class="pn">⚛️ SPA</div></button>
+        <button class="pick" data-plat="mobile"><div class="pt">Public</div><div class="pn">📱 모바일 앱</div></button>
+        <button class="pick" data-plat="cli"><div class="pt">Public</div><div class="pn">⌨️ 데스크톱/CLI</div></button>
+      </div>
+      <div id="platOut" class="card compact"></div>
+    </div>
+  </section>
+  <section class="slide appendix" id="a06">
+    <h2>public 클라이언트는 secret 을 버리고, 그 자리를 PKCE 로 메웁니다</h2>
+    <ul class="params">
+      <li><b>secret 이 하던 일</b> — "이 토큰 요청을 보낸 것이 그 인가 요청의 주인이 맞다"를 증명</li>
+      <li><b>public 에서는 못 한다</b> — 배포된 코드에 박은 값은 누구나 꺼낼 수 있으니 증명이 안 됩니다</li>
+      <li><b>PKCE 가 대신한다</b> — 흐름마다 새로 만드는 <code>code_verifier</code> 는 앱 메모리에만 있습니다</li>
+      <li><b>그래서 성질이 다릅니다</b> — secret 은 <b>오래 사는 하나</b>, verifier 는 <b>한 번 쓰고 버리는 값</b></li>
+    </ul>
+    <p>새는 순간의 피해가 다릅니다. secret 이 새면 그 클라이언트가 통째로 털리고, verifier 가 새면 그 흐름 하나가 끝납니다.</p>
+  </section>
+  <section class="slide appendix" id="a07">
+    <h2>사람이 없는 호출은, 서비스가 자기 자격으로 토큰을 받습니다</h2>
+    <div class="seq-mount" id="ccSeq"></div>
+  </section>
+  <section class="slide appendix" id="a08">
+    <h2>머신 토큰 세 가지는, <b>주체가 누구냐</b>로 갈립니다</h2>
+    <ul class="params">
+      <li><b>Client Credentials</b> — 주체는 <code>service:billing-worker</code>. OAuth2 표준 grant 이고, 동의 화면도 <code>id_token</code> 도 없습니다</li>
+      <li><b>Service token</b> — 제품이 발급하는 서비스용 토큰. 저장소·환경 단위로 scope 를 끊고 만료를 답니다</li>
+      <li><b>PAT</b> — 주체가 <b>사람 계정</b>입니다. 그래서 그 사람이 가진 권한을 그대로 물려받습니다</li>
+    </ul>
+    <p>운영 서비스의 기본값은 앞의 둘입니다. PAT 는 로컬 스크립트까지가 자리예요.</p>
+  </section>
+  <section class="slide appendix" id="a09">
+    <h2>PAT 가 위험한 이유는, 그것이 <b>사람의 권한</b>이기 때문입니다</h2>
+    <ul class="params">
+      <li><b>권한이 과합니다</b> — 그 사람이 들어갈 수 있는 저장소 전부에 들어갑니다. 필요한 하나가 아니라요</li>
+      <li><b>퇴사하면 멈춥니다</b> — 계정이 닫히는 순간 그 토큰을 쓰던 배치도 같이 죽습니다</li>
+      <li><b>잘 샙니다</b> — 커밋 기록, 로그, 스크린샷. 사고 보고서에 가장 자주 나오는 이름입니다</li>
+      <li><b>추적이 흐려집니다</b> — 감사 로그에는 사람 이름이 남습니다. 실제로 부른 것은 배치인데요</li>
+    </ul>
+    <p>그래도 써야 한다면 <b>fine-grained · 만료일 · 최소 scope · secret manager</b> 넷을 함께 겁니다.</p>
+  </section>
+  <section class="slide appendix" id="a10">
+    <h2>지금 이 호출은 어떤 토큰을 써야 하나요?</h2>
+    <div class="demo">
+      <div class="grid2">
+        <label>누가 API를 호출하나?
+          <select id="callerType">
+            <option value="browser">브라우저 속 사용자</option>
+            <option value="backend">백엔드 서비스(서버↔서버)</option>
+            <option value="ci">CI/CD 자동화</option>
+            <option value="local">로컬 개발자 스크립트</option>
+            <option value="impersonation">서비스가 사용자를 대행</option>
+          </select>
+        </label>
+        <label>지금 '사람'이 참여 중인가?
+          <select id="humanPresent">
+            <option value="yes">예 — 사람이 클릭/동의함</option>
+            <option value="no">아니오 — 자동으로 돎</option>
+          </select>
+        </label>
+      </div>
+      <pre id="tokenChoiceOut"></pre>
+    </div>
+  </section>
+  <section class="slide appendix" id="a11">
+    <h2>요청과 실패 케이스를 눌러서 되짚어 봅니다</h2>
+    <div class="demo">
+      <div class="win">
+        <div class="win-bar"><div class="win-dots"><i></i><i></i><i></i></div><div class="win-url">auth-traffic-inspector — console</div></div>
+        <div class="win-body">
+          <div class="btn-row" style="margin-top:0">
+            <button class="console-cmd primary" data-cmd="auth-url">authorize</button>
+            <button class="console-cmd" data-cmd="exchange-code">token exchange</button>
+            <button class="console-cmd" data-cmd="call-api">call API</button>
+            <button class="console-cmd" data-cmd="client-credentials">client credentials</button>
+            <button class="console-cmd" data-cmd="pat-risk">PAT 위험</button>
+            <button class="console-cmd" data-cmd="bad-state">state 불일치</button>
+            <button class="console-cmd" data-cmd="oidc-verify">id_token 검증</button>
+          </div>
+          <pre id="consoleOut" style="margin-bottom:0"></pre>
+        </div>
+      </div>
+    </div>
+  </section>
+  <!-- 퀴즈 은행 두 장. 문제 다섯·넷이 한 장에 들어 있지만 화면에는 한 번에 하나만
+       보인다 — registerBeats 에 매단 wireQuizBank 가 → 하나에 다음 문제로 갈아 끼운다.
+       .build 로는 이 일을 못 한다. .build 는 쌓이는 공개라 마지막 비트에서 다섯 개가
+       한꺼번에 서고, 그러면 720px 을 넘을뿐더러 청중이 다음 문제를 먼저 읽는다. -->
+  <section class="slide appendix" id="a12">
+    <h2>발표에서 내지 못한 문제 다섯 — 앞쪽 절반을 되짚습니다</h2>
+    <div class="quiz" data-qid="q-intro" data-answer="b">
+      <div class="q">① OAuth2가 풀려는 가장 근본적인 문제는?</div>
+      <button class="opt" data-opt="a">A. 비밀번호를 더 강력하게 암호화하는 것</button>
+      <button class="opt" data-opt="b">B. 비밀번호를 넘기지 않고도, 제한된 권한만 안전하게 위임하는 것</button>
+      <button class="opt" data-opt="c">C. 로그인 화면을 더 예쁘게 만드는 것</button>
+      <div class="explain">정답은 <strong>B</strong>. OAuth2는 암호화 알고리즘이 아니라 <em>권한을 빌려주는 약속</em>입니다. "전부 아니면 전무"를 "딱 필요한 만큼"으로 바꿔 줍니다.</div>
+    </div>
+    <div class="quiz" data-qid="q-actors" data-answer="c">
+      <div class="q">② access_token이 유효한지, scope가 충분한지를 최종 판단하는 쪽은?</div>
+      <button class="opt" data-opt="a">A. 브라우저</button>
+      <button class="opt" data-opt="b">B. 인증 서버(Authorization Server)</button>
+      <button class="opt" data-opt="c">C. API 서버(Resource Server)</button>
+      <div class="explain">정답은 <strong>C</strong>. <em>발급</em>은 인증 서버가 하지만, 요청마다 유효성·scope·만료·대상을 <em>검증</em>해 데이터를 줄지 정하는 쪽은 API 서버입니다.</div>
+    </div>
+    <div class="quiz" data-qid="q-redirect" data-answer="b">
+      <div class="q">③ 공격자가 <code>redirect_uri</code>를 자기 사이트로 바꿔 코드를 가로채려 합니다. 1차 방어선은?</div>
+      <button class="opt" data-opt="a">A. scope를 더 많이 요청한다</button>
+      <button class="opt" data-opt="b">B. 사전 등록된 redirect_uri와 '정확히' 일치할 때만 허용한다</button>
+      <button class="opt" data-opt="c">C. URL을 더 길게 만든다</button>
+      <div class="explain">정답은 <strong>B</strong>. 인증 서버는 등록해 둔 목록과 <em>완전 일치</em>할 때만 코드를 보냅니다. 부분 일치는 허용하지 않습니다.</div>
+    </div>
+    <div class="quiz" data-qid="q-state" data-answer="c">
+      <div class="q">④ 콜백으로 돌아온 <code>state</code>가 세션에 저장해 둔 값과 다르면?</div>
+      <button class="opt" data-opt="a">A. 일단 토큰 교환을 진행하고 나중에 확인한다</button>
+      <button class="opt" data-opt="b">B. scope만 다시 확인하면 된다</button>
+      <button class="opt" data-opt="c">C. 요청을 폐기한다. 위조이거나 다른 흐름의 응답일 수 있다</button>
+      <div class="explain">정답은 <strong>C</strong>. state 검증은 CSRF와 응답 섞임을 막는 기본 방어선입니다. 불일치하면 무조건 중단하세요.</div>
+    </div>
+    <div class="quiz" data-qid="q-refresh" data-answer="b">
+      <div class="q">⑤ rotation 중에 공격자가 훔친 '옛' refresh token을 쓰면, 무엇이 가장 바람직한가?</div>
+      <button class="opt" data-opt="a">A. 그냥 새 토큰을 또 발급해 준다</button>
+      <button class="opt" data-opt="b">B. 재사용을 감지하고, 해당 토큰 패밀리 전체를 무효화한다</button>
+      <button class="opt" data-opt="c">C. 아무 일도 일어나지 않는다</button>
+      <div class="explain">정답은 <strong>B</strong>. 한 번 쓴 토큰이 또 들어오면 "유출됐다"는 신호입니다. 체인을 통째로 끊어 둘 다 로그아웃시키고 재로그인을 시킵니다.</div>
+    </div>
+  </section>
+  <section class="slide appendix" id="a13">
+    <h2>남은 문제 넷 — OIDC 와 머신 인증을 되짚습니다</h2>
+    <div class="quiz" data-qid="q-oidc-flow" data-answer="b">
+      <div class="q">⑥ 공개된 <code>jwks_uri</code>의 키로 id_token 서명을 검증할 수 있는데, 왜 위조는 못 할까요?</div>
+      <button class="opt" data-opt="a">A. 공개키로도 서명을 새로 만들 수 있어서, 검증과 위조가 모두 가능하다</button>
+      <button class="opt" data-opt="b">B. 서명 생성은 OP만 가진 비공개키로만 되고, 공개키로는 검증만 된다</button>
+      <button class="opt" data-opt="c">C. JWKS는 비밀이라 공격자가 접근할 수 없어서</button>
+      <div class="explain">정답은 <strong>B</strong>. 비대칭 서명은 <em>생성=비공개키, 검증=공개키</em>로 역할이 나뉩니다. 그래서 JWKS가 공개돼도 위조는 불가능합니다.</div>
+    </div>
+    <div class="quiz" data-qid="q-tool-auth" data-answer="b">
+      <div class="q">⑦ CLI 도구는 왜 <code>client_secret</code> 없이도 비교적 안전하게 토큰을 받을까요?</div>
+      <button class="opt" data-opt="a">A. CLI는 신뢰된 프로그램이라 인증 서버가 secret을 면제해 준다</button>
+      <button class="opt" data-opt="b">B. 숨길 수 없는 secret을 아예 버리고, 흐름마다 새로 만드는 PKCE로 코드 탈취를 막기 때문</button>
+      <button class="opt" data-opt="c">C. 토큰을 127.0.0.1로만 받으면 secret이 필요 없어서</button>
+      <div class="explain">정답은 <strong>B</strong>. 배포된 CLI에 박은 secret은 비밀이 아닙니다. 그래서 앱만 쥐고 있는 <code>code_verifier</code>가 그 자리를 대신합니다.</div>
+    </div>
+    <div class="quiz" data-qid="q-m2m" data-answer="c">
+      <div class="q">⑧ 운영 백엔드가 매시간 billing API를 자기 권한으로 호출해야 합니다. 가장 적절한 선택은?</div>
+      <button class="opt" data-opt="a">A. 개발자 개인 PAT를 서버 환경변수에 넣는다</button>
+      <button class="opt" data-opt="b">B. OIDC id_token을 API 호출에 사용한다</button>
+      <button class="opt" data-opt="c">C. Client Credentials 기반의 짧은 수명 service token을 쓴다</button>
+      <div class="explain">정답은 <strong>C</strong>. 사람이 없는 호출은 <em>서비스 자신</em>을 주체로 삼습니다. A는 사람 의존·과권한, B는 id_token을 API에 쓰는 흔한 오용입니다.</div>
+    </div>
+    <div class="quiz" data-qid="q-final" data-answer="a">
+      <div class="q">⑨ access_token · id_token · PAT를 가장 정확히 설명한 것은?</div>
+      <button class="opt" data-opt="a">A. access_token=API 권한용, id_token=로그인 신원 확인용, PAT=사람 계정 기반의 제품별 토큰</button>
+      <button class="opt" data-opt="b">B. 셋은 이름만 다르고 모두 같은 용도다</button>
+      <button class="opt" data-opt="c">C. PAT는 OAuth2 표준 client credentials grant의 정식 명칭이다</button>
+      <div class="explain">정답은 <strong>A</strong>. 토큰은 <em>주체 · 소비자 · 용도</em> 셋으로 갈립니다. 그 셋을 구분하는 순간 설계가 또렷해집니다.</div>
+    </div>
+  </section>
 <!-- ==== /SLIDES ==== -->
   <div id="notes"></div>
   <div id="overview"></div>
@@ -1854,7 +2135,21 @@ Host: api.example.com
   "s49": ["첫 줄은 오늘 내내 본 결론이라 넘어가고, 괄호 안만 보세요. 저 둘은 아직도 문서에 남아 있어서 검색하면 나옵니다. 나오면 못 본 걸로 하시면 됩니다.", "둘째 줄의 정확히가 핵심입니다. 이건 인증 서버 쪽에 우리가 등록하는 값이라, 우리가 틀릴 수 있는 자리예요. 편하자고 별표 하나 붙이는 순간 끝납니다.", "셋째는 콜백 함수의 첫 줄에 있어야 합니다. 교환해 보고 나서 따지려고 미루면, 그 사이에 일이 다 벌어져요.", "넷째는 방금 다섯 줄로 보신 그겁니다. 라이브러리를 쓰시되, 어떤 옵션이 켜져 있는지는 한 번 열어 보세요. 기본값이 다 켜 주지는 않습니다."],
   "s50": ["첫 줄에서 짧게가 얼마냐고 물으시면 분 단위라고 답하겠습니다. 시간 단위로 잡혀 있으면 대개 갱신을 구현하기 싫어서 그런 거고요.", "둘째 줄은 정답이 없습니다. 다만 우리 토큰이 지금 어디 놓여 있는지 팀에서 아무도 모른다면, 그건 답이 없는 게 아니라 문제인 거예요. 오늘 돌아가서 그것부터 확인해 보셔도 좋겠습니다.", "셋째는 사람 계정으로 서버를 돌리지 말라는 말입니다. 그 사람이 팀을 옮기면 서비스가 같이 나가요. 새벽에 그 전화를 받게 됩니다.", "마지막 줄이 제일 지루한데 사고는 여기서 납니다. 만료가 없는 열쇠는 잃어버린 줄도 모르거든요. 여덟 줄 중 하나만 오늘 하시겠다면 저는 이걸 고르겠습니다."],
   "s51": ["자동으로 한 바퀴 돕니다. 오늘 맨 앞에서 이 그림을 봤을 때는 열여섯 줄이 그냥 화살표였죠. 지금은 전부 이름이 있습니다. 앞의 세 줄은 우리 앱이 주소 하나 만들어서 브라우저를 보내는 자리고, 거기 붙는 값들은 3부에서 하나씩 이름을 붙였습니다. 가운데 구간은 우리 코드가 한 줄도 안 도는 자리예요. 비밀번호는 저기서만 입력되고 우리는 구경도 못 합니다. 열 번째 줄에서 돌아오는 건 토큰이 아니라 번호표고요. 그리고 색이 한 번 바뀌는 그 줄, 저기가 오늘의 분기점입니다. 저 줄부터는 브라우저가 무대에 없어요. 그래서 아까 주소창에서 훔쳐 간 값들이 저기서 전부 쓸모없어지는 겁니다. 마지막 두 줄은 헤더에 실어 보내는 자리인데, 무엇을 실어야 하고 무엇을 실으면 안 되는지는 방금 갈라놓았고요. 그림이 멈췄죠. 맨 앞에서 보신 것과 똑같은 그림인데 다르게 보이신다면, 오늘 한 시간은 성공한 겁니다."],
-  "s52": ["오늘을 질문 하나로 열었습니다. 내 비밀번호를 남의 앱에 알려줘도 될까. 답은 안 된다였고, 그 뒤로 오십 분 동안 본 건 전부 알려주지 않고도 되게 만드는 방법이었어요. 화면의 네 줄이 그 방법의 요약입니다.", "여기 못 담은 것들은 부록에 넣어 뒀습니다. A 키를 누르면 나와요. 터미널이나 티브이처럼 브라우저가 마땅치 않은 데서 로그인하는 방식, 우리 앱이 네 유형 중 어디인지 고르는 표, 사람 없는 호출과 PAT 이야기, 그리고 요청과 실패를 직접 찍어 보는 콘솔이 있습니다. 질문 주시면 그쪽으로 넘어가겠습니다.", "마지막 질문입니다. 오늘 단어 하나만 들고 가신다면 이거예요. 답은 B 입니다. 지참인이라는 뜻이고, 아까 그 팔찌와 같아요. 가진 사람이 곧 권한자입니다. 오늘 본 게 결국 다 이 한 줄로 모여요. 그 물건이 어디를 지나가는지, 얼마나 오래 사는지, 새면 무엇이 끝나는지. 수고하셨습니다."]
+  "s52": ["오늘을 질문 하나로 열었습니다. 내 비밀번호를 남의 앱에 알려줘도 될까. 답은 안 된다였고, 그 뒤로 오십 분 동안 본 건 전부 알려주지 않고도 되게 만드는 방법이었어요. 화면의 네 줄이 그 방법의 요약입니다.", "여기 못 담은 것들은 부록에 넣어 뒀습니다. A 키를 누르면 나와요. 터미널이나 티브이처럼 브라우저가 마땅치 않은 데서 로그인하는 방식, 우리 앱이 네 유형 중 어디인지 고르는 표, 사람 없는 호출과 PAT 이야기, 그리고 요청과 실패를 직접 찍어 보는 콘솔이 있습니다. 질문 주시면 그쪽으로 넘어가겠습니다.", "마지막 질문입니다. 오늘 단어 하나만 들고 가신다면 이거예요. 답은 B 입니다. 지참인이라는 뜻이고, 아까 그 팔찌와 같아요. 가진 사람이 곧 권한자입니다. 오늘 본 게 결국 다 이 한 줄로 모여요. 그 물건이 어디를 지나가는지, 얼마나 오래 사는지, 새면 무엇이 끝나는지. 수고하셨습니다."],
+  "a00": ["여기서부터는 부록입니다. 발표 중에는 넘어가고, 질문이 나올 때만 꺼내는 장들이에요. 크게 네 묶음입니다. 먼저 브라우저 창을 띄울 수 없는 자리 — 터미널이나 티브이 같은 기기가 어떻게 로그인하는지. 다음은 클라이언트 네 유형이 무엇으로 갈리는지. 셋째는 사람이 아예 없는 호출, 그러니까 머신 인증입니다. 마지막은 발표에서 못 낸 퀴즈 아홉 개고요. 궁금하신 쪽으로 바로 넘어가겠습니다."],
+  "a01": ["시엘아이에는 콜백을 받아 줄 웹서버가 없습니다. 그래서 자기 안에 하나를 잠깐 띄웁니다. 비어 있는 포트를 하나 잡고, 그 주소를 리다이렉트 유알아이로 적어 인가 요청을 만들고, 시스템 브라우저를 엽니다. 로그인과 동의가 끝나면 브라우저가 127.0.0.1의 그 포트로 코드를 물고 돌아오고, 코드를 받은 그 자리에서 로컬 서버를 닫습니다. 포트를 고정하지 않는 게 요점이에요. 매번 비어 있는 것을 잡습니다. 그래서 인증 서버는 루프백 주소에 한해서만 포트를 뺀 일치를 허용합니다. 다른 주소였다면 완전 일치가 원칙이죠."],
+  "a02": ["시엘아이 로그인 전체 흐름입니다. 오른쪽 화살표로 한 단계씩 넘어가니까 궁금한 데서 멈추셔도 됩니다. 눈여겨보실 것은 이게 앞에서 본 웹 로그인과 같은 흐름이라는 점이에요. 오소라이제이션 코드 더하기 피케이시이. 달라진 건 두 가지뿐입니다. 콜백 주소가 127.0.0.1이라는 것, 그리고 클라이언트 시크릿이 없다는 것. 시크릿이 서던 자리는 피케이시이의 코드 베리파이어가 대신합니다. 마지막에 받은 토큰을 오에스 키체인에 넣는 단계까지 있는 것도 봐 두세요."],
+  "a03": ["브라우저를 아예 못 띄우는 기기도 있습니다. 티브이, 게임 콘솔, 화면은 있는데 글자 넣기가 고약한 장비들이요. 그때 쓰는 것이 디바이스 코드 흐름입니다. 기기가 인증 서버에서 짧은 코드 하나와 주소를 받아 화면에 띄웁니다. 사용자는 폰으로 그 주소에 들어가 코드를 넣고 로그인하죠. 그동안 기기는 토큰 엔드포인트를 계속 두드리고 있습니다. 아직 승인 전이면 사백에 오소라이제이션 펜딩이 돌아오고, 승인된 순간 이백과 함께 토큰이 나옵니다. 입력은 폰에서, 토큰은 기기로. 화면과 입력을 갈라 놓은 게 이 흐름의 전부입니다."],
+  "a04": ["클라이언트를 네 유형으로 나눈다고들 하는데, 실제로 갈리는 기준은 하나입니다. 클라이언트 시크릿을 숨길 수 있느냐. 왼쪽은 서버에서 도는 앱이에요. 코드가 서버에만 있으니 뜯어보려는 사람 손이 닿지 않습니다. 오른쪽은 에스피에이, 모바일, 시엘아이. 코드가 사용자 기기까지 배포됩니다. 번들을 열거나 바이너리를 뜯으면 박아 둔 값이 그대로 보여요. 그건 비밀이 아닙니다. 그래서 왼쪽만 백채널에서 시크릿으로 자신을 증명하고, 오른쪽은 시크릿을 아예 쓰지 않고 피케이시이로 그 자리를 메웁니다. 순서를 이렇게 잡으셔야 새 플랫폼이 나와도 스스로 판단하실 수 있습니다."],
+  "a05": ["같은 질문을 네 플랫폼에 던져 본 표입니다. 버튼을 눌러 가며 보시죠. 웹 서버 앱은 시크릿을 보관할 수 있으니 토큰 교환이 백엔드에서 일어나고, 브라우저에는 세션 쿠키만 갑니다. 에스피에이와 모바일은 시크릿을 못 숨기니 피케이시이가 필수고, 대신 토큰을 어디 둘지가 숙제로 남습니다. 시엘아이는 리다이렉트 유알아이가 루프백이라는 게 특징이고요. 표에서 한 줄만 남기신다면 리다이렉트 유알아이 줄을 보세요. 플랫폼마다 여기가 제일 크게 갈립니다."],
+  "a06": ["시크릿이 원래 하던 일이 뭐였는지부터 짚겠습니다. 이 토큰 요청을 보낸 게 아까 그 인가 요청의 주인이 맞다는 증명이에요. 퍼블릭 클라이언트는 그 증명을 할 수가 없습니다. 배포된 코드에 박은 값은 누구나 꺼낼 수 있으니까요. 그래서 피케이시이가 대신합니다. 흐름마다 새로 만드는 코드 베리파이어는 앱 메모리에만 있고, 밖으로 나가는 건 그 해시뿐이죠. 성질이 다르다는 걸 보세요. 시크릿은 오래 사는 하나고, 베리파이어는 한 번 쓰고 버리는 값입니다. 그래서 새는 순간의 피해도 다릅니다. 시크릿이 새면 그 클라이언트가 통째로 털리고, 베리파이어가 새면 그 흐름 하나가 끝납니다."],
+  "a07": ["사람이 없는 호출입니다. 배치 작업, 마이크로서비스 사이 통신, 씨아이씨디 파이프라인. 로그인할 사람이 아예 없죠. 그러면 브라우저 흐름이 통째로 필요 없습니다. 동의 화면도, 리다이렉트도, 아이디 토큰도 없어요. 서비스가 자기 클라이언트 아이디와 시크릿만으로 토큰을 요청하고, 백채널 왕복 한 번에 액세스 토큰이 나옵니다. 리프레시 토큰도 안 줍니다 — 만료되면 같은 자격으로 다시 받으면 되니까요. 여기서 토큰의 주체는 사람이 아니라 그 서비스 자신입니다."],
+  "a08": ["머신 토큰이라고 뭉뚱그려 부르지만 세 가지가 섞여 있고, 갈리는 기준은 주체가 누구냐입니다. 클라이언트 크리덴셜은 주체가 서비스예요. 오소투 표준 그랜트고요. 서비스 토큰은 제품이 발급하는 것인데, 저장소나 환경 단위로 스코프를 끊고 만료를 답니다. 마지막 피에이티는 주체가 사람 계정입니다. 이게 결정적인 차이예요. 그 사람이 가진 권한을 그대로 물려받습니다. 운영 서비스의 기본값은 앞의 둘이고, 피에이티는 로컬 스크립트까지가 제자리입니다."],
+  "a09": ["피에이티가 왜 위험한지는 한 줄로 정리됩니다. 그게 사람의 권한이기 때문이에요. 넷으로 나뉩니다. 첫째, 권한이 과합니다. 필요한 저장소 하나가 아니라 그 사람이 들어갈 수 있는 전부에 들어가요. 둘째, 퇴사하면 멈춥니다. 계정이 닫히는 순간 그 토큰을 쓰던 배치가 같이 죽습니다. 셋째, 잘 샙니다. 커밋 기록, 로그, 스크린샷. 사고 보고서에 가장 자주 나오는 이름이에요. 넷째, 추적이 흐려집니다. 감사 로그에는 사람 이름이 남는데 실제로 부른 건 배치죠. 그래도 써야 한다면 파인그레인드, 만료일, 최소 스코프, 시크릿 매니저 넷을 함께 거세요."],
+  "a10": ["고르기 어려울 때 쓰는 표입니다. 위쪽에서 누가 부르는지, 아래쪽에서 사람이 참여하는지를 고르면 추천이 나옵니다. 이 데모의 요점은 추천 문구가 아니라 경고 쪽이에요. 머신 호출인데 사람이 참여한다고 골랐거나, 반대로 사람이 없는데 브라우저 흐름을 골랐으면 그 자리에서 짚어 줍니다. 실무에서 어긋나는 지점이 딱 거기거든요. 아래 공통 조건 다섯 줄은 무엇을 고르셨든 똑같이 걸립니다. 최소 권한, 만료와 회전, 소유자 기록, 시크릿 매니저 보관, 마지막 사용 시각 감사."],
+  "a11": ["오늘 나온 요청들을 한자리에 모아 둔 콘솔입니다. 실제로 네트워크를 부르지는 않고 어떤 요청이 어떤 응답을 받는지만 보여 줍니다. 앞의 세 개가 정상 흐름이에요. 인가 요청, 토큰 교환, 에이피아이 호출. 뒤의 네 개는 곁가지와 실패 케이스입니다. 클라이언트 크리덴셜, 피에이티 점검, 스테이트 불일치, 아이디 토큰 검증. 질문이 어느 대목에서 나오든 그 버튼 하나를 눌러서 답하시면 됩니다."],
+  "a12": ["발표 중에는 시간이 없어 못 낸 문제들입니다. 화살표를 누르면 한 문제씩 나옵니다. 앞쪽 절반을 되짚는 다섯 문제예요. 오소투가 풀려는 문제가 무엇이었는지, 토큰을 최종적으로 판정하는 쪽이 누구인지, 리다이렉트 유알아이와 스테이트가 각각 무엇을 막는지, 그리고 리프레시 토큰 로테이션이 재사용을 만났을 때 어떻게 해야 하는지. 한 문제씩 같이 풀어 보시죠."],
+  "a13": ["남은 네 문제입니다. 뒤쪽 절반, 그러니까 오아이디씨와 머신 인증 쪽이에요. 공개키로 검증은 되는데 위조는 왜 안 되는지, 시엘아이가 시크릿 없이도 왜 버티는지, 사람 없는 백엔드 호출에 무엇을 써야 하는지, 그리고 마지막으로 세 토큰의 차이를 한 줄로 말할 수 있는지. 마지막 문제는 오늘 전체의 요약이기도 합니다. 답을 말할 수 있으시면 오늘 한 시간은 남으신 겁니다."]
 }
 </script>
 
@@ -2047,7 +2342,9 @@ function toggleOverview(){
   ov.innerHTML=Deck.slides.map((s,i)=>{
     const sec=Deck.secOf(s.id);
     const warn = sec>110 ? 'color:#fb7185' : sec<25 ? 'color:#fbbf24' : 'color:#8698b3';
-    return `<div class="ov-cell${i===Deck.index?' cur':''}" data-i="${i}">
+    // 부록은 흐리게. 예순일곱 칸이 한 줄로 이어지면 어디까지가 발표인지 안 보인다.
+    const app = s.classList.contains('appendix') ? ' app' : '';
+    return `<div class="ov-cell${app}${i===Deck.index?' cur':''}" data-i="${i}">
       <span class="n">${i+1}</span><span class="t">${titleOf(s)}</span>
       <span class="s" style="${warn}">${fmt(sec)}</span></div>`;
   }).join('');
@@ -2082,6 +2379,14 @@ function onKey(e){
     case 'p': case 'P': openPresenter(); break;
     case 's': case 'S': toggleNotes(); break;
     case 'o': case 'O': toggleOverview(); break;
+    /* 부록 첫 장으로. s52 의 대본이 "A 를 누르면 부록"이라고 청중에게 예고하므로
+       이 배선이 없으면 발표자가 그 자리에서 갈 곳을 잃는다. 번호를 외워 두는 대신
+       class 로 찾는다 — 본편이 한 장 늘어도 여기는 그대로다. */
+    case 'a': case 'A': {
+      const i=Deck.slides.findIndex(s=>s.classList.contains('appendix'));
+      if(i>=0) Deck.go(i);
+      break;
+    }
     case 'Enter': jumpCommit(); break;
     case 'Escape':
       jumpCancel();
@@ -2274,6 +2579,57 @@ const MAIN_STEPS=[
   {from:'api',to:'client',ch:'back',cap:'200 사용자 데이터',wire:'HTTP/1.1 200 OK\n{ "id":"user_2489","name":"주니어 개발자" }',note:'<p><span class="nl what">무슨 일</span>API 서버가 토큰을 검증한 뒤 요청한 데이터를 돌려줍니다.</p><p><span class="nl why">왜 중요</span>API 서버는 토큰의 <b>서명·만료·scope·audience</b>를 직접 확인합니다. "토큰이 있으니 통과"가 아니라, 이 토큰이 이 API를 부를 자격이 있는지를 매번 검사합니다.</p>'}
 ];
 
+/* 출처: oauth2_tutorial.html 2257-2265(CC_*) · 2295-2330(NATIVE_*·DEVICE_*).
+   부록 a02·a03·a07 이 쓴다. 한 글자도 고치지 않았다 — 원본과 대조할 수 있어야 한다.
+   OIDC_ACTORS·OIDC_STEPS(18단계)는 옮기지 않았다. 이 덱에 그 시퀀스를 놓을 장이 없다. */
+const CC_ACTORS=[
+  {id:'client',ic:'📱',nm:'앱(서비스)'},{id:'auth',ic:'🔐',nm:'인증 서버'},{id:'api',ic:'📦',nm:'API 서버'}
+];
+const CC_STEPS=[
+  {from:'client',to:'auth',ch:'back',cap:'POST /token (CC)',wire:'POST /oauth/token   (사용자 없음, 백채널)\nAuthorization: Basic base64(client_id:client_secret)\n\ngrant_type=client_credentials\n&scope=invoice:read metrics:write',note:'<p><span class="nl what">무슨 일</span>사람도 브라우저도 동의 화면도 없습니다. 서비스가 <b>자기 자신의 자격증명</b>(client_id·client_secret)만으로 토큰을 요청합니다.</p><p><span class="nl why">왜 중요</span>이건 "사용자 대신"이 아니라 "서비스 자신"으로 행동하는 흐름입니다. 그래서 redirect도 PKCE도 필요 없고, 전부 백채널에서 끝납니다.</p><p><span class="nl tip">초보 주의</span>client_secret이 곧 이 서비스의 비밀번호입니다. 코드/이미지에 박지 말고 비밀 저장소(secret manager)나 환경변수로 주입하세요.</p>'},
+  {from:'auth',to:'client',ch:'back',cap:'200 access_token',wire:'HTTP/1.1 200 OK\n{\n  "access_token": "at_svc_...",\n  "token_type": "Bearer",\n  "expires_in": 3600\n}',note:'<p><span class="nl what">무슨 일</span>access_token만 돌아옵니다. <b>id_token도 refresh_token도 없습니다.</b></p><p><span class="nl why">왜 중요</span>사용자가 없으니 "누가 로그인했나"(id_token)가 의미 없고, 만료되면 같은 자격증명으로 다시 받으면 되니 refresh_token도 불필요합니다. 토큰의 주체는 사람이 아니라 service:billing-worker입니다.</p>'},
+  {from:'client',to:'api',ch:'back',cap:'GET /invoices (Bearer)',wire:'GET /invoices\nAuthorization: Bearer at_svc_...',note:'<p><span class="nl what">무슨 일</span>받은 서비스 토큰을 Bearer로 실어 API를 호출합니다.</p><p><span class="nl tip">초보 주의</span>서비스 토큰에도 최소 scope만 부여하세요. invoice:read만 필요하면 쓰기 권한은 빼는 게 사고 시 피해를 줄입니다.</p>'},
+  {from:'api',to:'client',ch:'back',cap:'200 데이터',wire:'HTTP/1.1 200 OK\n[ ...invoices... ]',note:'<p><span class="nl what">무슨 일</span>API 서버가 토큰의 scope(invoice:read)와 주체(서비스)를 확인하고 데이터를 돌려줍니다.</p><p><span class="nl why">왜 중요</span>사람 대상 토큰과 똑같이, 서비스 토큰도 매 호출마다 권한과 만료를 검증받습니다. "내부 서비스니까 통과"는 위험한 가정입니다.</p>'}
+];
+
+const NATIVE_ACTORS=[
+  {id:'user',ic:'👤',nm:'사용자'},
+  {id:'cli',ic:'💻',nm:'CLI 도구'},
+  {id:'browser',ic:'🌐',nm:'시스템 브라우저'},
+  {id:'op',ic:'🔐',nm:'OP(인증서버)'}
+];
+const NATIVE_STEPS=[
+  {from:'user',to:'cli',ch:'ui',cap:'$ claude login',wire:'(터미널에서 로그인 명령 실행)',note:'<p><span class="nl what">무슨 일</span>사용자가 CLI 도구에 로그인을 시작합니다.</p><p><span class="nl why">왜 중요</span>CLI는 브라우저도 없고 client_secret도 숨길 수 없는 <b>public client</b>라, 웹 서버와는 다른 방식이 필요합니다. 그 답이 루프백 리다이렉트입니다.</p>'},
+  {from:'cli',to:'cli',ch:'check',cap:'PKCE 생성 + 로컬 서버 기동',wire:'code_verifier / code_challenge 생성\nstate 생성\n임시 콜백 서버 listen:\n  http://127.0.0.1:53217/callback   (빈 포트 자동 선택)',note:'<p><span class="nl what">무슨 일</span>CLI가 자기 PC에 잠깐 쓸 콜백용 HTTP 서버를 임의의 빈 포트로 띄웁니다. 동시에 PKCE 값과 state를 만듭니다.</p><p><span class="nl why">왜 중요</span>브라우저가 인증 후 코드를 "어딘가로" 돌려줘야 하는데, 데스크톱 앱엔 공개 도메인이 없습니다. 그래서 자기 PC의 루프백 주소(127.0.0.1)를 redirect_uri로 씁니다(RFC 8252).</p><p><span class="nl tip">초보 주의</span>secret이 없으니 PKCE가 코드 보호의 전부입니다. 포트는 고정하지 말고 매번 빈 포트를 받아 쓰는 게 충돌·선점에 안전합니다.</p>'},
+  {from:'cli',to:'browser',ch:'ui',cap:'시스템 브라우저 열기',wire:'open "https://auth.example.com/authorize?\n  response_type=code&client_id=cli-tool\n  &redirect_uri=http://127.0.0.1:53217/callback\n  &scope=openid offline_access\n  &code_challenge=E9Mel…&code_challenge_method=S256\n  &state=st_…"',note:'<p><span class="nl what">무슨 일</span>CLI가 사용자의 기본 웹 브라우저를 열어 OP 로그인 페이지로 보냅니다.</p><p><span class="nl why">왜 중요</span>임베디드 웹뷰가 아니라 <b>진짜 시스템 브라우저</b>를 쓰는 게 RFC 8252 권고입니다 — 기존 로그인 세션·비밀번호 관리자·패스키를 그대로 활용하고, 도구가 비밀번호를 엿볼 여지를 없앱니다.</p><p><span class="nl tip">초보 주의</span>redirect_uri가 https가 아니라 http이지만, 127.0.0.1(루프백)이라 예외적으로 허용됩니다. 로컬 주소는 외부에서 가로채기 어렵기 때문입니다. IPv6 <code>[::1]</code>도 동일하게 허용됩니다(단 <code>localhost</code> 호스트명은 비권장). 또 OP는 루프백 redirect의 <b>포트 번호를 등록값과 대조하지 않습니다</b> — 그래서 매번 다른 빈 포트를 써도 됩니다(RFC 8252).</p>'},
+  {from:'browser',to:'op',ch:'front',cap:'GET /authorize',wire:'GET /authorize?...(위 파라미터)\nHost: auth.example.com',note:'<p><span class="nl what">무슨 일</span>브라우저가 OP에 도착해 로그인·동의 화면을 띄웁니다.</p><p><span class="nl why">왜 중요</span>여기서부터는 일반 웹 OIDC와 똑같습니다 — 비밀번호는 OP에만 입력되고, CLI는 그 과정을 보지 못합니다.</p>'},
+  {from:'op',to:'browser',ch:'front',cap:'302 → 127.0.0.1 콜백',wire:'HTTP/1.1 302 Found\nLocation: http://127.0.0.1:53217/callback?\n  code=SplxlOBe…&state=st_…',note:'<p><span class="nl what">무슨 일</span>로그인·동의가 끝나면 OP가 브라우저를 아까 그 루프백 주소로 되돌려 보냅니다.</p><p><span class="nl why">왜 중요</span>브라우저는 이 주소가 사용자 PC 자신(127.0.0.1)이라는 것만 알 뿐, 그게 CLI가 띄운 서버인지는 신경 쓰지 않습니다. 그냥 평소처럼 리다이렉트를 따라갈 뿐입니다.</p>'},
+  {from:'browser',to:'cli',ch:'front',cap:'GET 127.0.0.1/callback?code',wire:'GET /callback?code=Splx…&state=st_…\nHost: 127.0.0.1:53217',note:'<p><span class="nl what">무슨 일</span>브라우저가 코드를 CLI의 로컬 서버로 전달합니다. CLI는 받은 state를 자신이 만든 값과 대조합니다.</p><p><span class="nl why">왜 중요</span>이렇게 CLI가 브라우저로부터 authorization code를 넘겨받습니다. 이 전달은 네트워크를 타지 않고 같은 PC 안에서 끝납니다.</p><p><span class="nl tip">초보 주의</span>같은 PC의 다른 로컬 프로세스가 끼어드는 걸 막기 위해 state·PKCE 검증이 여전히 중요합니다.</p>'},
+  {from:'cli',to:'op',ch:'back',cap:'POST /token (PKCE)',wire:'POST /token\ngrant_type=authorization_code\n&code=Splx…&code_verifier=dBjftJ…\n&client_id=cli-tool\n&redirect_uri=http://127.0.0.1:53217/callback',note:'<p><span class="nl what">무슨 일</span>CLI가 백채널로 코드를 토큰으로 교환합니다. client_secret 없이 code_verifier로만 자신을 증명합니다.</p><p><span class="nl why">왜 중요</span>public client라 secret이 없습니다 — 그 자리를 PKCE가 메웁니다. 코드를 훔쳐도 열쇠 원본(verifier)이 없으면 토큰으로 못 바꿉니다.</p>'},
+  {from:'op',to:'cli',ch:'back',cap:'200 {access, id, refresh}',wire:'HTTP/1.1 200 OK\n{\n  "access_token": "at_…",\n  "id_token": "eyJ…",\n  "refresh_token": "rt_…",\n  "expires_in": 3600\n}',note:'<p><span class="nl what">무슨 일</span>토큰이 도착합니다. scope에 넣은 offline_access 덕에 refresh_token도 함께 받습니다.</p><p><span class="nl why">왜 중요</span>CLI는 매번 브라우저 로그인을 반복하지 않으려고, refresh_token으로 access_token을 조용히 갱신합니다. 그래서 한 번 로그인하면 한동안 다시 안 물어봅니다.</p>'},
+  {from:'cli',to:'cli',ch:'check',cap:'토큰을 OS 키체인에 저장',wire:'토큰 저장: macOS Keychain / Windows Credential Manager /\n         libsecret (없으면 ~/.config의 600 권한 파일)\n로컬 콜백 서버 종료\n브라우저 탭: "로그인 완료 — 이 창은 닫아도 됩니다"',note:'<p><span class="nl what">무슨 일</span>토큰을 OS 보안 저장소에 보관하고, 역할을 끝낸 임시 로컬 서버를 닫습니다.</p><p><span class="nl why">왜 중요</span>평문 파일보다 OS 키체인이 안전합니다. 다른 사용자·프로세스의 접근을 OS가 막아 주니까요.</p><p><span class="nl tip">초보 주의</span>토큰을 그냥 홈 디렉터리 평문에 두면 같은 PC의 다른 프로세스가 읽을 수 있습니다. 키체인이 없으면 최소한 600 권한 파일을 쓰세요.</p>'}
+];
+
+const DEVICE_ACTORS=[
+  {id:'device',ic:'📟',nm:'기기 / CLI'},
+  {id:'user',ic:'👤',nm:'사용자'},
+  {id:'phone',ic:'📱',nm:'다른 기기 브라우저'},
+  {id:'op',ic:'🔐',nm:'OP(인증서버)'}
+];
+const DEVICE_STEPS=[
+  {from:'user',to:'device',ch:'ui',cap:'로그인 시작',wire:'$ claude login --device\n(또는 스마트TV·콘솔에서 "로그인" 선택)',note:'<p><span class="nl what">무슨 일</span>브라우저를 띄울 수 없거나 입력이 불편한 기기(헤드리스 서버·스마트TV·IoT)에서 로그인을 시작합니다.</p><p><span class="nl why">왜 중요</span>이런 기기는 루프백 방식조차 못 씁니다(띄울 브라우저가 없으니까). 그래서 입력과 브라우저를 다른 기기로 떠넘기는 변종이 필요합니다.</p>'},
+  {from:'device',to:'op',ch:'back',cap:'POST /device_authorization',wire:'POST /device_authorization\nclient_id=tv-app&scope=openid offline_access',note:'<p><span class="nl what">무슨 일</span>기기가 OP에 "기기 로그인을 시작하겠다"고 요청합니다.</p><p><span class="nl why">왜 중요</span>사용자 입력을 받는 대신, OP가 사람이 따라갈 수 있는 짧은 코드와 주소를 발급하도록 만드는 단계입니다.</p>'},
+  {from:'op',to:'device',ch:'back',cap:'200 device_code + user_code',wire:'HTTP/1.1 200 OK\n{\n  "device_code": "GmRhmhcxhwAzkoEqiMEg_DnyEy…",\n  "user_code": "WDJB-MJHT",\n  "verification_uri": "https://auth.example.com/device",\n  "verification_uri_complete": ".../device?code=WDJB-MJHT",\n  "expires_in": 900,\n  "interval": 5\n}',note:'<p><span class="nl what">무슨 일</span>OP가 코드 두 개를 줍니다 — 긴 <b>device_code</b>(기기가 폴링에 쓰는 비밀)와 짧은 <b>user_code</b>(사람이 입력). interval은 폴링 간격(초), expires_in은 코드 수명입니다.</p><p><span class="nl why">왜 중요</span>사람은 외우기 쉬운 짧은 코드만 다루고, 기기는 긴 비밀 코드로 토큰을 받습니다. 역할을 분리해 사람의 부담을 최소화합니다.</p>'},
+  {from:'device',to:'user',ch:'ui',cap:'코드·주소 표시',wire:'화면 표시:\n  "auth.example.com/device 에 접속해\n   코드 WDJB-MJHT 를 입력하세요"\n  [ QR 코드 ]',note:'<p><span class="nl what">무슨 일</span>기기가 화면에 주소와 user_code(보통 QR 코드까지)를 띄웁니다.</p><p><span class="nl why">왜 중요</span>사용자는 이 정보를 보고 입력이 편한 다른 기기(폰·노트북)에서 작업을 이어갑니다.</p><p><span class="nl tip">초보 주의</span>verification_uri_complete를 QR로 만들면 코드 입력조차 생략돼 사용자 경험이 좋아집니다.</p>'},
+  {from:'user',to:'phone',ch:'ui',cap:'폰으로 주소 방문',wire:'(사용자가 폰 브라우저로 auth.example.com/device 를 열고\n WDJB-MJHT 입력)',note:'<p><span class="nl what">무슨 일</span>사용자가 자기 폰/노트북의 브라우저로 그 주소를 열고 user_code를 입력합니다.</p><p><span class="nl why">왜 중요</span>진짜 로그인은 입력과 브라우저가 편한 이 기기에서 일어납니다. 불편한 기기(TV/CLI)는 키보드 입력에서 해방됩니다.</p>'},
+  {from:'phone',to:'op',ch:'front',cap:'로그인 + user_code + 동의',wire:'(폰 브라우저: user_code 확인 → OP 로그인 → 동의)',note:'<p><span class="nl what">무슨 일</span>폰 브라우저에서 일반 OIDC 로그인·동의가 진행됩니다. OP는 이 user_code를 아까 그 device_code와 연결합니다.</p><p><span class="nl why">왜 중요</span>비밀번호는 여기서도 OP에만 입력됩니다 — 기기(TV/CLI)는 사용자의 비밀번호를 절대 보지 못합니다.</p>'},
+  {from:'device',to:'op',ch:'back',cap:'POST /token (폴링)',wire:'POST /token\ngrant_type=urn:ietf:params:oauth:grant-type:device_code\n&device_code=GmRhmhc…&client_id=tv-app',note:'<p><span class="nl what">무슨 일</span>그 사이 기기는 interval(예: 5초)마다 OP에 "다 됐나요?" 하고 폴링합니다.</p><p><span class="nl why">왜 중요</span>기기는 사용자가 폰에서 언제 끝낼지 모르니, 콜백을 기다리는 대신 주기적으로 물어봅니다.</p>'},
+  {from:'op',to:'device',ch:'back',cap:'400 authorization_pending',wire:'HTTP/1.1 400 Bad Request\n{ "error": "authorization_pending" }',note:'<p><span class="nl what">무슨 일</span>사용자가 아직 동의 전이면 OP는 "대기 중" 응답을 줍니다. 기기는 interval만큼 쉬었다 다시 폴링합니다.</p><p><span class="nl tip">초보 주의</span>너무 자주 물으면 OP가 slow_down 오류로 "간격을 늘려라"고 지시합니다. 그 지시를 반드시 따라야 차단되지 않습니다. 또 <b>대기·완료 판단은 HTTP 상태코드가 아니라 응답 본문의 error 값</b>으로 하세요 — 상태코드는 OP마다 다를 수 있습니다.</p>'},
+  {from:'device',to:'op',ch:'back',cap:'POST /token (재폴링)',wire:'POST /token\ngrant_type=urn:ietf:params:oauth:grant-type:device_code\n&device_code=GmRhmhc…&client_id=tv-app',note:'<p><span class="nl what">무슨 일</span>사용자가 폰에서 동의를 끝낸 뒤, 기기가 다시 폴링합니다.</p><p><span class="nl why">왜 중요</span>이번엔 OP 쪽 상태가 "승인됨"으로 바뀌어 있어, 같은 요청이지만 결과가 달라집니다.</p>'},
+  {from:'op',to:'device',ch:'back',cap:'200 {access, id, refresh}',wire:'HTTP/1.1 200 OK\n{\n  "access_token": "at_…",\n  "id_token": "eyJ…",\n  "refresh_token": "rt_…",\n  "expires_in": 3600\n}',note:'<p><span class="nl what">무슨 일</span>드디어 토큰이 도착합니다. 기기는 이후 id_token 검증·refresh를 일반 OIDC 흐름과 동일하게 처리합니다.</p><p><span class="nl why">왜 중요</span>사용자는 불편한 기기에 비밀번호를 한 번도 입력하지 않고 로그인을 끝냈습니다. 입력은 폰이, 토큰 보관은 기기가 맡는 깔끔한 분업입니다.</p>'}
+];
+
+
 
 /* 출처: oauth2_tutorial.html 2007-2106
    renderAuthUrl · renderState · sha256Base64Url · renderPkce · renderApiCall ·
@@ -2328,6 +2684,87 @@ const ROT=[
   '공격자가 예전에 훔친 RT1로 토큰을 요청합니다.\nPOST /oauth/token  grant_type=refresh_token  refresh_token=RT1\n\n🚨 인증 서버: "이미 쓰인 RT1이 또 왔다 = 유출 신호!"\n→ 400 invalid_grant + 이 계정의 토큰 패밀리(RT1·RT2…) 전체 무효화.\n   정상 사용자도 재로그인하게 되지만, 공격자도 차단됩니다.'
 ];
 function renderRot(i){ $('#rotOut').textContent=ROT[i]; $$('.rot-step').forEach(b=>b.classList.toggle('primary',Number(b.dataset.step)===i)); }
+
+
+/* ---------- 부록 a05 · 플랫폼별 설계 탐색기 ----------
+   출처: oauth2_tutorial.html 2109-2131 (renderPlat). 표 내용은 그대로다.
+   고친 것은 행 이름표뿐 — 원본은 <span style="…font-size:12.5px"> 를 손으로 박았다.
+   인라인 값은 .slide .verify-row(24px)를 이기므로 무대에서 그 열만 하한 아래로
+   내려앉는다. 크기는 CSS(.verify-row .pk-k)에 맡기고 여기서는 클래스만 준다. */
+function renderPlat(plat){
+  const out=$('#platOut'); if(!out)return;
+  const d={
+    web:{t:'🖥️ 웹 서버 앱 (Confidential)',rows:[
+      ['client_secret','✅ 서버에 안전 보관 가능'],['권장 흐름','Authorization Code + PKCE'],
+      ['토큰 교환','백엔드(백채널)에서 secret과 함께'],['redirect_uri','https://app.example.com/callback'],
+      ['토큰 저장','서버 세션 — 브라우저엔 세션 쿠키만'],['포인트','가장 안전. 토큰이 브라우저에 노출되지 않음']]},
+    spa:{t:'⚛️ SPA (Public)',rows:[
+      ['client_secret','❌ 못 숨김 (JS 소스에 노출)'],['권장 흐름','Authorization Code + PKCE (secret 없음)'],
+      ['토큰 교환','브라우저에서 직접, PKCE로 보호'],['redirect_uri','https://app.example.com/callback'],
+      ['토큰 저장','XSS 위험 ↔ 메모리/쿠키 고민. BFF 권장'],['포인트','implicit flow 금지. PKCE 필수']]},
+    mobile:{t:'📱 모바일 앱 (Public)',rows:[
+      ['client_secret','❌ 앱 바이너리 디컴파일로 노출'],['권장 흐름','Authorization Code + PKCE'],
+      ['토큰 교환','앱에서 직접, PKCE로 보호'],['redirect_uri','myapp://callback 또는 https(App/Universal Links)'],
+      ['토큰 저장','iOS Keychain / Android Keystore'],['포인트','redirect 가로채기 방지 위해 Universal/App Links 권장']]},
+    cli:{t:'⌨️ 데스크톱 / CLI (Public)',rows:[
+      ['client_secret','❌ 배포 바이너리에 못 숨김'],['권장 흐름','Authorization Code + PKCE, 또는 Device Code'],
+      ['토큰 교환','로컬에서 PKCE로 보호'],['redirect_uri','http://127.0.0.1:{port}/callback (loopback)'],
+      ['토큰 저장','OS 보안 저장소 / 안전한 파일'],['포인트','브라우저 못 띄우는 기기(TV 등)는 Device Code Flow']]}
+  }[plat];
+  if(!d)return;
+  out.innerHTML=`<h4>${d.t}</h4>`+
+    d.rows.map(r=>`<div class="verify-row"><span class="pk-k">${r[0]}</span><span>${r[1]}</span></div>`).join('');
+  $$('#platPicks .pick').forEach(b=>b.classList.toggle('active',b.dataset.plat===plat));
+}
+
+/* ---------- 부록 a10 · 어떤 토큰을 쓸 것인가 ----------
+   출처: oauth2_tutorial.html 2134-2147 (renderTokenChoice). 두 <select> 가 없으면
+   조용히 나간다 — 이 덱에서 그 장을 빼도 나머지 배선이 살아 있어야 한다. */
+function renderTokenChoice(){
+  const ct=$('#callerType'), hp=$('#humanPresent'), out=$('#tokenChoiceOut');
+  if(!ct||!hp||!out)return;
+  const c=ct.value, h=hp.value;
+  const map={
+    browser:['Authorization Code + PKCE + OIDC','사용자 로그인·권한 위임. access_token은 API용, id_token은 로그인 확인용.'],
+    backend:['Client Credentials 또는 workload identity','서비스가 자기 자신(service:billing-worker)으로 호출. 사용자 동의/id_token 없음.'],
+    ci:['짧은 수명 service token / app installation token','저장소·환경 단위 scope, 만료, 감사 로그가 핵심.'],
+    local:['fine-grained PAT (제한적 허용)','개인 계정 권한이므로 최소 scope·만료일·이름·보관 위치를 강제.'],
+    impersonation:['명시적 delegation / on-behalf-of 설계','서비스 토큰을 몰래 사용자처럼 쓰면 감사·권한 모델이 무너짐.']
+  };
+  const [rec,why]=map[c];
+  const warn = (c!=='browser' && h==='yes') ? '\n\n⚠️ "사람이 참여"인데 머신 호출 주체를 골랐어요. 정말 사람의 로그인이라면 Authorization Code+OIDC가 맞습니다.'
+            : (c==='browser' && h==='no') ? '\n\n⚠️ 사람이 없는데 브라우저 사용자 흐름을 골랐어요. 자동 호출이면 client credentials 계열이 맞습니다.' : '';
+  out.textContent=`추천: ${rec}\n이유: ${why}\n사람 참여: ${h==='yes'?'예':'아니오'}${warn}\n\n공통 허용 조건: 최소 권한(scope) · 만료/회전 정책 · 소유자와 목적 기록 · secret manager 보관 · 마지막 사용 시각 감사`;
+}
+
+/* ---------- 부록 a11 · 요청·실패 케이스 콘솔 ----------
+   출처: oauth2_tutorial.html 2150-2158 (CONSOLE). 그대로다. */
+const CONSOLE={
+  'auth-url':'$ GET /oauth/authorize\n  response_type=code & scope=openid profile email\n  state, nonce, code_challenge(S256) 포함\n→ 302 로 인증 서버 로그인/동의 화면으로 이동 (프론트채널)',
+  'exchange-code':'$ POST /oauth/token   (백채널)\n  grant_type=authorization_code & code & code_verifier & client_secret\n→ 200 { access_token, refresh_token, id_token, expires_in }',
+  'call-api':'$ GET /me\n  Authorization: Bearer <access_token>\n→ scope 충분: 200 OK / 부족: 403 insufficient_scope',
+  'client-credentials':'$ POST /oauth/token   (백채널, 사용자 없음)\n  grant_type=client_credentials & client_secret & scope\n→ 200 { access_token }  (id_token·refresh_token 없음)\n   주체 = service:billing-worker',
+  'pat-risk':'$ PAT 점검\n  주체 = 사람 계정(과한 권한) · 퇴사 시 중단 · 잘 샘(코드 커밋)\n→ 운영 서비스 기본값으로 부적합. fine-grained + 만료 + secret manager.',
+  'bad-state':'$ 콜백 state 검사\n  saved=st_7Yqk9bV2  received=zzz_attacker\n→ 🚨 불일치: CSRF 의심. 토큰 교환 중단, 요청 폐기.',
+  'oidc-verify':'$ id_token 검증\n  iss✅ aud✅ exp✅ signature✅ nonce✅\n→ 전부 통과해야 로그인 세션 생성. 하나라도 실패 = 거부.'
+};
+
+/* ---------- 부록 a12·a13 · 퀴즈 은행 ----------
+   한 장에 문제를 여러 개 담되 화면에는 한 번에 하나만 둔다. → 하나가 다음 문제다.
+
+   .build 로는 이 일이 안 된다. .build 는 '쌓이는 공개'라 마지막 비트에서 다섯 문제가
+   한꺼번에 서고, 그러면 720px 을 넘길뿐더러 청중이 발표자보다 먼저 다음 문제를 읽는다.
+   그래서 registerBeats 의 컨트롤러 자리를 쓴다 — wireDia·createSequence 와 같은
+   {n, go(i)} 모양이라 applyBeat 가 그대로 몰아준다.
+   숨기는 방법은 opacity 가 아니라 display:none 이어야 한다. 자리를 비켜 주지 않으면
+   보이지 않는 네 문제가 세로를 그대로 먹는다. */
+function wireQuizBank(slideId){
+  const slide=$('#'+slideId); if(!slide)return null;
+  const qs=$$('.quiz',slide); if(!qs.length)return null;
+  const show=i=>qs.forEach((q,k)=>q.classList.toggle('q-off',k!==i));
+  show(0);
+  return { n:qs.length, go(k){ show(Math.max(0,Math.min(qs.length-1,k))); } };
+}
 
 /* ---------- JWT builder/verifier (real HMAC) ---------- */
 /* 변경점(renderJwt) 둘.
@@ -2485,6 +2922,28 @@ function registerAssets(){
   if(seq17) ON_ENTER['s17']=seq17;   // enter(): 되감고 재생 · leave(): 멈춤
   if(seq51) ON_ENTER['s51']=seq51;
 
+  /* ---------- 부록 ----------
+     그림 하나와 시퀀스 셋, 퀴즈 은행 둘. 전부 registerBeats 로 → 에 매단다.
+
+     부록의 시퀀스는 ON_ENTER 에 넣지 않는다 — 자동재생하지 않는다는 뜻이다.
+     s17·s51 이 자동재생하는 이유는 열여섯 단계의 '모양'을 3분 30초 안에 보여 주는
+     것이었다. 부록은 정반대 상황이다: 질문이 나와서 여는 장이고, 발표자는 특정
+     단계에 멈춰 서서 답해야 한다. 자동재생은 답하는 동안 화면을 혼자 굴린다.
+     그래서 여기서는 → 한 번이 한 단계다. */
+  registerBeats('a04', wireDia('diaSecret',[
+  {c:'기준은 딱 하나입니다 — <b>client_secret을 숨길 수 있느냐.</b>',h:2200},
+  {c:'서버에서 도는 앱은 코드가 서버에만 있습니다. 뜯어보려 해도 <span class="ye">손이 닿지 않아요.</span>',h:2700},
+  {c:'SPA·모바일·CLI는 다릅니다. 코드가 <span class="no">사용자 기기까지 배포됩니다.</span>',h:2500},
+  {c:'번들을 열거나 바이너리를 뜯으면 박아 둔 값이 그대로 보입니다. <b>비밀이 아니에요.</b>',h:2800},
+  {c:'그래서 confidential 클라이언트만 백채널에서 secret으로 자신을 증명합니다.',h:2500},
+  {c:'public 클라이언트는 secret을 <b>아예 쓰지 않고</b>, 흐름마다 새로 만드는 <span class="hi">PKCE</span>로 그 자리를 메웁니다.',h:3200}
+  ]));
+  registerBeats('a02', createSequence('nativeSeq',{title:'CLI · 네이티브 앱 로그인 (Authorization Code + PKCE · 루프백 리다이렉트)',actors:NATIVE_ACTORS,steps:NATIVE_STEPS,hasCheck:true}));
+  registerBeats('a03', createSequence('deviceSeq',{title:'디바이스 코드 흐름 (Device Authorization Grant · 폴링)',actors:DEVICE_ACTORS,steps:DEVICE_STEPS}));
+  registerBeats('a07', createSequence('ccSeq',{title:'Client Credentials Flow (머신 to 머신)',actors:CC_ACTORS,steps:CC_STEPS,hasCheck:false}));
+  registerBeats('a12', wireQuizBank('a12'));
+  registerBeats('a13', wireQuizBank('a13'));
+
   /* ---------- 도착한 순간의 데모 상태 ----------
      s45 는 위변조가 무너뜨릴 '정상 상태'가 먼저 있어야 말이 된다. 그래서 그 장에
      처음 들어오는 순간 정상 토큰을 한 번 만들어 둔다.
@@ -2536,6 +2995,16 @@ function wireDemos(){
   $$('.api-scope').forEach(cb=>cb.addEventListener('change',()=>{const a=$('.api-call.primary');renderApiCall(a?.dataset.need||'profile:read',a?.dataset.path||'/me');}));
   $$('.rot-step').forEach(b=>b.addEventListener('click',()=>renderRot(Number(b.dataset.step))));
 
+  /* 부록의 데모 셋. 여기(go(0) 뒤)에 두는 이유는 본편 것과 같다 — 배선 중에 예외가
+     나도 덱은 이미 굴러가는 상태여야 한다. */
+  $$('#platPicks .pick').forEach(b=>b.addEventListener('click',()=>renderPlat(b.dataset.plat)));
+  ['callerType','humanPresent'].forEach(id=>on('#'+id,'change',renderTokenChoice));
+  $$('.console-cmd').forEach(b=>b.addEventListener('click',()=>{
+    const o=$('#consoleOut'); if(!o)return;
+    o.textContent=CONSOLE[b.dataset.cmd]||'';
+    $$('.console-cmd').forEach(x=>x.classList.remove('primary')); b.classList.add('primary');
+  }));
+
   /* JWT 데모는 s44·s45 두 곳에 같은 마크업이 있다. 버튼을 걸 때 각자의 루트를 넘긴다. */
   const r44=$('#jwtDemo44'), r45=$('#jwtDemo45');
   if(r44) on('#jwtBuild','click',()=>renderJwt('ok',r44),r44);
@@ -2552,6 +3021,9 @@ function wireDemos(){
   boot(renderPkce,'pkceOut','verifierInput');
   boot(()=>renderApiCall('profile:read','/me'),'apiOut');
   boot(()=>renderRot(0),'rotOut');
+  boot(()=>renderPlat('web'),'platPicks','platOut');
+  boot(renderTokenChoice,'tokenChoiceOut','callerType','humanPresent');
+  boot(()=>{ $('#consoleOut').textContent=CONSOLE['auth-url']; },'consoleOut');
   if(r44) renderJwt('ok', r44);
 }
 /* ==== /ASSET:JS ==== */
