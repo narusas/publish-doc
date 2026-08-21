@@ -514,6 +514,83 @@ def test_appendix_sequences_do_not_play_by_themselves(page):
         assert state(page)['i'] == i, '→ 가 단계를 넘기지 않고 슬라이드를 넘겼다'
 
 
+# --- ON_ENTER 생명주기 --------------------------------------------------------
+#
+# Deck.go 는 떠나는 장의 leave() 와 들어오는 장의 enter() 를 부른다. 두 짝이 다
+# 필요하다. leave() 를 지우면 떠난 장의 타이머가 화면 밖에서 계속 돌고(s19 에 6초
+# 서 있으면 #mainSeq17 이 6 / 16 을 가리킨다), enter() 를 지우면 되감기와 재생이
+# 같이 죽는다 — 그리고 활자 하한·720px 넘침 두 테스트가 기대는 '한 바퀴 깨우기'가
+# 아무것도 깨우지 않게 된다. 둘 다 지워도 검사기는 통과하고, 이 파일에도 그것을
+# 잡는 자리가 없었다.
+
+
+def autoplaying_slide(pg):
+    """leave() 를 가진 ON_ENTER 자산이 실린 첫 슬라이드의 (id, 번호). 없으면 skip.
+
+    특정 장 번호를 적지 않는다 — 장이 늘거나 번호가 바뀌어도 그대로 돈다."""
+    got = pg.evaluate("""() => {
+      for (const id of Object.keys(ON_ENTER)) {
+        if (!ON_ENTER[id].leave) continue;
+        const i = Deck.slides.findIndex(s => s.id === id);
+        if (i >= 0 && Deck.slides[i].querySelector('.seq-counter')) return [id, i];
+      }
+      return null;
+    }""")
+    if not got:
+        pytest.skip('leave() 를 가진 자동재생 자산이 아직 없다')
+    return got[0], got[1]
+
+
+def seq_step(pg, sid):
+    """'3 / 16' 계기판에서 현재 단계 번호만 뽑는다."""
+    return pg.evaluate(
+        'id => +document.getElementById(id).querySelector(".seq-counter")'
+        '.textContent.trim().split("/")[0]', sid)
+
+
+def test_leaving_an_autoplaying_slide_stops_it(page):
+    """떠난 장의 자동재생은 멈춘다.
+
+    안 멈추면 화면 밖에서 계속 돈다. 재현된 결과: leave() 없이 s19 에 6초 서
+    있으면 #mainSeq17 이 6 / 16 을 가리킨다. 나중에 그 장으로 ← 로 돌아오면
+    발표자가 말하려던 단계가 아니라 혼자 굴러간 단계가 서 있고, 다른 장의 자산까지
+    깨어나면 두 장이 동시에 진행한다."""
+    page.goto(DECK)
+    sid, i = autoplaying_slide(page)
+    goto(page, i)
+    page.wait_for_timeout(2200)                 # 자동재생은 1700ms 간격이다
+    running = seq_step(page, sid)
+    assert running > 1, '자동재생이 애초에 돌지 않는다 (%d 단계)' % running
+
+    goto(page, i + 1)                           # 떠난다
+    left = seq_step(page, sid)
+    page.wait_for_timeout(4000)
+    assert seq_step(page, sid) == left, \
+        '%s 를 떠났는데 시퀀스가 화면 밖에서 %d → %d 로 계속 갔다' % (
+            sid, left, seq_step(page, sid))
+
+
+def test_entering_an_autoplaying_slide_rewinds_and_starts_it(page):
+    """들어온 장의 자동재생은 처음부터 다시 시작한다.
+
+    enter() 가 없으면 두 가지가 같이 죽는다. 되감기(← 로 돌아왔을 때 발표자가
+    설명을 다시 시작하는데 화면은 마지막 단계에 서 있다)와 재생(화면이 아예 안
+    움직인다). 활자 하한·720px 테스트의 '한 바퀴 깨우기'도 이 호출에 기댄다."""
+    page.goto(DECK)
+    sid, i = autoplaying_slide(page)
+    goto(page, i)
+    page.wait_for_timeout(2200)
+    assert seq_step(page, sid) > 1
+    goto(page, i + 1)                           # 나갔다가
+    goto(page, i)                               # 다시 들어온다
+
+    assert seq_step(page, sid) == 1, \
+        '%s 에 다시 들어왔는데 처음으로 되감기지 않았다 (%d 단계)' % (
+            sid, seq_step(page, sid))
+    page.wait_for_timeout(2200)
+    assert seq_step(page, sid) > 1, '%s 에 들어왔는데 자동재생이 시작되지 않았다' % sid
+
+
 def test_appendix_quiz_bank_shows_exactly_one_question_per_beat(page):
     """퀴즈 은행은 한 비트에 문제 하나만 세운다.
 
