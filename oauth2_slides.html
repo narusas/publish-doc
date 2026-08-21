@@ -94,6 +94,10 @@ body{font-family:var(--sans);color:var(--text);-webkit-font-smoothing:antialiase
 }
 #notes.on{transform:none}
 #notes p{margin:0 0 10px;font-size:19px}
+/* 두 겹침 창은 ↑↓ 로 굴리려고 포커스를 받는다(tabindex="-1"). 무대에 포커스 테두리가
+   뜨면 프로젝터에 그대로 보이므로 지운다 — 키보드 이동용 포커스가 아니라
+   '이 상자가 스크롤 주인'이라는 표시일 뿐이다. */
+#notes:focus,#overview:focus{outline:none}
 
 /* 개요 그리드 — 글자만 빽빽한 슬라이드를 한눈에 찾아내는 자리 */
 #overview{
@@ -2065,8 +2069,8 @@ Host: api.example.com
     </div>
   </section>
 <!-- ==== /SLIDES ==== -->
-  <div id="notes"></div>
-  <div id="overview"></div>
+  <div id="notes" tabindex="-1"></div>
+  <div id="overview" tabindex="-1"></div>
   <div id="toast"></div>
 </div></div>
 
@@ -2360,15 +2364,29 @@ function toast(msg){
   clearTimeout(toastTimer); toastTimer=setTimeout(()=>t.classList.remove('on'),2600);
 }
 
+/* 서랍을 여는 순간 포커스를 준다. ↑↓ 로 서랍을 굴리려면 스크롤 상자가 포커스를 갖고
+   있어야 한다 — 포커스가 <body> 에 남으면 브라우저는 스크롤할 상자를 못 찾고,
+   그 키는 onKey 의 손에 남아 슬라이드를 넘긴다. 대본이 서랍(38%=273px)을 넘치는
+   장이 예순일곱 중 열여섯이므로(s30 은 538px 이 필요하다) 굴릴 수 없는 서랍은
+   그 열여섯 장에서 대본의 절반이 없는 것과 같다. */
 function toggleNotes(){
   const el=$('#notes');
   el.classList.toggle('on');
-  if(el.classList.contains('on')) renderNotes();
+  if(el.classList.contains('on')){ notesFor=null; renderNotes(); el.focus({preventScroll:true}); }
+  else el.blur();
 }
+/* 같은 장을 다시 그리지 않는다. paint() 는 타이머가 도는 동안 0.5초마다 불리는데,
+   그때마다 innerHTML 을 다시 넣으면 scrollTop 이 0 으로 돌아간다 — 발표자는 타이머를
+   켜 놓고 발표하므로, 다시 그리면 읽던 자리를 0.5초마다 잃는다. */
+let notesFor=null;
 function renderNotes(){
   const id=Deck.slides[Deck.index].id;
-  $('#notes').innerHTML=(Deck.script[id]||[])
+  if(notesFor===id) return;
+  notesFor=id;
+  const el=$('#notes');
+  el.innerHTML=(Deck.script[id]||[])
     .map(p=>`<p>${p.replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]))}</p>`).join('');
+  el.scrollTop=0;
 }
 
 function toggleOverview(){
@@ -2390,6 +2408,14 @@ function toggleOverview(){
     ov.classList.remove('on'); Deck.go(+c.dataset.i);
   }));
   ov.classList.add('on');
+  /* 열자마자 지금 서 있는 칸을 화면 안으로 끌어온다. 그리드는 720px 무대 안에서
+     1321px 이라 두 화면 가까이 되고, 인덱스 40 부터는 현재 칸이 아예 안 보인다
+     (index 40 → curTop 650, index 60 → 1098). 개요는 설계 10절이 '눈 검사'의
+     도구로 지정한 자리이자 질의응답 때 부록으로 들어가는 문이다 — 열었을 때
+     내가 어디 있는지가 안 보이면 둘 다 못 한다.
+     add('on') 뒤여야 한다. display:none 인 동안에는 좌표가 없어 아무 데도 안 간다. */
+  $('.ov-cell.cur',ov)?.scrollIntoView({block:'center'});
+  ov.focus({preventScroll:true});
 }
 
 /* ---------- 숫자 점프 ----------
@@ -2427,6 +2453,17 @@ function onKey(e){
   if(tag==='SELECT' && /^(ArrowUp|ArrowDown|Home|End| )$/.test(e.key)) return;
   if(typing && (e.key.length===1 || /^(ArrowLeft|ArrowRight|Home|End)$/.test(e.key))) return;
   if(tag==='INPUT' && t.type==='checkbox' && e.key===' ') return;   // 스페이스는 체크박스가 쓴다
+  /* 겹쳐 뜬 창이 열려 있으면 굴리는 키는 그 창의 것이다. 둘 다 스크롤 상자이고
+     둘 다 무대보다 크다 — 개요는 720px 안에서 1321px, 노트 서랍은 열여섯 장에서
+     대본이 273px 를 넘친다. 여기서 비켜 주지 않으면 발표자가 '읽으려고' 누른 ↓ 가
+     화면 밖에서 슬라이드를 넘긴다. 아무 표시도 없이 넘어가므로, 창을 닫고 나서야
+     엉뚱한 장에 서 있는 것을 안다.
+     비켜 주는 키는 굴리는 키뿐이다. ←→ 는 아래로 흘려보낸다 — 개요를 띄워 놓고
+     다음 장으로 넘기는 것은 실제로 쓰는 손놀림이고, O·S·Escape 가 죽으면 창을
+     닫을 방법이 사라진다. */
+  if($('#overview').classList.contains('on')||$('#notes').classList.contains('on')){
+    if(/^(ArrowUp|ArrowDown|PageUp|PageDown|Home|End)$/.test(e.key)) return;
+  }
   switch(e.key){
     case 'ArrowRight': case ' ': case 'PageDown': e.preventDefault(); Deck.next(); break;
     case 'ArrowLeft': case 'PageUp': e.preventDefault(); Deck.prev(); break;

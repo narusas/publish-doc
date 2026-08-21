@@ -148,8 +148,150 @@ def test_open_notes_drawer_follows_the_current_slide(page):
     page.goto(DECK)
     page.keyboard.press('s')
     first = page.inner_text('#notes')
-    page.keyboard.press('ArrowDown')
+    # ↓ 가 아니라 → 로 넘긴다. 서랍이 열려 있는 동안 ↓ 는 서랍을 굴리는 키다
+    # (test_arrow_keys_scroll_the_open_notes_drawer_instead_of_the_deck).
+    while state(page)['i'] == 0:
+        page.keyboard.press('ArrowRight')
     assert page.inner_text('#notes') != first, '슬라이드를 넘겼는데 노트가 그대로다'
+
+
+# --- 겹쳐 뜬 창이 굴리는 키를 갖는다 -------------------------------------------
+#
+# 노트 서랍과 개요 그리드는 둘 다 스크롤 상자이고 둘 다 무대보다 크다. onKey 가
+# ↑↓·PageUp/Down 을 조건 없이 가져가던 동안, 발표자가 '읽으려고' 누른 키는 창을
+# 굴리는 대신 창 뒤에서 슬라이드를 넘겼다. 화면에 아무 표시가 없으므로 창을 닫고
+# 나서야 엉뚱한 장에 서 있는 것을 안다.
+
+
+def overflowing_notes_slide(pg):
+    """대본이 서랍(max-height:38%)을 넘치는 첫 슬라이드. 없으면 skip."""
+    i = pg.evaluate("""() => {
+      const n = document.getElementById('notes');
+      const keep = Deck.index, wasOn = n.classList.contains('on');
+      n.classList.add('on');
+      let found = -1;
+      for (let i = 0; i < Deck.slides.length; i++) {
+        Deck.go(i); notesFor = null; renderNotes();
+        if (n.scrollHeight - n.clientHeight > 1) { found = i; break; }
+      }
+      if (!wasOn) n.classList.remove('on');
+      Deck.go(keep);
+      return found;
+    }""")
+    if i < 0:
+        pytest.skip('서랍을 넘치는 대본이 아직 없다')
+    return i
+
+
+def settled_scroll_top(pg, sel):
+    """스크롤이 멈춘 뒤의 scrollTop.
+
+    크롬은 키보드 스크롤을 애니메이션으로 굴린다. 누른 직후에 읽으면 아직 0 이라
+    '굴러가지 않았다'와 구분이 안 된다. 값이 두 번 연속 같을 때까지 기다린다."""
+    last = None
+    for _ in range(25):
+        pg.wait_for_timeout(120)
+        now = pg.eval_on_selector(sel, 'e => e.scrollTop')
+        if now == last:
+            return now
+        last = now
+    return last
+
+
+def test_arrow_keys_scroll_the_open_notes_drawer_instead_of_the_deck(page):
+    """서랍이 열려 있으면 ↓·PageDown 은 대본을 굴린다. 슬라이드는 그대로다.
+
+    서랍은 max-height:38% = 273px 이고, 대본이 그것을 넘치는 장이 예순일곱 중
+    열여섯이다(s30 은 538px 이 필요하다). 굴릴 수 없는 서랍은 그 열여섯 장에서
+    대본의 절반이 없는 것과 같다 — 그리고 읽으려고 누른 그 키가 덱을 두 장
+    넘겨 버린다."""
+    page.goto(DECK)
+    i = overflowing_notes_slide(page)
+    goto(page, i)
+    page.keyboard.press('s')
+    assert on(page, '#notes') is True
+    assert page.eval_on_selector('#notes', 'e => e.scrollTop') == 0
+    page.keyboard.press('ArrowDown')
+    page.keyboard.press('PageDown')
+    moved = settled_scroll_top(page, '#notes')
+    assert state(page)['i'] == i, \
+        '서랍이 열려 있는데 ↓·PageDown 이 슬라이드를 넘겼다 (%d → %d)' % (i, state(page)['i'])
+    assert moved > 0, '서랍이 열려 있는데 ↓·PageDown 이 대본을 굴리지 않는다'
+    page.keyboard.press('ArrowUp')
+    assert settled_scroll_top(page, '#notes') < moved, '↑ 가 대본을 되돌리지 않는다'
+    assert state(page)['i'] == i, '서랍이 열려 있는데 ↑ 가 슬라이드를 되돌렸다'
+
+
+def test_open_notes_drawer_keeps_its_scroll_while_the_timer_runs(page):
+    """타이머가 도는 동안에도 읽던 자리를 지킨다.
+
+    paint() 는 타이머가 켜져 있으면 0.5초마다 불린다. 그때마다 서랍의 innerHTML 을
+    다시 넣으면 scrollTop 이 0 으로 돌아간다 — 발표자는 타이머를 켜 놓고 발표하므로
+    굴릴 수 있게 만들어 놓고도 0.5초마다 맨 위로 튕긴다."""
+    page.goto(DECK)
+    i = overflowing_notes_slide(page)
+    goto(page, i)
+    page.keyboard.press('s')
+    page.keyboard.press('PageDown')
+    moved = settled_scroll_top(page, '#notes')
+    assert moved > 0
+    page.keyboard.press('t')                      # 타이머 시작 → paint() 가 0.5초마다
+    page.wait_for_timeout(1400)
+    assert page.eval_on_selector('#notes', 'e => e.scrollTop') == moved, \
+        '타이머가 도는 동안 서랍이 맨 위로 되돌아갔다'
+    page.keyboard.press('t')
+
+
+def test_arrow_keys_scroll_the_open_overview_instead_of_the_deck(page):
+    """개요가 열려 있으면 ↓·End 는 그리드를 굴린다. 슬라이드는 그대로다."""
+    page.goto(DECK)
+    goto(page, 10)
+    page.keyboard.press('o')
+    assert on(page, '#overview') is True
+    box = page.eval_on_selector(
+        '#overview', 'e => [e.scrollHeight, e.clientHeight]')
+    assert box[0] > box[1], '개요가 무대 안에 다 들어가 스크롤을 잴 수 없다'
+    start = settled_scroll_top(page, '#overview')
+    for _ in range(3):
+        page.keyboard.press('ArrowDown')
+    assert settled_scroll_top(page, '#overview') > start, \
+        '개요가 열려 있는데 ↓ 가 그리드를 굴리지 않는다'
+    assert state(page)['i'] == 10, \
+        '개요가 열려 있는데 ↓ 가 창 뒤에서 슬라이드를 넘겼다'
+    page.keyboard.press('End')
+    assert settled_scroll_top(page, '#overview') > start
+    assert state(page)['i'] == 10, '개요가 열려 있는데 End 가 슬라이드를 옮겼다'
+
+
+def test_overview_brings_the_current_cell_into_view_when_it_opens(page):
+    """어느 장에서 열어도 지금 서 있는 칸이 보인다.
+
+    그리드는 720px 무대 안에서 1321px 이라 두 화면 가까이 된다. 스크롤을 0 에
+    두고 열면 인덱스 40 부터는 현재 칸이 아예 화면 밖이다(index 40 → curTop 650,
+    index 60 → 1098) — 예순일곱 장 중 스물일곱 장. 개요는 설계 10절이 '눈 검사'의
+    도구로 지정한 자리이자 질의응답 때 부록으로 들어가는 문이라, 열었을 때 내가
+    어디 있는지가 안 보이면 둘 다 못 한다."""
+    page.goto(DECK)
+    n = state(page)['n']
+    bad = []
+    for i in [0, n // 3, n // 2, 2 * n // 3, n - 1]:
+        seen = page.evaluate("""(i) => {
+          const ov = document.getElementById('overview');
+          if (ov.classList.contains('on')) toggleOverview();
+          Deck.go(i);
+          toggleOverview();
+          const c = ov.querySelector('.ov-cell.cur');
+          if (!c) return {i, ok: false, why: '현재 칸 표시가 없다'};
+          const cb = c.getBoundingClientRect(), ob = ov.getBoundingClientRect();
+          const ok = cb.top >= ob.top - 0.5 && cb.bottom <= ob.bottom + 0.5;
+          const out = {i, ok, why: 'cellTop=' + Math.round(cb.top - ob.top) +
+                       ' viewH=' + Math.round(ob.height)};
+          toggleOverview();
+          return out;
+        }""", i)
+        if not seen['ok']:
+            bad.append('index %d: %s' % (seen['i'], seen['why']))
+    assert bad == [], '개요를 열었는데 현재 칸이 화면 밖이다:\n  %s' % '\n  '.join(bad)
 
 
 def test_o_opens_one_overview_cell_per_slide(page):
