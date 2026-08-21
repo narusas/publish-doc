@@ -745,9 +745,19 @@ pre b{color:var(--auth);font-weight:700}
 </style>
 </head>
 <body>
+<!-- ==== DECK:CHROME ==== -->
+<!-- 덱 크롬. DECK:CORE:CSS 가 꾸미고 DECK:CORE:JS 가 하드 의존하는 열한 개의 id 가
+     여기 있다: viewport · stage · bars · barPos · barTime · hud · clock · counter ·
+     notes · overview · toast. paint() 는 이 중 첫 하나만 없어도 그 자리에서 던지므로
+     '없으면 기능 하나가 죽는' 관계가 아니라 '없으면 덱이 안 켜지는' 관계다.
+     그래서 이 마크업도 마커를 갖는다 — 설계 9절대로 CORE 블록만 뽑으면 붙을 DOM 이
+     하나도 없는 CSS 와 JS 가 나온다.
+     SLIDES 가 #stage 안에 들어앉으므로 블록이 둘로 갈린다. 뽑을 때는 두 조각을
+     순서대로 이어 붙이고 그 사이에 SLIDES 를 끼운다. -->
 <div id="viewport"><div id="stage">
   <div id="bars"><i id="barPos"></i><i id="barTime"></i></div>
   <div id="hud"><span class="clock" id="clock">0:00</span><span id="counter">1 / 1</span></div>
+<!-- ==== /DECK:CHROME ==== -->
 
 <!-- ==== SLIDES ==== -->
   <section class="slide" id="s00">
@@ -2080,10 +2090,16 @@ Host: api.example.com
     </div>
   </section>
 <!-- ==== /SLIDES ==== -->
+
+<!-- ==== DECK:CHROME ==== -->
+<!-- 크롬의 두 번째 조각. 겹쳐 뜨는 것들은 슬라이드 뒤에 와야 같은 z-index 에서 위에
+     깔린다. tabindex="-1" 은 장식이 아니다 — ↑↓ 로 굴리려면 스크롤 상자가 포커스를
+     가져야 하고, 없으면 그 키가 창 뒤에서 슬라이드를 넘긴다. -->
   <div id="notes" tabindex="-1"></div>
   <div id="overview" tabindex="-1"></div>
   <div id="toast"></div>
 </div></div>
+<!-- ==== /DECK:CHROME ==== -->
 
 <script type="application/json" id="deck-script">
 {

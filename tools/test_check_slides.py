@@ -344,3 +344,52 @@ def test_the_deck_does_not_hardcode_the_slide_length_limits_again():
     assert line, '개요 칸의 시간 색을 정하는 줄을 찾지 못했다'
     assert 'SLIDE_MAX' in line[0] and 'SLIDE_MIN' in line[0], \
         '개요 칸이 상수 대신 숫자를 다시 박았다: %s' % line[0].strip()
+
+
+CHROME_BLOCK = re.compile(
+    r'<!--\s*====\s*DECK:CHROME\s*====\s*-->(.*?)<!--\s*====\s*/DECK:CHROME\s*====\s*-->',
+    re.S)
+CORE_JS = re.compile(
+    r'/\* ==== DECK:CORE:JS ==== \*/(.*?)/\* ==== /DECK:CORE:JS ==== \*/', re.S)
+DOLLAR_ID = re.compile(r"""\$\(\s*['"]#([\w-]+)['"]""")
+ANY_ID = re.compile(r"""\bid\s*=\s*["']([\w-]+)["']""")
+
+# 대본 블록은 크롬이 아니다. 슬라이드별 문장이 사는 곳이라 덱마다 내용이 다르고,
+# SLIDES 와 함께 움직인다.
+NOT_CHROME = {'deck-script'}
+
+CHROME_IDS = {'viewport', 'stage', 'bars', 'barPos', 'barTime', 'hud',
+              'clock', 'counter', 'notes', 'overview', 'toast'}
+
+
+def test_the_deck_chrome_lives_inside_its_own_marker():
+    """DECK:CORE:CSS 가 꾸미고 DECK:CORE:JS 가 붙잡는 DOM 도 마커를 가져야 한다.
+
+    설계 9절은 CORE 블록을 build_slides.py 의 템플릿으로 뽑겠다고 한다. 그런데
+    크롬 마크업이 어느 마커에도 없으면, 그 절차대로 뽑은 CSS 와 JS 는 붙을 DOM 이
+    하나도 없는 채로 나온다. paint() 는 첫 번째 없는 id 에서 그 자리에 던지므로
+    '기능 하나가 죽는' 것이 아니라 '덱이 안 켜지는' 것이다."""
+    with open(DECK, encoding='utf-8') as fh:
+        html = fh.read()
+    blocks = CHROME_BLOCK.findall(html)
+    assert len(blocks) == 2, \
+        'DECK:CHROME 블록이 %d개다 — SLIDES 가 #stage 안에 있어 둘로 갈린다' % len(blocks)
+    have = set(ANY_ID.findall('\n'.join(blocks)))
+    assert have == CHROME_IDS, \
+        'DECK:CHROME 이 들고 있는 id 가 달라졌다: %s' % sorted(have)
+
+
+def test_every_id_the_core_js_reaches_for_is_in_the_chrome_block():
+    """코어 JS 가 $('#x') 로 찾는 것은 전부 크롬 안에 있어야 한다.
+
+    이 짝이 어긋나면 두 조각을 같이 옮기지 않았다는 뜻이고, 그 결과는 화면이 아니라
+    콘솔에서 터진다. 발표자 창의 id(now·nxt·el·pl…)는 자식 창 문서의 것이라
+    d.getElementById 로 찾으므로 여기 걸리지 않는다."""
+    with open(DECK, encoding='utf-8') as fh:
+        html = fh.read()
+    core = CORE_JS.search(html)
+    assert core, 'DECK:CORE:JS 블록을 찾지 못했다'
+    chrome = set(ANY_ID.findall('\n'.join(CHROME_BLOCK.findall(html))))
+    missing = sorted(set(DOLLAR_ID.findall(core.group(1))) - NOT_CHROME - chrome)
+    assert missing == [], \
+        '코어 JS 가 찾는데 DECK:CHROME 에 없는 id: %s' % missing
