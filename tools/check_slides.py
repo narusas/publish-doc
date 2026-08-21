@@ -37,7 +37,10 @@ SCRIPT_BLOCK = re.compile(
 DECK_SCRIPT_OPEN = re.compile(r'''<script\b[^>]*\bid\s*=\s*["']deck-script["'][^>]*>''', re.I)
 CLOSE_SCRIPT = re.compile(r'</script', re.I)
 
-Deck = namedtuple('Deck', 'html slides script')
+# slides 는 전체, main_slides 는 발표하는 장만이다. 부록(class 에 appendix)은 52분
+# 합계에서 빠진다 — 발표하지 않는 장이기 때문이다. 대본 존재와 25~110초 규칙은 부록도
+# 그대로 받는다: 질문이 나와 꺼내는 순간 읽어 주는 장이므로.
+Deck = namedtuple('Deck', 'html slides main_slides script')
 
 
 def read_deck(path):
@@ -47,7 +50,7 @@ def read_deck(path):
     block = SLIDES_BLOCK.search(html)
     if not block:
         raise ValueError('%s: SLIDES 마커 블록을 찾지 못했다' % path)
-    slides = []
+    slides, main_slides = [], []
     for attrs in SECTION_TAG.findall(block.group(1)):
         cm = CLASS_ATTR.search(attrs)
         if not cm or 'slide' not in cm.group(1).split():
@@ -55,7 +58,12 @@ def read_deck(path):
         m = ID_ATTR.search(attrs)
         if not m:
             raise ValueError('%s: id 없는 .slide 가 있다 — <section%s>' % (path, attrs[:60]))
-        slides.append(m.group(1))
+        sid = m.group(1)
+        slides.append(sid)
+        # 'slide' 판별과 같은 방식으로 공백 분해해서 본다. 부분 문자열로 훑으면
+        # class="appendix-note" 같은 이름이 부록으로 세어진다.
+        if 'appendix' not in cm.group(1).split():
+            main_slides.append(sid)
 
     sb = SCRIPT_BLOCK.search(html)
     if not sb:
@@ -67,7 +75,7 @@ def read_deck(path):
         raise ValueError('%s: deck-script 의 JSON 을 읽지 못했다 — %s. '
                          '대본 안에 </script 가 들어 있지 않은지 보라' % (path, e))
 
-    return Deck(html=html, slides=slides, script=script)
+    return Deck(html=html, slides=slides, main_slides=main_slides, script=script)
 
 
 def seconds(paras):
@@ -110,10 +118,11 @@ def check_slide_seconds(deck):
 
 
 def check_total(deck):
-    total = sum(seconds(deck.script.get(sid, [])) for sid in deck.slides)
+    # 부록은 세지 않는다. 넣어 버리면 읽지도 않을 분량 때문에 본편을 깎게 된다.
+    total = sum(seconds(deck.script.get(sid, [])) for sid in deck.main_slides)
     lo, hi = TOTAL_TARGET - TOTAL_TOL, TOTAL_TARGET + TOTAL_TOL
     if not (lo <= total <= hi):
-        return ['대본 합계 %s — 목표 %s ±%s 를 벗어난다 (허용 %s~%s)'
+        return ['본편 대본 합계 %s — 목표 %s ±%s 를 벗어난다 (허용 %s~%s)'
                 % (_fmt(total), _fmt(TOTAL_TARGET), _fmt(TOTAL_TOL), _fmt(lo), _fmt(hi))]
     return []
 
@@ -308,8 +317,10 @@ def main(argv):
         problems = []
         for check in CHECKS:
             problems.extend(check(deck))
-        total = sum(seconds(deck.script.get(s, [])) for s in deck.slides)
-        print('%s — 슬라이드 %d장, 대본 합계 %s' % (path, len(deck.slides), _fmt(total)))
+        n_app = len(deck.slides) - len(deck.main_slides)
+        total = sum(seconds(deck.script.get(s, [])) for s in deck.main_slides)
+        print('%s — 본편 %d장(%s) + 부록 %d장'
+              % (path, len(deck.main_slides), _fmt(total), n_app))
         for p in problems:
             print('  ✗ %s' % p)
         if problems:

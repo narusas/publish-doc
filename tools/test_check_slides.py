@@ -141,3 +141,40 @@ def test_code_gets_the_lower_mono_floor():
     """<pre>/<code> 는 20px 이 하한이다. 같은 20px 이 본문이면 위반, 코드면 통과."""
     problems = cs.check_font_floor(deck('deck_small_text.html'))
     assert not any('pre' in p for p in problems), '코드 20px 을 본문 하한으로 재고 있다'
+
+
+# --- 부록은 합계에서 뺀다 (Task 8) ------------------------------------------
+
+def test_appendix_slides_are_excluded_from_total():
+    """부록은 발표하지 않는 장이다. 합계에 넣으면 읽지도 않을 분량 때문에
+    본편을 깎게 된다."""
+    d = deck('deck_with_appendix.html')
+    assert 'a00' in d.script
+    assert d.main_slides == ['s00', 's01']        # 부록 제외
+    assert d.slides == ['s00', 's01', 'a00']      # 전체는 포함
+
+
+def test_appendix_slide_still_needs_script():
+    """꺼내 읽을 문장이 없으면 질문에 답할 수 없다. 대본 검사는 전체를 본다."""
+    d = deck('deck_with_appendix.html')
+    assert cs.check_script_present(d) == []
+
+
+def test_appendix_slide_seconds_are_still_bounded():
+    """부록도 한 장에 25~110초를 지킨다 — 읽어 주는 장이기 때문이다."""
+    assert cs.check_slide_seconds(deck('deck_with_appendix.html')) == []
+
+
+def test_check_total_ignores_appendix_seconds():
+    """부록 대본을 더해도 합계는 본편 두 장의 합 그대로여야 한다."""
+    d = deck('deck_with_appendix.html')
+    main_only = sum(cs.seconds(d.script[s]) for s in d.main_slides)
+    reported = cs.check_total(d)
+    assert len(reported) == 1                      # 픽스처는 52분에 한참 못 미친다
+    assert cs._fmt(main_only) in reported[0]
+
+
+def test_ok_fixture_has_no_appendix():
+    """appendix 클래스가 없으면 전체와 본편이 같다."""
+    d = deck('deck_ok.html')
+    assert d.main_slides == d.slides
