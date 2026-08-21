@@ -276,6 +276,12 @@ body{font-family:var(--sans);color:var(--text);-webkit-font-smoothing:antialiase
    나오지 않는다 — 아래에서 .seq-detail .note 를 display:none 으로 접는다.
    그래서 20px 로 두고 행 높이는 이식한 값(42px) 그대로 둔다. */
 .slide .seq-cap{font-size:20px}
+/* 자기 자신에게 보내는 단계(from===to)의 이름표. 같은 목록의 같은 슬롯에 앉는
+   .seq-cap 의 짝이라 크기를 맞춘다. 이쪽은 예외 목록에 넣을 필요가 없다 —
+   .seq-pill 은 var(--mono) 를 쓰므로 하한이 24 가 아니라 코드 하한 20 이고, 20px 은
+   그 선 위다. 이식값 10.5px 로 두면 부록 a02 의 "PKCE 생성 + 로컬 서버 기동" 같은
+   단계 이름이 뒷자리에서 사라진다. 본편에는 self 단계가 없어 이 규칙이 없었다. */
+.slide .seq-msg.self .seq-pill{font-size:20px;padding:3px 10px}
 .slide .seq-num{width:32px;height:32px;font-size:20px}
 .slide .seq-detail{flex:0 0 auto;margin-top:10px}
 .slide .seq-detail-head .lbl{font-size:24px}   /* 단계 이름 — 이 장이 하려는 말이다. 하한을 지킨다 */
@@ -376,6 +382,11 @@ body{font-family:var(--sans);color:var(--text);-webkit-font-smoothing:antialiase
    보이지 않는 네 문제가 세로를 그대로 먹는다 — display 로 비켜 준다.
    자세한 근거는 ASSET:JS 의 wireQuizBank 주석에 있다. */
 .slide .quiz.q-off{display:none}
+
+/* 목록 뒤에 붙는 마무리 한 줄(a00·a06·a08·a09). .slide li 의 아래 여백이 0 이라
+   그냥 두면 마지막 항목에 달라붙어 다섯째 항목처럼 읽힌다. 목록에서 떼어 놓는다.
+   본편은 이 모양이 없어서(목록으로 끝나거나 .build 로 열린다) 부록에만 건다. */
+.slide.appendix ul + p{margin-top:22px}
 
 /* 개요 그리드에서 부록을 구분한다. 예순일곱 칸이 한 덩어리로 이어지면 어디까지가
    오늘 발표인지 눈으로 잘리지 않는다. 테두리를 점선으로 바꾸고 바탕을 낮춘다. */
@@ -1865,7 +1876,7 @@ Host: api.example.com
     <div class="seq-mount" id="deviceSeq"></div>
   </section>
   <section class="slide appendix" id="a04">
-    <h2>네 유형을 가르는 기준은 하나입니다 — <code>client_secret</code> 을 숨길 수 있나</h2>
+    <h2><code>client_secret</code> 을 숨길 수 있나 — 그 답을 정하는 건 <b>코드가 배포되는 곳</b>입니다</h2>
     <figure class="dia" id="diaSecret">
       <div class="dia-top">
         <span class="dia-tag">secret이 사는 곳</span>
