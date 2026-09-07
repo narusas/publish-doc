@@ -1503,7 +1503,7 @@ CSS 를 더한다.
 .asm-sec span{margin-left:auto; font-family:var(--mono); font-size:11.5px; color:var(--text-mut)}
 .asm-sec.s-ok{border-color:var(--border-2)}
 .asm-sec.s-dim{opacity:.55}
-.asm-sec.s-warn{border-color:#fbbf24}
+.asm-sec.s-warn{border-color:var(--warn)}
 .asm-sec.s-gone{border-style:dashed; opacity:.4}
 .asm-sec.s-cache{border-color:#38bdf8}
 .asm-sec.s-skel{background:repeating-linear-gradient(90deg, var(--panel) 0 18px, var(--panel-2) 18px 36px)}
