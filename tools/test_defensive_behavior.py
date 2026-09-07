@@ -156,7 +156,8 @@ def test_a_string_throws_because_it_has_no_such_getter(page):
 
 
 def test_an_empty_list_throws_too(page):
-    """리스트에 정수가 아닌 프로퍼티를 물으면 결국 BeanELResolver 로 떨어진다."""
+    """리스트에 정수가 아닌 프로퍼티를 물으면 인덱스로도 게터로도 읽을 수 없어 던진다.
+    어떤 리졸버가 어떤 예외 타입으로 던지는지는 자바를 돌려 확인하지 않았으므로 단정하지 않는다."""
     assert el(page, 'list')['result'] == 'throw'
 
 
