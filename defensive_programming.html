@@ -460,6 +460,34 @@ button:focus-visible, .term:focus-visible, a:focus-visible,
   margin:10px 0 12px;
 }
 @media (max-width: 640px){ .wgrid{grid-template-columns:1fr} }
+
+/* 팀의 절차 체크리스트 — 14장. auth_basics.html의 .ckl/.ck/.ck-score 틀을 그대로
+   가져오되, 이 장은 항목을 완료 정의·설계 리뷰·회고 세 갈래로 묶어야 해서
+   그룹 이름표(.ck-grp-h)를 하나 더 둔다. */
+.ckl{border:1px solid var(--border-2); border-radius:var(--radius); background:var(--panel); padding:6px 16px 14px; margin:16px 0}
+.ck-grp-h{
+  font-family:var(--mono); font-size:11px; letter-spacing:1px; text-transform:uppercase;
+  color:var(--accent); padding:14px 0 6px; border-top:1px solid var(--border);
+}
+.ck-grp-h:first-child{padding-top:6px; border-top:none}
+.ck{display:flex; gap:12px; align-items:flex-start; padding:11px 0; border-bottom:1px solid var(--border); cursor:pointer}
+.ck:last-child{border-bottom:none}
+.ck .cb{flex:0 0 20px; width:20px; height:20px; border-radius:6px; border:1.5px solid var(--border-2);
+  display:grid; place-items:center; font-size:12px; color:transparent; transition:all .15s; margin-top:2px}
+.ck.on .cb{background:var(--ok); border-color:var(--ok); color:#062018}
+.ck .ct{font-size:14px; color:var(--text-dim); line-height:1.65}
+.ck .ct b{color:#fff}
+.ck.on .ct{color:var(--text-mut)}
+.ck-score{font-family:var(--mono); font-size:13px; color:var(--accent); padding:10px 0 2px}
+
+/* 설계 리뷰 템플릿 — 14장. QUESTIONS를 축 별로 묶어 인쇄 가능한 목록으로 편다. */
+.rv-axis{margin:14px 0}
+.rv-axis-h{
+  font-family:var(--mono); font-size:11px; letter-spacing:1px; text-transform:uppercase;
+  color:var(--accent); margin-bottom:6px;
+}
+.rv-list{margin:0; padding-left:22px; color:var(--text-dim); font-size:14.5px; line-height:1.9}
+.rv-list li{margin-bottom:4px}
 </style>
 </head>
 <body>
@@ -2636,7 +2664,202 @@ void 전시_섹션_응답이_2초를_넘으면_그_섹션만_숨고_나머지는
     <section id="process" data-title="팀의 절차로">
       <div class="sec-head"><span class="kicker">14장</span></div>
       <h2>🔁 팀의 절차로 만듭니다 <span class="lvl">🔵</span></h2>
-      <div class="nextq">이제 남은 것은 <b>다시 그 스택트레이스로 돌아가 확인하는 일뿐입니다.</b></div>
+
+      <p class="lead">13장은 답을 받아 내고 문장으로 굳히는 법까지 보여 주고 멈췄습니다. 그리고 마지막에
+      물었습니다. <b>"이것을 매번 개인이 기억해야 할까요."</b> 지금까지 이 문서가 요구한 것은 전부 한
+      사람의 손을 거쳐야 했습니다. 요건 리뷰에서 열두 질문을 떠올리는 것도, 답을 네 칸 문장으로 굳히는
+      것도, 그 문장을 문서에 남기는 것도 결국 그 화면을 맡은 개발자 한 사람에게 달려 있었습니다. 이
+      장은 그 의존을 걷어 냅니다.</p>
+
+      <h3>🧍 사람이 바뀌면 사라지는 방어</h3>
+
+      <p>한 사람이 매번 잘 해내는 팀은 실제로 있습니다. 문제는 그 방식이 성립하는 조건이 하나뿐이라는
+      데 있습니다. <b>그 사람이 계속 그 자리에 있어야 합니다.</b> 열두 질문을 외우고 있는 그 개발자가
+      이직하거나, 다른 프로젝트로 옮기거나, 그저 이번 주에 유난히 바빠서 요건 리뷰 한 번을 건너뛰는
+      순간, 지금까지 쌓아 온 것 전부가 함께 사라집니다.</p>
+
+      <p>사라지는 방식이 특히 나쁩니다. 조용히 사라지기 때문입니다. 코드가 컴파일되지 않거나 빌드가
+      실패하는 방식으로 사라지는 것이 아니라, 그저 다음 화면 정의서에 실패 요건 칸이 비어 있는 채로
+      넘어가는 방식으로 사라집니다. 그 빈칸을 알아볼 수 있는 사람은 11장에서 확인한 대로 원래도 개발자
+      한 사람뿐이었는데, 그 한 사람마저 바뀌면 빈칸을 알아볼 사람 자체가 없어집니다.</p>
+
+      <p>개인의 성실함에 기대는 방어가 갖는 약점이 여기에 있습니다. <b>사람이 바뀌면 함께
+      사라집니다.</b> 반대로 팀의 절차에 박아 넣은 방어는 사람이 바뀌어도 남습니다. 다음 사람이 그
+      절차를 몰라도, 절차 자체가 무엇을 확인해야 하는지 알려 주기 때문입니다. 이 장은 지금까지 개인이
+      해내던 세 가지, 곧 완료 정의와 설계 리뷰와 회고를 팀의 절차로 옮깁니다.</p>
+
+      <h3>🧾 완료 정의에 넣는 한 줄</h3>
+
+      <p>가장 먼저 옮길 자리는 완료 정의, 곧 DoD입니다. 이 화면을 다 만들었다고 부를 수 있는 조건을
+      팀이 미리 정해 둔 목록이고, 이 목록에 없는 항목은 아무리 중요해도 확인 없이 통과합니다. 여기에
+      한 줄을 추가합니다.</p>
+
+      <p style="font-size:17px; line-height:1.7; color:#fff; text-align:center; font-weight:600; margin:22px 0">
+      "이 기능의 실패 요건 문장이 있는가."</p>
+
+      <p>한 줄이지만 가볍지 않습니다. 이 항목이 통과하지 못하면, 화면이 정상 경로에서 완벽하게
+      동작하더라도 <b>그 기능은 아직 완료가 아닙니다.</b> 13장이 제안한 세 번째 협상 전략, 곧 범위로
+      말하는 전략이 여기서 실제 절차가 됩니다. 방어 요건은 여유가 되면 나중에 붙이는 부가 기능이 아니라,
+      처음부터 완료 조건의 일부입니다.</p>
+
+      <p>완료 정의가 좋은 자리인 이유는 그 항목을 확인하는 시점에 있습니다. 완료 정의는 코드 리뷰나
+      배포 승인처럼, 그 기능을 만든 사람과 만들지 않은 사람이 함께 확인하는 자리에서 다시 한번
+      걸립니다. 13장에서 짚은 대로 구두 합의는 방어가 아니고, 이 항목은 그 구두 합의를 문서로
+      요구합니다. 요건 문장이 어디에도 적혀 있지 않다면, 이 항목은 통과할 방법이 없습니다.</p>
+
+      <h3>🗒️ 설계 리뷰의 고정 질문</h3>
+
+      <p>완료 정의가 마지막 관문이라면, 설계 리뷰는 그 전에 답을 만들어 두는 자리입니다. 12장이 이미
+      확인한 대로 같은 질문도 던지는 시점에 따라 돌아오는 답이 다릅니다. 착수 전에 물으면 아직 아무것도
+      만들어지지 않아 답을 바꾸는 비용이 문장 한 줄이지만, 착수한 뒤에 물으면 이미 짜 놓은 코드가 답의
+      후보를 좁힙니다. 그래서 열두 질문을 던지는 자리도 개인의 기억이 아니라 팀의 절차, 곧 설계 리뷰
+      자리에 고정해 둡니다.</p>
+
+      <p>12장의 열두 질문을 그대로 옮긴 리뷰 템플릿입니다. 화면 하나를 앞에 놓고 네 축을 한 바퀴
+      돕니다.</p>
+
+      <div class="specbox">
+        <span class="kicker">설계 리뷰 템플릿 · 12장의 열두 질문</span>
+        <div id="rvList"><!-- QUESTIONS 배열에서 채워진다 --></div>
+      </div>
+
+      <p>이 템플릿에서 눈여겨볼 것은 열두 개 모두가 같은 무게로 쓰이지 않는다는 점입니다. 12장에서
+      확인한 대로 여섯 번째, <b>이 화면에서 어느 부분이 없어도 화면이 성립하는지</b>는 리뷰 자리에서
+      답 없이 넘기면 안 되는 질문입니다. 답이 없는 채로 넘어가면, 코드는 그 자리를 아무 표시 없이
+      지나갑니다.</p>
+
+      <p>여기서 반문이 자연스럽게 따라옵니다. <b>절차를 늘리면 개발이 느려지지 않을까요.</b> 완료
+      정의에 항목을 하나 얹고, 설계 리뷰에 열두 질문을 세우고, 회고에 요건 문장까지 요구하면, 화면
+      하나 만드는 데 드는 시간이 늘어난다는 걱정입니다. 이 걱정에는 근거가 있습니다. 열두 질문을 화면
+      하나마다 처음부터 전부 던지면, 답을 구하는 시간이 화면을 만드는 시간을 넘어설 수 있습니다. 그래서
+      이 절차를 거는 자리를 좁혀 둘 필요가 있습니다. 어디까지 좁히는지는 이 장의 끝에서 답합니다.</p>
+
+      <h3>♻️ 코드만 고치면 구멍은 남습니다</h3>
+
+      <p>절차를 어디에 걸지 정하기 전에, 왜 이 모든 것을 절차로 만들어야 하는지부터 짚어야 합니다.
+      그 답은 장애가 난 뒤에 팀이 실제로 하는 일에서 나옵니다.</p>
+
+      <p>장애가 나면 팀은 대개 코드를 고치고 끝냅니다. 이번 사건이라면 그 섹션의 데이터를 검증하는
+      코드를 추가하거나, 그 섹션 하나를 격리해서 예외가 페이지 전체로 번지지 않게 막는 식입니다.
+      코드는 실제로 고쳐집니다. 같은 화면에서 같은 방식으로는 다시 터지지 않습니다.</p>
+
+      <p>그런데 <b>다음 기능에서 같은 구멍이 다시 생깁니다.</b> 새로 만드는 화면은 이번에 고친 그
+      코드와 아무 관계가 없는 별개의 코드이기 때문입니다. 그 화면을 맡은 개발자가 이번 장애를 알고
+      있다면 같은 실수를 피하겠지만, 알고 있는지는 순전히 그 사람이 그때 이 팀에 있었는지, 이 장애를
+      전해 들었는지에 달려 있습니다. <b>장애 회고의 산출물이 코드 수정에서 멈추면, 그 회고에서 배운
+      것은 그 코드를 고친 사람의 머릿속에만 남습니다.</b> 1절에서 확인한 것과 같은 모양의 소멸입니다.</p>
+
+      <p>그래서 장애 회고의 산출물은 코드 수정이 아니라 <b>요건 문장</b>이어야 합니다. 13장의 형식대로
+      굳힌 문장 하나는 그 자체로 완료 정의의 그 항목을 채우는 근거가 되고, 다음 설계 리뷰에서 같은
+      질문이 나왔을 때 참고할 답이 됩니다. 코드 수정은 이번 화면 하나를 고치고, 요건 문장은 다음
+      화면이 같은 질문을 받게 만듭니다.</p>
+
+      <h3>🖊️ 이번 사건에서 나와야 할 문장</h3>
+
+      <p>형식만 말하면 손에 잡히지 않으니, 이번 사건을 놓고 회고를 연다면 거기서 나와야 하는 요건
+      문장이 어떤 모양일지 실제로 써 보겠습니다. 13장의 형식을 그대로 씁니다. 이 문장은 그날 실제로
+      나온 문장이 아닙니다. 이 사건이 남긴 사실 하나, <b>그 결정이 코드에 없었다</b>는 것에서 회고가
+      열린다면 그 회고가 어떤 문장으로 닫혀야 하는지를 보여 주는 처방입니다.</p>
+
+      <span class="kicker">예시 · 이 회고에서 나와야 하는 문장</span>
+      <div class="reqout">전시 섹션 하나의 데이터 처리 중 예외가 발생하면, 메인 화면 조립 기능은 그
+      섹션만 제외하고 나머지 섹션은 그대로 렌더링합니다. 사용자에게는 그 섹션이 빠진 화면을 보여
+      줍니다. 시스템은 실패한 섹션의 식별자와 예외 정보를 오류 수준으로 남깁니다.</div>
+
+      <p>이 문장이 그날 화면 정의서에 있었는지, 회고가 실제로 열렸는지, 열렸다면 무슨 문장이
+      나왔는지, 이 문서는 알지 못합니다. 11장·12장·13장에서 그은 선을 여기서도 그대로 지킵니다. 이
+      문장이 보여 주는 것은 <b>이런 사건 뒤에 열리는 회고라면 이런 모양의 문장을 산출물로 내놓아야
+      한다</b>는 것뿐입니다.</p>
+
+      <h3>🚪 어디서 멈추나 · 세 조건</h3>
+
+      <p>이제 앞서 미뤄 둔 반문에 답할 차례입니다. 열두 질문과 완료 정의 항목과 회고의 요건 문장을
+      만드는 모든 화면에 다 걸면, 정말로 아무것도 만들지 못합니다. 그래서 이 절차를 거는 기능을 셋
+      중 하나로 좁힙니다.</p>
+
+      <ul>
+        <li><b>① 밖에서 데이터가 들어오는가.</b> 외부 API, 데이터베이스, 캐시, 다른 팀의 코드처럼
+        <span class="term" data-t="신뢰 경계">신뢰 경계</span>를 넘어오는 값을 다루는 기능입니다.
+        4장이 그은 경계가 곧 이 기준입니다.</li>
+        <li><b>② 그 화면이 여러 조각으로 조립되는가.</b> 섹션이나 위젯 여러 개를 하나의 화면으로
+        모으는 기능입니다. 6·9·10장의 조립 시뮬레이터가 다루던 자리가 이 기준입니다.</li>
+        <li><b>③ 실패했을 때 되돌릴 수 없는 일이 일어나는가.</b> 결제, 재고 차감, 발송처럼 한 번
+        진행되면 취소로 되돌리기 어려운 기능입니다. 7·8장에서 삼킬 자격과 빨리 죽을 자리를 가르던
+        판단과 이어집니다.</li>
+      </ul>
+
+      <p>셋 중 하나에도 해당하지 않는 기능이라면, 이 절차를 걸지 않아도 됩니다. 내부에서만 도는
+      계산이고, 조립되는 조각이 하나뿐이고, 실패해도 다시 시도하면 그만인 기능까지 열두 질문을 다
+      던지면, 절차가 지키려는 것보다 절차가 잡아먹는 시간이 커집니다. 세 조건은 <b>어디에 방어를
+      두텁게 쌓을지 미리 좁혀 두는 선</b>입니다. 이번 장애의 그 화면은 셋 다 해당했습니다. 밖에서 온
+      값을 다뤘고, 여러 섹션을 조립했고, 실패하면 페이지 전체가 죽어 되돌릴 방법이 없었습니다.</p>
+
+      <h3>✅ 팀의 체크리스트로 확인하기</h3>
+
+      <p>지금까지 옮긴 세 자리, 완료 정의와 설계 리뷰와 회고를 한 화면에 모았습니다. 지금 맡고 있는
+      기능을 떠올리며 눌러 보세요. <b>확인해 본 것만</b> 누르는 것이 요령입니다.</p>
+
+      <div class="ckl" id="ckl">
+        <div class="ck-grp-h">완료 정의 (DoD)</div>
+        <div class="ck" data-k="dod-sentence"><span class="cb">✓</span><span class="ct">이 기능의
+        <b>실패 요건 문장</b>이 13장 형식대로 적혀 있다 <span class="dim">13장</span></span></div>
+        <div class="ck" data-k="dod-written"><span class="cb">✓</span><span class="ct">그 문장이
+        회의나 메신저가 아니라 <b>요건 문서나 티켓</b>에 남아 있다 <span class="dim">13장</span></span></div>
+
+        <div class="ck-grp-h">설계 리뷰</div>
+        <div class="ck" data-k="rv-trigger"><span class="cb">✓</span><span class="ct">이 기능이
+        <b>세 조건</b> 중 하나에 해당해서 리뷰 대상으로 잡았다</span></div>
+        <div class="ck" data-k="rv-twelve"><span class="cb">✓</span><span class="ct">열두 질문을
+        <b>네 축</b> 한 바퀴 돌며 훑었다 <span class="dim">12장</span></span></div>
+        <div class="ck" data-k="rv-sixth"><span class="cb">✓</span><span class="ct">여섯 번째 질문,
+        곧 <b>어느 부분이 없어도 성립하는지</b>에 답이 정해져 있다 <span class="dim">12장</span></span></div>
+
+        <div class="ck-grp-h">회고</div>
+        <div class="ck" data-k="pm-sentence"><span class="cb">✓</span><span class="ct">이번 장애
+        회고의 산출물에 <b>요건 문장</b>이 포함되어 있다</span></div>
+        <div class="ck" data-k="pm-not-only-code"><span class="cb">✓</span><span class="ct"><b>코드
+        수정만</b> 하고 회고를 끝내지 않았다</span></div>
+
+        <div class="ck-score" id="cklScore"></div>
+      </div>
+
+      <div class="oneline">
+        <span style="font-size:20px">♻️</span>
+        <div><strong>장애 회고의 산출물은 코드 수정이 아니라 요건 문장이어야 합니다. 코드만 고치면
+        다음 기능에서 같은 구멍이 다시 생깁니다.</strong> 그 문장을 완료 정의와 설계 리뷰에 박아
+        두면, 다음에는 사람이 아니라 절차가 그것을 기억합니다.</div>
+      </div>
+
+      <div class="quiz" data-qid="q-process" data-answer="c">
+        <div class="q-head">✅ 체크포인트</div>
+        <div class="q">장애 회고가 끝난 뒤 코드만 고치고 요건 문장을 산출물로 남기지 않으면, 무엇이
+        문제가 되는지 가장 정확하게 짚은 것은?</div>
+        <button class="opt" data-opt="a"><span class="mk">A</span> 이번에 고친 코드가 같은 화면에서
+        다시 같은 예외를 던지게 된다</button>
+        <button class="opt" data-opt="b"><span class="mk">B</span> 그 회고에 참석하지 못한 팀원이
+        기억하지 못해서, 다음에 비슷한 화면을 맡으면 같은 구멍을 만든다</button>
+        <button class="opt" data-opt="c"><span class="mk">C</span> 코드 수정은 그것을 고친 화면에만
+        남고, 전혀 다른 화면을 새로 만들 때는 그 수정과 이어질 자리가 없어서 같은 종류의 구멍이 다시
+        생긴다</button>
+        <button class="opt" data-opt="d"><span class="mk">D</span> 코드 리뷰어가 그 수정 사항의
+        목적을 이해하지 못해 승인을 거부한다</button>
+        <div class="explain"><b>정답 C.</b> 이번 사건에서 실제로 고친 코드는 그 섹션, 그 조립기
+        하나에만 적용됩니다. 다음에 만드는 화면은 그 코드와 무관한 별개의 코드이므로, 코드 수정만으로는
+        그 화면에 아무것도 전달되지 않습니다. 요건 문장으로 남겨야 완료 정의와 설계 리뷰라는, 모든
+        화면이 공통으로 거치는 자리에 그 교훈이 걸립니다.
+        <p style="margin:8px 0 0"><b>A</b>는 이 장이 실제로 짚은 것과 다릅니다. 고친 코드는 실제로
+        고쳐지고, 같은 화면에서 같은 방식으로는 다시 터지지 않습니다. 문제는 그 화면이 아니라 다음에
+        만드는 다른 화면에서 생깁니다.</p>
+        <p style="margin:8px 0 0"><b>B</b>는 1절이 다룬 것과 비슷해 보이지만 다른 이야기입니다. 설령
+        그 회고에 참석한 모든 사람이 다음 화면을 맡을 때까지 그 일을 똑똑히 기억하고 있어도, 코드
+        수정 자체에는 그 화면과 이 화면을 이어 줄 자리가 없습니다. 기억의 문제가 아니라 산출물의
+        형태가 이어지지 않는다는 문제입니다.</p>
+        <p style="margin:8px 0 0"><b>D</b>는 이 장에서 다루지 않은 이야기입니다. 코드 리뷰 승인
+        여부는 이 절차와 관계가 없습니다.</p></div>
+      </div>
+
+      <div class="nextq">이제 남은 것은 <b>맨 처음 그 스택트레이스로 돌아가 무엇이 달라졌는지 확인하는
+      일뿐입니다.</b></div>
     </section>
 
     <section id="recap" data-title="다시 그 스택트레이스로">
@@ -3760,6 +3983,61 @@ window.QUESTIONS = QUESTIONS;
 
   renderFields();
   render();
+})();
+
+/* ==== 14장 · 설계 리뷰 템플릿 ========================================
+   QUESTIONS를 축 별로 묶어 그대로 옮긴다. 12장·부록 C와 같은 배열을 세 번째로
+   읽는 자리일 뿐이라 여기서 새 문장을 짓지 않는다 — 읽기만 하고 고치지 않는다.
+   ==================================================================== */
+(() => {
+  const root = $('#rvList'); if(!root) return;
+  const axes = [...new Set(QUESTIONS.map(q => q.axis))];
+  root.innerHTML = axes.map(ax => `
+    <div class="rv-axis">
+      <div class="rv-axis-h">${esc(ax)}</div>
+      <ol class="rv-list">${
+        QUESTIONS.filter(q => q.axis === ax).map(q => `<li>${esc(q.q)}</li>`).join('')
+      }</ol>
+    </div>`).join('');
+})();
+
+/* ==== 14장 · 팀의 절차 체크리스트 ====================================
+   완료 정의·설계 리뷰·회고 세 갈래를 한 위젯에 담는다. auth_basics.html의
+   .ckl/.ck/.ck-score 배선을 그대로 옮기고, 저장은 이 문서의 Store로 한다.
+   loadKeys가 이미 '지금 화면에 있는 키로 한 번 거르고 다시 저장'하는 일을
+   하므로 그대로 재사용한다 — 항목을 지우거나 data-k를 바꿔도 분자가 분모를
+   넘지 않는다(위 loadKeys 정의부의 주석과 같은 이유).
+   ==================================================================== */
+(() => {
+  const ckl = $('#ckl'); if(!ckl) return;
+  const items = $$('.ck', ckl);
+  const score = $('#cklScore');
+  const done = loadKeys('ckl', new Set(items.map(el => el.dataset.k)));
+
+  function upd(){
+    score.textContent = `${done.size} / ${items.length} 확인함`;
+    Store.set('ckl', [...done]);
+  }
+
+  items.forEach(el => {
+    const k = el.dataset.k;
+    const on0 = done.has(k);
+    el.classList.toggle('on', on0);
+    el.setAttribute('role', 'checkbox');
+    el.setAttribute('tabindex', '0');
+    el.setAttribute('aria-checked', on0 ? 'true' : 'false');
+    const toggle = () => {
+      const on = el.classList.toggle('on');
+      el.setAttribute('aria-checked', on ? 'true' : 'false');
+      if(on) done.add(k); else done.delete(k);
+      upd();
+    };
+    el.addEventListener('click', toggle);
+    el.addEventListener('keydown', e => {
+      if(e.key === 'Enter' || e.key === ' '){ e.preventDefault(); toggle(); }
+    });
+  });
+  upd();
 })();
 </script>
 </body>
