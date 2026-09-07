@@ -16,6 +16,7 @@
 
 - **외부 의존성 0.** `<script src>` · `<link href>` · `<img src>` 로 원격 리소스를 싣지 않고, `fetch` · `XMLHttpRequest` · `new Image()` · `new WebSocket` · `navigator.sendBeacon` 을 쓰지 않는다. `tools/check_tutorial.py` 가 강제한다.
 - **각색 규칙(설계 문서 3절).** 다음 문자열은 문서에 **하나도** 나타나면 안 된다: `cheil` · `ssfshop` · `dspCnr` · `ConttImg` · `includeMultiMainContents` · `SecureValueExpression` · `전시코너` · `전시 코너`. 도메인 어휘는 **"전시 섹션"** 으로 통일한다. 반대로 `javax.el` · `org.apache.jasper` · `org.apache.el` · `BeanELResolver` · 줄 번호 `9946` · `_005fset_005f141` 은 **그대로 쓴다.**
+- **원인은 아직 규명되지 않았다.** 그 값이 **왜** 문자열이 되었는지도, 그 문자열이 **무엇이었는지도** 단정해서 쓰지 않는다. 스택트레이스가 보증하는 범위는 타입까지다. 2장 전체가 "우리는 아직 모른다"는 사실 위에 서 있으므로, 앞 장에서 내용을 아는 것처럼 쓰면 다음 장이 자기 앞 장과 모순된다. 4장은 전형적인 세 경로를 **가설로** 나란히 놓을 뿐 하나를 고르지 않는다.
 - **사슬 규칙.** 1장부터 14장까지 모든 장은 `<div class="nextq">…</div>` 하나로 끝난다. 그 안에 다음 장이 푸는 문제를 한 문장으로 적는다. 개요·15장·부록은 예외다.
 - **`.stack` 규칙.** 스프링과 라이브러리 이름은 `<div class="stack">` 안에만 둔다. 그 블록 안에 `<h2>` · `<h3>` · `.demo` · `.quiz` · `.nextq` 를 넣지 않는다. 블록을 전부 접어도 논지가 끊기지 않아야 한다.
 - **난이도 표시.** 장 제목 끝에 `<span class="lvl">🟢</span>` 또는 `<span class="lvl">🔵</span>` 를 단다.
@@ -773,7 +774,7 @@ const EL = (() => {
     {k:'dto',    label:'SectionVO 객체',      hint:'getBannerImageList() 가 있다'},
     {k:'map',    label:'Map (키 있음)',       hint:'MapELResolver 가 먼저 돈다'},
     {k:'null',   label:'null',                hint:'값이 아예 없다'},
-    {k:'string', label:'"" (빈 문자열)',      hint:'오늘 난 그것'},
+    {k:'string', label:'문자열',             hint:'오늘 그 자리에 있던 것. 내용은 아직 모른다'},
     {k:'list',   label:'빈 리스트',           hint:'정수 인덱스가 아니다'},
   ];
 
@@ -873,6 +874,9 @@ window.EL = EL;
 3. 데모(위)로 다섯 경우를 직접 눌러 보게 한다.
 4. 스택트레이스를 위에서 아래로 읽으며, 이 열 줄이 전부 **렌더링 중에 일어난 일**임을 확인한다. `mainSections_jsp.java:9946` 과 `_005fset_005f141` 이 말해 주는 것은 하나다. 한 파일 안에 `<c:set>` 이 141개 있다.
 5. 발현 지점과 발원 지점의 거리를 그림으로 못 박는다. 그 값이 문자열이 된 자리는 이 열 줄 어디에도 없다.
+6. **그 문자열이 무엇이었는지는 쓰지 않는다.** 이 예외가 보증하는 범위는 타입까지다. 내용을 아는 것처럼
+   쓰면 2장이 성립하지 않는다. 데모의 네 번째 칸도 "빈 문자열"이 아니라 그냥 "문자열"이다. 이 장은
+   "그 자리에 문자열이 있었다"까지만 확인하고, "무슨 문자열이었나"는 2장에 넘긴다.
 6. 용어 `<span class="term" data-t="EL">`, `<span class="term" data-t="리플렉션">` 을 심고 `GLOSSARY` 에 정의를 넣는다.
 7. `.nextq`: 그러면 그 값은 어디에서 문자열이 되었을까. **그런데 우리는 아직 그것을 모른다.**
 
