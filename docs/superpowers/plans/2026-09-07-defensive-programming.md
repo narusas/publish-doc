@@ -142,8 +142,8 @@ CHAINED = [cid for cid, _ in CHAPTERS
            if cid not in ('intro', 'recap') and not cid.startswith('ap-')]
 
 SECTION_OPEN = re.compile(r'<section\b([^>]*)>', re.I)
-STACK_OPEN = re.compile(r'<div\s+class="stack"[^>]*>', re.I)
-DIV_TAG = re.compile(r'<(/?)div\b[^>]*>', re.I)
+STACK_OPEN = re.compile(r'<details\s+class="stack"[^>]*>', re.I)
+DETAILS_TAG = re.compile(r'<(/?)details\b[^>]*>', re.I)
 
 
 @pytest.fixture(scope='module')
@@ -164,10 +164,10 @@ def iter_sections(src):
 
 
 def iter_stack_blocks(src):
-    """<div class="stack"> 의 본문을 div 중첩 깊이를 세어 내놓는다."""
+    """<details class="stack"> 의 본문을 details 중첩 깊이를 세어 내놓는다."""
     for m in STACK_OPEN.finditer(src):
         pos, depth = m.end(), 1
-        for dm in DIV_TAG.finditer(src, pos):
+        for dm in DETAILS_TAG.finditer(src, pos):
             depth += -1 if dm.group(1) else 1
             if depth == 0:
                 yield src[pos:dm.start()]
@@ -225,6 +225,13 @@ def test_the_next_problem_is_the_last_thing_in_the_chapter(src):
                 or 'class="demo"' in rest or 'class="quiz"' in rest):
             late.append(cid)
     assert late == [], '다음 문제 뒤에 본문이 더 있다: %s' % late
+
+
+def test_the_stack_parser_still_matches_the_markup(src):
+    """셀렉터가 마크업과 어긋나면 아래 규칙이 통째로 증발하면서 화면에는 초록불이
+    뜬다. 등장 횟수와 파서가 실제로 찾은 블록 수를 대조해 그 침묵을 막는다.
+    아직 .stack 이 하나도 없는 단계에서는 0 == 0 으로 성립한다."""
+    assert src.count('class="stack"') == len(list(iter_stack_blocks(src)))
 
 
 def test_stack_blocks_carry_no_load_bearing_content(src):
@@ -1314,7 +1321,100 @@ function renderAssembly(rootSel, opts){
 window.renderAssembly = renderAssembly;
 ```
 
-`buildControls` 는 조작 이름마다 버튼 묶음을 만들고 `state` 를 고친 뒤 `paint()` 를 부른다. 6장에서는 `controls: ['fault']` 만 넘긴다.
+조작 배선을 구현한다. **`opts.controls` 에 있는 조작만 만든다** — 6장은 결함 주입만, 9장은 타임아웃·격벽·회로 차단까지, 10장은 폴백까지 노출한다.
+
+```js
+function buildControls(root, controls, state, paint){
+  const bar = $('.asm-ctl', root);
+  const FAULTS = [
+    {k:'ok',    label:'정상'},
+    {k:'throw', label:'예외를 던진다'},
+    {k:'slow',  label:'느려진다'},
+    {k:'empty', label:'데이터가 없다'},
+  ];
+  const togRow = (k, label) =>
+    `<div class="ctl-row"><span class="ctl-k">${label}</span>
+       <button class="tog" data-tog="${k}">끔</button></div>`;
+  const pickRow = (r, label, opts) =>
+    `<div class="ctl-row"><span class="ctl-k">${label}</span>
+       <span class="picker" data-pick="${r}">${opts.map((o, i) =>
+         `<button class="pick${i ? '' : ' on'}" data-k="${o.k}">${o.label}</button>`).join('')}</span></div>`;
+
+  const parts = [];
+  if(controls.includes('fault')){
+    // 어느 섹션을 건드릴지 고르고, 그 섹션에 무엇이 일어나는지 고른다.
+    // '없으면 안 되는 자리'라는 표시가 8장의 판단과 12장의 여섯 번째 질문으로 이어진다.
+    parts.push(`<div class="ctl-row"><span class="ctl-k">결함을 넣을 섹션</span>
+      <select class="ctl-sel">${Assembly.SECTIONS.map(s =>
+        `<option value="${s.id}">${s.name}${s.critical ? ' · 없으면 안 되는 자리' : ''}</option>`).join('')}</select></div>`);
+    parts.push(pickRow('fault', '그 섹션에 무엇이 일어나는가', FAULTS));
+  }
+  if(controls.includes('isolate'))  parts.push(togRow('isolate',  '섹션 경계에서 실패를 멈춘다'));
+  if(controls.includes('timeout'))  parts.push(pickRow('timeout', '얼마나 기다리는가',
+    [{k:'', label:'끝까지'}, {k:'1000', label:'1000ms'}, {k:'300', label:'300ms'}]));
+  if(controls.includes('bulkhead')) parts.push(togRow('bulkhead', '섹션마다 자기 몫의 자원을 쓴다'));
+  if(controls.includes('breaker'))  parts.push(togRow('breaker',  '반복 실패한 의존을 잠시 끊는다'));
+  if(controls.includes('fallback')) parts.push(pickRow('fallback', '빈자리에 놓는 것',
+    [{k:'none', label:'아무것도'}, {k:'hide', label:'숨김'}, {k:'cache', label:'직전 값'},
+     {k:'skeleton', label:'골격'}]));
+  bar.innerHTML = parts.join('');
+
+  const sel = $('.ctl-sel', bar);
+  const target = () => sel ? sel.value : Assembly.SECTIONS[0].id;
+
+  $$('.picker', bar).forEach(pk => {
+    pk.addEventListener('click', e => {
+      const b = e.target.closest('.pick');
+      if(!b) return;
+      $$('.pick', pk).forEach(x => x.classList.toggle('on', x === b));
+      const kind = pk.dataset.pick, v = b.dataset.k;
+      if(kind === 'fault')        state.faults[target()] = v;
+      else if(kind === 'timeout') state.strategy.timeoutMs = v === '' ? null : Number(v);
+      else                        state.strategy[kind] = v;
+      paint();
+    });
+  });
+
+  $$('.tog', bar).forEach(b => {
+    // 이 전략들은 켜고 끄는 것뿐이라 토글 하나로 충분하다. 상태는 strategy 에 있고
+    // 버튼의 글자는 그 상태를 비추기만 한다.
+    const k = b.dataset.tog;
+    const paintTog = () => {
+      b.classList.toggle('on', !!state.strategy[k]);
+      b.textContent = state.strategy[k] ? '켬' : '끔';
+    };
+    b.addEventListener('click', () => { state.strategy[k] = !state.strategy[k]; paintTog(); paint(); });
+    paintTog();   // preset 으로 이미 켜져 있을 수 있다 — 9·10장이 그렇다
+  });
+
+  if(sel) sel.addEventListener('change', () => {
+    // 섹션을 바꾸면 버튼이 그 섹션의 현재 결함을 가리키게 맞춘다. 맞추지 않으면
+    // 화면은 '예외'라고 말하는데 실제로는 다른 섹션의 값인 상태가 된다.
+    const cur = state.faults[target()] || 'ok';
+    const pk = $('.picker[data-pick="fault"]', bar);
+    if(pk) $$('.pick', pk).forEach(x => x.classList.toggle('on', x.dataset.k === cur));
+  });
+}
+```
+
+마크업은 세 칸이다. 6·9·10장이 같은 모양을 쓰고 id 만 다르다.
+
+```html
+<div class="demo" id="asmLab">
+  <span class="demo-tag">메인 조립 시뮬레이터</span>
+  <p style="margin:0 0 10px">메인페이지는 전시 섹션 여덟 개를 위에서부터 조립합니다.
+  섹션 하나에 결함을 넣어 보세요.</p>
+  <div class="asm-ctl"></div>
+  <div class="asm-screen"></div>
+  <div class="asm-meter"></div>
+</div>
+```
+
+6장에서는 결함 주입만 넘긴다.
+
+```js
+renderAssembly('#asmLab', {controls:['fault']});
+```
 
 CSS 를 더한다.
 
@@ -1332,6 +1432,12 @@ CSS 를 더한다.
 .asm-500{display:flex; flex-direction:column; gap:8px; align-items:center; justify-content:center;
   min-height:230px; color:#fb7185; font-family:var(--mono); font-size:18px; text-align:center}
 .asm-500 span{font-family:var(--sans); font-size:14px; color:var(--text-mut); max-width:420px}
+.asm-ctl{display:grid; gap:8px; margin-bottom:12px}
+.ctl-row{display:flex; align-items:center; gap:10px; flex-wrap:wrap; font-size:14px; color:var(--text-dim)}
+.ctl-k{min-width:170px; color:var(--text-mut); font-size:13.5px}
+.ctl-sel{background:var(--panel); color:var(--text); border:1px solid var(--border-2);
+  border-radius:8px; padding:6px 10px; font-family:var(--sans); font-size:13.5px}
+.asm-meter{margin-top:10px}
 ```
 
 - [ ] **Step 2: 6장 본문을 쓴다**
@@ -1672,29 +1778,29 @@ git commit -m "11장: 코드에 없었던 이유는 부주의가 아니라 결�
    ================================================================== */
 const QUESTIONS = [
   {id:'q1',  axis:'데이터', q:'이 데이터가 하나도 없으면 화면에 무엇이 보입니까. 비웁니까, 숨깁니까, 대체물을 넣습니까',
-   blocks:'빈 목록에 그려진 헤더만 남아 레이아웃이 무너지는 화면', ch:10},
+   blocks:'빈 목록에 그려진 헤더만 남아 레이아웃이 무너지는 화면', ch:10, sec:'fallback'},
   {id:'q2',  axis:'데이터', q:'이 값이 오래된 것이어도 괜찮습니까. 몇 분까지 괜찮습니까',
-   blocks:'품절된 상품이 재고 있음으로 보이는 캐시 폴백', ch:10},
+   blocks:'품절된 상품이 재고 있음으로 보이는 캐시 폴백', ch:10, sec:'fallback'},
   {id:'q3',  axis:'데이터', q:'예상보다 많이 오면 어떻게 합니까. 상한이 있습니까',
-   blocks:'응답 하나가 수만 건이 되어 메모리를 삼키는 조회', ch:4},
+   blocks:'응답 하나가 수만 건이 되어 메모리를 삼키는 조회', ch:4, sec:'boundary'},
   {id:'q4',  axis:'연동',   q:'이 정보를 주는 쪽이 응답하지 않으면 얼마나 기다립니까. 기다린 뒤에는 무엇을 합니까',
-   blocks:'타임아웃 없는 호출 하나가 스레드 풀을 말리는 전염', ch:9},
+   blocks:'타임아웃 없는 호출 하나가 스레드 풀을 말리는 전염', ch:9, sec:'slowdown'},
   {id:'q5',  axis:'연동',   q:'그쪽이 틀린 값을 주면 우리는 어떻게 알아차립니까',
-   blocks:'오늘 그 장애 — 문자열이 뷰까지 흘러간 경로', ch:4},
+   blocks:'오늘 그 장애 — 문자열이 뷰까지 흘러간 경로', ch:4, sec:'boundary'},
   {id:'q6',  axis:'연동',   q:'이 화면에서 어느 부분이 없어도 화면이 성립합니까. 어느 부분이 없으면 화면을 띄우면 안 됩니까',
-   blocks:'섹션 하나의 실패가 페이지 전체를 데려가는 조립', ch:8},
+   blocks:'섹션 하나의 실패가 페이지 전체를 데려가는 조립', ch:8, sec:'failfast'},
   {id:'q7',  axis:'행위',   q:'이 버튼이 두 번 눌리면 어떻게 됩니까',
-   blocks:'같은 주문이 두 건 들어가는 중복 제출', ch:9},
+   blocks:'같은 주문이 두 건 들어가는 중복 제출', ch:9, sec:'slowdown'},
   {id:'q8',  axis:'행위',   q:'사용자가 중간에 이탈하면 이미 시작된 처리는 어떻게 됩니까',
-   blocks:'결제는 됐는데 주문이 없는 상태', ch:7},
+   blocks:'결제는 됐는데 주문이 없는 상태', ch:7, sec:'swallow'},
   {id:'q9',  axis:'행위',   q:'절반만 성공하면 성공입니까 실패입니까. 사용자에게 무엇이라고 말합니까',
-   blocks:'세 건 중 두 건만 담긴 장바구니에 뜬 "완료" 메시지', ch:8},
+   blocks:'세 건 중 두 건만 담긴 장바구니에 뜬 "완료" 메시지', ch:8, sec:'failfast'},
   {id:'q10', axis:'한계',   q:'이 기능이 감당해야 하는 최대치는 얼마입니까. 넘으면 어떻게 합니까',
-   blocks:'행사 시작 직후 몰린 요청에 전체가 멈추는 상황', ch:9},
+   blocks:'행사 시작 직후 몰린 요청에 전체가 멈추는 상황', ch:9, sec:'slowdown'},
   {id:'q11', axis:'한계',   q:'이 값이 0이거나 음수이거나 아주 크면 무엇이 맞습니까',
-   blocks:'수량 0으로 계산된 금액과 음수 재고', ch:5},
+   blocks:'수량 0으로 계산된 금액과 음수 재고', ch:5, sec:'invariant'},
   {id:'q12', axis:'한계',   q:'실패했을 때 사용자에게 무엇을 보여 주고, 우리는 무엇을 남깁니까',
-   blocks:'어느 섹션이었는지 적히지 않아 원인을 못 찾는 로그', ch:2},
+   blocks:'어느 섹션이었는지 적히지 않아 원인을 못 찾는 로그', ch:2, sec:'unknown'},
 ];
 window.QUESTIONS = QUESTIONS;
 ```
@@ -1708,19 +1814,28 @@ window.QUESTIONS = QUESTIONS;
   const root = $('#qCards');
   root.innerHTML = QUESTIONS.map(q => `
     <div class="qcard" data-id="${q.id}">
-      <div class="top"><span class="no">${q.axis}</span><a class="link" href="#${CH_ID[q.ch]}">${q.ch}장</a></div>
+      <div class="top"><span class="no">${q.axis}</span><a class="link" data-sec="${q.sec}">${q.ch}장</a></div>
       <p class="qq">${q.q}</p>
       <p class="qb">이 질문이 막는 것 — ${q.blocks}</p>
     </div>`).join('');
+  // 앵커는 템플릿 보간이 아니라 여기서 붙인다. 보간으로 href 를 만들면
+  // check_tutorial.py 의 앵커 검사가 `#${...}` 라는 문자열을 죽은 앵커로 읽는다.
+  // 대신 이 링크들이 진짜 장을 가리키는지는 아래 Step 2 의 테스트가 본다.
+  $$('a.link[data-sec]', root).forEach(a => a.setAttribute('href', '#' + a.dataset.sec));
 })();
 ```
 
-`CH_ID` 는 장 번호에서 섹션 id 로 가는 표다. 문서 앞쪽에 한 번 정의한다.
+- [ ] **Step 2-1: 링크가 진짜 장을 가리키는지 보는 테스트를 더한다**
 
-```js
-const CH_ID = {1:'trace',2:'unknown',3:'silent',4:'boundary',5:'invariant',6:'assembly',
-               7:'swallow',8:'failfast',9:'slowdown',10:'fallback',11:'specgap',
-               12:'questions',13:'wording',14:'process',15:'recap'};
+`tools/test_defensive_behavior.py` 끝에 붙인다.
+
+```python
+def test_every_question_points_at_a_real_chapter(page):
+    """카드의 장 링크는 setAttribute 로 붙으므로 check_tutorial.py 의 앵커
+    검사가 보지 못한다. 죽은 앵커를 놓치지 않도록 여기서 본다."""
+    missing = page.evaluate(
+        'QUESTIONS.map(q => q.sec).filter(s => !document.getElementById(s))')
+    assert missing == []
 ```
 
 - [ ] **Step 3: 본문을 쓴다**
@@ -2004,7 +2119,7 @@ Expected: `OK`, 죽은 CSS 없음, pytest 전부 PASS.
 - D1~D10 을 전부 조작해도 콘솔에 오류가 없는가
 - **D6 이 6·9·10장에서 각각 다른 조작만 노출하는가**, 그리고 한 장에서 조작한 것이 다른 장의 상태를 건드리지 않는가
 - 용어에 마우스를 올리면 설명이 뜨고, 용어집 서랍이 열리는가
-- 퀴즈 열다섯 개가 채점되고 해설이 펼쳐지는가
+- 퀴즈 열네 개가 채점되고 해설이 펼쳐지는가
 - `.stack` 블록을 전부 접은 채로 읽어도 논지가 끊기지 않는가
 - 좁은 화면(모바일 폭)에서 사이드바가 접히고 데모가 넘치지 않는가
 
@@ -2114,7 +2229,7 @@ git commit -m "허브에 아홉 번째 카드 — 방어적 프로그래밍
 - `renderAssembly(rootSel, opts)` — Task 8 에서 정의, Task 11·12 에서 `opts.controls` 와 `opts.preset` 으로 사용.
 - `EL.resolve(kind, prop)` — Task 3 에서 정의, Task 5(3장)에서 논지로 재사용.
 - `Pipeline.run(guardAt)` — Task 6 에서 정의.
-- `QUESTIONS` · `CH_ID` — Task 14 에서 정의, Task 15·17 에서 사용.
+- `QUESTIONS` — Task 14 에서 정의(`id`·`axis`·`q`·`blocks`·`ch`·`sec`), Task 15·17 에서 사용. `sec` 는 섹션 id 문자열이고 `test_every_question_points_at_a_real_chapter` 가 그것이 실재하는 장인지 대조한다.
 - `RADIUS` · `paintRadius(root, withHoles)` — Task 1 에서 정의, Task 17 에서 `withHoles=true` 로 재사용.
 - 섹션 id 열여덟 개 — Task 1 의 표가 유일한 출처이고 `tools/test_defensive_document.py` 의 `CHAPTERS` 가 그것을 강제한다.
 - 저장소 키 — 전부 `defprog:` 접두사. Task 1 에서 정하고 검사기가 확인한다.
