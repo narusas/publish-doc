@@ -20,6 +20,7 @@
 - **`.stack` 규칙.** 스프링과 라이브러리 이름은 `<div class="stack">` 안에만 둔다. 그 블록 안에 `<h2>` · `<h3>` · `.demo` · `.quiz` · `.nextq` 를 넣지 않는다. 블록을 전부 접어도 논지가 끊기지 않아야 한다.
 - **난이도 표시.** 장 제목 끝에 `<span class="lvl">🟢</span>` 또는 `<span class="lvl">🔵</span>` 를 단다.
 - **저장소 키 접두사**는 `defprog:` 다. (`auth_basics.html` 은 `authbasic:` 을 쓴다. 겹치면 진행률이 섞인다.)
+- **컴포넌트의 CSS 는 그 컴포넌트가 처음 등장하는 태스크가 함께 넣는다.** `tools/check_dead_css.py` 가 마크업·스크립트에서 쓰이지 않는 CSS 정의를 실패로 잡으므로, 나중에 쓸 CSS 를 미리 넣어 둘 수 없다. `.demo`·`.picker`·`.stack` 처럼 이 저장소의 다른 문서에 이미 있는 컴포넌트는 `auth_basics.html` 에서 규칙을 그대로 이식한다.
 - **모든 `<section>`** 에 `id` 와 `data-title` 이 있어야 한다. `class="term" data-t="X"` 의 `X` 는 전부 `GLOSSARY` 에 있어야 한다.
 - **커밋은 매 태스크 끝에 한 번.** 커밋 메시지는 한국어로, 무엇을 왜 했는지 적는다.
 
@@ -267,7 +268,9 @@ cp auth_basics.html defensive_programming.html
 
 그다음 다음을 지운다. **본문 섹션 전부**(`<section id="stateless">` 부터 마지막 부록까지), **auth 전용 데모 JS 전부**(`wireDia` 호출부와 각 데모의 IIFE), **auth 전용 `GLOSSARY` 항목 전부**, **auth 전용 CSS 중 남지 않는 컴포넌트**.
 
-남기는 것: `:root` 변수 · 레이아웃 · `#sidebar` · `#toc` · `#progBar` · `.term` 툴팁 · `.quiz` 채점 · 용어집 서랍 · `.demo` · `.picker` · `.pick` · `.oneline` · `.verdict` · `.sec-head` · `.map-grid` · `.lvl` · Prism 블록 · 전역 헬퍼(`$` · `$$` · `Store` · `loadKeys` · `markVisited` · `updateProgress` · `wirePicker` · `wireTogs`).
+**자바스크립트는 전부 남긴다**: Prism 블록 · 전역 헬퍼(`$` · `$$` · `LS` · `esc`) · 목차 자동 생성 · `loadKeys` · `markVisited` · `updateProgress` · 스크롤 스파이 · `.term` 툴팁 · `.quiz` 채점 · 용어집 서랍 · `wirePicker` · `wireTogs`. 이 중 `LS` 는 **`Store` 로 이름을 바꾼다** — 이 계획의 나머지 태스크가 전부 `Store` 로 부른다.
+
+**CSS 는 이 태스크의 마크업이 실제로 쓰는 것만 남긴다**: `:root` 변수 · 레이아웃 · `#sidebar` · `#toc` · `#progBar` · `.term` · `.quiz` 계열 · `.hero` · `.lead` · `.kicker` · `.map-grid` · `.map-card` · `.lvl` · `.dim`. `.demo` · `.picker` · `.pick` · `.verdict` · `.kv` · `.oneline` 처럼 **이 태스크에 아직 마크업이 없는 컴포넌트의 CSS 는 지운다.** 전역 제약대로 그 CSS 는 해당 컴포넌트가 처음 등장하는 태스크(3번 태스크)가 가져온다. Step 8 의 `check_dead_css.py` 가 이것을 강제한다.
 
 `<head>` 를 바꾼다.
 
@@ -308,23 +311,11 @@ const Store = {
   letter-spacing:1.2px; text-transform:uppercase; color:var(--accent); margin-bottom:5px;
 }
 
-/* 스프링·라이브러리 이름만 담는 블록. 접어도 논지가 끊기지 않아야 한다. */
-.stack{
-  margin:22px 0; border:1px dashed var(--border-2); border-radius:12px;
-  background:var(--bg-soft); overflow:hidden;
-}
-.stack > summary{
-  cursor:pointer; list-style:none; padding:11px 16px; font-size:13.5px;
-  color:var(--text-mut); font-family:var(--mono);
-}
-.stack > summary::-webkit-details-marker{display:none}
-.stack > summary::before{content:"🧰 "; }
-.stack[open] > summary{border-bottom:1px dashed var(--border-2); color:var(--text-dim)}
-.stack .sbody{padding:14px 18px; font-size:15px; color:var(--text-dim)}
-.stack .sbody code{color:var(--accent-2)}
 ```
 
-`.stack` 은 `<details class="stack">` 로 쓴다. 접을 수 있어야 "접어도 논지가 끊기지 않는다"는 기준을 독자가 직접 확인할 수 있다.
+`.stack` 의 CSS 는 **여기서 넣지 않는다.** 이 태스크에는 `.stack` 마크업이 아직 하나도 없어서 Step 8 의 `check_dead_css.py` 가 죽은 CSS 로 잡는다. 첫 `.stack` 이 등장하는 4번 태스크(2장)가 가져온다.
+
+다만 마크업 형태는 여기서 확정한다. `.stack` 은 `<details class="stack">` 로 쓴다. 접을 수 있어야 "접어도 논지가 끊기지 않는다"는 기준을 독자가 직접 확인할 수 있고, `tools/test_defensive_document.py` 의 `iter_stack_blocks` 도 `<details>` 를 찾는다.
 
 - [ ] **Step 5: 개요와 빈 섹션 열여덟 개를 넣는다**
 
@@ -781,6 +772,32 @@ const EL = (() => {
 window.EL = EL;
 ```
 
+- [ ] **Step 3-1: 이 문서에 처음 등장하는 컴포넌트의 CSS 를 이식한다**
+
+이 태스크가 이 문서의 **첫 데모와 첫 퀴즈**를 놓는다. 1번 태스크는 마크업이 없는 CSS 를
+남길 수 없었으므로(전역 제약), 그 컴포넌트들의 CSS 가 지금 필요하다. `auth_basics.html` 의
+`<style>` 블록들에서 아래 규칙을 **그대로** 이식한다. 새로 디자인하지 않는다.
+
+`.demo` · `.demo .demo-tag` · `.demo input[type="text"]` · `.demo input[type="range"]` ·
+`.demo label` · `.picker` · `.pick` · `.pick:hover` · `.pick.on` · `.verdict` ·
+`.verdict .badge` · `.oneline` · `.quiz .q-head` · `.quiz .opt .mk` ·
+`.quiz .opt.correct .mk` · `.quiz .opt.wrong .mk`
+
+(`.quiz` · `.quiz .opt` · `.quiz .explain` · `.term` · `.nextq` · `.trace` 는 1번 태스크가
+이미 넣어 두었다. 중복해서 넣지 않는다.)
+
+**`.kv` 만은 그대로 옮기면 안 된다.** `auth_basics.html` 의 `.kv` 는 `<dt>`/`<dd>` 를 전제하는데
+이 문서의 데모는 `<span class="k">` 를 쓴다. 다음으로 넣는다.
+
+```css
+.kv{display:grid; grid-template-columns:auto 1fr; gap:8px 16px; margin:14px 0;
+  font-size:14px; align-items:baseline}
+.kv .k{font-family:var(--mono); font-size:12.5px; color:var(--accent); white-space:nowrap}
+```
+
+이식이 끝나면 `python3 tools/check_dead_css.py defensive_programming.html` 이 통과해야 한다.
+통과하지 않으면 이 태스크가 쓰지 않는 규칙까지 가져온 것이므로 그것을 지운다.
+
 - [ ] **Step 4: 데모 마크업과 배선을 넣는다**
 
 `#trace` 섹션 안에 넣는다.
@@ -951,6 +968,30 @@ null 이 조용히 통과하고 문자열이 던지는 비대칭은 3장이 다�
 ```css
 .todo{margin:10px 0 0; padding-left:20px; color:var(--text-mut); font-size:14.5px; line-height:1.9}
 ```
+
+**이 장에 이 문서의 첫 `.stack` 블록이 들어간다**(Step 2 의 8번). 1번 태스크는 마크업 없는
+CSS 를 남길 수 없었으므로 그 CSS 도 여기서 함께 넣는다.
+
+```css
+/* 스프링·라이브러리 이름만 담는 블록. 접어도 논지가 끊기지 않아야 한다. */
+.stack{
+  margin:22px 0; border:1px dashed var(--border-2); border-radius:12px;
+  background:var(--bg-soft); overflow:hidden;
+}
+.stack > summary{
+  cursor:pointer; list-style:none; padding:11px 16px; font-size:13.5px;
+  color:var(--text-mut); font-family:var(--mono);
+}
+.stack > summary::-webkit-details-marker{display:none}
+.stack > summary::before{content:"🧰 "}
+.stack[open] > summary{border-bottom:1px dashed var(--border-2); color:var(--text-dim)}
+.stack .sbody{padding:14px 18px; font-size:15px; color:var(--text-dim)}
+.stack .sbody code{color:var(--accent-2)}
+```
+
+이 CSS 를 넣으면 `tools/test_defensive_document.py` 의
+`test_the_stack_parser_still_matches_the_markup` 이 처음으로 0 이 아닌 수를 대조하게 된다.
+`class="stack"` 의 등장 횟수와 파서가 찾은 블록 수가 어긋나면 그 자리에서 실패한다.
 
 - [ ] **Step 2: 본문을 쓴다**
 
