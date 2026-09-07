@@ -4,14 +4,14 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>인터랙티브 개발 튜토리얼 모음 — 네트워크 · HTTPS · 인증 · 권한 · 클라우드</title>
-<meta name="description" content="주니어 개발자를 위한 인터랙티브 HTML 튜토리얼 모음. AWS 기초, 네트워크 기초, HTTPS·TLS, 웹 인증 기초, OAuth2/OIDC, 권한 관리, AWS IAM, AWS 네트워크 보안.">
+<meta name="description" content="주니어 개발자를 위한 인터랙티브 HTML 튜토리얼 모음. AWS 기초, 네트워크 기초, HTTPS·TLS, 웹 인증 기초, OAuth2/OIDC, 권한 관리, AWS IAM, AWS 네트워크 보안, 방어적 프로그래밍.">
 <style>
 :root{
   --bg:#070b12; --bg-soft:#0c1320; --panel:#111a28; --panel-2:#172133;
   --border:#233046; --border-2:#32425e;
   --text:#e8eef7; --text-dim:#9fb0c6; --text-mut:#8698b3;
   --accent:#2dd4bf; --accent-2:#a78bfa;
-  --net:#38bdf8; --auth:#fbbf24; --authz:#c084fc; --https:#2dd4bf; --iam:#ff9f43; --vpc:#fb7185; --webauth:#818cf8; --awsb:#34d399;
+  --net:#38bdf8; --auth:#fbbf24; --authz:#c084fc; --https:#2dd4bf; --iam:#ff9f43; --vpc:#fb7185; --webauth:#818cf8; --awsb:#34d399; --defp:#f472b6;
   --radius:16px;
   --mono:"JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
   --sans:"Pretendard Variable","Pretendard",-apple-system,BlinkMacSystemFont,system-ui,"Apple SD Gothic Neo","Malgun Gothic","Noto Sans KR",sans-serif;
@@ -130,7 +130,7 @@ footer .mono{font-family:var(--mono); font-size:12.5px}
   </p>
 
   <div class="meta">
-    <span>🗂️ <b>8개 문서</b></span>
+    <span>🗂️ <b>9개 문서</b></span>
     <span>🖱️ <b>클릭·슬라이더</b>로 확인하는 데모</span>
     <span>📦 <b>단일 HTML</b> · 외부 의존성 0</span>
     <span>💾 진행률 <b>자동 저장</b></span>
@@ -244,6 +244,26 @@ footer .mono{font-family:var(--mono); font-size:12.5px}
       라우팅 테이블·NACL·Security Group·Network Firewall·WAF가 어떤 순서로 걸리는지를 관문 단위로 세우고, 직접 눌러 확인합니다.
       IAM이 "누가 무엇을 할 수 있나"라면 이쪽은 "패킷이 어디까지 갈 수 있나"입니다.</p>
       <div class="tags"><i>VPC · 서브넷</i><i>라우팅 · IGW/NAT</i><i>NACL</i><i>Security Group</i><i>Network Firewall</i><i>WAF</i><i>VPC Endpoint</i><i>Flow Logs</i></div>
+      <span class="go">열어 보기 <span class="ar">→</span></span>
+    </a>
+
+    <a class="card" href="defensive_programming.html" style="--c:var(--defp)">
+      <div class="top">
+        <span class="ic">🧱</span>
+        <span class="no">Defensive</span>
+        <span class="new">NEW</span>
+      </div>
+      <h2>방어적 프로그래밍 — 하나가 죽었을 때 전체가 죽지 않게</h2>
+      <p><b>전시 섹션 하나에서 발생한 예외가 메인페이지 전체를 오류 화면으로 만들었습니다.</b>
+      스택트레이스가 가리키는 곳에는 범인이 없다는 사실에서 출발해,
+      방어의 반경을 한 줄에서 요구사항까지 여섯 번 넓혀 갑니다.
+      <code>try-catch</code>를 더 뿌리는 이야기가 아니라
+      <b>어느 경계에서 실패를 멈출지 정하는 설계</b>의 이야기이고,
+      마지막 파트에서는 코드를 떠나 기획 요건에 방어 조항을 넣는 데까지 갑니다.</p>
+      <div class="tags">
+        <i>조용한 실패</i><i>신뢰 경계</i><i>불변식</i><i>실패 격리</i>
+        <i>fail-fast · fail-soft</i><i>타임아웃 · 격벽</i><i>폴백</i><i>요건 문장</i>
+      </div>
       <span class="go">열어 보기 <span class="ar">→</span></span>
     </a>
 
