@@ -761,7 +761,7 @@ def test_an_empty_list_throws_too(page):
 
 - [ ] **Step 2: 테스트를 돌려 실패를 확인한다**
 
-Run: `python3 -m pytest tools/test_defensive_behavior.py -k el -v`
+Run: `python3 -m pytest tools/test_defensive_behavior.py -k "resolves or throws" -v`
 Expected: FAIL — `EL is not defined`.
 
 - [ ] **Step 3: EL 엔진을 구현한다**
@@ -1174,7 +1174,7 @@ def test_the_early_message_names_what_was_wrong(page):
 
 - [ ] **Step 2: 실패를 확인한다**
 
-Run: `python3 -m pytest tools/test_defensive_behavior.py -k pipeline -v`
+Run: `python3 -m pytest tools/test_defensive_behavior.py -k guarding -v`
 Expected: FAIL — `Pipeline is not defined`.
 
 - [ ] **Step 3: 엔진과 데모를 구현한다**
