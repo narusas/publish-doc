@@ -648,8 +648,8 @@ throw new SectionRenderException("섹션 렌더링 실패: " + sectionId, e);</c
       <details class="stack">
         <summary>스프링에는 이름이 있습니다</summary>
         <div class="sbody">
-          로그를 남기는 코드가 특정 로깅 구현에 매이지 않게 해 주는 계층이 <code>SLF4J</code> 같은 로깅
-          파사드입니다. 방금 말한 ‘무엇에 대해’의 식별자를 요청 하나에 속한 모든 로그 줄에 자동으로 붙여
+          이 세 조각을 실제로 로그로 남기는 코드는 보통 <code>SLF4J</code> 같은 로깅 파사드를 거칩니다.
+          방금 말한 ‘무엇에 대해’의 식별자를 요청 하나에 속한 모든 로그 줄에 자동으로 붙여
           주는 자리가 <code>MDC</code>(Mapped Diagnostic Context)입니다. 예외가 컨트롤러까지 올라왔을 때 이
           세 조각을 한 곳에서 모아 남기는 자리는 <code>@ControllerAdvice</code>의
           <code>@ExceptionHandler</code>입니다.
