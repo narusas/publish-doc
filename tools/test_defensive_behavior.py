@@ -182,3 +182,31 @@ def test_the_early_message_names_what_was_wrong(page):
     r = pipeline(page, 'parse')
     assert 'bannerImageList' in r['message']
     assert 'String' in r['message']
+
+
+def test_the_twelve_questions_are_exposed(page):
+    """12장·13장·부록 C 가 같은 배열을 쓴다. 배열이 window 에 없으면 뒤의 두
+    곳은 자기 사본을 만들게 되고, 그때부터 셋은 조용히 갈라진다."""
+    assert page.evaluate('QUESTIONS.length') == 12
+    assert page.evaluate('[...new Set(QUESTIONS.map(q => q.axis))]') == [
+        '데이터', '연동', '행위', '한계']
+    assert page.evaluate(
+        "QUESTIONS.filter(q => !(q.id && q.q && q.blocks && q.ch && q.sec)).length") == 0
+
+
+def test_every_question_points_at_a_real_chapter(page):
+    """카드의 장 링크는 setAttribute 로 붙으므로 check_tutorial.py 의 앵커
+    검사가 보지 못한다. 죽은 앵커를 놓치지 않도록 여기서 본다."""
+    missing = page.evaluate(
+        'QUESTIONS.map(q => q.sec).filter(s => !document.getElementById(s))')
+    assert missing == []
+
+
+def test_every_card_links_where_the_data_says(page):
+    """href 를 붙이는 것은 렌더 뒤의 한 줄이다. 그 줄이 사라져도 화면은 멀쩡해
+    보이고 앵커 검사도 통과하므로, 실제로 붙은 href 를 데이터와 대조한다."""
+    pairs = page.evaluate("""() => QUESTIONS.map(q => {
+        const a = document.querySelector('.qcard[data-id="' + q.id + '"] a.link');
+        return [q.sec, a ? a.getAttribute('href') : null];
+    })""")
+    assert [p for p in pairs if p[1] != '#' + p[0]] == []
