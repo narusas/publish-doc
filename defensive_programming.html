@@ -657,6 +657,88 @@ function paintRadius(root, withHoles){
     </div>`).join('');
 }
 paintRadius($('#radiusMap'), false);
+
+/* ==== D6 · 메인 조립 시뮬레이터 엔진 ==============================
+   6·9·10장이 같은 함수를 부른다. 화면이 아니라 순수 함수로 둔 이유는
+   tools/test_defensive_behavior.py 가 이 함수를 직접 부르기 때문이다.
+   ================================================================== */
+const Assembly = (() => {
+  // critical 은 '없으면 화면을 띄우면 안 되는 자리'다. 12장의 여섯 번째 질문이
+  // 실제로 정하는 값이며, 개발자가 혼자 정할 수 없는 값이기도 하다.
+  const SECTIONS = [
+    {id:'hero',   name:'메인 배너',   critical:true },
+    {id:'quick',  name:'퀵 메뉴',     critical:false},
+    {id:'best',   name:'베스트 상품', critical:false},
+    {id:'new',    name:'신상품',      critical:false},
+    {id:'brand',  name:'브랜드 위크', critical:false},
+    {id:'reco',   name:'추천 상품',   critical:false},
+    {id:'event',  name:'이벤트 배너', critical:false},
+    {id:'footer', name:'푸터',        critical:true },
+  ];
+
+  const OK_MS   = 40;    // 정상 응답
+  const SLOW_MS = 3000;  // 느려진 의존이 실제로 무는 시간
+  const BREAKER_THRESHOLD = 2;  // 이만큼 실패하면 다음부터는 부르지 않는다
+
+  const DEFAULT_STRATEGY = {
+    isolate: false,      // 섹션 경계에서 실패를 멈추는가
+    timeoutMs: null,     // 기다림의 상한 (null 이면 끝까지 기다린다)
+    bulkhead: false,     // 섹션마다 자기 몫의 자원을 쓰는가
+    breaker: false,      // 반복 실패한 의존을 잠시 끊는가
+    fallback: 'none',    // 'none' | 'hide' | 'cache' | 'skeleton'
+  };
+
+  function assemble(faults, st){
+    faults = faults || {};
+    st = Object.assign({}, DEFAULT_STRATEGY, st || {});
+
+    const rendered = [];
+    let totalMs = 0, failures = 0, open = false;
+
+    for(const s of SECTIONS){
+      // 회로가 열렸으면 부르지 않는다. 부르지 않았으므로 시간도 들지 않는다.
+      if(open && st.breaker){
+        rendered.push({id:s.id, name:s.name, state:'open', ms:0});
+        continue;
+      }
+
+      const fault = faults[s.id] || 'ok';
+      let ms = OK_MS, state = 'ok';
+
+      if(fault === 'slow'){
+        ms = st.timeoutMs === null ? SLOW_MS : Math.min(SLOW_MS, st.timeoutMs);
+        state = st.timeoutMs === null ? 'slow' : 'timeout';
+      }else if(fault === 'throw'){
+        state = 'throw';
+      }else if(fault === 'empty'){
+        // 빈 것은 실패가 아니다. 3장의 비대칭이 여기서도 성립한다.
+        state = 'empty';
+      }
+
+      // 격벽이 없으면 한 섹션의 시간이 다음 섹션의 시간에 그대로 더해진다.
+      // 격벽이 있으면 섹션들이 자기 몫으로 나란히 도므로 가장 느린 하나가 값이다.
+      totalMs = st.bulkhead ? Math.max(totalMs, ms) : totalMs + ms;
+
+      if(state === 'throw' || state === 'timeout'){
+        failures++;
+        // 없으면 안 되는 자리이거나, 멈춰 세울 경계가 없으면 페이지가 죽는다.
+        // 오늘 일어난 일이 뒤쪽 경우다.
+        if(s.critical || !st.isolate){
+          return {rendered, pageState:'error', totalMs, failedAt:s.id};
+        }
+        state = st.fallback === 'none' ? 'blank' : st.fallback;
+        if(failures >= BREAKER_THRESHOLD) open = true;
+      }
+
+      rendered.push({id:s.id, name:s.name, state, ms});
+    }
+
+    return {rendered, pageState: failures ? 'partial' : 'ok', totalMs, failedAt:null};
+  }
+
+  return {SECTIONS, DEFAULT_STRATEGY, assemble};
+})();
+window.Assembly = Assembly;
 </script>
 </body>
 </html>
