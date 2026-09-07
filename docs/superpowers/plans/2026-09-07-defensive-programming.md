@@ -564,6 +564,18 @@ def test_a_bulkhead_stops_one_slow_section_from_adding_to_everyone(page):
     assert walled['totalMs'] < serial['totalMs']
 
 
+def test_an_open_breaker_still_cannot_skip_a_critical_section(page):
+    """회로가 열려도 없으면 안 되는 자리를 건너뛰면 페이지는 성립하지 않는다.
+
+    푸터에는 사업자 정보가 실린다. 그것이 빠진 상거래 페이지는 띄우면 안 된다.
+    회로를 섹션마다 걸지 않고 하나로 걸면 이 일이 조용히 일어난다 — 화면은
+    '일부만 비었다'고 말하는데 실제로는 띄우면 안 되는 페이지가 나간다."""
+    r = assemble(page, {'best': 'throw', 'new': 'throw'},
+                 isolate=True, breaker=True, fallback='cache')
+    assert r['pageState'] == 'error'
+    assert r['failedAt'] == 'footer'
+
+
 def test_the_breaker_stops_calling_after_repeated_failures(page):
     r = assemble(page, {'best': 'throw', 'new': 'throw', 'brand': 'throw'},
                  isolate=True, breaker=True, fallback='cache')
@@ -591,6 +603,9 @@ Expected: FAIL. `typeof Assembly.assemble` 이 `"undefined"` 다.
 const Assembly = (() => {
   // critical 은 '없으면 화면을 띄우면 안 되는 자리'다. 12장의 여섯 번째 질문이
   // 실제로 정하는 값이며, 개발자가 혼자 정할 수 없는 값이기도 하다.
+  // 푸터가 여기 들어가는 이유가 그 점을 잘 보여 준다. 디자인 요소라서가 아니라
+  // 사업자 정보와 통신판매업 신고번호가 거기 실리기 때문이다. 그것이 빠진 상거래
+  // 페이지는 띄우면 안 된다. 개발자가 코드만 보고 정할 수 있는 값이 아니다.
   const SECTIONS = [
     {id:'hero',   name:'메인 배너',   critical:true },
     {id:'quick',  name:'퀵 메뉴',     critical:false},
@@ -622,8 +637,14 @@ const Assembly = (() => {
     let totalMs = 0, failures = 0, open = false;
 
     for(const s of SECTIONS){
-      // 회로가 열렸으면 부르지 않는다. 부르지 않았으므로 시간도 들지 않는다.
       if(open && st.breaker){
+        // 회로가 열렸으면 부르지 않는다. 부르지 않았으므로 시간도 들지 않는다.
+        // 다만 없으면 안 되는 자리까지 끊으면 페이지는 여전히 성립하지 않는다.
+        // 회로를 섹션마다 걸지 않고 하나로 걸었을 때 실제로 나는 사고이며,
+        // 9장이 이 자리를 그대로 쓴다.
+        if(s.critical){
+          return {rendered, pageState:'error', totalMs, failedAt:s.id};
+        }
         rendered.push({id:s.id, name:s.name, state:'open', ms:0});
         continue;
       }
@@ -1687,6 +1708,10 @@ renderAssembly('#slowLab', {
 3. 데모(위). 타임아웃 없이 느린 섹션 하나를 주입하면 응답 시간이 3초를 넘는 것을 확인한다. 타임아웃을 켜면 상한이 생기고, 격벽을 켜면 다른 섹션의 시간에 더해지지 않는다.
 4. **타임아웃 값을 정하는 방법.** 관행적인 3초가 아니라 상위 요청의 예산에서 거꾸로 나눈다. 메인페이지가 1초 안에 끝나야 한다면 섹션 여덟 개가 나눠 쓸 예산은 그 안에 있다.
 5. 회로 차단기. 반복해서 실패하는 의존을 잠시 부르지 않는다. **부르지 않았으므로 시간도 들지 않는다.**
+   그리고 곧바로 그 대가를 보여 준다. 데모에서 결함을 둘 넣어 회로를 열면 **푸터까지 끊기고
+   페이지가 죽는다.** 회로를 섹션마다 걸지 않고 하나로 걸었기 때문이다. 여기서 한 문장이 나온다.
+   **방어 수단 자체가 새로운 실패 모드를 만든다.** 그리고 푸터가 왜 없으면 안 되는 자리인지는
+   개발자가 정한 것이 아니라는 사실로 11장에 다리를 놓는다.
 6. 재시도와 그 위험. 상류가 이미 무너졌는데 재시도가 부하를 곱한다. 지수 백오프와 지터, 그리고 재시도해도 되는 연산의 조건인 멱등성.
 7. `<details class="stack">`: Resilience4j 의 `TimeLimiter` · `Bulkhead` · `CircuitBreaker` · `Retry`, HTTP 클라이언트의 타임아웃이 **연결과 읽기 둘**이라는 사실.
 8. `.nextq`: 버티기로 했다면, **비어 있는 그 자리에 무엇을 놓나.**
