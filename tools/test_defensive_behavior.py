@@ -108,6 +108,18 @@ def test_a_bulkhead_stops_one_slow_section_from_adding_to_everyone(page):
     assert walled['totalMs'] < serial['totalMs']
 
 
+def test_an_open_breaker_still_cannot_skip_a_critical_section(page):
+    """회로가 열려도 없으면 안 되는 자리를 건너뛰면 페이지는 성립하지 않는다.
+
+    푸터에는 사업자 정보가 실린다. 그것이 빠진 상거래 페이지는 띄우면 안 된다.
+    회로를 섹션마다 걸지 않고 하나로 걸면 이 일이 조용히 일어난다 — 화면은
+    '일부만 비었다'고 말하는데 실제로는 띄우면 안 되는 페이지가 나간다."""
+    r = assemble(page, {'best': 'throw', 'new': 'throw'},
+                 isolate=True, breaker=True, fallback='cache')
+    assert r['pageState'] == 'error'
+    assert r['failedAt'] == 'footer'
+
+
 def test_the_breaker_stops_calling_after_repeated_failures(page):
     r = assemble(page, {'best': 'throw', 'new': 'throw', 'brand': 'throw'},
                  isolate=True, breaker=True, fallback='cache')

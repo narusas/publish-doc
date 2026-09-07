@@ -665,6 +665,9 @@ paintRadius($('#radiusMap'), false);
 const Assembly = (() => {
   // critical 은 '없으면 화면을 띄우면 안 되는 자리'다. 12장의 여섯 번째 질문이
   // 실제로 정하는 값이며, 개발자가 혼자 정할 수 없는 값이기도 하다.
+  // 푸터가 여기 들어가는 이유가 그 점을 잘 보여 준다. 디자인 요소라서가 아니라
+  // 사업자 정보와 통신판매업 신고번호가 거기 실리기 때문이다. 그것이 빠진 상거래
+  // 페이지는 띄우면 안 된다. 개발자가 코드만 보고 정할 수 있는 값이 아니다.
   const SECTIONS = [
     {id:'hero',   name:'메인 배너',   critical:true },
     {id:'quick',  name:'퀵 메뉴',     critical:false},
@@ -696,8 +699,14 @@ const Assembly = (() => {
     let totalMs = 0, failures = 0, open = false;
 
     for(const s of SECTIONS){
-      // 회로가 열렸으면 부르지 않는다. 부르지 않았으므로 시간도 들지 않는다.
       if(open && st.breaker){
+        // 회로가 열렸으면 부르지 않는다. 부르지 않았으므로 시간도 들지 않는다.
+        // 다만 없으면 안 되는 자리까지 끊으면 페이지는 여전히 성립하지 않는다.
+        // 회로를 섹션마다 걸지 않고 하나로 걸었을 때 실제로 나는 사고이며,
+        // 9장이 이 자리를 그대로 쓴다.
+        if(s.critical){
+          return {rendered, pageState:'error', totalMs, failedAt:s.id};
+        }
         rendered.push({id:s.id, name:s.name, state:'open', ms:0});
         continue;
       }
