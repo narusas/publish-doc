@@ -923,9 +923,6 @@ throw new SectionRenderException("섹션 렌더링 실패: " + sectionId, e);</c
           경계에서 하는 이 검증을 컨트롤러 코드로 옮기면, 요청 DTO에 붙이는 제약 애노테이션(Bean
           Validation)과 그것을 실행하는 <code>@Valid</code>가 이 자리를 맡습니다. 필수 항목이 비어 있지
           않은지를 가장 단순하게 그 자리에서 확인하는 방법은 <code>Objects.requireNonNull</code>입니다.
-          캐시에서 값을 꺼내는 자리, 즉 역직렬화가 일어나는 자리에서 모르는 필드를 만났을 때 조용히
-          무시할지 즉시 실패할지는 <code>@JsonIgnoreProperties(ignoreUnknown = ...)</code> 같은 설정으로
-          미리 정해 둡니다.
         </div>
       </details>
 
