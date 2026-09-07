@@ -126,3 +126,35 @@ def test_the_breaker_stops_calling_after_repeated_failures(page):
     states = {s['id']: s['state'] for s in r['rendered']}
     assert states['brand'] == 'open'
     assert [s for s in r['rendered'] if s['id'] == 'brand'][0]['ms'] == 0
+
+
+def el(page, kind, prop='bannerImageList'):
+    return page.evaluate('([k, p]) => EL.resolve(k, p)', [kind, prop])
+
+
+def test_a_dto_with_the_getter_resolves(page):
+    assert el(page, 'dto')['result'] == 'value'
+
+
+def test_a_map_with_the_key_resolves(page):
+    """MapELResolver 가 BeanELResolver 보다 먼저 도므로 키만 있으면 통과한다.
+    통과한다는 것이 문제다 — 타입은 이 자리에서 이미 사라졌다."""
+    assert el(page, 'map')['result'] == 'value'
+
+
+def test_null_resolves_to_nothing_and_says_nothing(page):
+    """EL 은 null 을 빈 문자열로 렌더한다. 조용한 쪽이 더 위험하다는 3장의 근거다."""
+    assert el(page, 'null')['result'] == 'empty'
+
+
+def test_a_string_throws_because_it_has_no_such_getter(page):
+    """오늘 난 예외 그 자체다."""
+    r = el(page, 'string')
+    assert r['result'] == 'throw'
+    assert 'PropertyNotFoundException' in r['text']
+    assert 'java.lang.String' in r['text']
+
+
+def test_an_empty_list_throws_too(page):
+    """리스트에 정수가 아닌 프로퍼티를 물으면 결국 BeanELResolver 로 떨어진다."""
+    assert el(page, 'list')['result'] == 'throw'
