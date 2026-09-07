@@ -1,0 +1,662 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>방어적 프로그래밍 — 하나가 죽었을 때 전체가 죽지 않게</title>
+<meta name="description" content="전시 섹션 하나의 예외가 메인페이지 전체를 죽인 장애에서 출발해, 방어를 코드 습관이 아니라 설계 결정으로 다루는 인터랙티브 튜토리얼. 신뢰 경계·불변식·실패 격리·타임아웃, 그리고 방어를 요구사항으로 만드는 방법까지.">
+<style id="prism-theme">
+code[class*=language-],pre[class*=language-]{color:#ccc;background:0 0;font-family:Consolas,Monaco,'Andale Mono','Ubuntu Mono',monospace;font-size:1em;text-align:left;white-space:pre;word-spacing:normal;word-break:normal;word-wrap:normal;line-height:1.5;-moz-tab-size:4;-o-tab-size:4;tab-size:4;-webkit-hyphens:none;-moz-hyphens:none;-ms-hyphens:none;hyphens:none}pre[class*=language-]{padding:1em;margin:.5em 0;overflow:auto}:not(pre)>code[class*=language-],pre[class*=language-]{background:#2d2d2d}:not(pre)>code[class*=language-]{padding:.1em;border-radius:.3em;white-space:normal}.token.block-comment,.token.cdata,.token.comment,.token.doctype,.token.prolog{color:#999}.token.punctuation{color:#ccc}.token.attr-name,.token.deleted,.token.namespace,.token.tag{color:#e2777a}.token.function-name{color:#6196cc}.token.boolean,.token.function,.token.number{color:#f08d49}.token.class-name,.token.constant,.token.property,.token.symbol{color:#f8c555}.token.atrule,.token.builtin,.token.important,.token.keyword,.token.selector{color:#cc99cd}.token.attr-value,.token.char,.token.regex,.token.string,.token.variable{color:#7ec699}.token.entity,.token.operator,.token.url{color:#67cdcc}.token.bold,.token.important{font-weight:700}.token.italic{font-style:italic}.token.entity{cursor:help}.token.inserted{color:green}
+</style>
+<style>
+/* ============================================================
+   디자인 시스템
+   ============================================================ */
+:root{
+  --bg:        #0b0f17;
+  --bg-soft:   #111726;
+  --panel:     #161d2e;
+  --panel-2:   #1c2435;
+  --border:    #283149;
+  --border-2:  #364263;
+  --text:      #e6ecf5;
+  --text-dim:  #9aa7bd;
+  --text-mut:  #8492af;   /* WCAG AA 대비 확보(패널 위 ≥4.5:1) */
+
+  --accent:    #fb7185;   /* 메인(로즈) */
+  --accent-2:  #f472b6;   /* 보조(핑크) */
+
+  /* 판정 색 — 축은 "의도대로 됐나" 하나다. 초록은 시킨 대로 된 것(막으라고 해서 막힘),
+     빨강은 의도와 어긋난 것(막았어야 할 것이 뚫렸거나, 아무도 시키지 않은 로그아웃이 남),
+     노랑은 판정이 아니라 상황 라벨. 이 축을 데모마다 흔들지 않는다. */
+  --ok:        #34d399;
+  --warn:      #fbbf24;
+  --bad:       #f87171;
+  --purple:    #c084fc;
+
+  --radius:    14px;
+  --radius-sm: 9px;
+  --shadow:    0 10px 30px rgba(0,0,0,.35);
+  --mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  --sans: "Pretendard Variable", "Pretendard", -apple-system, BlinkMacSystemFont, system-ui, "Apple SD Gothic Neo", "Malgun Gothic", "Noto Sans KR", sans-serif;
+}
+
+*{box-sizing:border-box}
+/* `hidden`이 정말 감추게 한다. 브라우저 기본 시트의 [hidden]{display:none}은 작성자
+   규칙에 지므로, display를 지정한 요소(.lb-row{display:grid} 등)에 el.hidden=true를
+   걸어도 그대로 보인다 — 7장 #lbSim의 중앙 저장소 칸이 라운드로빈 모드에서 계속
+   보이던 것이 그 경우다. */
+[hidden]{display:none !important}
+html{scroll-behavior:smooth; scroll-padding-top:24px}
+body{
+  margin:0; background:var(--bg); color:var(--text);
+  font-family:var(--sans); line-height:1.7;
+  -webkit-font-smoothing:antialiased;
+  font-size:16px;
+}
+body::before{ /* 은은한 배경 그라데이션 */
+  content:""; position:fixed; inset:0; z-index:-1; pointer-events:none;
+  background:
+    radial-gradient(900px 500px at 12% -5%, rgba(56,189,248,.10), transparent 60%),
+    radial-gradient(800px 500px at 100% 0%, rgba(129,140,248,.10), transparent 55%);
+}
+
+/* ============================================================
+   레이아웃: 사이드바 + 본문
+   ============================================================ */
+.layout{display:flex; min-height:100vh}
+#sidebar{
+  width:288px; flex:0 0 288px; position:sticky; top:0; height:100vh;
+  background:linear-gradient(180deg,var(--bg-soft),var(--bg));
+  border-right:1px solid var(--border);
+  display:flex; flex-direction:column; z-index:50;
+}
+.brand{padding:22px 22px 14px}
+.brand h1{font-size:16px; margin:0; letter-spacing:-.2px; line-height:1.4}
+.brand .sub{font-size:12px; color:var(--text-mut); margin-top:4px}
+.brand .logo{
+  display:inline-flex; gap:7px; align-items:center; margin-bottom:10px;
+  font-weight:800; color:var(--accent); font-size:13px; letter-spacing:.5px;
+}
+.brand .logo .dot{width:9px;height:9px;border-radius:50%;background:var(--accent);box-shadow:0 0 10px var(--accent)}
+
+.progress-wrap{padding:0 22px 14px}
+.progress-line{display:flex; justify-content:space-between; font-size:11px; color:var(--text-mut); margin-bottom:6px}
+.progress-bar{height:7px; border-radius:99px; background:var(--panel-2); overflow:hidden}
+.progress-bar > i{
+  display:block; height:100%; width:0%;
+  background:linear-gradient(90deg,var(--accent),var(--accent-2));
+  border-radius:99px; transition:width .5s cubic-bezier(.2,.8,.2,1);
+}
+
+#toc{flex:1; overflow-y:auto; padding:6px 12px 18px}
+#toc a{
+  display:flex; align-items:center; gap:10px; padding:9px 12px; border-radius:10px;
+  color:var(--text-dim); text-decoration:none; font-size:13.5px; font-weight:500;
+  transition:background .15s,color .15s; position:relative;
+}
+#toc a .num{
+  flex:0 0 22px; width:22px; height:22px; border-radius:7px; display:grid; place-items:center;
+  font-size:11px; font-family:var(--mono); background:var(--panel-2); color:var(--text-mut);
+  border:1px solid var(--border);
+}
+#toc a:hover{background:var(--panel); color:var(--text)}
+#toc a.active{background:var(--panel-2); color:#fff}
+#toc a.active .num{background:var(--accent); color:#06121c; border-color:var(--accent)}
+#toc a.done .num::after{content:"✓"; }
+#toc a.done .num{color:var(--ok)}
+
+.side-tools{padding:14px 16px; border-top:1px solid var(--border); display:flex; gap:8px; flex-wrap:wrap}
+.side-tools button{flex:1}
+
+#content{flex:1; min-width:0; max-width:1000px; margin:0 auto; padding:40px 48px 120px}
+
+/* ============================================================
+   타이포 / 공통 컴포넌트
+   ============================================================ */
+section{scroll-margin-top:20px; padding-top:26px; margin-bottom:18px}
+section > .sec-head{margin-bottom:18px}
+.kicker{
+  display:inline-flex; align-items:center; gap:7px; font-family:var(--mono); font-size:12px;
+  color:var(--accent); letter-spacing:1px; text-transform:uppercase; margin-bottom:10px;
+  padding:4px 10px; border:1px solid var(--border-2); border-radius:99px; background:var(--panel);
+}
+h3{font-size:20px; margin:34px 0 10px; letter-spacing:-.3px}
+h4{font-size:16px; margin:22px 0 8px; color:var(--text)}
+p{color:var(--text-dim); margin:12px 0}
+.lead{font-size:17.5px; color:var(--text); line-height:1.75}
+strong{color:#fff; font-weight:700}
+ul,ol{color:var(--text-dim); padding-left:22px}
+li{margin:7px 0}
+hr{border:none; border-top:1px solid var(--border); margin:34px 0}
+
+/* 용어 인라인 (툴팁) */
+.term{
+  color:#cfe9fb; border-bottom:1.5px dotted var(--accent); cursor:help;
+  font-weight:500; text-underline-offset:3px; white-space:nowrap;
+}
+#tooltip{
+  position:fixed; z-index:999; max-width:320px; pointer-events:none;
+  background:#0a1422; color:var(--text); border:1px solid var(--border-2);
+  border-radius:10px; padding:11px 13px; font-size:13.5px; line-height:1.6;
+  box-shadow:0 12px 30px rgba(0,0,0,.5); opacity:0; transform:translateY(6px);
+  transition:opacity .14s, transform .14s;
+}
+#tooltip.show{opacity:1; transform:translateY(0)}
+#tooltip b{color:var(--accent)}
+
+/* 코드 블록 */
+pre[class*="language-"]{
+  border-radius:12px !important; border:1px solid var(--border); margin:16px 0 !important;
+  font-size:13px; box-shadow:var(--shadow);
+}
+code:not([class*="language-"]){
+  font-family:var(--mono); font-size:.86em; background:var(--panel-2);
+  border:1px solid var(--border); border-radius:6px; padding:1px 6px; color:#ffd9a8;
+  overflow-wrap:anywhere;
+}
+
+/* 버튼 */
+button{
+  font-family:var(--sans); font-size:13.5px; font-weight:600; cursor:pointer;
+  background:var(--panel-2); color:var(--text); border:1px solid var(--border-2);
+  border-radius:9px; padding:9px 15px; transition:all .15s; line-height:1;
+}
+button:hover{border-color:var(--accent); color:#fff; transform:translateY(-1px)}
+button:active{transform:translateY(0)}
+button:disabled{opacity:.4; cursor:not-allowed; transform:none}
+button.ghost{background:transparent}
+button.sm{padding:6px 11px; font-size:12.5px}
+
+/* 퀴즈 */
+.quiz{border:1px solid var(--border-2); border-radius:var(--radius); padding:18px 20px; margin:22px 0; background:var(--panel)}
+.quiz .opt{
+  display:block; width:100%; text-align:left; margin:8px 0; padding:12px 14px;
+  background:var(--panel-2); border:1px solid var(--border); border-radius:10px; color:var(--text);
+  font-weight:500; transition:all .15s;
+}
+.quiz .opt:hover{border-color:var(--accent-2); transform:none; color:#fff}
+.quiz .opt.correct{border-color:var(--ok); background:rgba(52,211,153,.13); color:#fff}
+.quiz .opt.wrong{border-color:var(--bad); background:rgba(248,113,113,.12); color:#fff}
+.quiz .opt:disabled{cursor:default; opacity:1}
+.quiz .explain{display:none; margin-top:12px; padding:13px 15px; border-radius:10px; background:var(--bg); border:1px solid var(--border); font-size:14.5px; color:var(--text-dim)}
+.quiz .explain.show{display:block}
+.quiz .explain b{color:var(--ok)}
+
+/* 용어 사전 드로어 */
+#glossary{
+  position:fixed; top:0; right:0; height:100vh; width:380px; max-width:90vw; z-index:200;
+  background:var(--bg-soft); border-left:1px solid var(--border-2); box-shadow:-20px 0 50px rgba(0,0,0,.5);
+  transform:translateX(105%); transition:transform .3s cubic-bezier(.2,.8,.2,1);
+  display:flex; flex-direction:column;
+}
+#glossary.open{transform:translateX(0)}
+#glossary .g-head{padding:18px 20px; border-bottom:1px solid var(--border); display:flex; justify-content:space-between; align-items:center}
+#glossary .g-head h3{margin:0; font-size:17px}
+#glossary .g-body{overflow-y:auto; padding:8px 20px 30px}
+#glossary input{width:100%; margin:10px 0 6px; padding:10px 12px; border-radius:9px; background:var(--panel-2); border:1px solid var(--border); color:var(--text); font-family:var(--sans); font-size:14px}
+.g-item{padding:13px 0; border-bottom:1px solid var(--border)}
+.g-item .t{font-weight:700; color:var(--accent); font-size:14.5px}
+.g-item .d{font-size:13.5px; color:var(--text-dim); margin-top:3px}
+#scrim{position:fixed; inset:0; background:rgba(0,0,0,.5); z-index:150; opacity:0; pointer-events:none; transition:opacity .3s}
+#scrim.open{opacity:1; pointer-events:auto}
+
+/* 히어로 */
+.hero{padding:30px 0 6px}
+.hero h1{font-size:38px; line-height:1.25; margin:0 0 14px; letter-spacing:-.5px; color:#fff}
+.hero .g{
+  background:linear-gradient(90deg,#fff,#9fd6f5); -webkit-background-clip:text; background-clip:text;
+  -webkit-text-fill-color:transparent;
+}
+.map-grid{display:grid; grid-template-columns:repeat(auto-fill,minmax(150px,1fr)); gap:12px; margin-top:16px}
+.map-card{padding:14px; border-radius:12px; border:1px solid var(--border); background:var(--panel); cursor:pointer; text-decoration:none; color:var(--text); transition:all .15s; display:block}
+.map-card:hover{border-color:var(--accent); transform:translateY(-2px)}
+
+/* 모바일 */
+.menu-btn{display:none}
+@media(max-width:980px){
+  #sidebar{position:fixed; left:0; top:0; transform:translateX(-105%); transition:transform .3s; box-shadow:var(--shadow); z-index:160}
+  #sidebar.open{transform:translateX(0)}
+  #content{padding:64px 20px 100px}
+  .menu-btn{display:inline-flex; position:fixed; top:12px; left:12px; z-index:60}
+  .hero h1{font-size:30px}
+}
+
+/* 작은 유틸 */
+.dim{color:var(--text-mut)}
+
+/* 목차 완료 표시: 번호를 체크로 교체 */
+#toc a.done .num{color:var(--ok); font-size:0}
+#toc a.done .num::after{content:"✓"; font-size:12px}
+#toc a.done.active .num{background:var(--accent); color:#1a1005; font-size:0}
+
+/* 필수/심화 레벨 배지 */
+.lvl{display:inline-flex; align-items:center; gap:5px; font-size:11.5px; font-weight:700; font-family:var(--mono);
+  padding:3px 9px; border-radius:99px; border:1px solid var(--border-2); vertical-align:middle; white-space:nowrap}
+
+/* 접근성 */
+button:focus-visible, .term:focus-visible, a:focus-visible,
+.opt:focus-visible, [tabindex]:focus-visible, input:focus-visible{
+  outline:2px solid var(--accent); outline-offset:2px; border-radius:8px;
+}
+.term:focus-visible{outline-offset:3px}
+
+/* 장을 닫는 '다음 문제'. 사슬 규칙(설계 문서 6절)이 화면에서도 보이게 한다. */
+.nextq{
+  margin:26px 0 0; padding:14px 18px; border-left:3px solid var(--accent);
+  background:linear-gradient(90deg, rgba(45,212,191,.09), transparent 70%);
+  border-radius:0 10px 10px 0; color:var(--text-dim); font-size:15.5px;
+}
+.nextq b{color:var(--text)}
+.nextq::before{
+  content:"다음 문제"; display:block; font-family:var(--mono); font-size:11px;
+  letter-spacing:1.2px; text-transform:uppercase; color:var(--accent); margin-bottom:5px;
+}
+
+/* 각색한 장애의 스택트레이스 */
+.trace{
+  margin:20px 0; padding:16px 18px; border-radius:12px; overflow-x:auto;
+  background:#0a0f18; border:1px solid var(--border);
+  font-family:var(--mono); font-size:12.5px; line-height:1.85; color:var(--text-dim);
+}
+.trace code{color:inherit; background:none; border:0; padding:0}
+
+/* 반경 지도 카드 헤더 — .dim의 margin-left:auto가 실제로 오른쪽으로 밀리려면
+   부모가 flex여야 한다. */
+.map-card .top{display:flex; align-items:center; gap:8px; flex-wrap:wrap}
+.map-card .hole{color:var(--text-mut); font-size:13.5px; margin-top:6px}
+.map-card .top .dim{margin-left:auto; font-family:var(--mono); font-size:11.5px; color:var(--text-mut)}
+</style>
+</head>
+<body>
+
+<button class="menu-btn" id="menuBtn" aria-label="메뉴">☰ 목차</button>
+
+<div class="layout">
+  <!-- ============ 사이드바 ============ -->
+  <aside id="sidebar">
+    <div class="brand">
+      <div class="logo"><span class="dot"></span> DEFENSIVE·PROG</div>
+      <h1>방어적 프로그래밍</h1>
+      <div class="sub">신뢰 경계 · 불변식 · 실패 격리 · 타임아웃</div>
+    </div>
+    <div class="progress-wrap">
+      <div class="progress-line"><span>학습 진행률</span><span id="progPct">0%</span></div>
+      <div class="progress-bar"><i id="progBar"></i></div>
+    </div>
+    <nav id="toc"><!-- 자동 생성 --></nav>
+    <div class="side-tools">
+      <button class="sm ghost" id="glossaryBtn">📖 용어 사전</button>
+      <button class="sm ghost" id="resetBtn" title="진행률 초기화">↺ 초기화</button>
+    </div>
+  </aside>
+
+  <!-- ============ 본문 ============ -->
+  <main id="content">
+
+    <section id="intro" data-title="개요" class="hero">
+      <h1>하나가 죽었을 때<br><span class="g">전체가 죽지 않게</span></h1>
+      <p class="lead">오늘 메인페이지가 통째로 오류를 냈습니다. 로그에는 이 스택트레이스가 남았습니다.</p>
+
+      <pre class="trace"><code>javax.el.PropertyNotFoundException:
+    Property [bannerImageList] not found on type [java.lang.String]
+    at javax.el.BeanELResolver$BeanProperties.get(BeanELResolver.java:253)
+    at javax.el.BeanELResolver.property(BeanELResolver.java:322)
+    at javax.el.BeanELResolver.getValue(BeanELResolver.java:93)
+    at org.apache.jasper.el.JasperELResolver.getValue(JasperELResolver.java:123)
+    at org.apache.el.parser.AstValue.getValue(AstValue.java:160)
+    at org.apache.el.ValueExpressionImpl.getValue(ValueExpressionImpl.java:149)
+    at org.apache.jasper.runtime.PageContextImpl.proprietaryEvaluate(PageContextImpl.java:655)
+    at org.apache.jsp...mainSections_jsp._jspx_meth_c_005fset_005f141(mainSections_jsp.java:9946)
+    at org.apache.jsp...mainSections_jsp._jspx_meth_c_005fif_005f43(mainSections_jsp.java:9832)
+    at org.apache.jsp...mainSections_jsp._jspService(mainSections_jsp.java:743)</code></pre>
+
+      <p class="lead"><b>이 안에 범인이 있을까요.</b> 없습니다. 이 문서는 그 사실에서 출발합니다.</p>
+
+      <div class="map-grid" id="radiusMap"><!-- Step 6 --></div>
+    </section>
+
+    <section id="trace" data-title="스택트레이스는 범인이 아니다">
+      <div class="sec-head"><span class="kicker">1장</span></div>
+      <h2>🧨 스택트레이스가 가리키는 곳은 범인이 아니다 <span class="lvl">🟢</span></h2>
+      <div class="nextq">그러면 그 값은 어디에서 문자열이 되었을까요. <b>그런데 우리는 아직 그것을 모릅니다.</b></div>
+    </section>
+
+    <section id="unknown" data-title="아직 원인을 모른다">
+      <div class="sec-head"><span class="kicker">2장</span></div>
+      <h2>🔍 그런데 우리는 아직 원인을 모릅니다 <span class="lvl">🟢</span></h2>
+      <div class="nextq">담을 맥락을 정하려면, <b>애초에 무엇이 잘못이었는지</b>부터 정의되어 있어야 합니다.</div>
+    </section>
+
+    <section id="silent" data-title="조용한 실패">
+      <div class="sec-head"><span class="kicker">3장</span></div>
+      <h2>🕳️ null은 조용하고 잘못된 타입은 시끄럽습니다 <span class="lvl">🟢</span></h2>
+      <div class="nextq">그럼 어디에서 터뜨려야 할까요. <b>모든 곳에서 터뜨릴 수는 없습니다.</b></div>
+    </section>
+
+    <section id="boundary" data-title="신뢰 경계">
+      <div class="sec-head"><span class="kicker">4장</span></div>
+      <h2>🚧 검사는 곳곳이 아니라 선 위에서 합니다 <span class="lvl">🟢</span></h2>
+      <div class="nextq">경계를 통과한 뒤에도 <b>객체가 이상한 상태가 될 수 있습니다.</b></div>
+    </section>
+
+    <section id="invariant" data-title="가질 수 없게 만들기">
+      <div class="sec-head"><span class="kicker">5장</span></div>
+      <h2>🧱 애초에 그런 값을 가질 수 없게 만듭니다 <span class="lvl">🔵</span></h2>
+      <div class="nextq">객체 하나하나가 옳아도 <b>조립이 틀릴 수 있습니다.</b></div>
+    </section>
+
+    <section id="assembly" data-title="하나가 전체를 데려갔다">
+      <div class="sec-head"><span class="kicker">6장</span></div>
+      <h2>💥 섹션 하나가 죽어서 메인이 죽었습니다 <span class="lvl">🟢</span></h2>
+      <div class="nextq">그러면 그 예외를 <b>어디에서 잡아야 할까요.</b></div>
+    </section>
+
+    <section id="swallow" data-title="삼킬 자격">
+      <div class="sec-head"><span class="kicker">7장</span></div>
+      <h2>🎣 예외를 삼킬 자격이 있는 층은 따로 있습니다 <span class="lvl">🟢</span></h2>
+      <div class="nextq">잡을지 말지를 <b>무엇을 기준으로 정할까요.</b></div>
+    </section>
+
+    <section id="failfast" data-title="죽을 자리와 버틸 자리">
+      <div class="sec-head"><span class="kicker">8장</span></div>
+      <h2>⚖️ 빨리 죽을 자리와 버틸 자리 <span class="lvl">🟢</span></h2>
+      <div class="nextq">섹션이 죽지 않고 <b>느려지면 이 전략은 통하지 않습니다.</b></div>
+    </section>
+
+    <section id="slowdown" data-title="느린 것이 더 위험하다">
+      <div class="sec-head"><span class="kicker">9장</span></div>
+      <h2>⏱️ 죽는 것보다 느린 것이 위험합니다 <span class="lvl">🔵</span></h2>
+      <div class="nextq">버티기로 했다면, <b>비어 있는 그 자리에 무엇을 놓을까요.</b></div>
+    </section>
+
+    <section id="fallback" data-title="빈자리에 무엇을 놓나">
+      <div class="sec-head"><span class="kicker">10장</span></div>
+      <h2>🪫 비어 있는 자리에 무엇을 놓나 <span class="lvl">🟢</span></h2>
+      <div class="nextq">여기서 개발자가 혼자 고를 수 있는 것은 없습니다. <b>그것을 아는 사람은 기획자입니다.</b></div>
+    </section>
+
+    <section id="specgap" data-title="기획서에는 정상 경로만">
+      <div class="sec-head"><span class="kicker">11장</span></div>
+      <h2>📋 기획서에는 정상 경로만 있습니다 <span class="lvl">🟢</span></h2>
+      <div class="nextq">그러면 <b>무엇을 물어야 할까요.</b></div>
+    </section>
+
+    <section id="questions" data-title="물어야 할 열두 가지">
+      <div class="sec-head"><span class="kicker">12장</span></div>
+      <h2>❓ 개발자가 기획에게 물어야 할 열두 가지 <span class="lvl">🟢</span></h2>
+      <div class="nextq">물었는데 <b>"그건 개발에서 알아서 해 주세요"</b>라는 답이 오면 어떻게 할까요.</div>
+    </section>
+
+    <section id="wording" data-title="요건 문장으로 굳히기">
+      <div class="sec-head"><span class="kicker">13장</span></div>
+      <h2>✍️ 답을 요건 문장으로 굳히는 법 <span class="lvl">🟢</span></h2>
+      <div class="nextq">이것을 <b>매번 개인이 기억해야 할까요.</b></div>
+    </section>
+
+    <section id="process" data-title="팀의 절차로">
+      <div class="sec-head"><span class="kicker">14장</span></div>
+      <h2>🔁 팀의 절차로 만듭니다 <span class="lvl">🔵</span></h2>
+      <div class="nextq">이제 남은 것은 <b>다시 그 스택트레이스로 돌아가 확인하는 일뿐입니다.</b></div>
+    </section>
+
+    <section id="recap" data-title="다시 그 스택트레이스로">
+      <div class="sec-head"><span class="kicker">15장</span></div>
+      <h2>🗺️ 다시 그 스택트레이스로 <span class="lvl">🟢</span></h2>
+    </section>
+
+    <section id="ap-java" data-title="부록 A · 자바·스프링 대응표" data-num="A">
+      <div class="sec-head"><span class="kicker">부록 A</span></div>
+      <h2>☕ 자바·스프링 대응표</h2>
+    </section>
+
+    <section id="ap-jsp" data-title="부록 B · JSP·EL 환경" data-num="B">
+      <div class="sec-head"><span class="kicker">부록 B</span></div>
+      <h2>🌿 JSP·EL 환경에서의 방어</h2>
+    </section>
+
+    <section id="ap-cards" data-title="부록 C · 질문 카드" data-num="C">
+      <div class="sec-head"><span class="kicker">부록 C</span></div>
+      <h2>🃏 실패 요건 질문 카드</h2>
+    </section>
+  </main>
+</div>
+
+<!-- 용어 사전 드로어 -->
+<div id="scrim"></div>
+<aside id="glossary">
+  <div class="g-head"><h3>📖 용어 사전</h3><button class="sm ghost" id="glossaryClose">닫기 ✕</button></div>
+  <div class="g-body">
+    <input type="text" id="gSearch" placeholder="용어 검색… (예: 세션, 쿠키, 무상태, JWT)">
+    <div id="gList"></div>
+  </div>
+</aside>
+
+<!-- 툴팁 -->
+<div id="tooltip"></div>
+<!-- Prism core+clike+bash+java (v1.29.0, 임베딩 · 외부 의존성 0) -->
+<script id="prism-src">
+var _self="undefined"!=typeof window?window:"undefined"!=typeof WorkerGlobalScope&&self instanceof WorkerGlobalScope?self:{},Prism=function(e){var n=/(?:^|\s)lang(?:uage)?-([\w-]+)(?=\s|$)/i,t=0,r={},a={manual:e.Prism&&e.Prism.manual,disableWorkerMessageHandler:e.Prism&&e.Prism.disableWorkerMessageHandler,util:{encode:function e(n){return n instanceof i?new i(n.type,e(n.content),n.alias):Array.isArray(n)?n.map(e):n.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/\u00a0/g," ")},type:function(e){return Object.prototype.toString.call(e).slice(8,-1)},objId:function(e){return e.__id||Object.defineProperty(e,"__id",{value:++t}),e.__id},clone:function e(n,t){var r,i;switch(t=t||{},a.util.type(n)){case"Object":if(i=a.util.objId(n),t[i])return t[i];for(var l in r={},t[i]=r,n)n.hasOwnProperty(l)&&(r[l]=e(n[l],t));return r;case"Array":return i=a.util.objId(n),t[i]?t[i]:(r=[],t[i]=r,n.forEach((function(n,a){r[a]=e(n,t)})),r);default:return n}},getLanguage:function(e){for(;e;){var t=n.exec(e.className);if(t)return t[1].toLowerCase();e=e.parentElement}return"none"},setLanguage:function(e,t){e.className=e.className.replace(RegExp(n,"gi"),""),e.classList.add("language-"+t)},currentScript:function(){if("undefined"==typeof document)return null;if("currentScript"in document)return document.currentScript;try{throw new Error}catch(r){var e=(/at [^(\r\n]*\((.*):[^:]+:[^:]+\)$/i.exec(r.stack)||[])[1];if(e){var n=document.getElementsByTagName("script");for(var t in n)if(n[t].src==e)return n[t]}return null}},isActive:function(e,n,t){for(var r="no-"+n;e;){var a=e.classList;if(a.contains(n))return!0;if(a.contains(r))return!1;e=e.parentElement}return!!t}},languages:{plain:r,plaintext:r,text:r,txt:r,extend:function(e,n){var t=a.util.clone(a.languages[e]);for(var r in n)t[r]=n[r];return t},insertBefore:function(e,n,t,r){var i=(r=r||a.languages)[e],l={};for(var o in i)if(i.hasOwnProperty(o)){if(o==n)for(var s in t)t.hasOwnProperty(s)&&(l[s]=t[s]);t.hasOwnProperty(o)||(l[o]=i[o])}var u=r[e];return r[e]=l,a.languages.DFS(a.languages,(function(n,t){t===u&&n!=e&&(this[n]=l)})),l},DFS:function e(n,t,r,i){i=i||{};var l=a.util.objId;for(var o in n)if(n.hasOwnProperty(o)){t.call(n,o,n[o],r||o);var s=n[o],u=a.util.type(s);"Object"!==u||i[l(s)]?"Array"!==u||i[l(s)]||(i[l(s)]=!0,e(s,t,o,i)):(i[l(s)]=!0,e(s,t,null,i))}}},plugins:{},highlightAll:function(e,n){a.highlightAllUnder(document,e,n)},highlightAllUnder:function(e,n,t){var r={callback:t,container:e,selector:'code[class*="language-"], [class*="language-"] code, code[class*="lang-"], [class*="lang-"] code'};a.hooks.run("before-highlightall",r),r.elements=Array.prototype.slice.apply(r.container.querySelectorAll(r.selector)),a.hooks.run("before-all-elements-highlight",r);for(var i,l=0;i=r.elements[l++];)a.highlightElement(i,!0===n,r.callback)},highlightElement:function(n,t,r){var i=a.util.getLanguage(n),l=a.languages[i];a.util.setLanguage(n,i);var o=n.parentElement;o&&"pre"===o.nodeName.toLowerCase()&&a.util.setLanguage(o,i);var s={element:n,language:i,grammar:l,code:n.textContent};function u(e){s.highlightedCode=e,a.hooks.run("before-insert",s),s.element.innerHTML=s.highlightedCode,a.hooks.run("after-highlight",s),a.hooks.run("complete",s),r&&r.call(s.element)}if(a.hooks.run("before-sanity-check",s),(o=s.element.parentElement)&&"pre"===o.nodeName.toLowerCase()&&!o.hasAttribute("tabindex")&&o.setAttribute("tabindex","0"),!s.code)return a.hooks.run("complete",s),void(r&&r.call(s.element));if(a.hooks.run("before-highlight",s),s.grammar)if(t&&e.Worker){var c=new Worker(a.filename);c.onmessage=function(e){u(e.data)},c.postMessage(JSON.stringify({language:s.language,code:s.code,immediateClose:!0}))}else u(a.highlight(s.code,s.grammar,s.language));else u(a.util.encode(s.code))},highlight:function(e,n,t){var r={code:e,grammar:n,language:t};if(a.hooks.run("before-tokenize",r),!r.grammar)throw new Error('The language "'+r.language+'" has no grammar.');return r.tokens=a.tokenize(r.code,r.grammar),a.hooks.run("after-tokenize",r),i.stringify(a.util.encode(r.tokens),r.language)},tokenize:function(e,n){var t=n.rest;if(t){for(var r in t)n[r]=t[r];delete n.rest}var a=new s;return u(a,a.head,e),o(e,a,n,a.head,0),function(e){for(var n=[],t=e.head.next;t!==e.tail;)n.push(t.value),t=t.next;return n}(a)},hooks:{all:{},add:function(e,n){var t=a.hooks.all;t[e]=t[e]||[],t[e].push(n)},run:function(e,n){var t=a.hooks.all[e];if(t&&t.length)for(var r,i=0;r=t[i++];)r(n)}},Token:i};function i(e,n,t,r){this.type=e,this.content=n,this.alias=t,this.length=0|(r||"").length}function l(e,n,t,r){e.lastIndex=n;var a=e.exec(t);if(a&&r&&a[1]){var i=a[1].length;a.index+=i,a[0]=a[0].slice(i)}return a}function o(e,n,t,r,s,g){for(var f in t)if(t.hasOwnProperty(f)&&t[f]){var h=t[f];h=Array.isArray(h)?h:[h];for(var d=0;d<h.length;++d){if(g&&g.cause==f+","+d)return;var v=h[d],p=v.inside,m=!!v.lookbehind,y=!!v.greedy,k=v.alias;if(y&&!v.pattern.global){var x=v.pattern.toString().match(/[imsuy]*$/)[0];v.pattern=RegExp(v.pattern.source,x+"g")}for(var b=v.pattern||v,w=r.next,A=s;w!==n.tail&&!(g&&A>=g.reach);A+=w.value.length,w=w.next){var E=w.value;if(n.length>e.length)return;if(!(E instanceof i)){var P,L=1;if(y){if(!(P=l(b,A,e,m))||P.index>=e.length)break;var S=P.index,O=P.index+P[0].length,j=A;for(j+=w.value.length;S>=j;)j+=(w=w.next).value.length;if(A=j-=w.value.length,w.value instanceof i)continue;for(var C=w;C!==n.tail&&(j<O||"string"==typeof C.value);C=C.next)L++,j+=C.value.length;L--,E=e.slice(A,j),P.index-=A}else if(!(P=l(b,0,E,m)))continue;S=P.index;var N=P[0],_=E.slice(0,S),M=E.slice(S+N.length),W=A+E.length;g&&W>g.reach&&(g.reach=W);var z=w.prev;if(_&&(z=u(n,z,_),A+=_.length),c(n,z,L),w=u(n,z,new i(f,p?a.tokenize(N,p):N,k,N)),M&&u(n,w,M),L>1){var I={cause:f+","+d,reach:W};o(e,n,t,w.prev,A,I),g&&I.reach>g.reach&&(g.reach=I.reach)}}}}}}function s(){var e={value:null,prev:null,next:null},n={value:null,prev:e,next:null};e.next=n,this.head=e,this.tail=n,this.length=0}function u(e,n,t){var r=n.next,a={value:t,prev:n,next:r};return n.next=a,r.prev=a,e.length++,a}function c(e,n,t){for(var r=n.next,a=0;a<t&&r!==e.tail;a++)r=r.next;n.next=r,r.prev=n,e.length-=a}if(e.Prism=a,i.stringify=function e(n,t){if("string"==typeof n)return n;if(Array.isArray(n)){var r="";return n.forEach((function(n){r+=e(n,t)})),r}var i={type:n.type,content:e(n.content,t),tag:"span",classes:["token",n.type],attributes:{},language:t},l=n.alias;l&&(Array.isArray(l)?Array.prototype.push.apply(i.classes,l):i.classes.push(l)),a.hooks.run("wrap",i);var o="";for(var s in i.attributes)o+=" "+s+'="'+(i.attributes[s]||"").replace(/"/g,"&quot;")+'"';return"<"+i.tag+' class="'+i.classes.join(" ")+'"'+o+">"+i.content+"</"+i.tag+">"},!e.document)return e.addEventListener?(a.disableWorkerMessageHandler||e.addEventListener("message",(function(n){var t=JSON.parse(n.data),r=t.language,i=t.code,l=t.immediateClose;e.postMessage(a.highlight(i,a.languages[r],r)),l&&e.close()}),!1),a):a;var g=a.util.currentScript();function f(){a.manual||a.highlightAll()}if(g&&(a.filename=g.src,g.hasAttribute("data-manual")&&(a.manual=!0)),!a.manual){var h=document.readyState;"loading"===h||"interactive"===h&&g&&g.defer?document.addEventListener("DOMContentLoaded",f):window.requestAnimationFrame?window.requestAnimationFrame(f):window.setTimeout(f,16)}return a}(_self);"undefined"!=typeof module&&module.exports&&(module.exports=Prism),"undefined"!=typeof global&&(global.Prism=Prism);
+Prism.languages.clike={comment:[{pattern:/(^|[^\\])\/\*[\s\S]*?(?:\*\/|$)/,lookbehind:!0,greedy:!0},{pattern:/(^|[^\\:])\/\/.*/,lookbehind:!0,greedy:!0}],string:{pattern:/(["'])(?:\\(?:\r\n|[\s\S])|(?!\1)[^\\\r\n])*\1/,greedy:!0},"class-name":{pattern:/(\b(?:class|extends|implements|instanceof|interface|new|trait)\s+|\bcatch\s+\()[\w.\\]+/i,lookbehind:!0,inside:{punctuation:/[.\\]/}},keyword:/\b(?:break|catch|continue|do|else|finally|for|function|if|in|instanceof|new|null|return|throw|try|while)\b/,boolean:/\b(?:false|true)\b/,function:/\b\w+(?=\()/,number:/\b0x[\da-f]+\b|(?:\b\d+(?:\.\d*)?|\B\.\d+)(?:e[+-]?\d+)?/i,operator:/[<>]=?|[!=]=?=?|--?|\+\+?|&&?|\|\|?|[?*/~^%]/,punctuation:/[{}[\];(),.:]/};
+!function(e){var t="\\b(?:BASH|BASHOPTS|BASH_ALIASES|BASH_ARGC|BASH_ARGV|BASH_CMDS|BASH_COMPLETION_COMPAT_DIR|BASH_LINENO|BASH_REMATCH|BASH_SOURCE|BASH_VERSINFO|BASH_VERSION|COLORTERM|COLUMNS|COMP_WORDBREAKS|DBUS_SESSION_BUS_ADDRESS|DEFAULTS_PATH|DESKTOP_SESSION|DIRSTACK|DISPLAY|EUID|GDMSESSION|GDM_LANG|GNOME_KEYRING_CONTROL|GNOME_KEYRING_PID|GPG_AGENT_INFO|GROUPS|HISTCONTROL|HISTFILE|HISTFILESIZE|HISTSIZE|HOME|HOSTNAME|HOSTTYPE|IFS|INSTANCE|JOB|LANG|LANGUAGE|LC_ADDRESS|LC_ALL|LC_IDENTIFICATION|LC_MEASUREMENT|LC_MONETARY|LC_NAME|LC_NUMERIC|LC_PAPER|LC_TELEPHONE|LC_TIME|LESSCLOSE|LESSOPEN|LINES|LOGNAME|LS_COLORS|MACHTYPE|MAILCHECK|MANDATORY_PATH|NO_AT_BRIDGE|OLDPWD|OPTERR|OPTIND|ORBIT_SOCKETDIR|OSTYPE|PAPERSIZE|PATH|PIPESTATUS|PPID|PS1|PS2|PS3|PS4|PWD|RANDOM|REPLY|SECONDS|SELINUX_INIT|SESSION|SESSIONTYPE|SESSION_MANAGER|SHELL|SHELLOPTS|SHLVL|SSH_AUTH_SOCK|TERM|UID|UPSTART_EVENTS|UPSTART_INSTANCE|UPSTART_JOB|UPSTART_SESSION|USER|WINDOWID|XAUTHORITY|XDG_CONFIG_DIRS|XDG_CURRENT_DESKTOP|XDG_DATA_DIRS|XDG_GREETER_DATA_DIR|XDG_MENU_PREFIX|XDG_RUNTIME_DIR|XDG_SEAT|XDG_SEAT_PATH|XDG_SESSION_DESKTOP|XDG_SESSION_ID|XDG_SESSION_PATH|XDG_SESSION_TYPE|XDG_VTNR|XMODIFIERS)\\b",a={pattern:/(^(["']?)\w+\2)[ \t]+\S.*/,lookbehind:!0,alias:"punctuation",inside:null},n={bash:a,environment:{pattern:RegExp("\\$"+t),alias:"constant"},variable:[{pattern:/\$?\(\([\s\S]+?\)\)/,greedy:!0,inside:{variable:[{pattern:/(^\$\(\([\s\S]+)\)\)/,lookbehind:!0},/^\$\(\(/],number:/\b0x[\dA-Fa-f]+\b|(?:\b\d+(?:\.\d*)?|\B\.\d+)(?:[Ee]-?\d+)?/,operator:/--|\+\+|\*\*=?|<<=?|>>=?|&&|\|\||[=!+\-*/%<>^&|]=?|[?~:]/,punctuation:/\(\(?|\)\)?|,|;/}},{pattern:/\$\((?:\([^)]+\)|[^()])+\)|`[^`]+`/,greedy:!0,inside:{variable:/^\$\(|^`|\)$|`$/}},{pattern:/\$\{[^}]+\}/,greedy:!0,inside:{operator:/:[-=?+]?|[!\/]|##?|%%?|\^\^?|,,?/,punctuation:/[\[\]]/,environment:{pattern:RegExp("(\\{)"+t),lookbehind:!0,alias:"constant"}}},/\$(?:\w+|[#?*!@$])/],entity:/\\(?:[abceEfnrtv\\"]|O?[0-7]{1,3}|U[0-9a-fA-F]{8}|u[0-9a-fA-F]{4}|x[0-9a-fA-F]{1,2})/};e.languages.bash={shebang:{pattern:/^#!\s*\/.*/,alias:"important"},comment:{pattern:/(^|[^"{\\$])#.*/,lookbehind:!0},"function-name":[{pattern:/(\bfunction\s+)[\w-]+(?=(?:\s*\(?:\s*\))?\s*\{)/,lookbehind:!0,alias:"function"},{pattern:/\b[\w-]+(?=\s*\(\s*\)\s*\{)/,alias:"function"}],"for-or-select":{pattern:/(\b(?:for|select)\s+)\w+(?=\s+in\s)/,alias:"variable",lookbehind:!0},"assign-left":{pattern:/(^|[\s;|&]|[<>]\()\w+(?:\.\w+)*(?=\+?=)/,inside:{environment:{pattern:RegExp("(^|[\\s;|&]|[<>]\\()"+t),lookbehind:!0,alias:"constant"}},alias:"variable",lookbehind:!0},parameter:{pattern:/(^|\s)-{1,2}(?:\w+:[+-]?)?\w+(?:\.\w+)*(?=[=\s]|$)/,alias:"variable",lookbehind:!0},string:[{pattern:/((?:^|[^<])<<-?\s*)(\w+)\s[\s\S]*?(?:\r?\n|\r)\2/,lookbehind:!0,greedy:!0,inside:n},{pattern:/((?:^|[^<])<<-?\s*)(["'])(\w+)\2\s[\s\S]*?(?:\r?\n|\r)\3/,lookbehind:!0,greedy:!0,inside:{bash:a}},{pattern:/(^|[^\\](?:\\\\)*)"(?:\\[\s\S]|\$\([^)]+\)|\$(?!\()|`[^`]+`|[^"\\`$])*"/,lookbehind:!0,greedy:!0,inside:n},{pattern:/(^|[^$\\])'[^']*'/,lookbehind:!0,greedy:!0},{pattern:/\$'(?:[^'\\]|\\[\s\S])*'/,greedy:!0,inside:{entity:n.entity}}],environment:{pattern:RegExp("\\$?"+t),alias:"constant"},variable:n.variable,function:{pattern:/(^|[\s;|&]|[<>]\()(?:add|apropos|apt|apt-cache|apt-get|aptitude|aspell|automysqlbackup|awk|basename|bash|bc|bconsole|bg|bzip2|cal|cargo|cat|cfdisk|chgrp|chkconfig|chmod|chown|chroot|cksum|clear|cmp|column|comm|composer|cp|cron|crontab|csplit|curl|cut|date|dc|dd|ddrescue|debootstrap|df|diff|diff3|dig|dir|dircolors|dirname|dirs|dmesg|docker|docker-compose|du|egrep|eject|env|ethtool|expand|expect|expr|fdformat|fdisk|fg|fgrep|file|find|fmt|fold|format|free|fsck|ftp|fuser|gawk|git|gparted|grep|groupadd|groupdel|groupmod|groups|grub-mkconfig|gzip|halt|head|hg|history|host|hostname|htop|iconv|id|ifconfig|ifdown|ifup|import|install|ip|java|jobs|join|kill|killall|less|link|ln|locate|logname|logrotate|look|lpc|lpr|lprint|lprintd|lprintq|lprm|ls|lsof|lynx|make|man|mc|mdadm|mkconfig|mkdir|mke2fs|mkfifo|mkfs|mkisofs|mknod|mkswap|mmv|more|most|mount|mtools|mtr|mutt|mv|nano|nc|netstat|nice|nl|node|nohup|notify-send|npm|nslookup|op|open|parted|passwd|paste|pathchk|ping|pkill|pnpm|podman|podman-compose|popd|pr|printcap|printenv|ps|pushd|pv|quota|quotacheck|quotactl|ram|rar|rcp|reboot|remsync|rename|renice|rev|rm|rmdir|rpm|rsync|scp|screen|sdiff|sed|sendmail|seq|service|sftp|sh|shellcheck|shuf|shutdown|sleep|slocate|sort|split|ssh|stat|strace|su|sudo|sum|suspend|swapon|sync|sysctl|tac|tail|tar|tee|time|timeout|top|touch|tr|traceroute|tsort|tty|umount|uname|unexpand|uniq|units|unrar|unshar|unzip|update-grub|uptime|useradd|userdel|usermod|users|uudecode|uuencode|v|vcpkg|vdir|vi|vim|virsh|vmstat|wait|watch|wc|wget|whereis|which|who|whoami|write|xargs|xdg-open|yarn|yes|zenity|zip|zsh|zypper)(?=$|[)\s;|&])/,lookbehind:!0},keyword:{pattern:/(^|[\s;|&]|[<>]\()(?:case|do|done|elif|else|esac|fi|for|function|if|in|select|then|until|while)(?=$|[)\s;|&])/,lookbehind:!0},builtin:{pattern:/(^|[\s;|&]|[<>]\()(?:\.|:|alias|bind|break|builtin|caller|cd|command|continue|declare|echo|enable|eval|exec|exit|export|getopts|hash|help|let|local|logout|mapfile|printf|pwd|read|readarray|readonly|return|set|shift|shopt|source|test|times|trap|type|typeset|ulimit|umask|unalias|unset)(?=$|[)\s;|&])/,lookbehind:!0,alias:"class-name"},boolean:{pattern:/(^|[\s;|&]|[<>]\()(?:false|true)(?=$|[)\s;|&])/,lookbehind:!0},"file-descriptor":{pattern:/\B&\d\b/,alias:"important"},operator:{pattern:/\d?<>|>\||\+=|=[=~]?|!=?|<<[<-]?|[&\d]?>>|\d[<>]&?|[<>][&=]?|&[>&]?|\|[&|]?/,inside:{"file-descriptor":{pattern:/^\d/,alias:"important"}}},punctuation:/\$?\(\(?|\)\)?|\.\.|[{}[\];\\]/,number:{pattern:/(^|\s)(?:[1-9]\d*|0)(?:[.,]\d+)?\b/,lookbehind:!0}},a.inside=e.languages.bash;for(var s=["comment","function-name","for-or-select","assign-left","parameter","string","environment","function","keyword","builtin","boolean","file-descriptor","operator","punctuation","number"],o=n.variable[1].inside,i=0;i<s.length;i++)o[s[i]]=e.languages.bash[s[i]];e.languages.sh=e.languages.bash,e.languages.shell=e.languages.bash}(Prism);
+!function(e){var n=/\b(?:abstract|assert|boolean|break|byte|case|catch|char|class|const|continue|default|do|double|else|enum|exports|extends|final|finally|float|for|goto|if|implements|import|instanceof|int|interface|long|module|native|new|non-sealed|null|open|opens|package|permits|private|protected|provides|public|record(?!\s*[(){}[\]<>=%~.:,;?+\-*/&|^])|requires|return|sealed|short|static|strictfp|super|switch|synchronized|this|throw|throws|to|transient|transitive|try|uses|var|void|volatile|while|with|yield)\b/,t="(?:[a-z]\\w*\\s*\\.\\s*)*(?:[A-Z]\\w*\\s*\\.\\s*)*",s={pattern:RegExp("(^|[^\\w.])"+t+"[A-Z](?:[\\d_A-Z]*[a-z]\\w*)?\\b"),lookbehind:!0,inside:{namespace:{pattern:/^[a-z]\w*(?:\s*\.\s*[a-z]\w*)*(?:\s*\.)?/,inside:{punctuation:/\./}},punctuation:/\./}};e.languages.java=e.languages.extend("clike",{string:{pattern:/(^|[^\\])"(?:\\.|[^"\\\r\n])*"/,lookbehind:!0,greedy:!0},"class-name":[s,{pattern:RegExp("(^|[^\\w.])"+t+"[A-Z]\\w*(?=\\s+\\w+\\s*[;,=()]|\\s*(?:\\[[\\s,]*\\]\\s*)?::\\s*new\\b)"),lookbehind:!0,inside:s.inside},{pattern:RegExp("(\\b(?:class|enum|extends|implements|instanceof|interface|new|record|throws)\\s+)"+t+"[A-Z]\\w*\\b"),lookbehind:!0,inside:s.inside}],keyword:n,function:[e.languages.clike.function,{pattern:/(::\s*)[a-z_]\w*/,lookbehind:!0}],number:/\b0b[01][01_]*L?\b|\b0x(?:\.[\da-f_p+-]+|[\da-f_]+(?:\.[\da-f_p+-]+)?)\b|(?:\b\d[\d_]*(?:\.[\d_]*)?|\B\.\d[\d_]*)(?:e[+-]?\d[\d_]*)?[dfl]?/i,operator:{pattern:/(^|[^.])(?:<<=?|>>>?=?|->|--|\+\+|&&|\|\||::|[?:~]|[-+*/%&|^!=<>]=?)/m,lookbehind:!0},constant:/\b[A-Z][A-Z_\d]+\b/}),e.languages.insertBefore("java","string",{"triple-quoted-string":{pattern:/"""[ \t]*[\r\n](?:(?:"|"")?(?:\\.|[^"\\]))*"""/,greedy:!0,alias:"string"},char:{pattern:/'(?:\\.|[^'\\\r\n]){1,6}'/,greedy:!0}}),e.languages.insertBefore("java","class-name",{annotation:{pattern:/(^|[^.])@\w+(?:\s*\.\s*\w+)*/,lookbehind:!0,alias:"punctuation"},generics:{pattern:/<(?:[\w\s,.?]|&(?!&)|<(?:[\w\s,.?]|&(?!&)|<(?:[\w\s,.?]|&(?!&)|<(?:[\w\s,.?]|&(?!&))*>)*>)*>)*>/,inside:{"class-name":s,keyword:n,punctuation:/[<>(),.:]/,operator:/[?&|]/}},import:[{pattern:RegExp("(\\bimport\\s+)"+t+"(?:[A-Z]\\w*|\\*)(?=\\s*;)"),lookbehind:!0,inside:{namespace:s.inside.namespace,punctuation:/\./,operator:/\*/,"class-name":/\w+/}},{pattern:RegExp("(\\bimport\\s+static\\s+)"+t+"(?:\\w+|\\*)(?=\\s*;)"),lookbehind:!0,alias:"static",inside:{namespace:s.inside.namespace,static:/\b\w+$/,punctuation:/\./,operator:/\*/,"class-name":/\w+/}}],namespace:{pattern:RegExp("(\\b(?:exports|import(?:\\s+static)?|module|open|opens|package|provides|requires|to|transitive|uses|with)\\s+)(?!<keyword>)[a-z]\\w*(?:\\.[a-z]\\w*)*\\.?".replace(/<keyword>/g,(function(){return n.source}))),lookbehind:!0,inside:{punctuation:/\./}}})}(Prism);
+</script>
+<script>
+/* ============================================================
+   용어 사전 (방어적 프로그래밍)
+   ============================================================ */
+const GLOSSARY = {
+  // @GLOSSARY_END
+};
+
+/* ============================================================
+   유틸 · 학습 엔진
+   ============================================================ */
+const $  = (s, r=document) => r.querySelector(s);
+const $$ = (s, r=document) => Array.from(r.querySelectorAll(s));
+const Store = {
+  get(k, d){ try{ return JSON.parse(localStorage.getItem("defprog:"+k)) ?? d; }catch(e){ return d; } },
+  set(k, v){ try{ localStorage.setItem("defprog:"+k, JSON.stringify(v)); }catch(e){} }
+};
+const esc = s => String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+
+/* --- 목차 자동 생성 + 스크롤스파이 --- */
+const sections = $$('section[data-title]');
+const toc = $('#toc');
+sections.forEach((sec, i) => {
+  const a = document.createElement('a');
+  a.href = '#' + sec.id;
+  a.dataset.target = sec.id;
+  // 번호는 위치에서 나오지만, 장이 아닌 절(개요·부록)은 자기 표지를 data-num으로 들고 온다.
+  // 부록에 16·17·18이 붙으면 16장이 있다는 뜻이 되어 버린다.
+  a.innerHTML = `<span class="num">${sec.dataset.num || (i===0?'·':i)}</span><span>${sec.dataset.title}</span>`;
+  toc.appendChild(a);
+});
+const tocLinks = $$('#toc a');
+
+/* 저장된 진행 기록은 읽어 올 때 지금 화면에 있는 키로 한 번 거른다.
+   장이나 퀴즈를 지우거나 이름을 바꾸면 그 키가 독자의 기록에는 남아, 분자만 옛
+   문서 기준으로 계산된다 — 15장 체크리스트에서 "9 / 8"이 찍혔던 것과 같은 모양이고,
+   여기서는 Math.min clamp에 가려 숫자 대신 퍼센트가 이르게 100%에 닿는다.
+   거른 결과가 원본과 다르면 곧바로 다시 저장해 옛 키를 흘려보낸다(중복도 함께 정리된다).
+   그래야 분자가 언제나 분모의 부분집합이다. */
+function loadKeys(name, valid){
+  const raw  = Store.get(name, []);
+  const arr  = Array.isArray(raw) ? raw : [];
+  const kept = new Set(arr.filter(k => valid.has(k)));
+  if(kept.size !== arr.length) Store.set(name, [...kept]);
+  return kept;
+}
+
+const visited = loadKeys('visited', new Set(sections.map(s => s.id)));
+function markVisited(id){
+  if(visited.has(id)) return;
+  visited.add(id); Store.set('visited', [...visited]); updateProgress();
+}
+tocLinks.forEach(a => { if(visited.has(a.dataset.target)) a.classList.add('done'); });
+const spy = new IntersectionObserver((entries) => {
+  entries.forEach(e => {
+    if(e.isIntersecting){
+      const id = e.target.id;
+      tocLinks.forEach(a => a.classList.toggle('active', a.dataset.target === id));
+      markVisited(id);
+      const cur = $(`#toc a[data-target="${id}"]`);
+      if(cur) cur.classList.add('done');
+    }
+  });
+}, { rootMargin: '-45% 0px -50% 0px', threshold: 0 });
+sections.forEach(s => spy.observe(s));
+
+/* --- 진행률 --- */
+const quizEls = $$('.quiz');
+const solved = loadKeys('solved', new Set(quizEls.map(q => q.dataset.qid)));
+function updateProgress(){
+  const total = sections.length + quizEls.length;
+  const done = visited.size + solved.size;
+  const pct = total ? Math.round(Math.min(done, total) / total * 100) : 0;
+  $('#progBar').style.width = pct + '%';
+  $('#progPct').textContent = pct + '%';
+}
+
+/* --- 툴팁 --- */
+const tip = $('#tooltip');
+function showTip(el){
+  const key = el.dataset.t;
+  tip.innerHTML = `<b>${esc(el.textContent)}</b><br>${GLOSSARY[key] || key}`;
+  tip.classList.add('show'); positionTip(el);
+}
+function positionTip(el){
+  const r = el.getBoundingClientRect();
+  let x = r.left, y = r.bottom + 8;
+  tip.style.left = '0px'; tip.style.top = '0px';
+  const tw = tip.offsetWidth, th = tip.offsetHeight;
+  if(x + tw > window.innerWidth - 12) x = window.innerWidth - tw - 12;
+  if(y + th > window.innerHeight - 12) y = r.top - th - 8;
+  tip.style.left = Math.max(12, x) + 'px';
+  tip.style.top = y + 'px';
+}
+function hideTip(){ tip.classList.remove('show'); }
+$$('.term').forEach(el => {
+  el.setAttribute('tabindex','0'); el.setAttribute('role','button');
+  el.setAttribute('aria-label', el.textContent + ' — 용어 설명 보기');
+  el.addEventListener('mouseenter', () => showTip(el));
+  el.addEventListener('mouseleave', hideTip);
+  el.addEventListener('focus', () => showTip(el));
+  el.addEventListener('blur', hideTip);
+  el.addEventListener('click', e => { e.stopPropagation(); tip.classList.contains('show') ? hideTip() : showTip(el); });
+  el.addEventListener('keydown', e => {
+    if(e.key==='Enter'||e.key===' '){ e.preventDefault(); tip.classList.contains('show') ? hideTip() : showTip(el); }
+    else if(e.key==='Escape') hideTip();
+  });
+});
+document.addEventListener('click', hideTip);
+window.addEventListener('scroll', hideTip, true);
+
+/* --- 퀴즈 --- */
+$$('.quiz').forEach(q => {
+  const ans = q.dataset.answer, qid = q.dataset.qid;
+  const opts = $$('.opt', q), explain = $('.explain', q);
+  if(solved.has(qid)){
+    opts.forEach(o => { o.disabled = true; if(o.dataset.opt===ans) o.classList.add('correct'); });
+    explain.classList.add('show'); q._done = true;
+  }
+  opts.forEach(opt => opt.addEventListener('click', () => {
+    if(q._done) return;
+    opts.forEach(o => { o.disabled = true; if(o.dataset.opt===ans) o.classList.add('correct'); });
+    if(opt.dataset.opt !== ans) opt.classList.add('wrong');
+    else { solved.add(qid); Store.set('solved', [...solved]); updateProgress(); }
+    explain.classList.add('show'); q._done = true;
+  }));
+});
+
+/* --- 용어 사전 드로어 --- */
+const glossary = $('#glossary'), scrim = $('#scrim');
+function renderGlossary(filter=''){
+  const list = $('#gList'); list.innerHTML = '';
+  const f = filter.trim().toLowerCase();
+  Object.entries(GLOSSARY)
+    .filter(([k,v]) => !f || k.toLowerCase().includes(f) || v.toLowerCase().includes(f))
+    .sort((a,b)=>a[0].localeCompare(b[0],'ko'))
+    .forEach(([k,v]) => {
+      const d = document.createElement('div'); d.className = 'g-item';
+      d.innerHTML = `<div class="t">${esc(k)}</div><div class="d">${esc(v)}</div>`;
+      list.appendChild(d);
+    });
+}
+function openGlossary(){ renderGlossary(); glossary.classList.add('open'); scrim.classList.add('open'); $('#glossaryBtn').setAttribute('aria-expanded','true'); }
+function closeGlossary(){ glossary.classList.remove('open'); scrim.classList.remove('open'); $('#glossaryBtn').setAttribute('aria-expanded','false'); }
+$('#glossaryBtn').setAttribute('aria-expanded','false');
+$('#glossaryBtn').addEventListener('click', openGlossary);
+$('#glossaryClose').addEventListener('click', closeGlossary);
+scrim.addEventListener('click', () => { closeGlossary(); $('#sidebar').classList.remove('open'); $('#menuBtn').setAttribute('aria-expanded','false'); });
+$('#gSearch').addEventListener('input', e => renderGlossary(e.target.value));
+document.addEventListener('keydown', e => {
+  if(e.key === 'Escape'){ closeGlossary(); $('#sidebar').classList.remove('open'); $('#menuBtn').setAttribute('aria-expanded','false'); }
+});
+$('#resetBtn').addEventListener('click', () => {
+  if(confirm('학습 진행률·퀴즈·체크리스트 기록을 모두 지울까요?')){
+    ['visited','solved','ckl'].forEach(k => localStorage.removeItem('defprog:'+k));
+    location.reload();
+  }
+});
+$('#menuBtn').setAttribute('aria-expanded','false');
+$('#menuBtn').setAttribute('aria-controls','sidebar');
+$('#menuBtn').addEventListener('click', () => {
+  const open = $('#sidebar').classList.toggle('open'); scrim.classList.toggle('open');
+  $('#menuBtn').setAttribute('aria-expanded', open ? 'true':'false');
+});
+$$('#toc a').forEach(a => a.addEventListener('click', () => { $('#sidebar').classList.remove('open'); scrim.classList.remove('open'); $('#menuBtn').setAttribute('aria-expanded','false'); }));
+
+/* 토글 버튼 공통 배선 */
+function wireTogs(sel, onChange){
+  const root = $(sel); if(!root) return null;
+  const state = {};
+  $$('.tog', root).forEach(b => {
+    state[b.dataset.k] = b.classList.contains('on');
+    b.setAttribute('aria-pressed', state[b.dataset.k] ? 'true':'false');
+    b.addEventListener('click', () => {
+      b.classList.toggle('on');
+      state[b.dataset.k] = b.classList.contains('on');
+      b.setAttribute('aria-pressed', state[b.dataset.k] ? 'true':'false');
+      onChange(state);
+    });
+  });
+  return state;
+}
+function wirePicker(sel, onPick){
+  const root = $(sel); if(!root) return;
+  $$('.pick', root).forEach(b => b.addEventListener('click', () => {
+    $$('.pick', root).forEach(x => x.classList.toggle('on', x===b));
+    onPick(b.dataset.k, b);
+  }));
+}
+
+
+// ==== 반경 지도 — 개요와 15장이 같은 배열에서 그린다 ====
+const RADIUS = [
+  {n:'한 줄',        ch:'1·2·3', can:'그 값이 이상하다는 것을 그 자리에서 알린다',
+                     hole:'알려도 그 섹션은 여전히 빈 화면이다'},
+  {n:'한 함수',      ch:'4',     can:'경계에서 한 번 검사해 안쪽을 신뢰할 수 있게 만든다',
+                     hole:'검사를 통과한 뒤에도 객체가 이상해질 수 있다'},
+  {n:'한 객체',      ch:'5',     can:'그런 상태를 애초에 가질 수 없게 만든다',
+                     hole:'객체가 옳아도 조립이 틀릴 수 있다'},
+  {n:'한 모듈',      ch:'6·7·8', can:'실패를 섹션 경계에서 멈춰 세운다',
+                     hole:'죽지 않고 느려지면 이 방어는 통하지 않는다'},
+  {n:'프로세스 경계',ch:'9·10',  can:'느린 의존을 끊고 그 자리를 대신 채운다',
+                     hole:'무엇으로 채울지는 여전히 정해져 있지 않다'},
+  {n:'요구사항',     ch:'11~14', can:'무엇을 보여 줄지 문서에 문장으로 남긴다',
+                     hole:'여기가 종착지다'},
+];
+
+function paintRadius(root, withHoles){
+  root.innerHTML = RADIUS.map((r, i) => `
+    <div class="map-card">
+      <div class="top"><span class="no">반경 ${i+1}</span><b>${r.n}</b><span class="dim">${r.ch}장</span></div>
+      <p>${r.can}</p>
+      ${withHoles ? `<p class="hole">↳ ${r.hole}</p>` : ''}
+    </div>`).join('');
+}
+paintRadius($('#radiusMap'), false);
+</script>
+</body>
+</html>
