@@ -504,21 +504,23 @@ table.t td.c{font-family:var(--mono); font-size:12px; color:var(--text-mut); whi
    그대로 손으로 채우는 칸이 된다. */
 .qans{margin:11px 0 2px; height:32px; border-bottom:1px dashed var(--border-2)}
 
-/* 인쇄 — 부록 C 의 카드만 남긴다. 사이드바·데모·퀴즈·용어집은 눌러야 쓸모가 있는
-   물건이라 종이에서는 자리만 차지한다. 스크림은 이 문서에서 클래스가 아니라 #scrim 이다. */
+/* 인쇄 — 부록 C 만 남긴다. 이 문서는 사이드바로 이동만 하는 연속 스크롤 한 장이라,
+   숨기는 것을 사이드바·데모·퀴즈로 끝내면 본문 열다섯 장이 그대로 따라 나온다(그렇게
+   두었을 때 A4 55쪽이었다). 그래서 부록 C 를 뺀 모든 섹션을 통째로 내린다. 제목과 안내
+   문장은 카드와 같은 섹션 안에 있으므로 함께 남는다. 스크림은 클래스가 아니라 #scrim 이다. */
 @media print{
-  #sidebar, .menu-btn, .demo, .quiz, #glossary, #scrim{display:none !important}
+  #sidebar, .menu-btn, #glossary, #scrim{display:none !important}
+  main section:not(#ap-cards){display:none}
   #ap-cards{display:block}
+  #content{padding:0; max-width:none}
   body{background:#fff; color:#000}
   /* 브라우저는 배경색을 기본적으로 인쇄하지 않는다. 화면용 밝은 글자색을 그대로 두면
-     흰 종이에 흰 글씨가 찍히므로, 종이에서 쓸 색을 여기서 다시 정한다. 미리보기로
-     확인하지 않으면 카드가 남았는데 아무것도 읽히지 않는 상태를 그냥 지나친다. */
-  p, li, .lead, .dim, strong, b, .term, .qq, .qb, .trace, table.t th, table.t td,
-  table.t td:first-child, code:not([class*="language-"]){color:#000}
-  .qcard, .qcard .no, .qax, .trace, table.t th,
-  code:not([class*="language-"]){background:none}
-  .qcard .no, .qax, table.t th, table.t td,
-  code:not([class*="language-"]){border-color:#999}
+     흰 종이에 흰 글씨가 찍히므로, 종이에 남는 것에만 색을 다시 정한다. 남는 것이
+     부록 C 하나뿐이라 범위도 그 안으로 좁힌다. */
+  #ap-cards, #ap-cards p, #ap-cards .qq, #ap-cards .qb, #ap-cards .dim,
+  #ap-cards .no, #ap-cards .qax{color:#000}
+  #ap-cards .qcard, #ap-cards .no, #ap-cards .qax{background:none}
+  #ap-cards .no, #ap-cards .qax{border-color:#999}
   .qans{border-bottom:1px solid #999}
   .qcard{break-inside:avoid; border:1px solid #999; margin:0 0 8px; padding:10px}
 }
@@ -3362,8 +3364,9 @@ void 전시_섹션_응답이_2초를_넘으면_그_섹션만_숨고_나머지는
       <h2>🃏 실패 요건 질문 카드</h2>
 
       <p>12장의 열두 질문을 요건 리뷰 자리에 그대로 들고 갈 수 있게 폈습니다. 표시를 남기고 개수를 세는
-      쪽은 12장의 카드이고, 여기 있는 것은 종이에 옮기기 위한 것입니다. 이 페이지를 인쇄하면 사이드바와
-      데모와 퀴즈는 빠지고 아래 카드 열두 장만 남습니다. 카드마다 답을 적을 자리를 한 줄씩 두었습니다.</p>
+      쪽은 12장의 카드이고, 여기 있는 것은 종이에 옮기기 위한 것입니다. 이 페이지를 인쇄하면 사이드바와 본문
+      열다섯 장과 부록 A·B 까지 전부 빠지고 이 부록만 남습니다. 카드마다 답을 적을 자리를 한 줄씩
+      두었습니다.</p>
 
       <p class="dim">네 축을 한 바퀴 도는 순서로 놓았습니다. 한 축에서 할 말이 하나도 나오지 않는다면 그
       축이 이 화면에 없는 것이 아니라, 아직 그 축을 생각하지 않은 것입니다.</p>
