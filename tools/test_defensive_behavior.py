@@ -158,3 +158,27 @@ def test_a_string_throws_because_it_has_no_such_getter(page):
 def test_an_empty_list_throws_too(page):
     """리스트에 정수가 아닌 프로퍼티를 물으면 결국 BeanELResolver 로 떨어진다."""
     assert el(page, 'list')['result'] == 'throw'
+
+
+def pipeline(page, guard_at):
+    return page.evaluate('g => Pipeline.run(g)', guard_at)
+
+
+def test_guarding_late_leaves_a_long_trace(page):
+    r = pipeline(page, 'view')
+    assert len(r['frames']) >= 8
+    assert 'PropertyNotFoundException' in r['message']
+
+
+def test_guarding_at_the_boundary_leaves_a_short_one(page):
+    """검증을 앞으로 옮길수록 스택트레이스가 짧아지고 메시지가 정확해진다."""
+    early = pipeline(page, 'parse')
+    late = pipeline(page, 'view')
+    assert len(early['frames']) < len(late['frames'])
+    assert early['caughtAt'] == 'parse'
+
+
+def test_the_early_message_names_what_was_wrong(page):
+    r = pipeline(page, 'parse')
+    assert 'bannerImageList' in r['message']
+    assert 'String' in r['message']
