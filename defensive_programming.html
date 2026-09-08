@@ -2484,7 +2484,7 @@ class DuplicateSectionException extends RuntimeException {
               <text class="cap-l" x="40" y="160">그 몫을 다시 둘로 나눕니다</text>
               <rect fill="var(--ok)" opacity=".20" stroke="var(--ok)" x="40" y="168" width="65" height="28" rx="6"/>
               <text class="m ok" x="72" y="187" text-anchor="middle">연결 100</text>
-              <rect fill="var(--ok)" opacity=".20" stroke="var(--ok)" x="105" y="168" width="130" height="28" rx="6"/>
+              <rect fill="var(--ok)" opacity=".11" stroke="var(--ok)" x="105" y="168" width="130" height="28" rx="6"/>
               <text class="m ok" x="170" y="187" text-anchor="middle">읽기 200</text>
               <text class="m mut" x="248" y="187">읽기만 짧게 잡으면 연결이 지연될 때 아무 힘도 쓰지 못합니다</text>
             </g>
@@ -2492,9 +2492,12 @@ class DuplicateSectionException extends RuntimeException {
             <!-- 4-a. 어디서 본 숫자를 옮겨 쓰면 -->
             <g data-at="3">
               <text class="cap-l no" x="40" y="222">어디서 본 3000ms 를 그대로 옮겨 쓰면</text>
-              <rect fill="var(--bad)" opacity=".18" stroke="var(--bad)" x="40" y="230" width="644" height="28" rx="6"/>
-              <text class="m no" x="360" y="249" text-anchor="middle">섹션 하나가 전체 예산의 세 배를 씁니다 · 막대가 화면 밖으로 나갑니다</text>
-              <polygon fill="var(--bad)" points="686,232 700,244 686,256"/>
+              <!-- 이 막대만 축척을 벗어나면 그림이 재는 것과 말하는 것이 달라진다. 3000ms 를 같은
+                   축척(1ms=0.65px)으로 그리면 1950px 이고, viewBox 밖은 svg 가 잘라 낸다.
+                   잘린 끝이 "예산 밖으로 나간다"를 그대로 보여 준다. 폭이 viewBox 보다 큰 것은
+                   의도이므로, 넘침을 재는 검사는 이 사각형을 예외로 두어야 한다. -->
+              <rect fill="var(--bad)" opacity=".18" stroke="var(--bad)" x="40" y="230" width="1950" height="28" rx="6"/>
+              <text class="m no" x="352" y="249" text-anchor="middle">3000ms · 이 그림의 오른쪽 끝을 지나 예산의 세 배까지 갑니다</text>
             </g>
 
             <!-- 4-b. 너무 빠듯하게 잡으면 -->
@@ -4422,7 +4425,7 @@ wireDia('diaLayers', [
   {c:'섹션 서비스는 그 섹션이 비어도 화면이 성립하는지를 압니다. 대안이 있으므로 잡는 것이 방어가 됩니다.', h:3400},
   {c:'페이지 조립기도 대안을 가집니다. 그 섹션을 빼고 나머지 일곱 칸을 세울 수 있습니다.', h:3400},
   {c:'전역 처리기까지 올라왔다는 것은 <b>그 사이 누구도 대안을 실행하지 못했다</b>는 뜻입니다. 여기서 할 수 있는 일은 기록하고 알리는 것뿐입니다.', h:4000},
-  {c:'가장 깊은 층과 가장 높은 층이 같은 이유로 자격을 갖지 못합니다. 잡는 동작이 같아 보여도, 대안이 없으면 그것은 방어가 아니라 삼킴입니다.', h:4400},
+  {c:'네 층을 나란히 놓으면 자격이 높이를 따라가지 않습니다. 잡는 동작이 같아 보여도, <b>대안이 없으면 그것은 방어가 아니라 삼킴입니다.</b>', h:4400},
 ]);
 
 wireDia('diaPool', [
