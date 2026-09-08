@@ -194,5 +194,7 @@ def test_every_language_used_has_a_grammar_in_this_file(src):
 
     문법 블록을 지우면 강조만 조용히 사라지고 검사기는 전부 통과한다. 그 침묵을 막는다."""
     for lang in sorted({a for a, _ in PRE_LANG.findall(src)}):
-        assert 'languages.%s' % lang in src, (
-            'language-%s 를 쓰는데 그 문법이 이 파일에 없다' % lang)
+        # 이름이 어딘가 적혀 있는 것으로는 부족하다. 실제로 대입하는 자리를 요구한다.
+        # (주석에만 남아도 통과하던 것을 막는다)
+        assert re.search(r'languages\.%s\s*=' % re.escape(lang), src), (
+            'language-%s 를 쓰는데 그 문법을 정의하는 자리가 이 파일에 없다' % lang)

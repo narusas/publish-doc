@@ -230,6 +230,8 @@ def test_the_jsp_grammar_knows_jsp_specific_syntax(page):
         const out = Prism.highlight(
             '<%@ page buffer="8kb" %>\\n<%-- c --%>\\n<c:out value="x"/>${a.b}',
             Prism.languages.jsp, 'jsp');
-        return ['jsp-directive', 'jsp-comment', 'namespace', 'el']
+        // 토큰 클래스를 통째로 본다. 부분 문자열만 보면 다른 단어 안의 'el' 로도 통과한다.
+        return ['token jsp-directive keyword', 'token jsp-comment comment',
+                'token namespace', 'token el variable']
                  .filter(k => out.indexOf(k) === -1);}""")
     assert kinds == [], 'JSP 문법이 잃은 토큰: %s' % kinds
