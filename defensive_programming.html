@@ -4531,6 +4531,11 @@ function wireDia(id, steps){
   }, { threshold: 0.3 }).observe(fig);
 }
 
+// 테스트가 클릭을 흉내 내는 대신 이 둘을 직접 부른다. window.EL · window.Assembly ·
+// window.QUESTIONS 를 올려 둔 것과 같은 이유이고, 이름도 같은 관례로 붙인다.
+window.diaAt = diaAt;
+window.RADIUS = RADIUS;
+
 wireDia('diaBlame', [
   {c:'값 하나가 상류에서 출발해 응답 파싱, 캐시, 모델 조립을 거쳐 화면 렌더까지 갑니다.', h:2800},
   {c:'그 값이 목록이 아니라 문자열이 된 자리는 앞의 세 갈래 가운데 하나입니다. <b>어느 쪽이었는지는 아직 모릅니다.</b>', h:3400},
