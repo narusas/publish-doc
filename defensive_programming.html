@@ -528,6 +528,124 @@ table.t td.c{font-family:var(--mono); font-size:12px; color:var(--text-mut); whi
   .qans{border-bottom:1px solid #999}
   .qcard{break-inside:avoid; border:1px solid #999; margin:0 0 8px; padding:10px}
 }
+
+/* ============ 도해 ============
+   그림 하나는 단계의 줄이다. 구동기가 단계 번호를 뿌리에 적고 해당 요소에 .vis 를
+   걸어 주며, 무엇이 어떻게 보일지는 여기서 정한다. 구동기는 자리도 모양도 모른다. */
+.dia{
+  margin:22px 0; padding:16px 18px; border:1px solid var(--border);
+  border-radius:var(--radius); background:var(--panel);
+}
+.dia-top{display:flex; align-items:center; gap:10px; flex-wrap:wrap; margin:0 0 6px}
+.dia-tag{
+  font-family:var(--mono); font-size:10.5px; letter-spacing:1px; text-transform:uppercase;
+  color:var(--text-mut); border:1px solid var(--border); padding:3px 8px;
+  border-radius:6px; background:var(--bg);
+}
+.dia-sp{flex:1 1 auto}
+.dia-btn{padding:5px 11px; font-size:12px; font-family:var(--mono); min-width:74px}
+.dia-dots{display:flex; gap:6px; align-items:center}
+/* 전역 button 규칙이 padding 을 들고 있어서, 폭만 8px 로 줘도 알약이 된다.
+   padding 과 line-height 를 도로 0 으로 내려 놓아야 점이 점으로 보인다. */
+.dia-dot{
+  width:8px; height:8px; padding:0; line-height:0; flex:0 0 auto;
+  border-radius:50%; background:var(--panel-2);
+  border:1px solid var(--border-2); transition:background .2s, border-color .2s;
+}
+.dia-dot:hover{transform:none; border-color:var(--accent)}
+.dia-dot.on{background:var(--accent); border-color:var(--accent)}
+/* 멈춰 있는 동안에는 지금 단계가 어디인지가 더 중요해진다 */
+.dia.paused .dia-dot.on{background:var(--warn); border-color:var(--warn)}
+.dia svg{display:block; width:100%; height:auto; margin:2px 0 0}
+
+/* 단계 설명. figcaption 과 갈라 둔다. figcaption 은 그림이 주장하는 것 한 줄이라
+   내내 같고, 이쪽은 단계마다 바뀐다. 바뀌는 쪽을 낭독기가 계속 읽으면 본문을 들을
+   수 없으므로 여기는 aria-hidden 으로 덮고, 그림의 뜻은 svg 의 aria-label 이 진다. */
+.dia-cap{
+  min-height:2.9em; margin:8px 0 0; padding:9px 12px; border-radius:var(--radius-sm);
+  background:var(--bg); border:1px solid var(--border);
+  font-size:13.2px; line-height:1.6; color:var(--text-dim);
+}
+.dia-cap b{color:var(--text)}
+.dia-cap .no{color:var(--bad)}
+.dia figcaption{
+  margin:8px 2px 0; font-size:12.5px; line-height:1.65; color:var(--text-mut);
+  border-top:1px solid var(--border); padding-top:8px;
+}
+.dia figcaption b{color:var(--text-dim)}
+
+/* ---- 그림 안의 공통 부품 ----
+   색 축은 본문 판정 색과 같다. 이 문서는 --accent 와 --bad 가 거의 같은 로즈라서,
+   형제 문서처럼 accent 를 '움직이는 값'에 쓰면 실패 표시와 구별되지 않는다.
+   좇아야 할 값은 --purple 이 맡고, accent 는 지금 단계의 테두리에만 쓴다. */
+.dia .nd{fill:var(--bg); stroke:var(--border-2); stroke-width:1.2}
+.dia .nd.soft{fill:var(--panel-2)}
+.dia .nd.hot{stroke:var(--accent); stroke-width:1.8}
+.dia .nd.ghost{fill:none; stroke:var(--border); stroke-dasharray:4 4}
+
+.dia text{font-family:var(--sans); fill:var(--text-dim)}
+.dia .s{font-size:11.5px; fill:var(--text-dim)}
+/* 값은 고정폭, 말은 본문 활자. 칸에 든 것이 데이터일 때는 자간이 벌어지는 것이 정보다. */
+.dia .m{font-family:var(--mono); font-size:10.5px; fill:var(--text-mut); letter-spacing:.3px}
+.dia .cap-l{font-family:var(--mono); font-size:9.5px; letter-spacing:.6px; fill:var(--text-mut)}
+.dia .mut{fill:var(--text-mut)}
+.dia .no{fill:var(--bad)}
+.dia .ok{fill:var(--ok)}
+.dia .warn{fill:var(--warn)}
+
+.dia .wire{stroke:var(--border-2); stroke-width:1.4; fill:none}
+.dia .wire.dash{stroke-dasharray:5 4}
+.dia .wire.bad{stroke:var(--bad); stroke-width:2}
+
+/* ---- 구동기가 쓰는 것 ----
+   data-at 하나다. 그 단계에서만 보여야 할 것에 붙이고, 목록 판정은 JS 가,
+   보임과 숨김은 여기가 맡는다. */
+.dia [data-at]{opacity:0; transition:opacity .28s ease}
+.dia [data-at].vis{opacity:1}
+
+/* 새로 생긴 것 */
+.dia .pop{transform-box:fill-box; transform-origin:center}
+.dia .pop.vis{animation:diaPop .42s cubic-bezier(.2,.9,.3,1.25) both}
+@keyframes diaPop{
+  0%  {opacity:0; transform:scale(.55)}
+  62% {opacity:1; transform:scale(1.07)}
+  100%{opacity:1; transform:scale(1)}
+}
+/* 지금 보라는 표시. 깜빡임이 아니라 숨쉬기여야 한다. 그림이 읽는 동안 내내 떠
+   있으므로 대비가 크게 오르내리면 옆의 본문을 못 읽는다. */
+.dia .breathe.vis{animation:diaBreathe 1.9s ease-in-out infinite}
+@keyframes diaBreathe{0%,100%{opacity:1} 50%{opacity:.45}}
+/* 선이 그어진다. 갔다 오는 것이 아니라 관계가 드러나는 것 */
+.dia .draw{stroke-dasharray:var(--dl,300); stroke-dashoffset:var(--dl,300)}
+.dia .draw.vis{animation:diaDraw var(--ft,.7s) ease-out forwards}
+@keyframes diaDraw{to{stroke-dashoffset:0}}
+
+/* 움직임을 줄여 달라고 한 사람에게는 자동으로 돌지 않는다. 구동기가 자동 재생을
+   걸지 않고, 여기서는 사이를 잇는 보간만 끈다. 단계를 손으로 넘기는 것은 남는다. */
+@media (prefers-reduced-motion: reduce){
+  .dia [data-at]{transition:none}
+  .dia .pop.vis, .dia .breathe.vis, .dia .draw.vis{animation:none}
+  /* 애니메이션을 끄면 시작 상태(투명·잘린 선)에 멈춘다. 끝난 모습으로 세운다. */
+  .dia .pop.vis, .dia .breathe.vis{opacity:1}
+  .dia .draw.vis{stroke-dashoffset:0}
+}
+
+/* 좁은 화면에서 글자가 뭉개지지 않게 최소 폭을 주고 가로로만 흘린다. 본문이 가로로
+   밀리면 안 되므로 스크롤은 그림 상자 안에서만 일어난다. 폭에 맞춰 통째로 줄이는
+   쪽은 택하지 않았다. 720 짜리 그림을 400 에 밀어 넣으면 9.5px 글자가 5px 가 된다. */
+.dia-scroll{overflow-x:auto; overflow-y:hidden; scrollbar-width:thin;
+  scrollbar-color:var(--border-2) transparent}
+.dia-scroll::-webkit-scrollbar{height:8px}
+.dia-scroll::-webkit-scrollbar-track{background:transparent}
+.dia-scroll::-webkit-scrollbar-thumb{background:var(--border-2); border-radius:99px}
+.dia-scroll::-webkit-scrollbar-thumb:hover{background:var(--text-mut)}
+/* 밀 수 있다는 표시. 넘치는 쪽이 상자 안이라 페이지 스크롤바로는 드러나지 않는다. */
+.dia-hint{display:none; font-family:var(--mono); font-size:10.5px; letter-spacing:.4px;
+  color:var(--text-mut); margin:0 0 4px}
+@media(max-width:700px){
+  .dia-scroll svg{min-width:560px}
+  .dia-hint{display:block}
+}
 </style>
 </head>
 <body>
@@ -688,6 +806,80 @@ table.t td.c{font-family:var(--mono); font-size:12px; color:var(--text-mut); whi
 
       <p>스택트레이스가 그 자리를 알려 주지 못하는 것은 스택트레이스의 결함이 아닙니다. 애초에 다른 것을
       찍는 물건이기 때문입니다.</p>
+
+      <figure class="dia" id="diaBlame">
+        <div class="dia-top">
+          <span class="dia-tag">그림 1 · 두 개의 길</span>
+          <span class="dia-sp"></span>
+          <button class="dia-btn ghost" type="button">▶ 재생</button>
+          <div class="dia-dots"></div>
+        </div>
+        <div class="dia-hint" aria-hidden="true">← 좌우로 밀어서 보세요 →</div>
+        <div class="dia-scroll">
+          <svg viewBox="0 0 720 300" role="img" aria-label="값 하나가 상류에서 출발해 응답 파싱, 캐시, 모델 조립을 거쳐 화면 렌더까지 가는 과정을 시간축 위에 놓은 그림. 그 값이 목록이 아니라 문자열이 된 자리는 앞의 세 갈래 가운데 하나이지만 어디였는지는 알 수 없고, 그 자리들에서는 아무도 예외를 던지지 않아 스택에 아무것도 남기지 않았다. 스택트레이스 열 줄은 마지막 화면 렌더 자리 위에서만 솟아 있어서, 터진 자리는 정확히 가리키지만 잘못된 자리는 가리키지 못한다.">
+
+            <!-- 스택이 찍지 않은 구간 -->
+            <rect class="nd ghost" x="30" y="40" width="400" height="150" rx="12" data-at="2+"/>
+            <text class="cap-l" x="230" y="66" text-anchor="middle" data-at="2+">스택트레이스가 찍지 않은 구간</text>
+            <text class="s" x="230" y="112" text-anchor="middle" data-at="2+">여기에서는 아무도 예외를 던지지 않았습니다.</text>
+            <text class="s mut" x="230" y="136" text-anchor="middle" data-at="2+">던지지 않았으므로 스택에 남을 것도 없습니다.</text>
+
+            <!-- 스택 열 줄. 위가 가장 깊은 자리다 -->
+            <g data-at="4+" class="pop">
+              <rect class="nd soft" x="452" y="18" width="236" height="180" rx="10"/>
+              <text class="cap-l" x="570" y="14" text-anchor="middle">스택트레이스가 찍은 것 · 열 줄</text>
+              <text class="m" x="460" y="36">BeanELResolver$BeanProperties.get:253</text>
+              <text class="m" x="460" y="53">BeanELResolver.property:322</text>
+              <text class="m" x="460" y="70">BeanELResolver.getValue:93</text>
+              <text class="m" x="460" y="87">JasperELResolver.getValue:123</text>
+              <text class="m" x="460" y="104">AstValue.getValue:160</text>
+              <text class="m" x="460" y="121">ValueExpressionImpl.getValue:149</text>
+              <text class="m" x="460" y="138">PageContextImpl.proprietaryEvaluate:655</text>
+              <text class="m" x="460" y="155">..._jspx_meth_c_005fset_005f141:9946</text>
+              <text class="m" x="460" y="172">..._jspx_meth_c_005fif_005f43:9832</text>
+              <text class="m" x="460" y="189">..._jspService:743</text>
+            </g>
+            <line class="wire" x1="570" y1="198" x2="570" y2="212" data-at="4+"/>
+
+            <!-- 값의 자리 표시 -->
+            <text class="m warn" x="74"  y="204" text-anchor="middle" data-at="1+">? 상류의 빈 값</text>
+            <text class="m warn" x="192" y="204" text-anchor="middle" data-at="1+">? 파싱 실패</text>
+            <text class="m warn" x="318" y="204" text-anchor="middle" data-at="1+">? 역직렬화 실패</text>
+            <text class="m no"   x="570" y="204" text-anchor="middle" data-at="3+">java.lang.String</text>
+
+            <!-- 네 자리와 그 앞의 상류 -->
+            <rect class="nd ghost" x="30"  y="212" width="88"  height="32" rx="8"/>
+            <text class="s mut" x="74"  y="232" text-anchor="middle">상류 API</text>
+            <rect class="nd" x="140" y="212" width="104" height="32" rx="8"/>
+            <text class="s" x="192" y="232" text-anchor="middle">응답 파싱</text>
+            <rect class="nd" x="266" y="212" width="104" height="32" rx="8"/>
+            <text class="s" x="318" y="232" text-anchor="middle">캐시</text>
+            <rect class="nd" x="392" y="212" width="104" height="32" rx="8"/>
+            <text class="s" x="444" y="232" text-anchor="middle">모델 조립</text>
+            <rect class="nd" x="518" y="212" width="104" height="32" rx="8"/>
+            <rect class="nd hot" x="518" y="212" width="104" height="32" rx="8" data-at="3+"/>
+            <text class="s" x="570" y="232" text-anchor="middle">화면 렌더</text>
+
+            <!-- 자리 사이의 이동 -->
+            <line class="wire dash" x1="118" y1="228" x2="140" y2="228"/>
+            <line class="wire dash" x1="244" y1="228" x2="266" y2="228"/>
+            <line class="wire dash" x1="370" y1="228" x2="392" y2="228"/>
+            <line class="wire dash" x1="496" y1="228" x2="518" y2="228"/>
+            <text class="cap-l ok" x="318" y="260" text-anchor="middle" data-at="2+">아무 항의 없이 통과</text>
+
+            <!-- 시간축 -->
+            <line class="wire" x1="30" y1="278" x2="694" y2="278"/>
+            <polygon fill="var(--border-2)" points="686,273 698,278 686,283"/>
+            <text class="cap-l" x="694" y="294" text-anchor="end">시간</text>
+
+            <!-- 마지막 단계에서만 그어지는 거리 -->
+            <path class="wire bad draw" style="--dl:420; --ft:.9s" d="M 150 292 L 560 292" data-at="5"/>
+            <text class="s no breathe" x="355" y="292" text-anchor="middle" data-at="5">잘못된 자리와 터진 자리 사이</text>
+          </svg>
+        </div>
+        <div class="dia-cap" aria-hidden="true"></div>
+        <figcaption><b>스택트레이스는 값이 지나온 길이 아니라 호출이 지나온 길입니다.</b> 두 길이 갈라지는 자리가 이 그림의 왼쪽입니다.</figcaption>
+      </figure>
 
       <div class="oneline">
         <span style="font-size:20px">📍</span>
@@ -3653,6 +3845,112 @@ function paintRadius(root, withHoles){
       ${withHoles ? `<p class="hole">↳ ${r.hole}</p>` : ''}
     </div>`).join('');
 }
+/* ============================================================
+   도해 구동기 (공통)
+   ------------------------------------------------------------
+   그림 하나는 단계의 줄이다. 구동기가 하는 일은 셋뿐이다. 지금 단계 번호를 뿌리
+   요소의 data-s 에 적고, 그 단계에서만 보여야 할 것에 .vis 를 걸고, 단계 설명을
+   갈아 끼운다. 무엇이 어디에 있는지는 각 그림의 SVG 가 정한다.
+
+   자동 재생은 화면에 들어와 있는 동안에만 돈다. 안 보이는 그림 열 개가 계속 타이머를
+   돌리면 배터리만 먹고, 스크롤을 내리다 눈에 걸린 그림이 이미 중간 단계에 가 있으면
+   앞을 못 본 채로 만나게 된다. 그래서 나가면 멈추고, 손으로 멈춘 것은 다시 들어와도
+   저절로 돌지 않는다.
+   ============================================================ */
+const DIA_MOTION = !(window.matchMedia &&
+  window.matchMedia('(prefers-reduced-motion: reduce)').matches);
+
+/* data-at="0,2" · "1-3" · "2+" 세 표기를 받는다. 단계가 늘거나 줄 때
+   목록을 손으로 다시 세지 않아도 되게 범위 표기를 둔다. */
+function diaAt(spec, n){
+  const s = new Set();
+  String(spec).split(',').forEach(raw => {
+    const p = raw.trim(); if(!p) return;
+    if(p.endsWith('+')){ for(let i = +p.slice(0, -1); i < n; i++) s.add(i); }
+    else if(p.includes('-')){
+      const [a, b] = p.split('-').map(Number);
+      for(let i = a; i <= b; i++) s.add(i);
+    }
+    else s.add(+p);
+  });
+  return s;
+}
+
+function wireDia(id, steps){
+  const fig = $('#' + id); if(!fig) return;
+  const cap  = $('.dia-cap',  fig);
+  const dots = $('.dia-dots', fig);
+  const btn  = $('.dia-btn',  fig);
+  const n    = steps.length;
+
+  const marks = $$('[data-at]', fig).map(el => ({ el:el, at:diaAt(el.dataset.at, n) }));
+
+  // 단계 점의 개수는 steps 에서 나온다. 손으로 적어 두면 단계를 하나 고칠 때마다
+  // 마크업도 함께 고쳐야 하고, 어긋나면 눈에 안 띄는 채로 남는다.
+  dots.innerHTML = '';
+  for(let k = 0; k < n; k++){
+    const b = document.createElement('button');
+    b.className = 'dia-dot';
+    b.type = 'button';
+    b.setAttribute('aria-label', (k + 1) + '단계로');
+    b.addEventListener('click', () => { hold = true; pause(); i = k; paint(); });
+    dots.appendChild(b);
+  }
+  const dotEls = $$('.dia-dot', dots);
+
+  let i = 0, timer = null, playing = false, hold = false;
+
+  function paint(){
+    fig.dataset.s = i;
+    cap.innerHTML = steps[i].c;
+    marks.forEach(m => m.el.classList.toggle('vis', m.at.has(i)));
+    dotEls.forEach((d, k) => d.classList.toggle('on', k === i));
+  }
+  function tick(){
+    i = (i + 1) % n;
+    paint();
+    timer = setTimeout(tick, steps[i].h || 2600);
+  }
+  function play(){
+    if(playing) return;
+    playing = true; fig.classList.remove('paused');
+    btn.textContent = '⏸ 멈춤'; btn.setAttribute('aria-pressed', 'true');
+    clearTimeout(timer);
+    timer = setTimeout(tick, steps[i].h || 2600);
+  }
+  function pause(){
+    playing = false; fig.classList.add('paused');
+    btn.textContent = '▶ 재생'; btn.setAttribute('aria-pressed', 'false');
+    clearTimeout(timer);
+  }
+
+  btn.setAttribute('aria-controls', id);
+  btn.addEventListener('click', () => {
+    if(playing){ hold = true; pause(); }
+    else { hold = false; play(); }
+  });
+
+  // 움직임을 줄여 달라고 한 사람에게는 마지막 단계를 세워 둔다. 0단계는 대개 아무
+  // 일도 일어나기 전이라, 그것만 남기면 그림이 아무 말도 하지 않는다.
+  if(!DIA_MOTION){ i = n - 1; hold = true; }
+  paint();
+  if(!DIA_MOTION){ pause(); return; }
+  pause();
+
+  new IntersectionObserver(es => {
+    es.forEach(e => { if(e.isIntersecting){ if(!hold) play(); } else pause(); });
+  }, { threshold: 0.3 }).observe(fig);
+}
+
+wireDia('diaBlame', [
+  {c:'값 하나가 상류에서 출발해 응답 파싱, 캐시, 모델 조립을 거쳐 화면 렌더까지 갑니다.', h:2800},
+  {c:'그 값이 목록이 아니라 문자열이 된 자리는 앞의 세 갈래 가운데 하나입니다. <b>어느 쪽이었는지는 아직 모릅니다.</b>', h:3400},
+  {c:'세 자리 가운데 어디에서도 예외가 나지 않았습니다. 아무도 던지지 않았으므로 스택에 남을 것도 없습니다.', h:3200},
+  {c:'화면을 그리는 자리에서 EL이 게터를 찾다 실패합니다. 이 값이 처음으로 항의를 받는 자리입니다.', h:3000},
+  {c:'그때 찍힌 것이 이 열 줄입니다. 열 줄 전부가 렌더링 구간 안에 있습니다.', h:3200},
+  {c:'터진 자리는 정확합니다. <span class="no">잘못된 자리는 이 열 줄 바깥에 있습니다.</span>', h:3800},
+]);
+
 paintRadius($('#radiusMap'), false);
 // 15장은 같은 배열을 구멍까지 그린다. 두 그림이 어긋날 수 없는 이유가 이 두 줄이다.
 paintRadius($('#recapMap'), true);

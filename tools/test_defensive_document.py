@@ -143,7 +143,8 @@ def test_the_next_problem_is_the_last_thing_in_the_chapter(src):
         close = body.find('</div>', start)
         rest = body[close + len('</div>'):] if close > 0 else ''
         if (re.search(r'<(?:h2|h3|p)\b', rest)
-                or 'class="demo"' in rest or 'class="quiz"' in rest):
+                or 'class="demo"' in rest or 'class="quiz"' in rest
+                or 'class="dia"' in rest):
             late.append(cid)
     assert late == [], '다음 문제 뒤에 본문이 더 있다: %s' % late
 
