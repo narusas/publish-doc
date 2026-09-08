@@ -21,6 +21,7 @@ DIAGRAMS = [
     ('diaPool', 'slowdown'),
     ('diaBudget', 'slowdown'),
     ('diaSpecGap', 'specgap'),
+    ('diaRadius', 'recap'),
 ]
 
 FIGURE_OPEN = re.compile(r'<figure class="dia" id="([^"]+)"')
@@ -107,3 +108,19 @@ def test_the_evidence_the_first_diagram_must_keep(src):
     body = dict(iter_figures(src))['diaBlame']
     for keep in ('BeanELResolver', '_005fset_005f141', '9946'):
         assert keep in body, f'diaBlame 이 {keep} 을 잃었다'
+
+
+def test_the_radius_diagram_does_not_hardcode_the_map(src):
+    """반경 이름을 SVG 안에 손으로 적으면 RADIUS 배열과 어긋날 수 있다.
+
+    본문 코드에 '두 그림이 어긋날 수 없는 이유가 이 두 줄이다'라고 적어 둔 그 불변식을
+    그림에도 그대로 건다. 그림은 배열에서 그려야 한다."""
+    body = dict(iter_figures(src))['diaRadius']
+    for name in ('한 줄', '한 함수', '한 객체', '한 모듈', '프로세스 경계', '요구사항'):
+        assert f'>{name}<' not in body, f'diaRadius 가 "{name}" 을 마크업에 직접 적었다'
+    assert 'paintRadiusDia' in src
+
+
+def test_the_recap_card_list_was_replaced_not_duplicated(src):
+    """같은 지도를 15장에 두 번 두지 않는다."""
+    assert 'recapMap' not in src
