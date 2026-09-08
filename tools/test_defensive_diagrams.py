@@ -14,6 +14,7 @@ DOC = Path(__file__).resolve().parent.parent / 'defensive_programming.html'
 DIAGRAMS = [
     ('diaBlame', 'trace'),
     ('diaSilent', 'silent'),
+    ('diaBoundary', 'boundary'),
 ]
 
 FIGURE_OPEN = re.compile(r'<figure class="dia" id="([^"]+)"')
