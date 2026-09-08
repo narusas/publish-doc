@@ -1334,3 +1334,88 @@ def test_declared_frame_counts_match_what_gets_drawn(page, deck):
         pytest.fail(MUST_EXIST % 'data-frames 를 선언한 도해(diaRadiusIntro·diaRadiusRecap)')
     bad = ['%s: 선언 %d ≠ 실측 %d' % (fid, dec, real) for fid, dec, real in got if dec != real]
     assert bad == [], '\n'.join(bad)
+
+
+# --- Task 5 · 데모 컨트롤러 넷 -------------------------------------------------
+
+DEFPROG = os.path.join(ROOT, 'defensive_programming_slides.html')
+
+
+def _go_slide(page, sid):
+    page.evaluate('sid => Deck.go(Deck.slides.findIndex(s => s.id === sid))', sid)
+
+
+def _beat(page, b):
+    page.evaluate('b => { Deck.beat = b; applyBeat(Deck.slides[Deck.index], b); }', b)
+
+
+def test_el_lab_walks_the_five_values_by_beat(page):
+    page.goto('file://' + DEFPROG)
+    _go_slide(page, 's07')
+    assert page.evaluate('beatCount(Deck.slides[Deck.index])') == 5
+    kinds = []
+    for b in range(5):
+        _beat(page, b)
+        kinds.append(page.evaluate("document.querySelector('#elLab07 .pick.on').dataset.k"))
+    assert kinds == ['dto', 'map', 'null', 'string', 'list']
+    _beat(page, 3)
+    assert 'PropertyNotFoundException' in page.inner_text('#elLab07 .el-out')
+
+
+def test_assembly_21_dies_on_beat_one(page):
+    page.goto('file://' + DEFPROG)
+    _go_slide(page, 's21')
+    _beat(page, 0)
+    assert page.query_selector('#asmLab21 .asm-500') is None
+    _beat(page, 1)
+    assert page.query_selector('#asmLab21 .asm-500') is not None
+
+
+def test_assembly_28_isolation_leaves_one_blank_and_seven_ok(page):
+    page.goto('file://' + DEFPROG)
+    _go_slide(page, 's28')
+    _beat(page, 0)
+    assert page.query_selector('#asmLab28 .asm-500') is not None
+    _beat(page, 1)
+    assert page.query_selector('#asmLab28 .asm-500') is None
+    assert page.evaluate("document.querySelectorAll('#asmLab28 .asm-sec.s-gone').length") == 1
+    assert page.evaluate("document.querySelectorAll('#asmLab28 .asm-sec.s-ok').length") == 7
+
+
+def test_assembly_34_timeout_brings_the_page_under_a_second(page):
+    page.goto('file://' + DEFPROG)
+    _go_slide(page, 's34')
+    ms = lambda: int(re.search(r'(\d+)ms', page.inner_text('#asmLab34 .asm-meter')).group(1))
+    _beat(page, 0)
+    assert ms() > 3000
+    _beat(page, 1)
+    assert ms() < 1000
+    assert page.evaluate("document.querySelectorAll('#asmLab34 .asm-sec.s-gone').length") == 1
+
+
+def test_judge_lab_shows_one_card_per_beat_and_reveals_on_click(page):
+    page.goto('file://' + DEFPROG)
+    _go_slide(page, 's25')
+    assert page.evaluate('beatCount(Deck.slides[Deck.index])') == 8
+    for b in range(8):
+        _beat(page, b)
+        visible = page.evaluate(
+            "Array.from(document.querySelectorAll('#judgeLab25 .jcard'))"
+            ".filter(c => c.offsetParent !== null).map(c => c.dataset.k)")
+        assert len(visible) == 1, '비트 %d 에 카드 %d 장' % (b, len(visible))
+    _beat(page, 1)   # 결제 금액 카드. 정답은 fast
+    page.click('#judgeLab25 .jcard[data-k="pay"] .jbtn[data-a="fast"]')
+    why = page.inner_text('#judgeLab25 .jcard[data-k="pay"] .jwhy')
+    assert '맞았습니다' in why and '빨리 죽어야' in why
+
+
+def test_word_lab_fills_the_four_slots_by_beat(page):
+    page.goto('file://' + DEFPROG)
+    _go_slide(page, 's46')
+    assert page.evaluate('beatCount(Deck.slides[Deck.index])') == 4
+    _beat(page, 0)
+    assert page.evaluate("document.querySelectorAll('#wordLab46 .gap').length") == 3
+    _beat(page, 3)
+    assert page.evaluate("document.querySelectorAll('#wordLab46 .gap').length") == 0
+    out = page.inner_text('#wordLab46 .reqout')
+    assert '2초' in out and '경고' in out
