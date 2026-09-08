@@ -18,6 +18,7 @@ DIAGRAMS = [
     ('diaShape', 'invariant'),
     ('diaCommit', 'assembly'),
     ('diaLayers', 'swallow'),
+    ('diaPool', 'slowdown'),
 ]
 
 FIGURE_OPEN = re.compile(r'<figure class="dia" id="([^"]+)"')

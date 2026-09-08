@@ -585,6 +585,7 @@ table.t td.c{font-family:var(--mono); font-size:12px; color:var(--text-mut); whi
 .dia .nd.ghost{fill:none; stroke:var(--border); stroke-dasharray:4 4}
 .dia .nd.bad{stroke:var(--bad)}
 .dia .nd.busy{fill:rgba(192,132,252,.14); stroke:var(--purple)}
+.dia .nd.wait{fill:rgba(251,191,36,.12); stroke:var(--warn); stroke-dasharray:4 3}
 
 .dia text{font-family:var(--sans); fill:var(--text-dim)}
 .dia .s{font-size:11.5px; fill:var(--text-dim)}
@@ -2355,6 +2356,67 @@ class DuplicateSectionException extends RuntimeException {
       때문입니다. 느린 섹션 하나가 붙든 자리 때문에, 그 섹션과는 아무 상관 없는 요청, 심지어 그
       섹션을 아예 부르지 않는 요청까지 대기열에 걸립니다. 이 전염에는 예외가 필요 없습니다. 시간만
       있으면 됩니다.</p>
+
+      <figure class="dia" id="diaPool">
+        <div class="dia-top">
+          <span class="dia-tag">그림 7 · 예외 없이 서는 법</span>
+          <span class="dia-sp"></span>
+          <button class="dia-btn ghost" type="button">▶ 재생</button>
+          <div class="dia-dots"></div>
+        </div>
+        <div class="dia-hint" aria-hidden="true">← 좌우로 밀어서 보세요 →</div>
+        <div class="dia-scroll">
+          <svg viewBox="0 0 720 290" role="img" aria-label="느린 섹션을 그리는 요청이 스레드를 하나씩 붙들어 스레드 풀이 마르는 과정을 보여 주는 그림. 요청 하나가 스레드 하나를 붙들고 응답이 오거나 연결이 끊길 때까지 자리를 지키므로, 그런 요청이 풀의 한계만큼 쌓이면 남은 스레드가 없다. 그때부터는 그 요청이 어떤 섹션을 그리려 했는지가 중요하지 않고, 느린 섹션을 아예 부르지 않는 요청까지 대기열에 걸린다. 이 전염에는 예외가 필요 없고 시간만 있으면 된다.">
+
+            <text class="cap-l" x="24" y="34">들어오는 요청</text>
+            <text class="cap-l" x="376" y="34" text-anchor="middle">스레드 풀 · 여덟 자리</text>
+            <text class="cap-l" x="620" y="34" text-anchor="middle">대기열</text>
+
+            <!-- 들어오는 요청 -->
+            <rect class="nd" x="24" y="52" width="188" height="30" rx="7"/>
+            <text class="m" x="34" y="72">느린 섹션을 그리는 요청</text>
+            <rect class="nd" x="24" y="90" width="188" height="30" rx="7"/>
+            <text class="m" x="34" y="110">느린 섹션을 그리는 요청</text>
+            <rect class="nd" x="24" y="128" width="188" height="30" rx="7" data-at="1+"/>
+            <text class="m" x="34" y="148" data-at="1+">느린 섹션을 그리는 요청</text>
+            <rect class="nd" x="24" y="166" width="188" height="30" rx="7" data-at="2+"/>
+            <text class="m" x="34" y="186" data-at="2+">느린 섹션을 그리는 요청</text>
+            <rect class="nd" x="24" y="204" width="188" height="30" rx="7" data-at="4"/>
+            <text class="m val" x="34" y="224" data-at="4">그 섹션을 부르지 않는 요청</text>
+
+            <!-- 풀 -->
+            <rect class="nd ghost" x="236" y="44" width="280" height="210" rx="12"/>
+            <rect class="nd busy" x="248" y="60"  width="124" height="38" rx="7" data-at="0+"/>
+            <text class="m warn" x="310" y="84" text-anchor="middle" data-at="0+">붙들림</text>
+            <rect class="nd busy" x="380" y="60"  width="124" height="38" rx="7" data-at="0+"/>
+            <text class="m warn" x="442" y="84" text-anchor="middle" data-at="0+">붙들림</text>
+            <rect class="nd busy" x="248" y="106" width="124" height="38" rx="7" data-at="1+"/>
+            <text class="m warn" x="310" y="130" text-anchor="middle" data-at="1+">붙들림</text>
+            <rect class="nd busy" x="380" y="106" width="124" height="38" rx="7" data-at="1+"/>
+            <text class="m warn" x="442" y="130" text-anchor="middle" data-at="1+">붙들림</text>
+            <rect class="nd busy" x="248" y="152" width="124" height="38" rx="7" data-at="1+"/>
+            <text class="m warn" x="310" y="176" text-anchor="middle" data-at="1+">붙들림</text>
+            <rect class="nd busy" x="380" y="152" width="124" height="38" rx="7" data-at="2+"/>
+            <text class="m warn" x="442" y="176" text-anchor="middle" data-at="2+">붙들림</text>
+            <rect class="nd busy" x="248" y="198" width="124" height="38" rx="7" data-at="2+"/>
+            <text class="m warn" x="310" y="222" text-anchor="middle" data-at="2+">붙들림</text>
+            <rect class="nd busy" x="380" y="198" width="124" height="38" rx="7" data-at="2+"/>
+            <text class="m warn" x="442" y="222" text-anchor="middle" data-at="2+">붙들림</text>
+            <text class="s no breathe" x="376" y="272" text-anchor="middle" data-at="2+">남은 자리 없음</text>
+
+            <!-- 대기열 -->
+            <rect class="nd ghost" x="540" y="44" width="160" height="210" rx="12"/>
+            <rect class="nd wait" x="550" y="60"  width="140" height="30" rx="7" data-at="3+"/>
+            <text class="m mut" x="620" y="80" text-anchor="middle" data-at="3+">대기</text>
+            <rect class="nd wait" x="550" y="98"  width="140" height="30" rx="7" data-at="3+"/>
+            <text class="m mut" x="620" y="118" text-anchor="middle" data-at="3+">대기</text>
+            <rect class="nd wait" x="550" y="136" width="140" height="30" rx="7" data-at="4"/>
+            <text class="m val breathe" x="620" y="156" text-anchor="middle" data-at="4">그 섹션과 무관</text>
+          </svg>
+        </div>
+        <div class="dia-cap" aria-hidden="true"></div>
+        <figcaption><b>이 전염에는 예외가 필요 없습니다. 시간만 있으면 됩니다.</b> 격리가 경계에서 기다려도 붙잡을 것이 도착하지 않는 이유가 여기입니다.</figcaption>
+      </figure>
 
       <p>말로는 이만큼입니다. 다시 같은 조립 시뮬레이터를 씁니다. 이번에는 6장과 달리 격리를 이미
       켜 둔 채로 시작합니다. 격리를 해 두고도 왜 느려지는지를 물어야 하는 장이기 때문입니다. 아래
@@ -4303,6 +4365,14 @@ wireDia('diaLayers', [
   {c:'페이지 조립기도 대안을 가집니다. 그 섹션을 빼고 나머지 일곱 칸을 세울 수 있습니다.', h:3400},
   {c:'전역 처리기까지 올라왔다는 것은 <b>그 사이 누구도 대안을 실행하지 못했다</b>는 뜻입니다. 여기서 할 수 있는 일은 기록하고 알리는 것뿐입니다.', h:4000},
   {c:'가장 깊은 층과 가장 높은 층이 같은 이유로 자격을 갖지 못합니다. 잡는 동작이 같아 보여도, 대안이 없으면 그것은 방어가 아니라 삼킴입니다.', h:4400},
+]);
+
+wireDia('diaPool', [
+  {c:'요청 하나가 스레드 하나를 붙듭니다. 느린 섹션을 그리는 요청은 응답이 오거나 연결이 끊길 때까지 그 자리를 지킵니다.', h:3400},
+  {c:'다음 요청도 다른 스레드를 씁니다. 느린 섹션에 걸리는 요청이 계속 쌓입니다.', h:3200},
+  {c:'서버가 동시에 처리할 수 있는 수에는 한계가 있습니다. <span class="no">그 한계만큼 쌓이면 남은 스레드가 없습니다.</span>', h:3600},
+  {c:'여기서부터는 그 요청이 어떤 섹션을 그리려 했는지가 중요하지 않습니다. 스레드가 없으면 어떤 요청도 처리를 시작할 수조차 없습니다.', h:3800},
+  {c:'느린 섹션을 <b>아예 부르지 않는 요청까지</b> 대기열에 걸립니다. 느린 섹션 하나가 붙든 자리 때문입니다.', h:4200},
 ]);
 
 paintRadius($('#radiusMap'), false);
