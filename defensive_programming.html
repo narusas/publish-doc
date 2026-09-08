@@ -584,6 +584,7 @@ table.t td.c{font-family:var(--mono); font-size:12px; color:var(--text-mut); whi
 .dia .nd.hot{stroke:var(--accent); stroke-width:1.8}
 .dia .nd.ghost{fill:none; stroke:var(--border); stroke-dasharray:4 4}
 .dia .nd.bad{stroke:var(--bad)}
+.dia .nd.busy{fill:rgba(192,132,252,.14); stroke:var(--purple)}
 
 .dia text{font-family:var(--sans); fill:var(--text-dim)}
 .dia .s{font-size:11.5px; fill:var(--text-dim)}
@@ -1782,6 +1783,59 @@ throw new SectionRenderException("섹션 렌더링 실패: " + sectionId, e);</c
       먼저 나가야 하고, 이 시점에는 본문이 이미 나가 버린 뒤입니다. 이 지점 이후에 일어난 예외를 아무리
       잘 붙잡아도, 할 수 있는 일은 남은 렌더링을 멈추는 것뿐입니다. 이미 나간 앞부분은 되돌릴 수 없고,
       사용자의 브라우저에는 닫는 태그도 없이 잘린 HTML만 그대로 남습니다.</p>
+
+      <figure class="dia" id="diaCommit">
+        <div class="dia-top">
+          <span class="dia-tag">그림 5 · 되돌릴 수 없는 지점</span>
+          <span class="dia-sp"></span>
+          <button class="dia-btn ghost" type="button">▶ 재생</button>
+          <div class="dia-dots"></div>
+        </div>
+        <div class="dia-hint" aria-hidden="true">← 좌우로 밀어서 보세요 →</div>
+        <div class="dia-scroll">
+          <svg viewBox="0 0 720 300" role="img" aria-label="렌더링이 진행되는 동안 만들어진 HTML이 조금씩 클라이언트로 흘러 나가고, 어느 지점에서 상태 코드 200과 본문 일부가 이미 건네진다. 그 지점을 응답 커밋이라고 부른다. 커밋보다 늦게 난 예외는 아무리 넓게 감싸도 상태 코드를 500으로 바꾸거나 오류 페이지로 넘길 수 없다. 헤더는 언제나 본문보다 먼저 나가야 하는데 본문이 이미 나갔기 때문이다. 할 수 있는 일은 남은 렌더링을 멈추는 것뿐이고, 사용자에게는 닫는 태그도 없이 잘린 HTML이 남는다.">
+
+            <!-- 브라우저 -->
+            <rect class="nd" x="520" y="24" width="170" height="110" rx="10"/>
+            <text class="cap-l" x="605" y="20" text-anchor="middle">사용자의 브라우저</text>
+            <text class="m mut" x="532" y="48" data-at="0">(아직 아무것도 없음)</text>
+            <g data-at="1+">
+              <text class="m" x="532" y="48">&lt;html&gt;…머리말</text>
+              <text class="m" x="532" y="66">앞쪽 섹션들</text>
+            </g>
+            <text class="m no breathe" x="532" y="90" data-at="4">여기서 끊김</text>
+            <text class="m no" x="532" y="112" data-at="4">닫는 태그 없음</text>
+
+            <!-- 렌더링 진행 막대 -->
+            <text class="cap-l" x="40" y="164">서버가 만든 HTML</text>
+            <rect class="nd ghost" x="40" y="172" width="650" height="26" rx="6"/>
+            <rect class="nd busy" x="42" y="174" width="286" height="22" rx="5" data-at="1+"/>
+            <text class="m val" x="185" y="190" text-anchor="middle" data-at="1+">앞쪽 태그들이 만든 부분</text>
+
+            <!-- 커밋 마커 -->
+            <line class="wire dash bad" x1="330" y1="150" x2="330" y2="230" data-at="1+"/>
+            <text class="cap-l no" x="330" y="146" text-anchor="middle" data-at="1+">응답 커밋</text>
+            <text class="m mut" x="330" y="246" text-anchor="middle" data-at="1+">상태 코드 200과 본문 일부가 이미 나갔습니다</text>
+
+            <!-- 예외 마커 -->
+            <text class="s no pop" x="470" y="190" text-anchor="middle" data-at="2+">141번째에서 예외</text>
+            <line class="wire bad" x1="470" y1="196" x2="470" y2="214" data-at="2+"/>
+
+            <!-- 시간축 -->
+            <line class="wire" x1="40" y1="214" x2="694" y2="214"/>
+            <polygon fill="var(--border-2)" points="686,209 698,214 686,219"/>
+            <text class="cap-l" x="694" y="230" text-anchor="end">시간</text>
+
+            <!-- 커밋 뒤에 할 수 있는 일 -->
+            <text class="cap-l" x="40" y="268" data-at="3+">커밋 뒤에 시도해 볼 수 있는 것</text>
+            <text class="s no"  x="40" y="288" data-at="3+">✗ 상태 코드를 500으로 바꾼다</text>
+            <text class="s no"  x="270" y="288" data-at="3+">✗ 오류 페이지로 넘긴다</text>
+            <text class="s ok"  x="470" y="288" data-at="4">✓ 남은 렌더링을 멈춘다</text>
+          </svg>
+        </div>
+        <div class="dia-cap" aria-hidden="true"></div>
+        <figcaption><b>try-catch 는 예외를 붙잡을 수는 있어도 이미 나가 버린 바이트를 취소해 주지는 못합니다.</b> 문제는 감싸는 넓이가 아니라 감싸는 자리와 커밋 사이의 순서입니다.</figcaption>
+      </figure>
 
       <p>여기서 반문이 하나 따라옵니다. 그러면 렌더링을 시작하는 자리에서 전체를 <code>try-catch</code>로
       한 번 감싸면 되지 않을까요. 예외가 나면 그 자리에서 붙잡아 오류 페이지를 보여 주면 될 것
@@ -4171,6 +4225,14 @@ wireDia('diaShape', [
   {c:'역직렬화가 타입을 보므로 문자열이 리스트 자리에 앉는 상태는 사라집니다. <b>그 자리가 null 인 상태는 그대로 남습니다.</b>', h:3800},
   {c:'생성자를 통과하지 못하면 인스턴스 자체가 없습니다. 두 상태 모두 표현할 수 없게 됩니다.', h:3400},
   {c:'세 줄의 차이는 검사를 몇 번 더 했느냐가 아닙니다. <span class="ye">오히려 마지막 줄에 검사하는 코드가 가장 적게 남습니다.</span>', h:4000},
+]);
+
+wireDia('diaCommit', [
+  {c:'웹 서버는 응답 본문을 전부 만든 뒤에 한꺼번에 내보내지 않습니다. 페이지가 클수록 만들어지는 대로 조금씩 흘려보내는 쪽이 흔합니다.', h:3600},
+  {c:'어느 지점에서 상태 코드 200과 본문 일부가 이미 클라이언트에게 건네집니다. <b>이 순간을 응답 커밋이라고 부릅니다.</b>', h:3800},
+  {c:'141번째 태그에서 예외가 납니다. 커밋보다 늦은 자리입니다.', h:3000},
+  {c:'500으로 바꾸는 것도 오류 페이지로 넘기는 것도 헤더를 다시 쓰는 일입니다. <span class="no">헤더는 언제나 본문보다 먼저 나가야 하는데 본문이 이미 나갔습니다.</span>', h:4200},
+  {c:'할 수 있는 일은 남은 렌더링을 멈추는 것뿐입니다. 사용자에게는 닫는 태그도 없이 잘린 HTML 이 그대로 남습니다.', h:4000},
 ]);
 
 paintRadius($('#radiusMap'), false);
