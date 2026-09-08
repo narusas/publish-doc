@@ -253,7 +253,7 @@ Expected: FAIL. `test_every_planned_diagram_is_present` 가 `[] != ['diaBlame']`
    좇아야 할 값은 --purple 이 맡고, accent 는 지금 단계의 테두리에만 쓴다. */
 .dia .nd{fill:var(--bg); stroke:var(--border-2); stroke-width:1.2}
 .dia .nd.soft{fill:var(--panel-2)}
-.dia .nd.hot{stroke:var(--accent); stroke-width:1.8}
+.dia .nd.hot{fill:none; stroke:var(--accent); stroke-width:1.8}
 .dia .nd.ghost{fill:none; stroke:var(--border); stroke-dasharray:4 4}
 
 .dia text{font-family:var(--sans); fill:var(--text-dim)}
@@ -738,8 +738,8 @@ Task 1 이 넣은 `.dia .nd.ghost` 바로 아래에 넣는다.
         <text class="m no" x="48" y="225">EL 안쪽 프레임 다섯 줄이 되돌아옴</text>
       </g>
       <text class="m val" x="352" y="181" data-at="0">스택 1줄</text>
-      <text class="m val" x="352" y="181" data-at="1">스택 3줄</text>
-      <text class="m val" x="352" y="181" data-at="2">스택 5줄</text>
+      <text class="m val" x="352" y="181" data-at="1">스택 2줄</text>
+      <text class="m val" x="352" y="181" data-at="2">스택 3줄</text>
       <text class="m no"  x="352" y="181" data-at="3">스택 9줄</text>
 
       <!-- 메시지에 실리는 맥락 세 조각 -->
@@ -1412,7 +1412,6 @@ git commit -am "defprog-dia: 11장 — 채워진 다섯 칸과 비어 있는 다
 
 ```css
 .dia .rband-hot{fill:none; stroke:var(--accent); stroke-width:1.8}
-.dia .rband-mark{font-family:var(--mono); font-size:10.5px}
 ```
 
 - [ ] **Step 1: 테스트 목록을 늘리고, 단일 출처를 지키는 테스트를 더한다**
@@ -1490,18 +1489,14 @@ function paintRadiusDia(root){
       base.push(`<text class="s" x="${CX}" y="${CY + 4}" text-anchor="middle">반경 1 · ${RADIUS[0].n}</text>`);
     }
   }
-  // 강조 테두리와 구멍 표시는 단계마다 하나씩만 뜬다
+  // 강조 테두리는 단계마다 하나씩만 뜬다. 구멍 표시는 viewBox 를 넘어 잘리므로
+  // 그리지 않는다 — 강조 사각형과 아래 단계 설명만으로 충분하다.
   for(let k = 0; k < RADIUS.length; k++){
     const x = CX - (HW + k * DW), y = CY - (HH + k * DH);
     const w = 2 * (HW + k * DW), h = 2 * (HH + k * DH);
-    // 마지막 반경만 판정이 다르다. 클래스명을 보간으로 조립하면 check_dead_css 가
-    // 정의 쪽만 보고 사장 CSS 로 잡으므로, 갈래마다 리터럴로 쓴다.
-    const mark = (k === RADIUS.length - 1)
-      ? `<text class="rband-mark ok" x="${x + w + 8}" y="${y + 16}">여기가 종착지입니다</text>`
-      : `<text class="rband-mark no" x="${x + w + 8}" y="${y + 16}">↳ 그럼에도 남는 것이 있습니다</text>`;
     hot.push(`<g class="rband-hot-g">`
       + `<rect class="rband-hot" x="${x}" y="${y}" width="${w}" height="${h}" rx="12"/>`
-      + mark + `</g>`);
+      + `</g>`);
   }
   root.innerHTML = base.join('') + hot.join('');
   // data-at 은 속성으로 붙인다. 템플릿 문자열로 남기면 표기 검사가 해석하지 못한다.
