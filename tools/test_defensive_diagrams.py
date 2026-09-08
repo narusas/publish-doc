@@ -20,6 +20,7 @@ DIAGRAMS = [
     ('diaLayers', 'swallow'),
     ('diaPool', 'slowdown'),
     ('diaBudget', 'slowdown'),
+    ('diaSpecGap', 'specgap'),
 ]
 
 FIGURE_OPEN = re.compile(r'<figure class="dia" id="([^"]+)"')

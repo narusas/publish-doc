@@ -2903,6 +2903,75 @@ class DuplicateSectionException extends RuntimeException {
         페이지가 사라졌거나 열리지 않으면 무엇을 하는지는 <span class="gap">없음</span></span>
       </div>
 
+      <figure class="dia" id="diaSpecGap">
+        <div class="dia-top">
+          <span class="dia-tag">그림 9 · 채워진 칸과 빈 칸</span>
+          <span class="dia-sp"></span>
+          <button class="dia-btn ghost" type="button">▶ 재생</button>
+          <div class="dia-dots"></div>
+        </div>
+        <div class="dia-hint" aria-hidden="true">← 좌우로 밀어서 보세요 →</div>
+        <div class="dia-scroll">
+          <svg viewBox="0 0 720 318" role="img" aria-label="각색한 화면 정의서 다섯 줄을 왼쪽에 세우고, 줄마다 정상 경로와 실패 경로를 오른쪽 두 칸에 나란히 놓은 그림. 다섯 줄 모두 정상 경로 칸은 순서와 구성과 개수 조건까지 빠짐없이 채워져 있지만, 실패 경로 칸은 다섯 줄 모두 비어 있다. 우연히 다섯이 맞아떨어진 것이 아니라, 규칙 하나마다 그 규칙이 성립하지 않을 때를 위한 문장이 구조적으로 함께 딸려 있지 않기 때문이다.">
+
+            <text class="cap-l" x="30" y="30">화면 정의서 다섯 줄</text>
+            <text class="cap-l ok" x="386" y="30" text-anchor="middle">정상 경로</text>
+            <text class="cap-l no" x="586" y="30" text-anchor="middle">실패 경로</text>
+
+            <!-- 1 -->
+            <rect class="nd" x="30" y="42" width="330" height="42" rx="8"/>
+            <rect class="nd hot" x="30" y="42" width="330" height="42" rx="8" data-at="0"/>
+            <text class="s" x="42" y="68">등록한 순서로 노출한다</text>
+            <rect class="nd" x="376" y="42" width="180" height="42" rx="8"/>
+            <text class="m ok" x="466" y="68" text-anchor="middle">정해져 있음</text>
+            <rect class="nd ghost" x="572" y="42" width="118" height="42" rx="8"/>
+            <text class="m no" x="631" y="68" text-anchor="middle" data-at="0+">없음</text>
+
+            <!-- 2 -->
+            <rect class="nd" x="30" y="94" width="330" height="42" rx="8"/>
+            <rect class="nd hot" x="30" y="94" width="330" height="42" rx="8" data-at="1"/>
+            <text class="s" x="42" y="120">대표 이미지 1장, 상품 카드 목록</text>
+            <rect class="nd" x="376" y="94" width="180" height="42" rx="8"/>
+            <text class="m ok" x="466" y="120" text-anchor="middle">정해져 있음</text>
+            <rect class="nd ghost" x="572" y="94" width="118" height="42" rx="8"/>
+            <text class="m no" x="631" y="120" text-anchor="middle" data-at="1+">없음</text>
+
+            <!-- 3 -->
+            <rect class="nd" x="30" y="146" width="330" height="42" rx="8"/>
+            <rect class="nd hot" x="30" y="146" width="330" height="42" rx="8" data-at="2"/>
+            <text class="s" x="42" y="172">화살표로 넘겨 볼 수 있게 한다</text>
+            <rect class="nd" x="376" y="146" width="180" height="42" rx="8"/>
+            <text class="m ok" x="466" y="172" text-anchor="middle">정해져 있음</text>
+            <rect class="nd ghost" x="572" y="146" width="118" height="42" rx="8"/>
+            <text class="m no" x="631" y="172" text-anchor="middle" data-at="2+">없음</text>
+
+            <!-- 4 -->
+            <rect class="nd" x="30" y="198" width="330" height="42" rx="8"/>
+            <rect class="nd hot" x="30" y="198" width="330" height="42" rx="8" data-at="3"/>
+            <text class="s" x="42" y="224">그 기간에만 노출하고 지나면 뺀다</text>
+            <rect class="nd" x="376" y="198" width="180" height="42" rx="8"/>
+            <text class="m ok" x="466" y="224" text-anchor="middle">정해져 있음</text>
+            <rect class="nd ghost" x="572" y="198" width="118" height="42" rx="8"/>
+            <text class="m no" x="631" y="224" text-anchor="middle" data-at="3+">없음</text>
+
+            <!-- 5 -->
+            <rect class="nd" x="30" y="250" width="330" height="42" rx="8"/>
+            <rect class="nd hot" x="30" y="250" width="330" height="42" rx="8" data-at="4"/>
+            <text class="s" x="42" y="276">제목을 누르면 목록 페이지로 이동한다</text>
+            <rect class="nd" x="376" y="250" width="180" height="42" rx="8"/>
+            <text class="m ok" x="466" y="276" text-anchor="middle">정해져 있음</text>
+            <rect class="nd ghost" x="572" y="250" width="118" height="42" rx="8"/>
+            <text class="m no" x="631" y="276" text-anchor="middle" data-at="4+">없음</text>
+
+            <!-- 오른쪽 칸을 통째로 묶는 표시 -->
+            <rect class="nd ghost" x="566" y="36" width="130" height="262" rx="10" data-at="5"/>
+            <text class="s no breathe" x="631" y="308" text-anchor="middle" data-at="5">다섯 칸 전부</text>
+          </svg>
+        </div>
+        <div class="dia-cap" aria-hidden="true"></div>
+        <figcaption><b>우연히 다섯이 맞아떨어진 것이 아닙니다.</b> 규칙 하나마다 그 규칙이 성립하지 않을 때를 위한 문장이 구조적으로 함께 딸려 있지 않습니다.</figcaption>
+      </figure>
+
       <p>다섯 줄이 다섯 개의 정상 경로를 정해 두는 동안, 다섯 개의 실패 경로 자리는 전부 비어
       있습니다. 우연히 다섯이 맞아떨어진 것이 아닙니다. 이 문단에 적힌 규칙 하나마다, 그 규칙이
       성립하지 않을 때를 위한 문장이 <b>구조적으로</b> 함께 딸려 있지 않기 때문입니다.</p>
@@ -4442,6 +4511,15 @@ wireDia('diaBudget', [
   {c:'몫 하나를 다시 둘로 나눕니다. <b>연결을 맺기까지와 응답이 오기까지는 서로 다른 자리입니다.</b> 읽기만 짧게 잡으면 연결이 지연될 때 그 설정은 아직 시작도 하지 않았습니다.', h:4400},
   {c:'어디서 본 3000ms 를 그대로 옮겨 쓰면 <span class="no">섹션 하나가 전체 예산의 세 배를 씁니다.</span>', h:3400},
   {c:'짧게 잡을수록 안전해 보이지만, 정상적인 흔들림과 실제 실패를 가르는 눈금도 함께 좁아집니다. 잡아야 하는 것은 죽은 호출이지 순간적으로 느려진 호출이 아닙니다.', h:4400},
+]);
+
+wireDia('diaSpecGap', [
+  {c:'"등록한 순서로 노출한다"는 정해져 있습니다. <span class="no">그 데이터를 받아오지 못하면 무엇을 노출하는지는 없습니다.</span>', h:3600},
+  {c:'구성도 정해져 있습니다. <span class="no">이미지가 깨졌거나 카드가 하나도 없으면 무엇을 대신 놓는지는 없습니다.</span>', h:3600},
+  {c:'개수 조건도 정해져 있습니다. <span class="no">넘기다가 그 카드를 불러오지 못하면 무엇을 보여 주는지는 없습니다.</span>', h:3600},
+  {c:'노출 기간도 정해져 있습니다. <span class="no">기간을 계산할 기준 시간을 가져오지 못하면 어떻게 판단하는지는 없습니다.</span>', h:3800},
+  {c:'이동 동작도 정해져 있습니다. <span class="no">이동할 목록 페이지가 열리지 않으면 무엇을 하는지는 없습니다.</span>', h:3600},
+  {c:'다섯 줄이 다섯 개의 정상 경로를 정해 두는 동안, <b>다섯 개의 실패 경로 자리는 전부 비어 있습니다.</b>', h:4200},
 ]);
 
 paintRadius($('#radiusMap'), false);
