@@ -319,7 +319,7 @@ Expected: FAIL. `test_every_planned_diagram_is_present` 가 `[] != ['diaBlame']`
 .dia-hint{display:none; font-family:var(--mono); font-size:10.5px; letter-spacing:.4px;
   color:var(--text-mut); margin:0 0 4px}
 @media(max-width:700px){
-  .dia-scroll svg{min-width:560px}
+  .dia-scroll svg{min-width:720px}
   .dia-hint{display:block}
 }
 ```
