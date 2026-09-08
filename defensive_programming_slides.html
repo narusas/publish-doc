@@ -153,9 +153,11 @@ body{font-family:var(--sans);color:var(--text);-webkit-font-smoothing:antialiase
    EXEMPT['defensive_programming_slides.html'] 과
    test_the_font_floor_exemptions_match_their_css_comment 가 이 목록을 한 글자씩
    대조한다. 한쪽만 고치면 그 테스트가 잡는다.
-     [svg, svg *] 바닥 12px — 그림 속 글자. viewBox 좌표를 화면 px 로 환산해서 잰다. 같은 말을 .dia-cap 이 26px 로 다시 싣는다
+     [svg, svg *] 바닥 13px — 그림 속 글자. viewBox 좌표를 화면 px 로 환산해서 잰다. 같은 말을 .dia-cap 이 26px 로 다시 싣는다
    ==== 예외 목록 끝 ====
-   svg 줄의 근거는 파일럿 DECK:STAGE:CSS 의 「svg 줄의 근거를 따로 적는다」와 같다. */
+   svg 줄의 근거는 파일럿 DECK:STAGE:CSS 의 「svg 줄의 근거를 따로 적는다」와 같다. 실측(Task 4,
+   1280x720·getScreenCTM)은 13.1~18.7px 로, 가장 작은 값은 diaSpecGap(viewBox 720x318 —
+   열 도해 중 세로가 가장 커서 440px 상한에 걸었을 때 배율이 가장 작다)의 .cap-l 이다. */
 
 /* ---- 산문 build 슬라이드의 목록 (Task 2 fix) ----
    코어 CSS 는 li 의 크기를 정하지 않는다. 골격의 s02 가 목록이라 여기서 하한을 준다. */
@@ -164,12 +166,342 @@ body{font-family:var(--sans);color:var(--text);-webkit-font-smoothing:antialiase
 .slide li b{color:var(--text)}
 .slide .suspects li{font-size:26px}
 
-/* 이후 태스크가 이 아래에 무대 규칙을 더한다: Task 4 도해, Task 5 데모·퀴즈,
+/* ---- 도해 (Task 4) ----
+   원본 .dia 는 본문 폭 반응형이고 캡션이 13px 이다. 무대에서는 그림을 슬라이드 폭에
+   꽉 채우고 캡션을 하한 위로 올린다. 재생 버튼·좌우 밀기 안내·꼬리표·figcaption 은
+   발표자가 말로 하므로 없앤다 — 보이지 않는 요소는 활자 측정에서도 빠진다.
+   figcaption 은 그림이 주장하는 것 한 줄을 늘 같은 자리에 13px 로 고정해 두는데,
+   그 결론은 매 단계 .dia-cap 이 26px 로 다시 말한다(마지막 단계에서 특히). 남겨 두면
+   활자 하한(figcaption·안의 b)도 못 지키고 세로도 그만큼 더 먹는다.
+   도해가 있는 장은 본문(h2 44px·상하 패딩 72/88px)이 그림의 세로를 깎아 먹으므로
+   패딩을 줄이고 제목을 34px 로 낮춘다 — 그래도 하한(24px) 위다.
+   svg 글자는 화면 환산 실측이 13.1~18.7px 로 하한(위 예외 목록의 13px)에 겨우
+   닿아 있다 — max-height 를 더 낮추면 diaSpecGap 의 가장 작은 글자가 그 밑으로
+   떨어진다(실측 후 예외 값도 12→13 으로 올렸다). 그래서 그림 자체는 줄이지 않고,
+   그림을 둘러싼 여백(패딩·마진·줄간)만 줄여 세로를 되찾는다.
+   s04 는 그림 위에 약속 두 문장(p.build.promise)을, s24 는 그림 뒤에 마지막 비트
+   한 줄(.dia + p.build)을 더 얹는다. .build 는 opacity 로만 드러나(레이아웃은 비트
+   전이든 후든 항상 차지한다) 그 줄이 세로를 늘 먹으므로, 그 문장들의 줄간·아래 여백만
+   줄인다 — 글자 크기(26px)는 하한 위라 그대로 둔다. */
+.slide .dia{margin:0;max-width:none;padding:10px 14px}
+.slide .dia-top{margin-bottom:4px}
+.slide .dia-btn,.slide .dia-hint,.slide .dia-tag,.slide .dia figcaption{display:none}
+.slide .dia-scroll{overflow:visible}
+.slide .dia-scroll svg{width:100%;min-width:0;height:auto;max-height:440px}
+.slide .dia-cap{font-size:26px;line-height:1.4;min-height:80px;margin-top:8px}
+.slide .dia-dot{width:14px;height:14px}
+.slide:has(.dia){padding:36px 40px 40px}
+.slide:has(.dia) h2{font-size:34px;margin:0 0 12px}
+.slide p.build.promise{margin:0 0 6px;line-height:1.3}
+.slide .dia + p.build{margin:0 0 6px;line-height:1.3}
+
+/* 이후 태스크가 이 아래에 무대 규칙을 더한다: Task 5 데모·퀴즈,
    Task 6 막 표지·전과 후·내일 할 것. */
 /* ==== /DECK:STAGE:CSS ==== */
 
 /* ==== ASSET:CSS ← defensive_programming.html ==== */
-/* Task 4·5 가 채운다. 출처는 원본 파일과 줄 번호로 적는다. */
+/* 이 블록은 원본과 한 줄씩 대조하는 사본이 아니다 — 파일럿(oauth2_slides.html)의
+   알려진 이슈 8번이 내린 결론과 같다: "덱이 쓰는 부품 목록"이라는 전제로 시작해야
+   한다. 어느 파일 몇 행에서 가져왔는지는 각 블록 머리에 남기고, 덱이 쓰지 않는
+   죽은 규칙을 골라내는 일은 Task 9 로 미룬다. */
+
+/* 출처: defensive_programming.html 15-42 (:root). --bg·--text-dim·--text-mut 세 줄은
+   지운다 — DECK:STAGE:CSS 가 무대용 값을 이미 정했고 이 블록이 그 뒤에 오므로,
+   지우지 않으면 대비를 올린 값을 도로 덮어쓴다. 나머지(특히 --accent·--panel 계열)는
+   이 문서의 로즈 색 언어라 그대로 둔다 — DECK:CORE:CSS 의 :root 주석이 이미 그
+   갈아끼우는 자리로 ASSET:CSS 의 :root 를 지목해 두었다. */
+:root{
+  --bg-soft:   #111726;
+  --panel:     #161d2e;
+  --panel-2:   #1c2435;
+  --border:    #283149;
+  --border-2:  #364263;
+  --text:      #e6ecf5;
+
+  --accent:    #fb7185;   /* 메인(로즈) */
+  --accent-2:  #f472b6;   /* 보조(핑크) */
+
+  /* 판정 색 — 축은 "의도대로 됐나" 하나다. 초록은 시킨 대로 된 것(막으라고 해서 막힘),
+     빨강은 의도와 어긋난 것(막았어야 할 것이 뚫렸거나, 아무도 시키지 않은 로그아웃이 남),
+     노랑은 판정이 아니라 상황 라벨. 이 축을 데모마다 흔들지 않는다. */
+  --ok:        #34d399;
+  --warn:      #fbbf24;
+  --bad:       #f87171;
+  --purple:    #c084fc;
+
+  --radius:    14px;
+  --radius-sm: 9px;
+  --shadow:    0 10px 30px rgba(0,0,0,.35);
+  --mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  --sans: "Pretendard Variable", "Pretendard", -apple-system, BlinkMacSystemFont, system-ui, "Apple SD Gothic Neo", "Malgun Gothic", "Noto Sans KR", sans-serif;
+}
+
+/* 출처: defensive_programming.html 176-193 (.quiz 일가) */
+.quiz{border:1px solid var(--border-2); border-radius:var(--radius); padding:18px 20px; margin:22px 0; background:var(--panel)}
+.quiz .q-head{display:flex; align-items:center; gap:9px; font-size:12px; color:var(--accent); font-family:var(--mono); text-transform:uppercase; letter-spacing:1px; margin-bottom:8px}
+.quiz .q{font-weight:700; font-size:16px; color:#fff; margin:0 0 14px}
+.quiz .opt{
+  display:block; width:100%; text-align:left; margin:8px 0; padding:12px 14px;
+  background:var(--panel-2); border:1px solid var(--border); border-radius:10px; color:var(--text);
+  font-weight:500; transition:all .15s;
+}
+.quiz .opt:hover{border-color:var(--accent-2); transform:none; color:#fff}
+.quiz .opt .mk{font-family:var(--mono); color:var(--text-mut); margin-right:9px}
+.quiz .opt.correct{border-color:var(--ok); background:rgba(52,211,153,.13); color:#fff}
+.quiz .opt.correct .mk{color:var(--ok)}
+.quiz .opt.wrong{border-color:var(--bad); background:rgba(248,113,113,.12); color:#fff}
+.quiz .opt.wrong .mk{color:var(--bad)}
+.quiz .opt:disabled{cursor:default; opacity:1}
+.quiz .explain{display:none; margin-top:12px; padding:13px 15px; border-radius:10px; background:var(--bg); border:1px solid var(--border); font-size:14.5px; color:var(--text-dim)}
+.quiz .explain.show{display:block}
+.quiz .explain b{color:var(--ok)}
+
+/* 출처: defensive_programming.html 266-271 (.trace) */
+.trace{
+  margin:20px 0; padding:16px 18px; border-radius:12px; overflow-x:auto;
+  background:#0a0f18; border:1px solid var(--border);
+  font-family:var(--mono); font-size:12.5px; line-height:1.85; color:var(--text-dim);
+}
+.trace code{color:inherit; background:none; border:0; padding:0}
+
+/* 출처: defensive_programming.html 284-288 (.gap) */
+.gap{
+  background:rgba(251,191,36,.16); border:1px solid rgba(251,191,36,.4);
+  border-radius:6px; padding:1px 7px; color:var(--warn); font-weight:700;
+  font-family:var(--mono); font-size:12.5px;
+}
+
+/* 출처: defensive_programming.html 305-309 (.demo) */
+.demo{
+  background:linear-gradient(180deg,var(--bg-soft),var(--panel));
+  border:1px solid var(--border-2); border-radius:var(--radius);
+  padding:20px; margin:20px 0; position:relative; overflow:hidden;
+}
+
+/* 출처: defensive_programming.html 321-332 (.picker .pick .verdict). 원본 range 는
+   321-331 로 끝나지만 그러면 .verdict.good·.warn 두 색만 남고 .verdict.bad(332행)가
+   잘린다 — 판정 삼색 중 하나가 빠지므로 한 줄 늘려 세 색을 다 담는다. */
+.picker{display:flex; gap:8px; flex-wrap:wrap; margin:6px 0 4px}
+.pick{padding:8px 14px; border-radius:99px; border:1px solid var(--border-2); background:var(--panel-2);
+  color:var(--text-dim); font-weight:600; font-size:13.5px; cursor:pointer; transition:all .15s}
+.pick:hover{border-color:var(--accent); color:#fff}
+.pick.on{background:linear-gradient(90deg,var(--accent),var(--accent-2)); color:#1a1005; border-color:transparent}
+.verdict{display:flex; align-items:center; gap:10px; padding:11px 14px; border-radius:10px;
+  border:1px solid var(--border); background:var(--bg); margin:8px 0; transition:all .2s}
+/* 판정 색은 :root 주석이 정해 둔 축(--ok/--warn/--bad)을 그대로 쓴다. 여기에 --accent를
+   끌어다 쓰면 이 문서의 accent가 곧 로즈라서 '좋음'과 '나쁨'이 같은 색이 된다. */
+.verdict.good{border-color:var(--ok);   color:var(--text)}
+.verdict.warn{border-color:var(--warn); color:var(--text)}
+.verdict.bad{border-color:var(--bad);   color:var(--text)}
+
+/* 출처: defensive_programming.html 336-338 (.kv) */
+.kv{display:grid; grid-template-columns:auto 1fr; gap:8px 16px; margin:14px 0;
+  font-size:14px; align-items:baseline}
+.kv .k{font-family:var(--mono); font-size:12.5px; color:var(--accent); white-space:nowrap}
+
+/* 출처: defensive_programming.html 348-358 (.tog 일가) */
+.tog{
+  font-family:var(--mono); font-size:12.5px; font-weight:700; line-height:1.25; cursor:pointer;
+  padding:9px 12px; border-radius:9px; border:1px solid var(--border-2);
+  background:var(--panel-2); color:var(--text-mut); transition:all .15s; text-align:left;
+}
+.tog:hover{border-color:var(--accent); color:#fff; transform:none}
+.tog.on{background:rgba(52,211,153,.14); border-color:var(--ok); color:#86efac}
+.cl-togs{display:flex; flex-direction:column; gap:7px; margin:10px 0 4px}
+
+/* 남은 조사 목록. 로그 취조실이 처음 쓴다 */
+.todo{margin:10px 0 0; padding-left:20px; color:var(--text-mut); font-size:14.5px; line-height:1.9}
+
+/* 출처: defensive_programming.html 376-394 (.asm-* .ctl-*) */
+.asm-screen{display:grid; gap:8px; padding:14px; background:#0a0f18; border:1px solid var(--border); border-radius:12px; min-height:260px}
+.asm-sec{display:flex; align-items:center; gap:10px; padding:10px 14px; border-radius:9px; border:1px solid var(--border); background:var(--panel); font-size:14.5px}
+.asm-sec span{margin-left:auto; font-family:var(--mono); font-size:11.5px; color:var(--text-mut)}
+.asm-sec.s-ok{border-color:var(--border-2)}
+.asm-sec.s-dim{opacity:.55}
+.asm-sec.s-warn{border-color:var(--warn)}
+.asm-sec.s-gone{border-style:dashed; opacity:.4}
+.asm-sec.s-cache{border-color:#38bdf8}
+.asm-sec.s-skel{background:repeating-linear-gradient(90deg, var(--panel) 0 18px, var(--panel-2) 18px 36px)}
+.asm-sec.s-open{border-color:#c084fc; opacity:.7}
+.asm-500{display:flex; flex-direction:column; gap:8px; align-items:center; justify-content:center;
+  min-height:230px; color:#fb7185; font-family:var(--mono); font-size:18px; text-align:center}
+.asm-500 span{font-family:var(--sans); font-size:14px; color:var(--text-mut); max-width:420px}
+.asm-ctl{display:grid; gap:8px; margin-bottom:12px}
+.ctl-row{display:flex; align-items:center; gap:10px; flex-wrap:wrap; font-size:14px; color:var(--text-dim)}
+.ctl-k{min-width:170px; color:var(--text-mut); font-size:13.5px}
+.ctl-sel{background:var(--panel); color:var(--text); border:1px solid var(--border-2);
+  border-radius:8px; padding:6px 10px; font-family:var(--sans); font-size:13.5px}
+.asm-meter{margin-top:10px}
+
+/* 출처: defensive_programming.html 399-420 (.jcard 일가) */
+.jcard{
+  border:1px solid var(--border); border-radius:var(--radius-sm); background:var(--panel);
+  padding:13px 15px; margin:9px 0;
+}
+.jcard .jq{display:flex; gap:10px; align-items:flex-start; font-size:15px; color:var(--text); font-weight:600}
+.jcard .jn{
+  flex:0 0 22px; width:22px; height:22px; border-radius:7px; display:grid; place-items:center;
+  font-family:var(--mono); font-size:11px; font-weight:400; margin-top:2px;
+  background:var(--panel-2); color:var(--text-mut); border:1px solid var(--border);
+}
+.jbtns{display:flex; gap:8px; flex-wrap:wrap; margin:10px 0 0 32px}
+.jbtn{font-size:13px; padding:7px 14px; border-radius:99px}
+.jbtn:hover{transform:none}
+.jbtn:disabled{opacity:1; cursor:default}
+.jbtn.hit{border-color:var(--ok);  background:rgba(52,211,153,.13); color:#fff}
+.jbtn.miss{border-color:var(--bad); background:rgba(248,113,113,.12); color:#fff}
+.jwhy{
+  margin:10px 0 0 32px; padding:11px 13px; border-radius:9px;
+  background:var(--bg); border:1px solid var(--border); font-size:14px; color:var(--text-dim);
+}
+.jwhy b{color:#fff}
+
+/* 출처: defensive_programming.html 452-464 (.wgrid .wfield .reqout). 465행의
+   @media(max-width:640px)은 뺀다 — 덱은 1280x720 좌표계를 통째로 확대·축소하므로
+   창 너비에 따른 열 접힘은 뒷자리마다 다른 그림을 보여 준다. */
+.wgrid{display:grid; grid-template-columns:1fr 1fr; gap:12px; margin:4px 0}
+.wfield{display:flex; flex-direction:column; gap:6px; font-size:12.5px; color:var(--text-mut)}
+.wfield input{
+  padding:10px 12px; border-radius:9px; background:var(--panel-2);
+  border:1px solid var(--border-2); color:var(--text); font-family:var(--sans); font-size:14px;
+}
+.wfield input:focus{outline:none; border-color:var(--accent)}
+.wfield input::placeholder{color:var(--text-mut)}
+.reqout{
+  padding:14px 16px; border-radius:var(--radius-sm); background:var(--bg);
+  border:1px solid var(--border-2); font-size:15.5px; line-height:1.75; color:var(--text);
+  margin:10px 0 12px;
+}
+
+/* 출처: defensive_programming.html 531-661 (도해 .dia 일가) */
+.dia{
+  margin:22px 0; padding:16px 18px; border:1px solid var(--border);
+  border-radius:var(--radius); background:var(--panel);
+}
+.dia-top{display:flex; align-items:center; gap:10px; flex-wrap:wrap; margin:0 0 6px}
+.dia-tag{
+  font-family:var(--mono); font-size:10.5px; letter-spacing:1px; text-transform:uppercase;
+  color:var(--text-mut); border:1px solid var(--border); padding:3px 8px;
+  border-radius:6px; background:var(--bg);
+}
+.dia-sp{flex:1 1 auto}
+.dia-btn{padding:5px 11px; font-size:12px; font-family:var(--mono); min-width:74px}
+.dia-dots{display:flex; gap:6px; align-items:center}
+/* 전역 button 규칙이 padding 을 들고 있어서, 폭만 8px 로 줘도 알약이 된다.
+   padding 과 line-height 를 도로 0 으로 내려 놓아야 점이 점으로 보인다. */
+.dia-dot{
+  width:8px; height:8px; padding:0; line-height:0; flex:0 0 auto;
+  border-radius:50%; background:var(--panel-2);
+  border:1px solid var(--border-2); transition:background .2s, border-color .2s;
+}
+.dia-dot:hover{transform:none; border-color:var(--accent)}
+.dia-dot.on{background:var(--accent); border-color:var(--accent)}
+/* 멈춰 있는 동안에는 지금 단계가 어디인지가 더 중요해진다 */
+.dia.paused .dia-dot.on{background:var(--warn); border-color:var(--warn)}
+.dia svg{display:block; width:100%; height:auto; margin:2px 0 0}
+
+/* 단계 설명. figcaption 과 갈라 둔다. figcaption 은 그림이 주장하는 것 한 줄이라
+   내내 같고, 이쪽은 단계마다 바뀐다. 바뀌는 쪽을 낭독기가 계속 읽으면 본문을 들을
+   수 없으므로 여기는 aria-hidden 으로 덮고, 그림의 뜻은 svg 의 aria-label 이 진다. */
+.dia-cap{
+  min-height:2.9em; margin:8px 0 0; padding:9px 12px; border-radius:var(--radius-sm);
+  background:var(--bg); border:1px solid var(--border);
+  font-size:13.2px; line-height:1.6; color:var(--text-dim);
+}
+.dia-cap b{color:var(--text)}
+.dia-cap .no{color:var(--bad)}
+.dia-cap .ye{color:var(--ok)}
+.dia figcaption{
+  margin:8px 2px 0; font-size:12.5px; line-height:1.65; color:var(--text-mut);
+  border-top:1px solid var(--border); padding-top:8px;
+}
+.dia figcaption b{color:var(--text-dim)}
+
+/* ---- 그림 안의 공통 부품 ----
+   색 축은 본문 판정 색과 같다. 이 문서는 --accent 와 --bad 가 거의 같은 로즈라서,
+   형제 문서처럼 accent 를 '움직이는 값'에 쓰면 실패 표시와 구별되지 않는다.
+   좇아야 할 값은 --purple 이 맡고, accent 는 지금 단계의 테두리에만 쓴다. */
+.dia .nd{fill:var(--bg); stroke:var(--border-2); stroke-width:1.2}
+.dia .nd.soft{fill:var(--panel-2)}
+.dia .nd.hot{fill:none; stroke:var(--accent); stroke-width:1.8}
+.dia .nd.ghost{fill:none; stroke:var(--border); stroke-dasharray:4 4}
+.dia .nd.bad{stroke:var(--bad)}
+.dia .nd.busy{fill:rgba(192,132,252,.14); stroke:var(--purple)}
+.dia .nd.wait{fill:rgba(251,191,36,.12); stroke:var(--warn); stroke-dasharray:4 3}
+
+.dia text{font-family:var(--sans); fill:var(--text-dim)}
+.dia .s{font-size:11.5px; fill:var(--text-dim)}
+/* 값은 고정폭, 말은 본문 활자. 칸에 든 것이 데이터일 때는 자간이 벌어지는 것이 정보다. */
+.dia .m{font-family:var(--mono); font-size:10.5px; fill:var(--text-mut); letter-spacing:.3px}
+/* 열 줄짜리 스택처럼 한 상자에 여러 줄이 들어가는 자리. 줄 번호까지 그대로 실어야 하므로
+   글자를 줄여 상자 안에 맞춘다. */
+.dia .m.sm{font-size:9.5px; letter-spacing:.2px}
+.dia .cap-l{font-family:var(--mono); font-size:9.5px; letter-spacing:.6px; fill:var(--text-mut)}
+.dia .mut{fill:var(--text-mut)}
+.dia .no{fill:var(--bad)}
+.dia .warn{fill:var(--warn)}
+.dia .ok{fill:var(--ok)}
+.dia .val{fill:var(--purple)}
+/* 흐리게 하는 데 opacity 를 쓰면 안 된다. 구동기의 .dia [data-at]{opacity:0} 과
+   .dia [data-at].vis{opacity:1} 이 같은 속성을 쥐고 있어서, 보일 때나 숨을 때나
+   이 선언은 한 번도 이기지 못한다. 아무도 안 쥔 fill-opacity 로 같은 효과를 낸다. */
+.dia .gone{fill:var(--text-mut); fill-opacity:.5}
+
+.dia .wire{stroke:var(--border-2); stroke-width:1.4; fill:none}
+.dia .wire.dash{stroke-dasharray:5 4}
+.dia .wire.bad{stroke:var(--bad); stroke-width:2}
+
+.dia .rband-hot{fill:none; stroke:var(--accent); stroke-width:1.8}
+
+/* ---- 구동기가 쓰는 것 ----
+   data-at 하나다. 그 단계에서만 보여야 할 것에 붙이고, 목록 판정은 JS 가,
+   보임과 숨김은 여기가 맡는다. */
+.dia [data-at]{opacity:0; transition:opacity .28s ease}
+.dia [data-at].vis{opacity:1}
+
+/* 새로 생긴 것 */
+.dia .pop{transform-box:fill-box; transform-origin:center}
+.dia .pop.vis{animation:diaPop .42s cubic-bezier(.2,.9,.3,1.25) both}
+@keyframes diaPop{
+  0%  {opacity:0; transform:scale(.55)}
+  62% {opacity:1; transform:scale(1.07)}
+  100%{opacity:1; transform:scale(1)}
+}
+/* 지금 보라는 표시. 깜빡임이 아니라 숨쉬기여야 한다. 그림이 읽는 동안 내내 떠
+   있으므로 대비가 크게 오르내리면 옆의 본문을 못 읽는다. */
+.dia .breathe.vis{animation:diaBreathe 1.9s ease-in-out infinite}
+@keyframes diaBreathe{0%,100%{opacity:1} 50%{opacity:.45}}
+/* 선이 그어진다. 갔다 오는 것이 아니라 관계가 드러나는 것 */
+.dia .draw{stroke-dasharray:var(--dl,300); stroke-dashoffset:var(--dl,300)}
+.dia .draw.vis{animation:diaDraw var(--ft,.7s) ease-out forwards}
+@keyframes diaDraw{to{stroke-dashoffset:0}}
+
+/* 움직임을 줄여 달라고 한 사람에게는 자동으로 돌지 않는다. 구동기가 자동 재생을
+   걸지 않고, 여기서는 사이를 잇는 보간만 끈다. 단계를 손으로 넘기는 것은 남는다. */
+@media (prefers-reduced-motion: reduce){
+  .dia [data-at]{transition:none}
+  .dia .pop.vis, .dia .breathe.vis, .dia .draw.vis{animation:none}
+  /* 애니메이션을 끄면 시작 상태(투명·잘린 선)에 멈춘다. 끝난 모습으로 세운다. */
+  .dia .pop.vis, .dia .breathe.vis{opacity:1}
+  .dia .draw.vis{stroke-dashoffset:0}
+}
+
+/* 좁은 화면에서 글자가 뭉개지지 않게 최소 폭을 주고 가로로만 흘린다. 본문이 가로로
+   밀리면 안 되므로 스크롤은 그림 상자 안에서만 일어난다. 폭에 맞춰 통째로 줄이는
+   쪽은 택하지 않았다. 720 짜리 그림을 400 에 밀어 넣으면 9.5px 글자가 5px 가 된다. */
+.dia-scroll{overflow-x:auto; overflow-y:hidden; scrollbar-width:thin;
+  scrollbar-color:var(--border-2) transparent}
+.dia-scroll::-webkit-scrollbar{height:8px}
+.dia-scroll::-webkit-scrollbar-track{background:transparent}
+.dia-scroll::-webkit-scrollbar-thumb{background:var(--border-2); border-radius:99px}
+.dia-scroll::-webkit-scrollbar-thumb:hover{background:var(--text-mut)}
+/* 밀 수 있다는 표시. 넘치는 쪽이 상자 안이라 페이지 스크롤바로는 드러나지 않는다. */
+.dia-hint{display:none; font-family:var(--mono); font-size:10.5px; letter-spacing:.4px;
+  color:var(--text-mut); margin:0 0 4px}
+@media(max-width:700px){
+  .dia-scroll svg{min-width:720px}
+  .dia-hint{display:block}
+}
 /* ==== /ASSET:CSS ==== */
 </style>
 </head>
@@ -208,18 +540,175 @@ body{font-family:var(--sans);color:var(--text);-webkit-font-smoothing:antialiase
   </section>
   <section class="slide" id="s04">
     <h2>오늘의 약속 두 문장, 그리고 여섯 반경</h2>
+    <p class="build promise" data-beat="1">경계에서는 엄격하게 검사해서 <b>빨리 죽입니다</b>.</p>
+    <p class="build promise" data-beat="2">조립하는 자리에서는 부분 실패를 흡수해서 <b>버팁니다</b>.</p>
+    <!-- 출처: defensive_programming.html 3696-3711 (diaRadius). id 를 diaRadiusIntro 로
+         바꾸고 data-frames="6" 을 id 바로 뒤에 둔다(검사기의 DIA_FIG 가 id 뒤부터 본다).
+         안쪽 g#radiusBands 도 radiusBandsIntro 로 바꾼다. dia-btn(재생 버튼)은 뺀다.
+         이 장은 미리 보여 주는 자리라 registerBeats 로 등록하지 않는다 — ASSET:JS 가
+         마지막 프레임에 세워 두고 그대로 둔다. 이 장의 비트는 위 .build 둘만 센다. -->
+    <figure class="dia" id="diaRadiusIntro" data-frames="6">
+      <div class="dia-top">
+        <span class="dia-tag">그림 10 · 반경과 구멍</span>
+        <span class="dia-sp"></span>
+        <div class="dia-dots"></div>
+      </div>
+      <div class="dia-hint" aria-hidden="true">← 좌우로 밀어서 보세요 →</div>
+      <div class="dia-scroll">
+        <svg viewBox="0 0 720 300" role="img" aria-label="방어의 반경 여섯 개를 안쪽에서 바깥쪽으로 겹친 띠로 그린 지도. 가장 안쪽은 한 줄이고 바깥으로 갈수록 한 함수, 한 객체, 한 모듈, 프로세스 경계, 요구사항으로 넓어진다. 반경마다 막을 수 있는 것이 다르고, 어느 반경도 다음 반경의 몫까지 대신 막아 주지 않는다. 앞 반경이 막고 남긴 것이 그대로 다음 반경의 문제였고, 가장 바깥의 요구사항까지 가서야 사슬이 닫힌다. 그 반경 밖에는 코드가 없다.">
+          <g id="radiusBandsIntro"></g>
+        </svg>
+      </div>
+      <div class="dia-cap" aria-hidden="true"></div>
+      <figcaption><b>반경마다 막는 것이 다르고, 어느 반경도 다음 반경의 몫까지 대신 막아 주지 않습니다.</b> 앞 반경이 막고 남긴 것이 그대로 다음 반경의 문제였습니다.</figcaption>
+    </figure>
   </section>
   <section class="slide" id="s05">
     <h2>반경 1 · 한 줄 — 터진 자리와 잘못된 자리는 다른 곳입니다</h2>
   </section>
   <section class="slide" id="s06">
     <h2>스택트레이스는 호출이 지나온 길이지 값이 지나온 길이 아닙니다</h2>
+    <!-- 출처: defensive_programming.html 823-895 (diaBlame). dia-btn(재생 버튼)은 뺀다. -->
+    <figure class="dia" id="diaBlame">
+      <div class="dia-top">
+        <span class="dia-tag">그림 1 · 두 개의 길</span>
+        <span class="dia-sp"></span>
+        <div class="dia-dots"></div>
+      </div>
+      <div class="dia-hint" aria-hidden="true">← 좌우로 밀어서 보세요 →</div>
+      <div class="dia-scroll">
+        <svg viewBox="0 0 720 300" role="img" aria-label="값 하나가 상류에서 출발해 응답 파싱, 캐시, 모델 조립을 거쳐 화면 렌더까지 가는 과정을 시간축 위에 놓은 그림. 그 값이 목록이 아니라 문자열이 된 자리는 그럴듯해 보이는 세 갈래 가운데 하나일 수 있지만 어디였는지는 알 수 없고, 그 자리들에서는 아무도 예외를 던지지 않아 스택에 아무것도 남기지 않았다. 스택트레이스 열 줄은 마지막 화면 렌더 자리 위에서만 솟아 있어서, 터진 자리는 정확히 가리키지만 잘못된 자리는 가리키지 못한다.">
+
+          <!-- 스택이 찍지 않은 구간 -->
+          <rect class="nd ghost" x="30" y="40" width="400" height="150" rx="12" data-at="2+"/>
+          <text class="cap-l" x="230" y="66" text-anchor="middle" data-at="2+">스택트레이스가 찍지 않은 구간</text>
+          <text class="s" x="230" y="112" text-anchor="middle" data-at="2+">여기에서는 아무도 예외를 던지지 않았습니다.</text>
+          <text class="s mut" x="230" y="136" text-anchor="middle" data-at="2+">던지지 않았으므로 스택에 남을 것도 없습니다.</text>
+
+          <!-- 스택 열 줄. 위가 가장 깊은 자리다 -->
+          <g data-at="4+" class="pop">
+            <rect class="nd soft" x="440" y="18" width="260" height="180" rx="10"/>
+            <text class="cap-l" x="570" y="14" text-anchor="middle">스택트레이스가 찍은 것 · 열 줄</text>
+            <text class="m sm" x="448" y="36">BeanELResolver$BeanProperties.get:253</text>
+            <text class="m sm" x="448" y="53">BeanELResolver.property:322</text>
+            <text class="m sm" x="448" y="70">BeanELResolver.getValue:93</text>
+            <text class="m sm" x="448" y="87">JasperELResolver.getValue:123</text>
+            <text class="m sm" x="448" y="104">AstValue.getValue:160</text>
+            <text class="m sm" x="448" y="121">ValueExpressionImpl.getValue:149</text>
+            <text class="m sm" x="448" y="138">PageContextImpl.proprietaryEvaluate:655</text>
+            <text class="m sm" x="448" y="155">..._jspx_meth_c_005fset_005f141:9946</text>
+            <text class="m sm" x="448" y="172">..._jspx_meth_c_005fif_005f43:9832</text>
+            <text class="m sm" x="448" y="189">..._jspService:743</text>
+          </g>
+          <line class="wire" x1="570" y1="198" x2="570" y2="212" data-at="4+"/>
+
+          <!-- 값의 자리 표시 -->
+          <text class="m warn" x="74"  y="204" text-anchor="middle" data-at="1+">? 상류의 빈 값</text>
+          <text class="m warn" x="192" y="204" text-anchor="middle" data-at="1+">? 파싱 실패</text>
+          <text class="m warn" x="318" y="204" text-anchor="middle" data-at="1+">? 역직렬화 실패</text>
+          <text class="m no"   x="570" y="204" text-anchor="middle" data-at="3+">java.lang.String</text>
+
+          <!-- 네 자리와 그 앞의 상류 -->
+          <rect class="nd ghost" x="30"  y="212" width="88"  height="32" rx="8"/>
+          <text class="s mut" x="74"  y="232" text-anchor="middle">상류 API</text>
+          <rect class="nd" x="140" y="212" width="104" height="32" rx="8"/>
+          <text class="s" x="192" y="232" text-anchor="middle">응답 파싱</text>
+          <rect class="nd" x="266" y="212" width="104" height="32" rx="8"/>
+          <text class="s" x="318" y="232" text-anchor="middle">캐시</text>
+          <rect class="nd" x="392" y="212" width="104" height="32" rx="8"/>
+          <text class="s" x="444" y="232" text-anchor="middle">모델 조립</text>
+          <rect class="nd" x="518" y="212" width="104" height="32" rx="8"/>
+          <rect class="nd hot" x="518" y="212" width="104" height="32" rx="8" data-at="3+"/>
+          <text class="s" x="570" y="232" text-anchor="middle">화면 렌더</text>
+
+          <!-- 자리 사이의 이동 -->
+          <line class="wire dash" x1="118" y1="228" x2="140" y2="228"/>
+          <line class="wire dash" x1="244" y1="228" x2="266" y2="228"/>
+          <line class="wire dash" x1="370" y1="228" x2="392" y2="228"/>
+          <line class="wire dash" x1="496" y1="228" x2="518" y2="228"/>
+          <text class="cap-l mut" x="318" y="260" text-anchor="middle" data-at="2+">아무 항의 없이 통과</text>
+
+          <!-- 시간축 -->
+          <line class="wire" x1="30" y1="278" x2="694" y2="278"/>
+          <polygon fill="var(--border-2)" points="686,273 698,278 686,283"/>
+          <text class="cap-l" x="694" y="294" text-anchor="end">시간</text>
+
+          <!-- 마지막 단계에서만 그어지는 거리 -->
+          <path class="wire bad draw" style="--dl:420; --ft:.9s" d="M 150 292 L 560 292" data-at="5"/>
+          <text class="s no breathe" x="355" y="292" text-anchor="middle" data-at="5">잘못된 자리와 터진 자리 사이</text>
+        </svg>
+      </div>
+      <div class="dia-cap" aria-hidden="true"></div>
+      <figcaption><b>스택트레이스는 값이 지나온 길이 아니라 호출이 지나온 길입니다.</b> 두 길이 갈라지는 자리가 이 그림의 왼쪽입니다.</figcaption>
+    </figure>
   </section>
   <section class="slide" id="s07">
     <h2>같은 식에 다섯 값 — null 은 조용하고 문자열은 시끄럽습니다</h2>
   </section>
   <section class="slide" id="s08">
     <h2>조용한 쪽이 더 위험합니다</h2>
+    <!-- 출처: defensive_programming.html 1120-1181 (diaSilent). dia-btn(재생 버튼)은 뺀다. -->
+    <figure class="dia" id="diaSilent">
+      <div class="dia-top">
+        <span class="dia-tag">그림 2 · 같은 코드, 갈리는 자리</span>
+        <span class="dia-sp"></span>
+        <div class="dia-dots"></div>
+      </div>
+      <div class="dia-hint" aria-hidden="true">← 좌우로 밀어서 보세요 →</div>
+      <div class="dia-scroll">
+        <svg viewBox="0 0 720 250" role="img" aria-label="조용한 실패의 다섯 가지 모습을 하나씩 놓고, 같은 코드가 조건에 따라 방어가 되기도 하고 삼킴이 되기도 하는 것을 두 갈래로 보여 주는 그림. 빈 컬렉션 반환, 기본값 대입, Optional.orElse, 잡고 로그만 남기기, catch 후 무시 다섯 가지 모두 위쪽 갈래에서는 옳은 선택이고 아래쪽 갈래에서는 조용한 실패다. 다섯 가지의 공통점은 어느 갈래로 가든 예외가 나지 않아 테스트도 리뷰도 그대로 통과한다는 것이다.">
+
+          <text class="cap-l" x="30" y="20">다섯 가지 중</text>
+          <text class="m val" x="112" y="20" data-at="0">첫 번째</text>
+          <text class="m val" x="112" y="20" data-at="1">두 번째</text>
+          <text class="m val" x="112" y="20" data-at="2">세 번째</text>
+          <text class="m val" x="112" y="20" data-at="3">네 번째</text>
+          <text class="m val" x="112" y="20" data-at="4">다섯 번째</text>
+          <text class="m val" x="112" y="20" data-at="5">전부</text>
+
+          <!-- 왼쪽: 코드 모양 하나 -->
+          <rect class="nd soft" x="30" y="88" width="210" height="52" rx="10"/>
+          <text class="m" x="135" y="119" text-anchor="middle" data-at="0">빈 컬렉션 반환</text>
+          <text class="m" x="135" y="119" text-anchor="middle" data-at="1">기본값 대입</text>
+          <text class="m" x="135" y="119" text-anchor="middle" data-at="2">Optional.orElse(기본값)</text>
+          <text class="m" x="135" y="119" text-anchor="middle" data-at="3">잡고 로그만 남기기</text>
+          <text class="m" x="135" y="119" text-anchor="middle" data-at="4">catch (Exception ignored)</text>
+          <text class="m mut" x="135" y="119" text-anchor="middle" data-at="5">다섯 줄 모두</text>
+
+          <!-- 갈림 -->
+          <path class="wire" d="M 240 114 C 272 114 272 62 304 62"/>
+          <path class="wire" d="M 240 114 C 272 114 272 166 304 166"/>
+          <polygon fill="var(--border-2)" points="296,57 308,62 296,67"/>
+          <polygon fill="var(--border-2)" points="296,161 308,166 296,171"/>
+
+          <!-- 위 갈래: 옳은 자리 -->
+          <rect class="nd" x="308" y="34" width="382" height="56" rx="10"/>
+          <text class="cap-l ok" x="320" y="52">이 조건에서는 옳습니다</text>
+          <text class="s" x="320" y="76" data-at="0">목록이 정말로 비어 있을 때입니다.</text>
+          <text class="s" x="320" y="76" data-at="1">선택하지 않았을 때를 위한 값일 때입니다.</text>
+          <text class="s" x="320" y="76" data-at="2">정말로 없는 것이 정상 범위에 속할 때입니다.</text>
+          <text class="s" x="320" y="76" data-at="3">그 실패가 다음 로직에 영향을 주지 않을 때입니다.</text>
+          <text class="s no" x="320" y="76" data-at="4">옳은 자리가 사실상 없습니다.</text>
+          <text class="s mut" x="320" y="76" data-at="5">조건이 맞으면 다섯 줄 전부 방어입니다.</text>
+
+          <!-- 아래 갈래: 삼킨 자리 -->
+          <rect class="nd" x="308" y="138" width="382" height="56" rx="10"/>
+          <text class="cap-l no" x="320" y="156">이 조건에서는 조용한 실패입니다</text>
+          <text class="s" x="320" y="180" data-at="0">조회가 실패했는데도 같은 빈 리스트를 내주는 경우입니다.</text>
+          <text class="s" x="320" y="180" data-at="1">파싱이 깨졌는데도 기본값을 채워 넣는 경우입니다.</text>
+          <text class="s" x="320" y="180" data-at="2">조회가 실패해서 비어 버린 자리에까지 물리는 경우입니다.</text>
+          <text class="s" x="320" y="180" data-at="3">영향을 주는데도 로그만 남기고 진행하는 경우입니다.</text>
+          <text class="s" x="320" y="180" data-at="4">무시해도 되는지 판단한 흔적조차 남지 않습니다.</text>
+          <text class="s mut" x="320" y="180" data-at="5">조건이 어긋나면 다섯 줄 전부 삼킴입니다.</text>
+
+          <!-- 공통점 -->
+          <rect class="nd ghost" x="30" y="210" width="660" height="32" rx="8" data-at="5"/>
+          <text class="s warn breathe" x="360" y="231" text-anchor="middle" data-at="5">어느 갈래로 가든 예외는 나지 않습니다. 테스트도 리뷰도 그대로 통과합니다.</text>
+        </svg>
+      </div>
+      <div class="dia-cap" aria-hidden="true"></div>
+      <figcaption><b>"빈 컬렉션을 반환한다"는 문장 자체에는 방어인지 삼킴인지가 정해져 있지 않습니다.</b> 갈리는 것은 코드가 아니라 그 코드가 놓인 조건입니다.</figcaption>
+    </figure>
   </section>
   <section class="slide" id="s09">
     <h2>전과 후 ① — 잡고 로그만 남기는 catch</h2>
@@ -235,6 +724,81 @@ body{font-family:var(--sans);color:var(--text);-webkit-font-smoothing:antialiase
   </section>
   <section class="slide" id="s13">
     <h2>반경 2 · 한 함수 — 검증을 미룬 만큼 늘어나는 거리</h2>
+    <!-- 출처: defensive_programming.html 1342-1416 (diaBoundary). dia-btn(재생 버튼)은 뺀다. -->
+    <figure class="dia" id="diaBoundary">
+      <div class="dia-top">
+        <span class="dia-tag">그림 3 · 미룬 만큼의 거리</span>
+        <span class="dia-sp"></span>
+        <div class="dia-dots"></div>
+      </div>
+      <div class="dia-hint" aria-hidden="true">← 좌우로 밀어서 보세요 →</div>
+      <div class="dia-scroll">
+        <svg viewBox="0 0 720 260" role="img" aria-label="검증을 응답 파싱, 캐시 저장, 모델 조립, 화면 렌더 네 자리 가운데 어디에 두느냐에 따라, 잘못된 값이 잡히기까지 지나가는 거리가 어떻게 달라지는지 보여 주는 그림. 파싱에서 잡으면 값은 한 자리도 더 가지 못하고 스택은 한 줄이지만, 화면 렌더까지 미루면 값은 네 자리를 모두 지나고 스택은 아홉 줄이 되며 그 가운데 다섯 줄은 EL 안쪽 프레임이다. 검증을 미룰수록 잃는 것은 스택의 길이만이 아니라 메시지에 실을 수 있는 맥락이다.">
+
+          <!-- 파이프라인 -->
+          <rect class="nd" x="40"  y="40" width="140" height="36" rx="8"/>
+          <text class="s" x="110" y="63" text-anchor="middle">응답 파싱</text>
+          <rect class="nd" x="210" y="40" width="140" height="36" rx="8"/>
+          <text class="s" x="280" y="63" text-anchor="middle">캐시 저장</text>
+          <rect class="nd" x="380" y="40" width="140" height="36" rx="8"/>
+          <text class="s" x="450" y="63" text-anchor="middle">모델 조립</text>
+          <rect class="nd" x="550" y="40" width="140" height="36" rx="8"/>
+          <text class="s" x="620" y="63" text-anchor="middle">화면 렌더</text>
+          <line class="wire dash" x1="180" y1="58" x2="210" y2="58"/>
+          <line class="wire dash" x1="350" y1="58" x2="380" y2="58"/>
+          <line class="wire dash" x1="520" y1="58" x2="550" y2="58"/>
+
+          <!-- 검증을 두는 자리 -->
+          <rect class="nd hot" x="40"  y="40" width="140" height="36" rx="8" data-at="0"/>
+          <rect class="nd hot" x="210" y="40" width="140" height="36" rx="8" data-at="1"/>
+          <rect class="nd hot" x="380" y="40" width="140" height="36" rx="8" data-at="2"/>
+          <rect class="nd hot" x="550" y="40" width="140" height="36" rx="8" data-at="3"/>
+          <text class="cap-l" x="110" y="30" text-anchor="middle" data-at="0">여기서 검증</text>
+          <text class="cap-l" x="280" y="30" text-anchor="middle" data-at="1">여기서 검증</text>
+          <text class="cap-l" x="450" y="30" text-anchor="middle" data-at="2">여기서 검증</text>
+          <text class="cap-l" x="620" y="30" text-anchor="middle" data-at="3">여기서 검증</text>
+
+          <!-- 거리 막대. 잡히기까지 값이 지나간 구간 -->
+          <text class="cap-l" x="40" y="102">잘못된 값이 갈 수 있는 거리</text>
+          <rect class="nd ghost" x="40" y="110" width="650" height="24" rx="6"/>
+          <rect fill="var(--purple)" opacity=".55" x="42" y="112" width="138" height="20" rx="5" data-at="0"/>
+          <rect fill="var(--purple)" opacity=".55" x="42" y="112" width="308" height="20" rx="5" data-at="1"/>
+          <rect fill="var(--purple)" opacity=".55" x="42" y="112" width="478" height="20" rx="5" data-at="2"/>
+          <rect fill="var(--purple)" opacity=".55" x="42" y="112" width="648" height="20" rx="5" data-at="3"/>
+
+          <!-- 스택 -->
+          <text class="cap-l" x="40" y="160">그때 찍히는 스택</text>
+          <rect class="nd soft" x="40" y="168" width="300" height="18" rx="4" data-at="0-3"/>
+          <text class="m" x="48" y="181" data-at="0-3">우리 코드 한 줄</text>
+          <g data-at="1-3">
+            <rect class="nd soft" x="40" y="190" width="300" height="18" rx="4"/>
+            <text class="m" x="48" y="203">캐시와 조립을 거쳐 온 자리들</text>
+          </g>
+          <g data-at="3" class="pop">
+            <rect class="nd bad" x="40" y="212" width="300" height="18" rx="4"/>
+            <text class="m no" x="48" y="225">EL 안쪽 프레임 다섯 줄이 되돌아옴</text>
+          </g>
+          <text class="m val" x="352" y="181" data-at="0">스택 1줄</text>
+          <text class="m val" x="352" y="181" data-at="1">스택 2줄</text>
+          <text class="m val" x="352" y="181" data-at="2">스택 3줄</text>
+          <text class="m no"  x="352" y="181" data-at="3">스택 9줄</text>
+
+          <!-- 메시지에 실리는 맥락 세 조각 -->
+          <text class="cap-l" x="440" y="160">메시지에 실리는 맥락</text>
+          <rect class="nd" x="440" y="168" width="250" height="20" rx="5"/>
+          <text class="s ok"  x="450" y="183" data-at="0-2">무엇을 하려다가</text>
+          <text class="s mut" x="450" y="183" data-at="3">무엇을 하려다가</text>
+          <rect class="nd" x="440" y="192" width="250" height="20" rx="5"/>
+          <text class="s ok"  x="450" y="207" data-at="0-2">무엇에 대해</text>
+          <text class="s mut" x="450" y="207" data-at="3">무엇에 대해</text>
+          <rect class="nd" x="440" y="216" width="250" height="20" rx="5"/>
+          <text class="s ok" x="450" y="231" data-at="0-2">무엇을 받았는지</text>
+          <text class="s warn" x="450" y="231" data-at="3">무엇을 받았는지 (절반만)</text>
+        </svg>
+      </div>
+      <div class="dia-cap" aria-hidden="true"></div>
+      <figcaption><b>검증이 늦어질수록 잃는 것은 스택의 길이만이 아닙니다.</b> 메시지에 실을 수 있는 맥락이 함께 사라집니다.</figcaption>
+    </figure>
   </section>
   <section class="slide" id="s14">
     <h2>전과 후 ② — 곳곳의 null 검사</h2>
@@ -247,6 +811,59 @@ body{font-family:var(--sans);color:var(--text);-webkit-font-smoothing:antialiase
   </section>
   <section class="slide" id="s17">
     <h2>반경 3 · 한 객체 — 무엇이든 담기는 모델이 치르는 대가</h2>
+    <!-- 출처: defensive_programming.html 1595-1647 (diaShape). dia-btn(재생 버튼)은 뺀다. -->
+    <figure class="dia" id="diaShape">
+      <div class="dia-top">
+        <span class="dia-tag">그림 4 · 담을 수 있는 것의 넓이</span>
+        <span class="dia-sp"></span>
+        <div class="dia-dots"></div>
+      </div>
+      <div class="dia-hint" aria-hidden="true">← 좌우로 밀어서 보세요 →</div>
+      <div class="dia-scroll">
+        <svg viewBox="0 0 720 290" role="img" aria-label="세 가지 모델이 표현할 수 있는 상태의 넓이를 겹친 영역으로 그린 그림. 가장 넓은 영역은 Map으로, 리스트 자리에 문자열이 앉은 상태도 그 자리가 null인 상태도 모두 담을 수 있다. 검증 없는 DTO는 문자열이 앉은 상태를 표현할 수 없지만 null인 상태는 여전히 담는다. 생성자가 강제하는 DTO는 두 상태를 모두 표현할 수 없어서, 그 조건을 다시 검사하는 코드가 안쪽 어디에도 필요하지 않다. 늘어나는 것은 타입을 선언하는 자리 하나이고 줄어드는 것은 흩어 두었던 검사 전부다.">
+
+          <!-- 세 영역 -->
+          <rect class="nd ghost" x="40" y="48" width="430" height="200" rx="14"/>
+          <text class="cap-l" x="52" y="42">Map&lt;String, Object&gt; 가 담을 수 있는 것</text>
+          <g data-at="1+">
+            <rect class="nd" x="72" y="76" width="340" height="145" rx="12"/>
+            <text class="cap-l" x="84" y="70">검증 없는 DTO</text>
+          </g>
+          <g data-at="2+">
+            <rect class="nd soft" x="104" y="104" width="250" height="90" rx="10"/>
+            <text class="cap-l ok" x="116" y="98">생성자가 강제하는 DTO</text>
+            <text class="s ok" x="229" y="155" text-anchor="middle">여기 있는 것은 전부 유효합니다</text>
+          </g>
+
+          <!-- 잘못된 상태 둘 -->
+          <text class="m no"   x="430" y="238" text-anchor="end" data-at="0">● 리스트 자리에 문자열</text>
+          <text class="m gone" x="430" y="238" text-anchor="end" data-at="1+">● 리스트 자리에 문자열</text>
+          <text class="m no"   x="396" y="212" text-anchor="end" data-at="0,1">● 그 자리가 null</text>
+          <text class="m gone" x="396" y="212" text-anchor="end" data-at="2+">● 그 자리가 null</text>
+
+          <!-- 검사하는 코드의 양 -->
+          <text class="cap-l" x="500" y="42">그래서 필요한 검사</text>
+          <g data-at="0+">
+            <rect class="nd" x="500" y="56" width="190" height="52" rx="9"/>
+            <text class="s" x="510" y="76">Map</text>
+            <text class="m no" x="510" y="96">쓰는 자리마다 확인 · 여러 벌</text>
+          </g>
+          <g data-at="1+">
+            <rect class="nd" x="500" y="118" width="190" height="52" rx="9"/>
+            <text class="s" x="510" y="138">검증 없는 DTO</text>
+            <text class="m warn" x="510" y="158">꺼낼 때마다 null 확인</text>
+          </g>
+          <g data-at="2+">
+            <rect class="nd" x="500" y="180" width="190" height="52" rx="9"/>
+            <text class="s" x="510" y="200">생성자가 강제하는 DTO</text>
+            <text class="m ok" x="510" y="220">안쪽에는 없음</text>
+          </g>
+          <text class="s val breathe" x="595" y="256" text-anchor="middle" data-at="3">늘어난 것은 선언 한 자리입니다</text>
+        </svg>
+      </div>
+      <div class="dia-cap" aria-hidden="true"></div>
+      <figcaption><b>검사하는 코드는 빠뜨릴 수 있지만 타입은 빠뜨릴 수 없습니다.</b> 안쪽에서 다시 묻지 않아도 되는 이유가 이 넓이의 차이입니다.</figcaption>
+    </figure>
   </section>
   <section class="slide" id="s18">
     <h2>전과 후 ③ — Map&lt;String, Object&gt;</h2>
@@ -265,9 +882,121 @@ body{font-family:var(--sans);color:var(--text);-webkit-font-smoothing:antialiase
   </section>
   <section class="slide" id="s23">
     <h2>응답이 이미 나간 뒤에는 되돌릴 것이 없습니다</h2>
+    <!-- 출처: defensive_programming.html 1803-1856 (diaCommit). dia-btn(재생 버튼)은 뺀다. -->
+    <figure class="dia" id="diaCommit">
+      <div class="dia-top">
+        <span class="dia-tag">그림 5 · 되돌릴 수 없는 지점</span>
+        <span class="dia-sp"></span>
+        <div class="dia-dots"></div>
+      </div>
+      <div class="dia-hint" aria-hidden="true">← 좌우로 밀어서 보세요 →</div>
+      <div class="dia-scroll">
+        <svg viewBox="0 0 720 300" role="img" aria-label="아래 순서는 이 그림이 세운 가정이다. 렌더링이 진행되는 동안 만들어진 HTML이 조금씩 클라이언트로 흘러 나가고, 어느 지점에서 상태 코드 200과 본문 일부가 이미 건네진다. 그 지점을 응답 커밋이라고 부른다. 커밋보다 늦게 난 예외는 아무리 넓게 감싸도 상태 코드를 500으로 바꾸거나 오류 페이지로 넘길 수 없다. 헤더는 언제나 본문보다 먼저 나가야 하는데 본문이 이미 나갔기 때문이다. 할 수 있는 일은 남은 렌더링을 멈추는 것뿐이고, 사용자에게는 닫는 태그도 없이 잘린 HTML이 남는다.">
+
+          <text class="cap-l mut" x="40" y="16">아래 순서는 이 그림이 세운 가정입니다</text>
+
+          <!-- 브라우저 -->
+          <rect class="nd" x="520" y="24" width="170" height="110" rx="10"/>
+          <text class="cap-l" x="605" y="20" text-anchor="middle">사용자의 브라우저</text>
+          <text class="m mut" x="532" y="48" data-at="0">(아직 아무것도 없음)</text>
+          <g data-at="1+">
+            <text class="m" x="532" y="48">&lt;html&gt;…머리말</text>
+            <text class="m" x="532" y="66">앞쪽 섹션들</text>
+          </g>
+          <text class="m no breathe" x="532" y="90" data-at="4">여기서 끊김</text>
+          <text class="m no" x="532" y="112" data-at="4">닫는 태그 없음</text>
+
+          <!-- 렌더링 진행 막대 -->
+          <text class="cap-l" x="40" y="164">서버가 만든 HTML</text>
+          <rect class="nd ghost" x="40" y="172" width="650" height="26" rx="6"/>
+          <rect class="nd busy" x="42" y="174" width="286" height="22" rx="5" data-at="1+"/>
+          <text class="m val" x="185" y="190" text-anchor="middle" data-at="1+">앞쪽 태그들이 만든 부분</text>
+
+          <!-- 커밋 마커 -->
+          <line class="wire dash bad" x1="330" y1="150" x2="330" y2="230" data-at="1+"/>
+          <text class="cap-l no" x="330" y="146" text-anchor="middle" data-at="1+">응답 커밋</text>
+          <text class="m mut" x="330" y="246" text-anchor="middle" data-at="1+">상태 코드 200과 본문 일부가 이미 나갔습니다</text>
+
+          <!-- 예외 마커 -->
+          <text class="s no pop" x="470" y="190" text-anchor="middle" data-at="2+">141번째에서 예외</text>
+          <line class="wire bad" x1="470" y1="196" x2="470" y2="214" data-at="2+"/>
+
+          <!-- 시간축 -->
+          <line class="wire" x1="40" y1="214" x2="694" y2="214"/>
+          <polygon fill="var(--border-2)" points="686,209 698,214 686,219"/>
+          <text class="cap-l" x="694" y="230" text-anchor="end">시간</text>
+
+          <!-- 커밋 뒤에 할 수 있는 일 -->
+          <text class="cap-l" x="40" y="268" data-at="3+">커밋 뒤에 시도해 볼 수 있는 것</text>
+          <text class="s no"  x="40" y="288" data-at="3+">✗ 상태 코드를 500으로 바꾼다</text>
+          <text class="s no"  x="270" y="288" data-at="3+">✗ 오류 페이지로 넘긴다</text>
+          <text class="s ok"  x="470" y="288" data-at="4">✓ 남은 렌더링을 멈춘다</text>
+        </svg>
+      </div>
+      <div class="dia-cap" aria-hidden="true"></div>
+      <figcaption><b>try-catch 는 예외를 붙잡을 수는 있어도 이미 나가 버린 바이트를 취소해 주지는 못합니다.</b> 문제는 감싸는 넓이가 아니라 감싸는 자리와 커밋 사이의 순서입니다.</figcaption>
+    </figure>
   </section>
   <section class="slide" id="s24">
     <h2>같은 예외, 네 층 — 대안이 있는 층만 삼킬 수 있습니다</h2>
+    <!-- 출처: defensive_programming.html 2002-2057 (diaLayers). dia-btn(재생 버튼)은 뺀다. -->
+    <figure class="dia" id="diaLayers">
+      <div class="dia-top">
+        <span class="dia-tag">그림 6 · 자격은 지식에서 나온다</span>
+        <span class="dia-sp"></span>
+        <div class="dia-dots"></div>
+      </div>
+      <div class="dia-hint" aria-hidden="true">← 좌우로 밀어서 보세요 →</div>
+      <div class="dia-scroll">
+        <svg viewBox="0 0 720 300" role="img" aria-label="같은 예외 하나가 파서에서 섹션 서비스, 페이지 조립기를 거쳐 전역 처리기까지 올라가는 동안, 층마다 아는 것이 다르기 때문에 삼킬 자격도 달라진다는 것을 보여 주는 그림. 파서는 필드 이름과 값의 타입만 알아서 무엇을 대신 채워야 할지 모르고, 섹션 서비스는 그 섹션이 비어도 화면이 성립하는지를 알며, 페이지 조립기는 그 섹션이 빠져도 페이지를 띄울 수 있는지를 안다. 전역 처리기는 요청 하나가 실패했다는 것만 알아서 기록하고 알리는 일밖에 할 수 없다. 대안을 가진 가운데 두 층만 삼킬 자격이 있다.">
+
+          <text class="cap-l" x="70" y="30">예외가 올라가는 방향</text>
+          <text class="cap-l" x="450" y="30">이 층이 아는 것</text>
+
+          <!-- 예외가 올라가는 화살표 -->
+          <line class="wire bad" x1="46" y1="276" x2="46" y2="252" data-at="0+"/>
+          <line class="wire bad" x1="46" y1="252" x2="46" y2="192" data-at="1+"/>
+          <line class="wire bad" x1="46" y1="192" x2="46" y2="132" data-at="2+"/>
+          <line class="wire bad" x1="46" y1="132" x2="46" y2="72"  data-at="3+"/>
+          <polygon fill="var(--bad)" points="41,80 46,68 51,80" data-at="3+"/>
+
+          <!-- 네 층. 아래가 가장 깊다 -->
+          <rect class="nd" x="70" y="228" width="360" height="48" rx="9"/>
+          <text class="s" x="86" y="248">파서</text>
+          <rect class="nd hot" x="70" y="228" width="360" height="48" rx="9" data-at="0"/>
+          <text class="m no" x="416" y="266" text-anchor="end" data-at="0+">삼킬 자격 없음</text>
+          <text class="s" x="450" y="248" data-at="0+">필드 이름과 그 자리에 온 값의 타입만 압니다.</text>
+          <text class="s mut" x="450" y="266" data-at="0+">없는 지식으로 채우면 대안이 아니라 추측입니다.</text>
+
+          <rect class="nd" x="70" y="168" width="360" height="48" rx="9"/>
+          <text class="s" x="86" y="188">섹션 서비스</text>
+          <rect class="nd hot" x="70" y="168" width="360" height="48" rx="9" data-at="1"/>
+          <text class="m ok" x="416" y="206" text-anchor="end" data-at="1+">삼킬 자격 있음</text>
+          <text class="s" x="450" y="188" data-at="1+">이 섹션이 비어도 화면이 성립하는지 압니다.</text>
+          <text class="s mut" x="450" y="206" data-at="1+">그래서 빈 채로 둔다는 선택을 대신 내릴 수 있습니다.</text>
+
+          <rect class="nd" x="70" y="108" width="360" height="48" rx="9"/>
+          <text class="s" x="86" y="128">페이지 조립기</text>
+          <rect class="nd hot" x="70" y="108" width="360" height="48" rx="9" data-at="2"/>
+          <text class="m ok" x="416" y="146" text-anchor="end" data-at="2+">삼킬 자격 있음</text>
+          <text class="s" x="450" y="128" data-at="2+">이 섹션이 빠져도 페이지를 띄울 수 있는지 압니다.</text>
+          <text class="s mut" x="450" y="146" data-at="2+">그 섹션을 빼고 나머지를 세울 수 있습니다.</text>
+
+          <rect class="nd" x="70" y="48" width="360" height="48" rx="9"/>
+          <text class="s" x="86" y="68">전역 처리기</text>
+          <rect class="nd hot" x="70" y="48" width="360" height="48" rx="9" data-at="3"/>
+          <text class="m no" x="416" y="86" text-anchor="end" data-at="3+">삼킬 자격 없음</text>
+          <text class="s" x="450" y="68" data-at="3+">요청 하나가 실패했다는 것만 압니다.</text>
+          <text class="s mut" x="450" y="86" data-at="3+">기록하고 알리는 일까지가 할 수 있는 전부입니다.</text>
+
+          <text class="s val breathe" x="250" y="296" text-anchor="middle" data-at="4">대안을 가진 가운데 두 층만 자격이 있습니다</text>
+        </svg>
+      </div>
+      <div class="dia-cap" aria-hidden="true"></div>
+      <figcaption><b>자격을 가르는 것은 층의 높이가 아니라 그 층이 아는 것입니다.</b> 가장 깊은 층과 가장 높은 층이 같은 이유로 자격을 갖지 못합니다.</figcaption>
+    </figure>
+    <!-- 출처: defensive_programming.html 4767-4774 뒤에 이어지는 마지막 비트 한 줄 (Task 4 브리핑) -->
+    <p class="build" data-beat="5"><b>같은 코드가 방어와 삼킴으로 갈리는 조건은 하나입니다.</b> 잡은 층이 그 실패 대신 무엇을 할지 알고 있는가.</p>
   </section>
   <section class="slide" id="s25">
     <h2>빨리 죽을 자리와 버틸 자리 — 여덟 장을 직접 골라 봅시다</h2>
@@ -295,6 +1024,66 @@ body{font-family:var(--sans);color:var(--text);-webkit-font-smoothing:antialiase
   </section>
   <section class="slide" id="s33">
     <h2>반경 5 · 프로세스 경계 — 죽는 것보다 느린 것이 위험합니다</h2>
+    <!-- 출처: defensive_programming.html 2372-2431 (diaPool). dia-btn(재생 버튼)은 뺀다. -->
+    <figure class="dia" id="diaPool">
+      <div class="dia-top">
+        <span class="dia-tag">그림 7 · 예외 없이 서는 법</span>
+        <span class="dia-sp"></span>
+        <div class="dia-dots"></div>
+      </div>
+      <div class="dia-hint" aria-hidden="true">← 좌우로 밀어서 보세요 →</div>
+      <div class="dia-scroll">
+        <svg viewBox="0 0 720 290" role="img" aria-label="느린 섹션을 그리는 요청이 스레드를 하나씩 붙들어 스레드 풀이 마르는 과정을 보여 주는 그림. 요청 하나가 스레드 하나를 붙들고 응답이 오거나 연결이 끊길 때까지 자리를 지키므로, 그런 요청이 풀의 한계만큼 쌓이면 남은 스레드가 없다. 그때부터는 그 요청이 어떤 섹션을 그리려 했는지가 중요하지 않고, 느린 섹션을 아예 부르지 않는 요청까지 대기열에 걸린다. 이 전염에는 예외가 필요 없고 시간만 있으면 된다.">
+
+          <text class="cap-l" x="24" y="34">들어오는 요청</text>
+          <text class="cap-l" x="376" y="34" text-anchor="middle">스레드 풀 · 여덟 자리</text>
+          <text class="cap-l" x="620" y="34" text-anchor="middle">대기열</text>
+
+          <!-- 들어오는 요청 -->
+          <rect class="nd" x="24" y="52" width="188" height="30" rx="7"/>
+          <text class="m" x="34" y="72">느린 섹션을 그리는 요청</text>
+          <rect class="nd" x="24" y="90" width="188" height="30" rx="7"/>
+          <text class="m" x="34" y="110">느린 섹션을 그리는 요청</text>
+          <rect class="nd" x="24" y="128" width="188" height="30" rx="7" data-at="1+"/>
+          <text class="m" x="34" y="148" data-at="1+">느린 섹션을 그리는 요청</text>
+          <rect class="nd" x="24" y="166" width="188" height="30" rx="7" data-at="2+"/>
+          <text class="m" x="34" y="186" data-at="2+">느린 섹션을 그리는 요청</text>
+          <rect class="nd" x="24" y="204" width="188" height="30" rx="7" data-at="4"/>
+          <text class="m val" x="34" y="224" data-at="4">그 섹션을 부르지 않는 요청</text>
+
+          <!-- 풀 -->
+          <rect class="nd ghost" x="236" y="44" width="280" height="210" rx="12"/>
+          <rect class="nd busy" x="248" y="60"  width="124" height="38" rx="7" data-at="0+"/>
+          <text class="m warn" x="310" y="84" text-anchor="middle" data-at="0+">붙들림</text>
+          <rect class="nd busy" x="380" y="60"  width="124" height="38" rx="7" data-at="0+"/>
+          <text class="m warn" x="442" y="84" text-anchor="middle" data-at="0+">붙들림</text>
+          <rect class="nd busy" x="248" y="106" width="124" height="38" rx="7" data-at="1+"/>
+          <text class="m warn" x="310" y="130" text-anchor="middle" data-at="1+">붙들림</text>
+          <rect class="nd busy" x="380" y="106" width="124" height="38" rx="7" data-at="1+"/>
+          <text class="m warn" x="442" y="130" text-anchor="middle" data-at="1+">붙들림</text>
+          <rect class="nd busy" x="248" y="152" width="124" height="38" rx="7" data-at="1+"/>
+          <text class="m warn" x="310" y="176" text-anchor="middle" data-at="1+">붙들림</text>
+          <rect class="nd busy" x="380" y="152" width="124" height="38" rx="7" data-at="2+"/>
+          <text class="m warn" x="442" y="176" text-anchor="middle" data-at="2+">붙들림</text>
+          <rect class="nd busy" x="248" y="198" width="124" height="38" rx="7" data-at="2+"/>
+          <text class="m warn" x="310" y="222" text-anchor="middle" data-at="2+">붙들림</text>
+          <rect class="nd busy" x="380" y="198" width="124" height="38" rx="7" data-at="2+"/>
+          <text class="m warn" x="442" y="222" text-anchor="middle" data-at="2+">붙들림</text>
+          <text class="s no breathe" x="376" y="272" text-anchor="middle" data-at="2+">남은 자리 없음</text>
+
+          <!-- 대기열 -->
+          <rect class="nd ghost" x="540" y="44" width="160" height="210" rx="12"/>
+          <rect class="nd wait" x="550" y="60"  width="140" height="30" rx="7" data-at="3+"/>
+          <text class="m mut" x="620" y="80" text-anchor="middle" data-at="3+">대기</text>
+          <rect class="nd wait" x="550" y="98"  width="140" height="30" rx="7" data-at="3+"/>
+          <text class="m mut" x="620" y="118" text-anchor="middle" data-at="3+">대기</text>
+          <rect class="nd wait" x="550" y="136" width="140" height="30" rx="7" data-at="4"/>
+          <text class="m val breathe" x="620" y="156" text-anchor="middle" data-at="4">그 섹션과 무관</text>
+        </svg>
+      </div>
+      <div class="dia-cap" aria-hidden="true"></div>
+      <figcaption><b>이 전염에는 예외가 필요 없습니다. 시간만 있으면 됩니다.</b> 격리가 경계에서 기다려도 붙잡을 것이 도착하지 않는 이유가 여기입니다.</figcaption>
+    </figure>
   </section>
   <section class="slide" id="s34">
     <h2>느린 섹션 하나가 페이지 전체를 기다리게 합니다</h2>
@@ -316,6 +1105,74 @@ body{font-family:var(--sans);color:var(--text);-webkit-font-smoothing:antialiase
   </section>
   <section class="slide" id="s40">
     <h2>다섯 줄을 다시 읽으면, 빈자리가 다섯입니다</h2>
+    <!-- 출처: defensive_programming.html 2921-2988 (diaSpecGap). dia-btn(재생 버튼)은 뺀다. -->
+    <figure class="dia" id="diaSpecGap">
+      <div class="dia-top">
+        <span class="dia-tag">그림 9 · 채워진 칸과 빈 칸</span>
+        <span class="dia-sp"></span>
+        <div class="dia-dots"></div>
+      </div>
+      <div class="dia-hint" aria-hidden="true">← 좌우로 밀어서 보세요 →</div>
+      <div class="dia-scroll">
+        <svg viewBox="0 0 720 318" role="img" aria-label="각색한 화면 정의서 다섯 줄을 왼쪽에 세우고, 줄마다 정상 경로와 실패 경로를 오른쪽 두 칸에 나란히 놓은 그림. 다섯 줄 모두 정상 경로 칸은 순서와 구성과 개수 조건까지 빠짐없이 채워져 있지만, 실패 경로 칸은 다섯 줄 모두 비어 있다. 우연히 다섯이 맞아떨어진 것이 아니라, 규칙 하나마다 그 규칙이 성립하지 않을 때를 위한 문장이 구조적으로 함께 딸려 있지 않기 때문이다.">
+
+          <text class="cap-l" x="30" y="30">화면 정의서 다섯 줄</text>
+          <text class="cap-l ok" x="386" y="30" text-anchor="middle">정상 경로</text>
+          <text class="cap-l no" x="586" y="30" text-anchor="middle">실패 경로</text>
+
+          <!-- 1 -->
+          <rect class="nd" x="30" y="42" width="330" height="42" rx="8"/>
+          <rect class="nd hot" x="30" y="42" width="330" height="42" rx="8" data-at="0"/>
+          <text class="s" x="42" y="68">등록한 순서로 노출한다</text>
+          <rect class="nd" x="376" y="42" width="180" height="42" rx="8"/>
+          <text class="m ok" x="466" y="68" text-anchor="middle">정해져 있음</text>
+          <rect class="nd ghost" x="572" y="42" width="118" height="42" rx="8"/>
+          <text class="m warn" x="631" y="68" text-anchor="middle" data-at="0+">없음</text>
+
+          <!-- 2 -->
+          <rect class="nd" x="30" y="94" width="330" height="42" rx="8"/>
+          <rect class="nd hot" x="30" y="94" width="330" height="42" rx="8" data-at="1"/>
+          <text class="s" x="42" y="120">대표 이미지 1장, 상품 카드 목록</text>
+          <rect class="nd" x="376" y="94" width="180" height="42" rx="8"/>
+          <text class="m ok" x="466" y="120" text-anchor="middle">정해져 있음</text>
+          <rect class="nd ghost" x="572" y="94" width="118" height="42" rx="8"/>
+          <text class="m warn" x="631" y="120" text-anchor="middle" data-at="1+">없음</text>
+
+          <!-- 3 -->
+          <rect class="nd" x="30" y="146" width="330" height="42" rx="8"/>
+          <rect class="nd hot" x="30" y="146" width="330" height="42" rx="8" data-at="2"/>
+          <text class="s" x="42" y="172">화살표로 넘겨 볼 수 있게 한다</text>
+          <rect class="nd" x="376" y="146" width="180" height="42" rx="8"/>
+          <text class="m ok" x="466" y="172" text-anchor="middle">정해져 있음</text>
+          <rect class="nd ghost" x="572" y="146" width="118" height="42" rx="8"/>
+          <text class="m warn" x="631" y="172" text-anchor="middle" data-at="2+">없음</text>
+
+          <!-- 4 -->
+          <rect class="nd" x="30" y="198" width="330" height="42" rx="8"/>
+          <rect class="nd hot" x="30" y="198" width="330" height="42" rx="8" data-at="3"/>
+          <text class="s" x="42" y="224">그 기간에만 노출하고 지나면 뺀다</text>
+          <rect class="nd" x="376" y="198" width="180" height="42" rx="8"/>
+          <text class="m ok" x="466" y="224" text-anchor="middle">정해져 있음</text>
+          <rect class="nd ghost" x="572" y="198" width="118" height="42" rx="8"/>
+          <text class="m warn" x="631" y="224" text-anchor="middle" data-at="3+">없음</text>
+
+          <!-- 5 -->
+          <rect class="nd" x="30" y="250" width="330" height="42" rx="8"/>
+          <rect class="nd hot" x="30" y="250" width="330" height="42" rx="8" data-at="4"/>
+          <text class="s" x="42" y="276">제목을 누르면 목록 페이지로 이동한다</text>
+          <rect class="nd" x="376" y="250" width="180" height="42" rx="8"/>
+          <text class="m ok" x="466" y="276" text-anchor="middle">정해져 있음</text>
+          <rect class="nd ghost" x="572" y="250" width="118" height="42" rx="8"/>
+          <text class="m warn" x="631" y="276" text-anchor="middle" data-at="4+">없음</text>
+
+          <!-- 오른쪽 칸을 통째로 묶는 표시 -->
+          <rect class="nd ghost" x="566" y="36" width="130" height="262" rx="10" data-at="5"/>
+          <text class="s warn breathe" x="631" y="308" text-anchor="middle" data-at="5">다섯 칸 전부</text>
+        </svg>
+      </div>
+      <div class="dia-cap" aria-hidden="true"></div>
+      <figcaption><b>우연히 다섯이 맞아떨어진 것이 아닙니다.</b> 규칙 하나마다 그 규칙이 성립하지 않을 때를 위한 문장이 구조적으로 함께 딸려 있지 않습니다.</figcaption>
+    </figure>
   </section>
   <section class="slide" id="s41">
     <h2>세 군데에서 놓칩니다 — 그래서 볼 수 있는 사람은 개발자뿐입니다</h2>
@@ -349,6 +1206,25 @@ body{font-family:var(--sans);color:var(--text);-webkit-font-smoothing:antialiase
   </section>
   <section class="slide" id="s51">
     <h2>다시 그 스택트레이스로 — 반경마다 막은 것과 남긴 구멍</h2>
+    <!-- 출처: defensive_programming.html 3696-3711 (diaRadius). id 를 diaRadiusRecap 으로
+         바꾸고 data-frames="6" 을 id 바로 뒤에 둔다. 안쪽 g#radiusBands 도
+         radiusBandsRecap 으로 바꾼다. dia-btn(재생 버튼)은 뺀다. 이 장은 registerBeats
+         로 등록되어 여섯 비트로 돈다 — s04 와 달리 여기서는 마지막 비트로 넘어간다. -->
+    <figure class="dia" id="diaRadiusRecap" data-frames="6">
+      <div class="dia-top">
+        <span class="dia-tag">그림 10 · 반경과 구멍</span>
+        <span class="dia-sp"></span>
+        <div class="dia-dots"></div>
+      </div>
+      <div class="dia-hint" aria-hidden="true">← 좌우로 밀어서 보세요 →</div>
+      <div class="dia-scroll">
+        <svg viewBox="0 0 720 300" role="img" aria-label="방어의 반경 여섯 개를 안쪽에서 바깥쪽으로 겹친 띠로 그린 지도. 가장 안쪽은 한 줄이고 바깥으로 갈수록 한 함수, 한 객체, 한 모듈, 프로세스 경계, 요구사항으로 넓어진다. 반경마다 막을 수 있는 것이 다르고, 어느 반경도 다음 반경의 몫까지 대신 막아 주지 않는다. 앞 반경이 막고 남긴 것이 그대로 다음 반경의 문제였고, 가장 바깥의 요구사항까지 가서야 사슬이 닫힌다. 그 반경 밖에는 코드가 없다.">
+          <g id="radiusBandsRecap"></g>
+        </svg>
+      </div>
+      <div class="dia-cap" aria-hidden="true"></div>
+      <figcaption><b>반경마다 막는 것이 다르고, 어느 반경도 다음 반경의 몫까지 대신 막아 주지 않습니다.</b> 앞 반경이 막고 남긴 것이 그대로 다음 반경의 문제였습니다.</figcaption>
+    </figure>
   </section>
   <section class="slide" id="s52">
     <h2>방어는 어디에서 멈춥니까?</h2>
@@ -367,6 +1243,66 @@ body{font-family:var(--sans);color:var(--text);-webkit-font-smoothing:antialiase
   </section>
   <section class="slide appendix" id="a02">
     <h2>예산에서 거꾸로 나눈 타임아웃</h2>
+    <!-- 출처: defensive_programming.html 2473-2532 (diaBudget). dia-btn(재생 버튼)은 뺀다. -->
+    <figure class="dia" id="diaBudget">
+      <div class="dia-top">
+        <span class="dia-tag">그림 8 · 위에서 아래로 나눈다</span>
+        <span class="dia-sp"></span>
+        <div class="dia-dots"></div>
+      </div>
+      <div class="dia-hint" aria-hidden="true">← 좌우로 밀어서 보세요 →</div>
+      <div class="dia-scroll">
+        <svg viewBox="0 0 720 270" role="img" aria-label="타임아웃 값을 상위 예산에서 거꾸로 나누는 방향을 막대로 보여 주는 그림. 먼저 메인페이지가 지켜야 하는 1000밀리초를 세우고, 그 안에서 섹션 하나가 쓸 몫을 300밀리초로 정한 다음, 그 300밀리초를 다시 연결에 100밀리초와 읽기에 200밀리초로 나눈다. 어디서 본 3000밀리초를 그대로 옮겨 쓰면 섹션 하나가 전체 예산의 세 배를 쓰는 셈이 된다. 반대로 너무 빠듯하게 잡으면 평소 100밀리초짜리 호출이 150밀리초로 흔들리는 정상 범위까지 실패로 집계된다.">
+
+          <!-- 1. 상위 예산 -->
+          <text class="cap-l" x="40" y="34">메인페이지가 지켜야 하는 예산</text>
+          <rect class="nd" x="40" y="42" width="650" height="30" rx="6"/>
+          <text class="m val" x="365" y="62" text-anchor="middle">1000ms</text>
+
+          <!-- 2. 섹션 하나의 몫 -->
+          <g data-at="1+">
+            <text class="cap-l" x="40" y="98">격벽 뒤에서 섹션 하나에 주는 상한</text>
+            <rect fill="var(--purple)" opacity=".22" stroke="var(--purple)" x="40" y="106" width="195" height="28" rx="6"/>
+            <text class="m val" x="137" y="125" text-anchor="middle">300ms</text>
+            <text class="m mut" x="248" y="125">전체 시간은 합이 아니라 가장 느린 섹션의 시간입니다</text>
+          </g>
+
+          <!-- 3. 연결 몫과 읽기 몫 -->
+          <g data-at="2+">
+            <text class="cap-l" x="40" y="160">그 몫을 다시 둘로 나눕니다</text>
+            <rect fill="var(--ok)" opacity=".20" stroke="var(--ok)" x="40" y="168" width="65" height="28" rx="6"/>
+            <text class="m ok" x="72" y="187" text-anchor="middle">연결 100</text>
+            <rect fill="var(--ok)" opacity=".11" stroke="var(--ok)" x="105" y="168" width="130" height="28" rx="6"/>
+            <text class="m ok" x="170" y="187" text-anchor="middle">읽기 200</text>
+            <text class="m mut" x="248" y="187">읽기만 짧게 잡으면 연결이 지연될 때 아무 힘도 쓰지 못합니다</text>
+          </g>
+
+          <!-- 4-a. 어디서 본 숫자를 옮겨 쓰면 -->
+          <g data-at="3">
+            <text class="cap-l no" x="40" y="222">어디서 본 3000ms 를 그대로 옮겨 쓰면</text>
+            <!-- 이 막대만 축척을 벗어나면 그림이 재는 것과 말하는 것이 달라진다. 3000ms 를 같은
+                 축척(1ms=0.65px)으로 그리면 1950px 이고, viewBox 밖은 svg 가 잘라 낸다.
+                 잘린 끝이 "예산 밖으로 나간다"를 그대로 보여 준다. 폭이 viewBox 보다 큰 것은
+                 의도이므로, 넘침을 재는 검사는 이 사각형을 예외로 두어야 한다. -->
+            <rect fill="var(--bad)" opacity=".18" stroke="var(--bad)" x="40" y="230" width="1950" height="28" rx="6"/>
+            <text class="m no" x="352" y="249" text-anchor="middle">3000ms · 이 그림의 오른쪽 끝을 지나 예산의 세 배까지 갑니다</text>
+          </g>
+
+          <!-- 4-b. 너무 빠듯하게 잡으면 -->
+          <g data-at="4">
+            <text class="cap-l warn" x="40" y="222">반대로 너무 빠듯하게 잡으면</text>
+            <rect fill="var(--ok)" opacity=".20" stroke="var(--ok)" x="40" y="230" width="65" height="28" rx="6"/>
+            <text class="m ok" x="72" y="249" text-anchor="middle">평소 100</text>
+            <rect class="nd ghost" x="105" y="230" width="33" height="28" rx="6"/>
+            <text class="m warn" x="152" y="249">정상적인 흔들림 150ms</text>
+            <line class="wire bad" x1="118" y1="224" x2="118" y2="264"/>
+            <text class="m no" x="330" y="249">타임아웃을 120ms 로 잡으면 이 흔들림까지 실패로 집계됩니다</text>
+          </g>
+        </svg>
+      </div>
+      <div class="dia-cap" aria-hidden="true"></div>
+      <figcaption><b>예산은 상한을 정해 줄 뿐입니다.</b> 그 상한 안에 정상적인 흔들림의 폭까지 남겨 두어야 값이 삽니다.</figcaption>
+    </figure>
   </section>
   <section class="slide appendix" id="a03">
     <h2>회로 차단기와 재시도 — 방어 수단이 새 실패를 만듭니다</h2>
@@ -1015,7 +1951,198 @@ function init(){
 /* ==== ASSET:JS ← defensive_programming.html ==== */
 /* Task 4·5 가 채운다. 아래 두 함수는 DECK:CORE:JS 의 init() 이 typeof 로 확인하고
    부르는 접점이다 — registerAssets 는 Deck.go(0) 앞에서, wireDemos 는 뒤에서. */
-function registerAssets(){}
+
+/* 출처: oauth2_slides.html 2579-2620(diaAt·wireDia) — 파일럿과 같은 함수.
+   원본 defensive_programming.html 의 wireDia 는 setTimeout 으로 스스로 재생한다.
+   덱에서는 덱이 비트를 몰아줘야 하므로 자동재생(play/pause/tick/IntersectionObserver)을
+   걷어내고 {n, go(k)} 컨트롤러를 돌려준다. steps[i].h 는 지우지 않고 남긴다 —
+   시간 추정에 쓴다. */
+/* data-at="0,2" · "1-3" · "2+" 세 표기를 받는다. 단계가 늘거나 줄 때
+   목록을 손으로 다시 세지 않아도 되게 범위 표기를 둔다. */
+function diaAt(spec,n){
+  const s=new Set();
+  String(spec).split(',').forEach(raw=>{
+    const p=raw.trim(); if(!p)return;
+    if(p.endsWith('+')){for(let i=+p.slice(0,-1);i<n;i++)s.add(i);}
+    else if(p.includes('-')){const[a,b]=p.split('-').map(Number);for(let i=a;i<=b;i++)s.add(i);}
+    else s.add(+p);
+  });
+  return s;
+}
+
+function wireDia(id,steps){
+  const fig=$('#'+id); if(!fig)return null;
+  const cap=$('.dia-cap',fig), dots=$('.dia-dots',fig), btn=$('.dia-btn',fig);
+  const n=steps.length;
+  const marks=$$('[data-at]',fig).map(el=>({el:el,at:diaAt(el.dataset.at,n)}));
+
+  // 단계 점은 개수가 steps에서 나온다. 손으로 적어 두면 단계를 하나 고칠 때마다
+  // 마크업도 함께 고쳐야 하고, 어긋나면 눈에 안 띄는 채로 남는다.
+  dots.innerHTML='';
+  for(let k=0;k<n;k++){
+    const b=document.createElement('button');
+    b.className='dia-dot'; b.type='button';
+    b.setAttribute('aria-label',(k+1)+'단계로');
+    b.addEventListener('click',()=>{ Deck.beat=k; applyBeat(fig.closest('.slide'),k); paint(); });
+    dots.appendChild(b);
+  }
+  const dotEls=$$('.dia-dot',dots);
+
+  let i=0;
+  function paintDia(){
+    fig.dataset.s=i;
+    cap.innerHTML=steps[i].c;
+    marks.forEach(m=>m.el.classList.toggle('vis',m.at.has(i)));
+    dotEls.forEach((d,k)=>d.classList.toggle('on',k===i));
+  }
+  // 자동재생 버튼은 덱에서 의미가 없다 — → 가 그 자리를 대신한다. 마크업에서 이미
+  // 빼 두었지만, 원본에서 그림을 새로 옮겨 오면 딸려 올 수 있어 안전망으로 남긴다.
+  if(btn) btn.remove();
+  paintDia();
+  return { n:n, el:fig, go(k){ i=Math.max(0,Math.min(n-1,k)); paintDia(); } };
+}
+
+/* 출처: defensive_programming.html 4567-4580 (RADIUS) */
+// ==== 반경 지도 — 개요와 15장이 같은 배열에서 그린다 ====
+const RADIUS = [
+  {n:'한 줄',        ch:'1·2·3', can:'그 값이 이상하다는 것을 그 자리에서 알린다',
+                     hole:'그렇다고 모든 곳에서 터뜨릴 수는 없다'},
+  {n:'한 함수',      ch:'4',     can:'경계에서 한 번 검사해 안쪽을 신뢰할 수 있게 만든다',
+                     hole:'검사를 통과한 뒤에도 객체가 이상해질 수 있다'},
+  {n:'한 객체',      ch:'5',     can:'그런 상태를 애초에 가질 수 없게 만든다',
+                     hole:'객체가 옳아도 조립이 틀릴 수 있다'},
+  {n:'한 모듈',      ch:'6·7·8', can:'실패를 섹션 경계에서 멈춰 세운다',
+                     hole:'죽지 않고 느려지면 이 방어는 통하지 않는다'},
+  {n:'프로세스 경계',ch:'9·10',  can:'느린 의존을 끊고 그 자리를 대신 채운다',
+                     hole:'무엇으로 채울지는 여전히 정해져 있지 않다'},
+  {n:'요구사항',     ch:'11~14', can:'무엇을 보여 줄지 문서에 문장으로 남긴다',
+                     hole:'여기가 종착지다'},
+];
+
+/* 출처: defensive_programming.html 4595-4624 (paintRadiusDia)
+   반경 지도를 그림으로도 그린다. 문구는 손으로 적지 않고 위의 RADIUS 에서 가져온다.
+   여기 적어 두면 배열과 어긋날 수 있고, 그 어긋남은 눈에 띄지 않는 채로 남는다. */
+function paintRadiusDia(root){
+  if(!root) return;
+  const CX = 360, CY = 150, HW = 52, HH = 22, DW = 52, DH = 20;
+  const base = [], hot = [];
+  // 바깥 띠부터 그려야 안쪽 띠가 위에 온다
+  for(let k = RADIUS.length - 1; k >= 0; k--){
+    const x = CX - (HW + k * DW), y = CY - (HH + k * DH);
+    const w = 2 * (HW + k * DW), h = 2 * (HH + k * DH);
+    base.push(`<rect class="nd" x="${x}" y="${y}" width="${w}" height="${h}" rx="12"/>`);
+    if(k > 0){
+      base.push(`<text class="s" x="${x + 10}" y="${y + 16}">반경 ${k + 1} · ${RADIUS[k].n}</text>`);
+      base.push(`<text class="cap-l" x="${x + 10}" y="${y + 32}">${RADIUS[k].ch}장</text>`);
+    } else {
+      base.push(`<text class="s" x="${CX}" y="${CY + 4}" text-anchor="middle">반경 1 · ${RADIUS[0].n}</text>`);
+    }
+  }
+  // 강조 테두리는 단계마다 하나씩만 뜬다. 구멍 표시는 viewBox 를 넘어 잘리므로
+  // 그리지 않는다 — 강조 사각형과 아래 단계 설명만으로 충분하다.
+  for(let k = 0; k < RADIUS.length; k++){
+    const x = CX - (HW + k * DW), y = CY - (HH + k * DH);
+    const w = 2 * (HW + k * DW), h = 2 * (HH + k * DH);
+    hot.push(`<g class="rband-hot-g">`
+      + `<rect class="rband-hot" x="${x}" y="${y}" width="${w}" height="${h}" rx="12"/>`
+      + `</g>`);
+  }
+  root.innerHTML = base.join('') + hot.join('');
+  // data-at 은 속성으로 붙인다. 템플릿 문자열로 남기면 표기 검사가 해석하지 못한다.
+  const gs = $$('.rband-hot-g', root);
+  gs.forEach((g, k) => g.setAttribute('data-at', String(k)));
+}
+
+/* 출처: defensive_programming.html 4805-4816. 단계 문구는 RADIUS 에서 그대로 나온다 —
+   두 지도(s04·s51)와 캡션이 어긋날 수 없는 이유가 이 배열 하나다. 배열 리터럴이
+   아니라서 검사기는 단계 수를 못 세고, figure 의 data-frames="6" 이 그 자리를 대신한다. */
+function radiusSteps(){
+  return RADIUS.map(r => ({
+    c: '이 반경이 하는 일은 <b>"' + r.can + '"</b>입니다.'
+       + (r.hole === '여기가 종착지다'
+            ? ' <span class="ye">여기가 종착지입니다. 이 반경 밖에는 코드가 없습니다.</span>'
+            : ' <span class="no">그럼에도 "' + r.hole + '"는 것이 남습니다.</span>'),
+    h: 4000,
+  }));
+}
+
+function registerAssets(){
+  /* 출처: defensive_programming.html 4727-4799. registerBeats 로 감싼 것만 다르다. */
+  registerBeats('s06', wireDia('diaBlame', [
+    {c:'값 하나가 상류에서 출발해 응답 파싱, 캐시, 모델 조립을 거쳐 화면 렌더까지 갑니다.', h:2800},
+    {c:'그 값이 목록이 아니라 문자열이 된 자리는 앞의 세 갈래 가운데 하나입니다. <b>어느 쪽이었는지는 아직 모릅니다.</b>', h:3400},
+    {c:'세 자리 가운데 어디에서도 예외가 나지 않았습니다. 아무도 던지지 않았으므로 스택에 남을 것도 없습니다.', h:3200},
+    {c:'화면을 그리는 자리에서 EL이 게터를 찾다 실패합니다. 이 값이 처음으로 항의를 받는 자리입니다.', h:3000},
+    {c:'그때 찍힌 것이 이 열 줄입니다. 열 줄 전부가 렌더링 구간 안에 있습니다.', h:3200},
+    {c:'터진 자리는 정확합니다. <span class="no">잘못된 자리는 이 열 줄 바깥에 있습니다.</span>', h:3800},
+  ]));
+  registerBeats('s08', wireDia('diaSilent', [
+    {c:'빈 리스트를 받은 쪽은 <b>"없음"과 "가져오지 못함"을 더 이상 구별할 수 없습니다.</b> 두 경우가 같은 값으로 도착하기 때문입니다.', h:3600},
+    {c:'기본값이 채워지면 잘못된 요청이 정상 요청과 <b>같은 모양으로</b> 다음 자리에 도착합니다. 뒤에 선 코드는 둘을 가릴 근거가 없습니다.', h:3600},
+    {c:'조회가 실패해서 빈 자리와 원래 없는 자리가 같은 값을 받습니다. <b>실패와 부재가 한 칸에 겹칩니다.</b>', h:3400},
+    {c:'로그를 읽는 사람과 잘못된 결과를 받는 사람이 다릅니다. <b>결과는 이미 화면으로 나간 뒤입니다.</b>', h:3400},
+    {c:'무시해도 되는지 <b>판단한 흔적조차 남지 않습니다.</b> 다음 사람은 그 자리가 의도인지 실수인지 알 방법이 없습니다.', h:3600},
+    {c:'다섯 줄의 공통점은 하나입니다. <b>문제가 있다는 신호 자체가 없습니다.</b>', h:4000},
+  ]));
+  registerBeats('s13', wireDia('diaBoundary', [
+    {c:'값이 우리 타입이 되는 그 문턱에서 검증하면, 잘못된 값은 한 자리도 더 가지 못합니다. 메시지에는 세 조각이 모두 실립니다.', h:3600},
+    {c:'캐시 저장까지 미루면 값은 이미 한 자리를 지나온 뒤입니다.', h:3000},
+    {c:'모델 조립까지 미루면 두 자리를 더 지나옵니다. 거리가 길어질수록 어디에서 잘못됐는지 되짚을 곳도 늘어납니다.', h:3400},
+    {c:'화면 렌더까지 미루면 값은 네 자리를 전부 지나옵니다. <span class="no">1장에서 본 EL 안쪽 프레임 다섯 줄이 고스란히 되돌아옵니다.</span> 메시지에 남는 것은 무엇이 왔는지 한 조각뿐입니다.', h:4200},
+  ]));
+  registerBeats('s17', wireDia('diaShape', [
+    {c:'키에 리스트를 담든 문자열을 담든 <b>put 은 항상 성공합니다.</b> 잘못된 상태 둘이 모두 이 안에 있습니다.', h:3600},
+    {c:'역직렬화가 타입을 보므로 문자열이 리스트 자리에 앉는 상태는 사라집니다. <b>그 자리가 null 인 상태는 그대로 남습니다.</b>', h:3800},
+    {c:'생성자를 통과하지 못하면 인스턴스 자체가 없습니다. 두 상태 모두 표현할 수 없게 됩니다.', h:3400},
+    {c:'<b>늘어난 코드는 타입을 선언하는 자리 하나입니다.</b> 줄어든 코드는 그 값을 의심하며 열 곳에 흩어 두었던 검사 전부입니다.', h:4000},
+  ]));
+  registerBeats('s23', wireDia('diaCommit', [
+    {c:'웹 서버는 응답 본문을 전부 만든 뒤에 한꺼번에 내보내지 않습니다. 페이지가 클수록 만들어지는 대로 조금씩 흘려보내는 쪽이 흔합니다.', h:3600},
+    {c:'어느 지점에서 상태 코드 200과 본문 일부가 이미 클라이언트에게 건네집니다. <b>이 순간을 응답 커밋이라고 부릅니다.</b>', h:3800},
+    {c:'앞쪽 태그들이 흘려보낸 뒤 141번째에서 예외가 났다면, 그 예외는 커밋보다 늦은 자리에서 난 것입니다.', h:3400},
+    {c:'500으로 바꾸는 것도 오류 페이지로 넘기는 것도 헤더를 다시 쓰는 일입니다. <span class="no">헤더는 언제나 본문보다 먼저 나가야 하는데 본문이 이미 나갔습니다.</span>', h:4200},
+    {c:'할 수 있는 일은 남은 렌더링을 멈추는 것뿐입니다. 사용자에게는 닫는 태그도 없이 잘린 HTML 이 그대로 남습니다.', h:4000},
+  ]));
+  registerBeats('s24', wireDia('diaLayers', [
+    {c:'파서가 잡고 무언가를 채워 넣으려면 그 자리에 무엇이 맞는지를 파서가 알아야 합니다. <span class="no">파서에게는 없는 지식입니다.</span>', h:3800},
+    {c:'섹션 서비스는 그 섹션이 비어도 화면이 성립하는지를 압니다. 대안이 있으므로 잡는 것이 방어가 됩니다.', h:3400},
+    {c:'페이지 조립기도 대안을 가집니다. 그 섹션을 빼고 나머지 일곱 칸을 세울 수 있습니다.', h:3400},
+    {c:'전역 처리기까지 올라왔다는 것은 <b>그 사이 누구도 대안을 실행하지 못했다</b>는 뜻입니다. 여기서 할 수 있는 일은 기록하고 알리는 것뿐입니다.', h:4000},
+    {c:'네 층을 나란히 놓으면 자격이 높이를 따라가지 않습니다. 잡는 동작이 같아 보여도, <b>대안이 없으면 그것은 방어가 아니라 삼킴입니다.</b>', h:4400},
+  ]));
+  registerBeats('s33', wireDia('diaPool', [
+    {c:'요청 하나가 스레드 하나를 붙듭니다. 느린 섹션을 그리는 요청은 응답이 오거나 연결이 끊길 때까지 그 자리를 지킵니다.', h:3400},
+    {c:'다음 요청도 다른 스레드를 씁니다. 느린 섹션에 걸리는 요청이 계속 쌓입니다.', h:3200},
+    {c:'서버가 동시에 처리할 수 있는 수에는 한계가 있습니다. <span class="no">그 한계만큼 쌓이면 남은 스레드가 없습니다.</span>', h:3600},
+    {c:'여기서부터는 그 요청이 어떤 섹션을 그리려 했는지가 중요하지 않습니다. 스레드가 없으면 어떤 요청도 처리를 시작할 수조차 없습니다.', h:3800},
+    {c:'느린 섹션을 <b>아예 부르지 않는 요청까지</b> 대기열에 걸립니다. 느린 섹션 하나가 붙든 자리 때문입니다.', h:4200},
+  ]));
+  registerBeats('a02', wireDia('diaBudget', [
+    {c:'먼저 정하는 것은 섹션의 타임아웃이 아니라 <b>상위 요청이 통째로 지켜야 하는 예산</b>입니다.', h:3200},
+    {c:'격벽을 켜 두면 섹션마다 자기 시간을 따로 씁니다. 그래서 <b>전체 시간은 여덟 섹션의 합이 아니라 가장 느린 섹션의 시간</b>이고, 섹션 하나의 상한이 예산 안에 있으면 됩니다.', h:3400},
+    {c:'몫 하나를 다시 둘로 나눕니다. <b>연결을 맺기까지와 응답이 오기까지는 서로 다른 자리입니다.</b> 읽기만 짧게 잡으면 연결이 지연될 때 그 설정은 아직 시작도 하지 않았습니다.', h:4400},
+    {c:'어디서 본 3000ms 를 그대로 옮겨 쓰면 <span class="no">섹션 하나가 전체 예산의 세 배를 씁니다.</span>', h:3400},
+    {c:'짧게 잡을수록 안전해 보이지만, 정상적인 흔들림과 실제 실패를 가르는 눈금도 함께 좁아집니다. 잡아야 하는 것은 죽은 호출이지 순간적으로 느려진 호출이 아닙니다.', h:4400},
+  ]));
+  registerBeats('s40', wireDia('diaSpecGap', [
+    {c:'"등록한 순서로 노출한다"는 정해져 있습니다. <span class="no">그 데이터를 받아오지 못하면 무엇을 노출하는지는 없습니다.</span>', h:3600},
+    {c:'구성도 정해져 있습니다. <span class="no">이미지가 깨졌거나 카드가 하나도 없으면 무엇을 대신 놓는지는 없습니다.</span>', h:3600},
+    {c:'개수 조건도 정해져 있습니다. <span class="no">넘기다가 그 카드를 불러오지 못하면 무엇을 보여 주는지는 없습니다.</span>', h:3600},
+    {c:'노출 기간도 정해져 있습니다. <span class="no">기간을 계산할 기준 시간을 가져오지 못하면 어떻게 판단하는지는 없습니다.</span>', h:3800},
+    {c:'이동 동작도 정해져 있습니다. <span class="no">이동할 목록 페이지가 열리지 않으면 무엇을 하는지는 없습니다.</span>', h:3600},
+    {c:'다섯 줄이 다섯 개의 정상 경로를 정해 두는 동안, <b>다섯 개의 실패 경로 자리는 전부 비어 있습니다.</b>', h:4200},
+  ]));
+
+  /* 반경 지도 두 벌. 띠를 먼저 그려야 wireDia 가 [data-at] 을 찾는다. */
+  paintRadiusDia($('#radiusBandsIntro'));
+  paintRadiusDia($('#radiusBandsRecap'));
+  // s04 는 미리 보여 주는 자리라 등록하지 않는다. 마지막 프레임에 세워 두고 그 장의
+  // 비트는 .build 둘만 센다. 여섯 비트로 넘기는 것은 s51 하나다.
+  const intro = wireDia('diaRadiusIntro', radiusSteps());
+  if(intro) intro.go(RADIUS.length - 1);
+  registerBeats('s51', wireDia('diaRadiusRecap', radiusSteps()));
+}
+
 function wireDemos(){}
 /* ==== /ASSET:JS ==== */
 

@@ -998,7 +998,7 @@ EXEMPT = {
          '그림 속 글자. viewBox 좌표를 화면 px 로 환산해서 잰다. 같은 말을 .dia-cap 이 26px 로 다시 싣는다'),
     ],
     'defensive_programming_slides.html': [
-        ('svg, svg *', 12,
+        ('svg, svg *', 13,
          '그림 속 글자. viewBox 좌표를 화면 px 로 환산해서 잰다. 같은 말을 .dia-cap 이 26px 로 다시 싣는다'),
     ],
 }
@@ -1308,3 +1308,29 @@ def test_a_notes_drawer_that_fits_does_not_eat_the_navigation_keys(page, deck):
         page.keyboard.press('Escape')
     assert dead == [], \
         '넘치지 않는 서랍이 이 키들을 먹었다(창도 안 굴러가고 덱도 안 움직인다): %s' % dead
+
+
+# --- Task 4 · 실행 시 생성되는 도해의 프레임 선언은 실측과 같아야 한다 ---------------
+
+def test_declared_frame_counts_match_what_gets_drawn(page, deck):
+    """figure[data-frames] 는 검사기가 셀 수 없는 프레임 수를 대신 선언한다. 선언이
+    실제와 갈리면 검사기는 통과라고 하는데 → 는 빈 프레임을 넘기거나 마지막 프레임을
+    못 간다. 그려진 뒤의 [data-at] 최댓값을 재서 선언과 대조한다."""
+    page.goto('file://' + deck)
+    got = page.evaluate('''() => Array.from(document.querySelectorAll('figure.dia[data-frames]'))
+      .map(f => {
+        let top = -1;
+        f.querySelectorAll('[data-at]').forEach(el => {
+          String(el.dataset.at).split(',').forEach(p => {
+            p = p.trim(); if (!p) return;
+            if (p.endsWith('+')) p = p.slice(0, -1);
+            if (p.includes('-')) p = p.split('-').pop();
+            const n = parseInt(p, 10); if (!isNaN(n)) top = Math.max(top, n);
+          });
+        });
+        return [f.id, parseInt(f.dataset.frames, 10), top + 1];
+      })''')
+    if os.path.basename(deck) == 'defensive_programming_slides.html' and not got:
+        pytest.fail(MUST_EXIST % 'data-frames 를 선언한 도해(diaRadiusIntro·diaRadiusRecap)')
+    bad = ['%s: 선언 %d ≠ 실측 %d' % (fid, dec, real) for fid, dec, real in got if dec != real]
+    assert bad == [], '\n'.join(bad)
