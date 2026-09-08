@@ -594,6 +594,8 @@ table.t td.c{font-family:var(--mono); font-size:12px; color:var(--text-mut); whi
 .dia .mut{fill:var(--text-mut)}
 .dia .no{fill:var(--bad)}
 .dia .warn{fill:var(--warn)}
+.dia .ok{fill:var(--ok)}
+.dia .val{fill:var(--purple)}
 
 .dia .wire{stroke:var(--border-2); stroke-width:1.4; fill:none}
 .dia .wire.dash{stroke-dasharray:5 4}
@@ -1095,6 +1097,69 @@ throw new SectionRenderException("섹션 렌더링 실패: " + sectionId, e);</c
         <span class="k">catch (Exception ignored)</span><span>옳은 자리는 사실상 없습니다. 정말 무시해도
         되는 예외라면 애초에 던지지 않는 편이 낫고, 이 코드는 그 판단조차 남기지 않습니다.</span>
       </div>
+
+      <figure class="dia" id="diaSilent">
+        <div class="dia-top">
+          <span class="dia-tag">그림 2 · 같은 코드, 갈리는 자리</span>
+          <span class="dia-sp"></span>
+          <button class="dia-btn ghost" type="button">▶ 재생</button>
+          <div class="dia-dots"></div>
+        </div>
+        <div class="dia-hint" aria-hidden="true">← 좌우로 밀어서 보세요 →</div>
+        <div class="dia-scroll">
+          <svg viewBox="0 0 720 250" role="img" aria-label="조용한 실패의 다섯 가지 모습을 하나씩 놓고, 같은 코드가 조건에 따라 방어가 되기도 하고 삼킴이 되기도 하는 것을 두 갈래로 보여 주는 그림. 빈 컬렉션 반환, 기본값 대입, Optional.orElse, 잡고 로그만 남기기, catch 후 무시 다섯 가지 모두 위쪽 갈래에서는 옳은 선택이고 아래쪽 갈래에서는 조용한 실패다. 다섯 가지의 공통점은 어느 갈래로 가든 예외가 나지 않아 테스트도 리뷰도 그대로 통과한다는 것이다.">
+
+            <text class="cap-l" x="30" y="20">다섯 가지 중</text>
+            <text class="m val" x="112" y="20" data-at="0">첫 번째</text>
+            <text class="m val" x="112" y="20" data-at="1">두 번째</text>
+            <text class="m val" x="112" y="20" data-at="2">세 번째</text>
+            <text class="m val" x="112" y="20" data-at="3">네 번째</text>
+            <text class="m val" x="112" y="20" data-at="4">다섯 번째</text>
+            <text class="m val" x="112" y="20" data-at="5">전부</text>
+
+            <!-- 왼쪽: 코드 모양 하나 -->
+            <rect class="nd soft" x="30" y="88" width="210" height="52" rx="10"/>
+            <text class="m" x="135" y="119" text-anchor="middle" data-at="0">빈 컬렉션 반환</text>
+            <text class="m" x="135" y="119" text-anchor="middle" data-at="1">기본값 대입</text>
+            <text class="m" x="135" y="119" text-anchor="middle" data-at="2">Optional.orElse(기본값)</text>
+            <text class="m" x="135" y="119" text-anchor="middle" data-at="3">잡고 로그만 남기기</text>
+            <text class="m" x="135" y="119" text-anchor="middle" data-at="4">catch (Exception ignored)</text>
+            <text class="m mut" x="135" y="119" text-anchor="middle" data-at="5">다섯 줄 모두</text>
+
+            <!-- 갈림 -->
+            <path class="wire" d="M 240 114 C 272 114 272 62 304 62"/>
+            <path class="wire" d="M 240 114 C 272 114 272 166 304 166"/>
+            <polygon fill="var(--border-2)" points="296,57 308,62 296,67"/>
+            <polygon fill="var(--border-2)" points="296,161 308,166 296,171"/>
+
+            <!-- 위 갈래: 옳은 자리 -->
+            <rect class="nd" x="308" y="34" width="382" height="56" rx="10"/>
+            <text class="cap-l ok" x="320" y="52">이 조건에서는 옳습니다</text>
+            <text class="s" x="320" y="76" data-at="0">목록이 정말로 비어 있을 때입니다.</text>
+            <text class="s" x="320" y="76" data-at="1">선택하지 않았을 때를 위한 값일 때입니다.</text>
+            <text class="s" x="320" y="76" data-at="2">정말로 없는 것이 정상 범위에 속할 때입니다.</text>
+            <text class="s" x="320" y="76" data-at="3">그 실패가 다음 로직에 영향을 주지 않을 때입니다.</text>
+            <text class="s no" x="320" y="76" data-at="4">옳은 자리가 사실상 없습니다.</text>
+            <text class="s mut" x="320" y="76" data-at="5">조건이 맞으면 다섯 줄 전부 방어입니다.</text>
+
+            <!-- 아래 갈래: 삼킨 자리 -->
+            <rect class="nd" x="308" y="138" width="382" height="56" rx="10"/>
+            <text class="cap-l no" x="320" y="156">이 조건에서는 조용한 실패입니다</text>
+            <text class="s" x="320" y="180" data-at="0">조회가 실패했는데도 같은 빈 리스트를 내주는 경우입니다.</text>
+            <text class="s" x="320" y="180" data-at="1">파싱이 깨졌는데도 기본값을 채워 넣는 경우입니다.</text>
+            <text class="s" x="320" y="180" data-at="2">조회가 실패해서 비어 버린 자리에까지 물리는 경우입니다.</text>
+            <text class="s" x="320" y="180" data-at="3">영향을 주는데도 로그만 남기고 진행하는 경우입니다.</text>
+            <text class="s" x="320" y="180" data-at="4">무시해도 되는지 판단한 흔적조차 남지 않습니다.</text>
+            <text class="s mut" x="320" y="180" data-at="5">조건이 어긋나면 다섯 줄 전부 삼킴입니다.</text>
+
+            <!-- 공통점 -->
+            <rect class="nd ghost" x="30" y="210" width="660" height="32" rx="8" data-at="5"/>
+            <text class="s warn breathe" x="360" y="231" text-anchor="middle" data-at="5">어느 갈래로 가든 예외는 나지 않습니다. 테스트도 리뷰도 그대로 통과합니다.</text>
+          </svg>
+        </div>
+        <div class="dia-cap" aria-hidden="true"></div>
+        <figcaption><b>"빈 컬렉션을 반환한다"는 문장 자체에는 방어인지 삼킴인지가 정해져 있지 않습니다.</b> 갈리는 것은 코드가 아니라 그 코드가 놓인 조건입니다.</figcaption>
+      </figure>
 
       <p>다섯 가지를 나란히 놓고 보면 공통점이 하나 있습니다. 전부 코드가 겉으로는 멀쩡하게 돌아갑니다.
       예외가 없으니 테스트도 통과하고, 리뷰도 무난히 지나갑니다. 문제가 있다는 신호 자체가 아예
@@ -3951,6 +4016,15 @@ wireDia('diaBlame', [
   {c:'화면을 그리는 자리에서 EL이 게터를 찾다 실패합니다. 이 값이 처음으로 항의를 받는 자리입니다.', h:3000},
   {c:'그때 찍힌 것이 이 열 줄입니다. 열 줄 전부가 렌더링 구간 안에 있습니다.', h:3200},
   {c:'터진 자리는 정확합니다. <span class="no">잘못된 자리는 이 열 줄 바깥에 있습니다.</span>', h:3800},
+]);
+
+wireDia('diaSilent', [
+  {c:'조회 자체가 실패했는데도 빈 리스트를 내주면, 호출한 쪽은 <b>"없음"과 "가져오지 못함"</b>을 더 이상 구별할 수 없습니다.', h:3600},
+  {c:'파싱이 깨졌는데도 기본값을 채워 넣으면, 잘못된 요청이 정상 요청과 같은 모양으로 흘러갑니다.', h:3400},
+  {c:'조회가 실패해서 비어 버린 자리에까지 같은 기본값을 물리면, 실패와 부재가 서로 구별되지 않습니다.', h:3400},
+  {c:'영향을 주는데도 로그만 남기고 계속 진행하면, 잘못된 결과는 이미 화면으로 나간 뒤입니다.', h:3400},
+  {c:'정말 무시해도 되는 예외라면 애초에 던지지 않는 편이 낫습니다. <span class="no">이 코드는 그 판단조차 남기지 않습니다.</span>', h:3600},
+  {c:'다섯 줄의 공통점은 하나입니다. <b>문제가 있다는 신호 자체가 아예 없습니다.</b>', h:4000},
 ]);
 
 paintRadius($('#radiusMap'), false);

@@ -13,6 +13,7 @@ DOC = Path(__file__).resolve().parent.parent / 'defensive_programming.html'
 # (figure id, 그 도해가 속한 섹션 id)
 DIAGRAMS = [
     ('diaBlame', 'trace'),
+    ('diaSilent', 'silent'),
 ]
 
 FIGURE_OPEN = re.compile(r'<figure class="dia" id="([^"]+)"')
