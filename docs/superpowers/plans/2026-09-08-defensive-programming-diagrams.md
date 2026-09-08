@@ -441,7 +441,7 @@ function wireDia(id, steps){
   </div>
   <div class="dia-hint" aria-hidden="true">← 좌우로 밀어서 보세요 →</div>
   <div class="dia-scroll">
-    <svg viewBox="0 0 720 300" role="img" aria-label="값 하나가 상류에서 출발해 응답 파싱, 캐시, 모델 조립을 거쳐 화면 렌더까지 가는 과정을 시간축 위에 놓은 그림. 그 값이 목록이 아니라 문자열이 된 자리는 앞의 세 갈래 가운데 하나이지만 어디였는지는 알 수 없고, 그 자리들에서는 아무도 예외를 던지지 않아 스택에 아무것도 남기지 않았다. 스택트레이스 열 줄은 마지막 화면 렌더 자리 위에서만 솟아 있어서, 터진 자리는 정확히 가리키지만 잘못된 자리는 가리키지 못한다.">
+    <svg viewBox="0 0 720 300" role="img" aria-label="값 하나가 상류에서 출발해 응답 파싱, 캐시, 모델 조립을 거쳐 화면 렌더까지 가는 과정을 시간축 위에 놓은 그림. 그 값이 목록이 아니라 문자열이 된 자리는 그럴듯해 보이는 세 갈래 가운데 하나일 수 있지만 어디였는지는 알 수 없고, 그 자리들에서는 아무도 예외를 던지지 않아 스택에 아무것도 남기지 않았다. 스택트레이스 열 줄은 마지막 화면 렌더 자리 위에서만 솟아 있어서, 터진 자리는 정확히 가리키지만 잘못된 자리는 가리키지 못한다.">
 
       <!-- 스택이 찍지 않은 구간 -->
       <rect class="nd ghost" x="30" y="40" width="400" height="150" rx="12" data-at="2+"/>
@@ -639,12 +639,12 @@ Task 1 이 넣은 `.dia .warn` 바로 아래에 넣는다. `.dia .ok` 는 Task 1
 
 ```js
 wireDia('diaSilent', [
-  {c:'조회 자체가 실패했는데도 빈 리스트를 내주면, 호출한 쪽은 <b>"없음"과 "가져오지 못함"</b>을 더 이상 구별할 수 없습니다.', h:3600},
-  {c:'파싱이 깨졌는데도 기본값을 채워 넣으면, 잘못된 요청이 정상 요청과 같은 모양으로 흘러갑니다.', h:3400},
-  {c:'조회가 실패해서 비어 버린 자리에까지 같은 기본값을 물리면, 실패와 부재가 서로 구별되지 않습니다.', h:3400},
-  {c:'영향을 주는데도 로그만 남기고 계속 진행하면, 잘못된 결과는 이미 화면으로 나간 뒤입니다.', h:3400},
-  {c:'정말 무시해도 되는 예외라면 애초에 던지지 않는 편이 낫습니다. <span class="no">이 코드는 그 판단조차 남기지 않습니다.</span>', h:3600},
-  {c:'다섯 줄의 공통점은 하나입니다. <b>문제가 있다는 신호 자체가 아예 없습니다.</b>', h:4000},
+  {c:'빈 리스트를 받은 쪽은 <b>"없음"과 "가져오지 못함"을 더 이상 구별할 수 없습니다.</b> 두 경우가 같은 값으로 도착하기 때문입니다.', h:3600},
+  {c:'기본값이 채워지면 잘못된 요청이 정상 요청과 <b>같은 모양으로</b> 다음 자리에 도착합니다. 뒤에 선 코드는 둘을 가릴 근거가 없습니다.', h:3600},
+  {c:'조회가 실패해서 빈 자리와 원래 없는 자리가 같은 값을 받습니다. <b>실패와 부재가 한 칸에 겹칩니다.</b>', h:3400},
+  {c:'로그를 읽는 사람과 잘못된 결과를 받는 사람이 다릅니다. <b>결과는 이미 화면으로 나간 뒤입니다.</b>', h:3400},
+  {c:'무시해도 되는지 <b>판단한 흔적조차 남지 않습니다.</b> 다음 사람은 그 자리가 의도인지 실수인지 알 방법이 없습니다.', h:3600},
+  {c:'다섯 줄의 공통점은 하나입니다. <b>문제가 있다는 신호 자체가 없습니다.</b>', h:4000},
 ]);
 ```
 
@@ -751,7 +751,8 @@ Task 1 이 넣은 `.dia .nd.ghost` 바로 아래에 넣는다.
       <text class="s ok"  x="450" y="207" data-at="0-2">무엇에 대해</text>
       <text class="s mut" x="450" y="207" data-at="3">무엇에 대해</text>
       <rect class="nd" x="440" y="216" width="250" height="20" rx="5"/>
-      <text class="s ok" x="450" y="231" data-at="0-3">무엇을 받았는지</text>
+      <text class="s ok" x="450" y="231" data-at="0-2">무엇을 받았는지</text>
+      <text class="s warn" x="450" y="231" data-at="3">무엇을 받았는지 (절반만)</text>
     </svg>
   </div>
   <div class="dia-cap" aria-hidden="true"></div>
@@ -803,7 +804,8 @@ git commit -am "defprog-dia: 4장 — 검증을 미룬 만큼 늘어나는 거�
 
 - [ ] **Step 2: 마크업을 넣는다**
 
-`invariant` 섹션의 「세 모델, 같은 데이터」 데모 **뒤**, 「세 줄을 눌러 보면」 문단 **앞**에 넣는다.
+`invariant` 섹션의 「세 줄을 눌러 보면」 문단 **뒤**에 넣는다. (그 문단이 가리키는 데모와 그림 사이를
+가르지 않기 위해서다. 여전히 이 장의 `.quiz` 앞이어야 한다.)
 
 ```html
 <figure class="dia" id="diaShape">
@@ -868,7 +870,7 @@ wireDia('diaShape', [
   {c:'키에 리스트를 담든 문자열을 담든 <b>put 은 항상 성공합니다.</b> 잘못된 상태 둘이 모두 이 안에 있습니다.', h:3600},
   {c:'역직렬화가 타입을 보므로 문자열이 리스트 자리에 앉는 상태는 사라집니다. <b>그 자리가 null 인 상태는 그대로 남습니다.</b>', h:3800},
   {c:'생성자를 통과하지 못하면 인스턴스 자체가 없습니다. 두 상태 모두 표현할 수 없게 됩니다.', h:3400},
-  {c:'세 줄의 차이는 검사를 몇 번 더 했느냐가 아닙니다. <span class="ye">오히려 마지막 줄에 검사하는 코드가 가장 적게 남습니다.</span>', h:4000},
+  {c:'<b>늘어난 코드는 타입을 선언하는 자리 하나입니다.</b> 줄어든 코드는 그 값을 의심하며 열 곳에 흩어 두었던 검사 전부입니다.', h:4000},
 ]);
 ```
 
@@ -913,7 +915,7 @@ git commit -am "defprog-dia: 5장 — 담을 수 있는 상태가 줄어드는 �
   </div>
   <div class="dia-hint" aria-hidden="true">← 좌우로 밀어서 보세요 →</div>
   <div class="dia-scroll">
-    <svg viewBox="0 0 720 300" role="img" aria-label="렌더링이 진행되는 동안 만들어진 HTML이 조금씩 클라이언트로 흘러 나가고, 어느 지점에서 상태 코드 200과 본문 일부가 이미 건네진다. 그 지점을 응답 커밋이라고 부른다. 커밋보다 늦게 난 예외는 아무리 넓게 감싸도 상태 코드를 500으로 바꾸거나 오류 페이지로 넘길 수 없다. 헤더는 언제나 본문보다 먼저 나가야 하는데 본문이 이미 나갔기 때문이다. 할 수 있는 일은 남은 렌더링을 멈추는 것뿐이고, 사용자에게는 닫는 태그도 없이 잘린 HTML이 남는다.">
+    <svg viewBox="0 0 720 300" role="img" aria-label="아래 순서는 이 그림이 세운 가정이다. 렌더링이 진행되는 동안 만들어진 HTML이 조금씩 클라이언트로 흘러 나가고, 어느 지점에서 상태 코드 200과 본문 일부가 이미 건네진다. 그 지점을 응답 커밋이라고 부른다. 커밋보다 늦게 난 예외는 아무리 넓게 감싸도 상태 코드를 500으로 바꾸거나 오류 페이지로 넘길 수 없다. 헤더는 언제나 본문보다 먼저 나가야 하는데 본문이 이미 나갔기 때문이다. 할 수 있는 일은 남은 렌더링을 멈추는 것뿐이고, 사용자에게는 닫는 태그도 없이 잘린 HTML이 남는다.">
 
       <text class="cap-l mut" x="40" y="16">아래 순서는 이 그림이 세운 가정입니다</text>
 
@@ -1218,10 +1220,10 @@ git commit -am "defprog-dia: 9장 — 예외 없이 풀이 마르는 순서"
 
       <!-- 2. 섹션 하나의 몫 -->
       <g data-at="1+">
-        <text class="cap-l" x="40" y="98">그 안에서 섹션 하나에 배정한 몫</text>
+        <text class="cap-l" x="40" y="98">격벽 뒤에서 섹션 하나에 주는 상한</text>
         <rect fill="var(--purple)" opacity=".22" stroke="var(--purple)" x="40" y="106" width="195" height="28" rx="6"/>
         <text class="m val" x="137" y="125" text-anchor="middle">300ms</text>
-        <text class="m mut" x="248" y="125">나머지는 다른 섹션들과 여유의 몫입니다</text>
+        <text class="m mut" x="248" y="125">전체 시간은 합이 아니라 가장 느린 섹션의 시간입니다</text>
       </g>
 
       <!-- 3. 연결 몫과 읽기 몫 -->
@@ -1267,7 +1269,7 @@ git commit -am "defprog-dia: 9장 — 예외 없이 풀이 마르는 순서"
 ```js
 wireDia('diaBudget', [
   {c:'먼저 정하는 것은 섹션의 타임아웃이 아니라 <b>상위 요청이 통째로 지켜야 하는 예산</b>입니다.', h:3200},
-  {c:'그 예산 안에서 섹션 하나가 쓸 몫을 정합니다. 여덟 섹션이 나눠 쓸 시간이 그 안에 있어야 합니다.', h:3400},
+  {c:'격벽을 켜 두면 섹션마다 자기 시간을 따로 씁니다. 그래서 <b>전체 시간은 여덟 섹션의 합이 아니라 가장 느린 섹션의 시간</b>이고, 섹션 하나의 상한이 예산 안에 있으면 됩니다.', h:3400},
   {c:'몫 하나를 다시 둘로 나눕니다. <b>연결을 맺기까지와 응답이 오기까지는 서로 다른 자리입니다.</b> 읽기만 짧게 잡으면 연결이 지연될 때 그 설정은 아직 시작도 하지 않았습니다.', h:4400},
   {c:'어디서 본 3000ms 를 그대로 옮겨 쓰면 <span class="no">섹션 하나가 전체 예산의 세 배를 씁니다.</span>', h:3400},
   {c:'짧게 잡을수록 안전해 보이지만, 정상적인 흔들림과 실제 실패를 가르는 눈금도 함께 좁아집니다. 잡아야 하는 것은 죽은 호출이지 순간적으로 느려진 호출이 아닙니다.', h:4400},
@@ -1321,7 +1323,7 @@ git commit -am "defprog-dia: 9장 — 예산을 위에서 아래로 나눈다"
       <rect class="nd" x="376" y="42" width="180" height="42" rx="8"/>
       <text class="m ok" x="466" y="68" text-anchor="middle">정해져 있음</text>
       <rect class="nd ghost" x="572" y="42" width="118" height="42" rx="8"/>
-      <text class="m no" x="631" y="68" text-anchor="middle" data-at="0+">없음</text>
+      <text class="m warn" x="631" y="68" text-anchor="middle" data-at="0+">없음</text>
 
       <!-- 2 -->
       <rect class="nd" x="30" y="94" width="330" height="42" rx="8"/>
@@ -1330,7 +1332,7 @@ git commit -am "defprog-dia: 9장 — 예산을 위에서 아래로 나눈다"
       <rect class="nd" x="376" y="94" width="180" height="42" rx="8"/>
       <text class="m ok" x="466" y="120" text-anchor="middle">정해져 있음</text>
       <rect class="nd ghost" x="572" y="94" width="118" height="42" rx="8"/>
-      <text class="m no" x="631" y="120" text-anchor="middle" data-at="1+">없음</text>
+      <text class="m warn" x="631" y="120" text-anchor="middle" data-at="1+">없음</text>
 
       <!-- 3 -->
       <rect class="nd" x="30" y="146" width="330" height="42" rx="8"/>
@@ -1339,7 +1341,7 @@ git commit -am "defprog-dia: 9장 — 예산을 위에서 아래로 나눈다"
       <rect class="nd" x="376" y="146" width="180" height="42" rx="8"/>
       <text class="m ok" x="466" y="172" text-anchor="middle">정해져 있음</text>
       <rect class="nd ghost" x="572" y="146" width="118" height="42" rx="8"/>
-      <text class="m no" x="631" y="172" text-anchor="middle" data-at="2+">없음</text>
+      <text class="m warn" x="631" y="172" text-anchor="middle" data-at="2+">없음</text>
 
       <!-- 4 -->
       <rect class="nd" x="30" y="198" width="330" height="42" rx="8"/>
@@ -1348,7 +1350,7 @@ git commit -am "defprog-dia: 9장 — 예산을 위에서 아래로 나눈다"
       <rect class="nd" x="376" y="198" width="180" height="42" rx="8"/>
       <text class="m ok" x="466" y="224" text-anchor="middle">정해져 있음</text>
       <rect class="nd ghost" x="572" y="198" width="118" height="42" rx="8"/>
-      <text class="m no" x="631" y="224" text-anchor="middle" data-at="3+">없음</text>
+      <text class="m warn" x="631" y="224" text-anchor="middle" data-at="3+">없음</text>
 
       <!-- 5 -->
       <rect class="nd" x="30" y="250" width="330" height="42" rx="8"/>
@@ -1357,11 +1359,11 @@ git commit -am "defprog-dia: 9장 — 예산을 위에서 아래로 나눈다"
       <rect class="nd" x="376" y="250" width="180" height="42" rx="8"/>
       <text class="m ok" x="466" y="276" text-anchor="middle">정해져 있음</text>
       <rect class="nd ghost" x="572" y="250" width="118" height="42" rx="8"/>
-      <text class="m no" x="631" y="276" text-anchor="middle" data-at="4+">없음</text>
+      <text class="m warn" x="631" y="276" text-anchor="middle" data-at="4+">없음</text>
 
       <!-- 오른쪽 칸을 통째로 묶는 표시 -->
       <rect class="nd ghost" x="566" y="36" width="130" height="262" rx="10" data-at="5"/>
-      <text class="s no breathe" x="631" y="308" text-anchor="middle" data-at="5">다섯 칸 전부</text>
+      <text class="s warn breathe" x="631" y="308" text-anchor="middle" data-at="5">다섯 칸 전부</text>
     </svg>
   </div>
   <div class="dia-cap" aria-hidden="true"></div>
@@ -1514,9 +1516,12 @@ paintRadiusDia($('#radiusBands'));
 
 ```js
 wireDia('diaRadius', RADIUS.map(r => ({
-  c: r.can + (r.hole === '여기가 종착지다'
-       ? ' <span class="ye">여기가 종착지입니다. 이 반경 밖에는 코드가 없습니다.</span>'
-       : ' <span class="no">↳ 그럼에도 ' + r.hole + '.</span>'),
+  // 문구는 RADIUS 에서 그대로 가져온다. 그 배열은 지도 카드용이라 해라체이므로,
+  // 합쇼체 틀로 감싸 인용처럼 읽히게 한다. 배열을 고치면 개요의 카드와 어긋난다.
+  c: '이 반경이 막는 것은 이것입니다. <b>' + r.can + '.</b>'
+     + (r.hole === '여기가 종착지다'
+          ? ' <span class="ye">여기가 종착지입니다. 이 반경 밖에는 코드가 없습니다.</span>'
+          : ' <span class="no">그럼에도 남는 것이 있습니다. ' + r.hole + '.</span>'),
   h: 4000,
 })));
 ```
@@ -1561,9 +1566,9 @@ git commit -am "defprog-dia: 15장 — 반경 지도를 배열에서 그린다"
       <code>HandlerExceptionResolver</code>의 범위를 "핸들러 매핑이나 실행 중에 던져진 예외"로 긋고 있고,
       렌더링은 그 뒤에 오기 때문입니다. 사용자가 오류 페이지를 보게 되더라도 그것은 예외가 컨테이너까지
       올라가 오류 디스패치가 새로 돈 결과이지, 우리가 붙여 둔 핸들러가 돈 결과가 아닙니다. 그러면 렌더링
-      도중에 난 예외에는 세 조각을 어디에서 담아야 할까요. 자리가 넷 있고, 넷과 그 한계는
+      도중에 난 예외에는 세 조각을 어디에서 담아야 할까요. 자리가 몇 군데 있고, 그 자리들과 한계는
       <a class="link" href="#ap-java">부록 A</a>에 정리해 두었습니다. 지금 붙잡아 둘 것은 하나입니다.
-      <b>그 넷 어디에서 담든, 응답이 이미 나가 버린 뒤라면 할 수 있는 일은 기록을 남기는 것뿐입니다.</b>
+      <b>그 어디에서 담든, 응답이 이미 나가 버린 뒤라면 할 수 있는 일은 기록을 남기는 것뿐입니다.</b>
       담는 일과 고치는 일은 다른 일이고, 렌더링 도중이라면 담는 일만 남습니다. 왜 그런지는 6장이
       다룹니다.</p>
 ```
@@ -1581,12 +1586,12 @@ git commit -am "defprog-dia: 15장 — 반경 지도를 배열에서 그린다"
               <code>HandlerInterceptor.afterCompletion</code> ·
               <code>OncePerRequestFilter</code> · MDC</td>
               <td>바로 위의 <code>@ControllerAdvice</code>는 이 자리에 닿지 않습니다. 스프링이 예외 해결의
-              범위를 핸들러 매핑과 실행까지로 긋고 있고, 렌더링은 그 뒤이기 때문입니다. 세 조각이 가장 잘
-              모이는 자리는 <code>View</code>를 데코레이터로 감싸 <code>render</code>를 자기
+              범위를 핸들러 매핑과 실행까지로 긋고 있고, 렌더링은 그 뒤이기 때문입니다. 세 조각을 한자리에
+              모으기 좋은 자리는 <code>View</code>를 데코레이터로 감싸 <code>render</code>를 자기
               <code>try</code> 안에서 부르는 것입니다. 뷰 이름과 모델의 <b>키</b>, 그리고
               <code>isCommitted()</code>를 그 자리에서 함께 담을 수 있습니다. 값이 아니라 키만 담는 이유는
               2장이 짚었습니다. <code>afterCompletion</code>은 렌더링이 끝난 뒤에 불리는 유일한 인터셉터
-              훅이라 요청 단위 정보를 남기기 좋고, 필터는 빠짐없이 걸리는 대신 어느 섹션이었는지를 모릅니다.
+              훅이라 요청 단위 정보를 남기기 좋고, 필터는 더 바깥에서 걸리는 대신 어느 섹션이었는지를 모릅니다.
               MDC에 미리 넣어 두면 누가 어디에서 기록하든 그 조각들이 로그 줄에 딸려 나옵니다. 넷 중 무엇을
               고르든 <code>isCommitted()</code>가 true면 남는 일은 기록뿐입니다.</td>
               <td class="c">2·6장</td>
