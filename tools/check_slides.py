@@ -147,7 +147,12 @@ DIA_FIG = re.compile(
     r'''<figure\b[^>]*\bclass\s*=\s*["'][^"']*\bdia\b[^"']*["'][^>]*\bid\s*=\s*["']([^"']+)["'](.*?)</figure>''',
     re.S)
 DATA_AT = re.compile(r'''\bdata-at\s*=\s*["']([^"']+)["']''')
-WIRE_DIA = re.compile(r'''wireDia\(\s*['"](\w+)['"]\s*,\s*\[''')
+# 배열 리터럴이 아닌 호출(wireDia('diaRadiusRecap', radiusSteps()))도 잡는다. 단계 수는
+# 그때 셀 수 없으므로 None 이 되고, figure 의 data-frames 선언이 그 자리를 대신한다.
+WIRE_DIA = re.compile(r'''wireDia\(\s*['"](\w+)['"]\s*,\s*''')
+# 실행 시 SVG 를 그리는 도해는 마크업에 data-at 이 없다. figure 가 프레임 수를 선언한다.
+# 속성은 id 뒤에 와야 한다 — DIA_FIG 의 segment 가 id 다음부터 시작하기 때문이다.
+DATA_FRAMES = re.compile(r'''\bdata-frames\s*=\s*["'](\d+)["']''')
 
 # '이 자산이 어느 장에 사는가'를 선언하는 자리는 셋이고, 셋 다 같은 종류로 어긋난다.
 # 선언과 마크업이 갈라져도 화면에는 아무 표시가 없다 — 등록된 장에는 자산이 없는데
@@ -159,12 +164,16 @@ WIRE_DIA = re.compile(r'''wireDia\(\s*['"](\w+)['"]\s*,\s*\[''')
 # 한때 첫 줄만 검사했다. 그래서 <div class="seq-mount" id="nativeSeq"> 를 a02 에서
 # a03 으로 옮기면 검사기가 exit 0 · '✓ 통과' 를 내면서 a02 는 beatCount 9 짜리
 # 플레이어 없는 장이 됐다 — wireDia 쪽 절반이 막으려고 존재하는 바로 그 실패다.
+
+# 컨트롤러는 다섯 갈래다. 도해(wireDia)·시퀀스(createSequence)에 이 덱의 데모 넷
+# (wireEl·wireAssembly·wireJudge·wireWord)이 더해졌다. 전부 첫 인자가 마운트 id 다.
+CONTROLLERS = r'(?:wireDia|createSequence|wireEl|wireAssembly|wireJudge|wireWord)'
 REGISTER_MOUNT = re.compile(
-    r'''registerBeats\(\s*['"]([^'"]+)['"]\s*,\s*(?:wireDia|createSequence)\(\s*['"](\w+)['"]''')
+    r'''registerBeats\(\s*['"]([^'"]+)['"]\s*,\s*''' + CONTROLLERS + r'''\(\s*['"](\w+)['"]''')
 # 변수를 거쳐 등록되는 길. const seq17=createSequence('mainSeq17',…) 로 마운트 id 를
 # 알아낸 뒤 ON_ENTER['s17']=seq17 의 슬라이드와 짝짓는다.
 ASSET_VAR = re.compile(
-    r'''\b(?:const|let|var)\s+(\w+)\s*=\s*(?:wireDia|createSequence)\(\s*['"](\w+)['"]''')
+    r'''\b(?:const|let|var)\s+(\w+)\s*=\s*''' + CONTROLLERS + r'''\(\s*['"](\w+)['"]''')
 # 오른쪽이 이름 하나일 때만 잡는다. ON_ENTER['s45']={enter(){…}} 처럼 그 자리에서
 # 만든 객체는 마운트 id 가 없어 대조할 것이 없다.
 ON_ENTER_ASSIGN = re.compile(r'''ON_ENTER\[\s*['"](\w+)['"]\s*\]\s*=\s*(\w+)\b''')
@@ -196,7 +205,11 @@ def _slide_spans(html):
 
 
 def _max_at(segment):
-    """data-at 이 가리키는 최대 프레임 인덱스. '3+' 나 '1-4' 같은 표기를 푼다."""
+    """data-at 이 가리키는 최대 프레임 인덱스. '3+' 나 '1-4' 같은 표기를 푼다.
+    figure 가 data-frames 를 선언했으면 그 값을 믿는다 — 실행 시 그려지는 그림이다."""
+    m = DATA_FRAMES.search(segment)
+    if m:
+        return int(m.group(1)) - 1
     top = -1
     for spec in DATA_AT.findall(segment):
         for part in spec.split(','):
@@ -213,10 +226,14 @@ def _max_at(segment):
 
 
 def _wiredia_step_counts(html):
-    """wireDia(id, [ {c:...}, ... ]) 의 단계 수를 id 별로 센다."""
+    """wireDia(id, [ {c:...}, ... ]) 의 단계 수를 id 별로 센다.
+    배열 리터럴이 아니면(함수 호출·변수) 셀 수 없으므로 None 을 둔다."""
     counts = {}
     for m in WIRE_DIA.finditer(html):
-        i = m.end() - 1
+        i = m.end()
+        if i >= len(html) or html[i] != '[':
+            counts[m.group(1)] = None
+            continue
         depth = 0
         while i < len(html):
             if html[i] == '[':
@@ -250,12 +267,16 @@ def check_dia_frames(deck):
     counts = _wiredia_step_counts(deck.html)
     for fid, segment in DIA_FIG.findall(deck.html):
         frames = _max_at(segment) + 1
-        steps = counts.get(fid)
-        if steps is None:
+        declared = DATA_FRAMES.search(segment) is not None
+        if fid not in counts:
             problems.append('%s: SVG 는 있는데 wireDia 호출이 없다' % fid)
-        elif frames != steps:
+        elif counts[fid] is None:
+            if not declared:
+                problems.append('%s: wireDia 단계 수를 셀 수 없다 — 배열 리터럴로 쓰거나 '
+                                'figure 에 data-frames 를 적어라' % fid)
+        elif frames != counts[fid]:
             problems.append('%s: data-at 프레임 %d개 ≠ wireDia 단계 %d개'
-                            % (fid, frames, steps))
+                            % (fid, frames, counts[fid]))
     for fid in counts:
         if not re.search(r'''id\s*=\s*["']%s["']''' % re.escape(fid), deck.html):
             problems.append('%s: wireDia 호출은 있는데 SVG 가 없다' % fid)
@@ -272,7 +293,7 @@ def check_dia_frames(deck):
         if not re.search(r'''\bid\s*=\s*["']%s["']''' % re.escape(fid), segment):
             problems.append('%s: %s 에 등록됐는데 %s 안에 그 자산이 없다 — '
                             '발표자는 자산 없는 장에서 → 를 %d번 누르게 된다'
-                            % (fid, sid, sid, counts.get(fid, 1)))
+                            % (fid, sid, sid, (counts.get(fid) or 1)))
     return problems
 
 
@@ -352,9 +373,44 @@ def check_font_floor(deck):
     return problems
 
 
+# 설계 7절 「용어 규칙」. 청중이 방어적 프로그래밍을 몰라서 못 하는 개발자라 본편에서
+# 쓰는 개념어를 다섯(경계·격리·빨리 죽기와 버티기·폴백·요건 문장)으로 제한했다.
+# 아래 열둘은 부록으로 내린 개념의 이름이고 본편 슬라이드·대본 어디에도 나오면 안 된다.
+# 설계 문서의 목록과 한 글자씩 같아야 한다.
+BANNED_MAIN = ['불변식', '사전조건', '사후조건', '격벽', '회로 차단기', '멱등',
+               '백오프', '지터', '값 타입', '검사 예외', '비검사 예외', '리플렉션']
+HTML_COMMENT = re.compile(r'<!--.*?-->', re.S)
+ANY_TAG = re.compile(r'<[^>]+>')
+
+
+def _banned_pattern(word):
+    # '비검사 예외'가 '검사 예외'로 한 번 더 잡히지 않게 한다.
+    if word == '검사 예외':
+        return re.compile(r'(?<!비)검사 예외')
+    return re.compile(re.escape(word))
+
+
+def check_banned_words(deck):
+    """본편 슬라이드 텍스트와 본편 대본의 부록 용어. 주석은 세지 않는다 — 다음 사람에게
+    남기는 설명에는 그 이름이 필요하다."""
+    problems = []
+    spans = _slide_spans(deck.html)
+    for sid in deck.main_slides:
+        span = spans.get(sid)
+        text = ''
+        if span:
+            text = ANY_TAG.sub(' ', HTML_COMMENT.sub(' ', deck.html[span[0]:span[1]]))
+        text += ' ' + ' '.join(deck.script.get(sid, []))
+        for word in BANNED_MAIN:
+            if _banned_pattern(word).search(text):
+                problems.append('%s: 본편에 부록 용어 "%s" — 풀어 쓰거나 부록으로 보내라'
+                                % (sid, word))
+    return problems
+
+
 CHECKS = [check_script_present, check_slide_seconds, check_total,
           check_dia_frames, check_no_external, check_script_terminator,
-          check_font_floor]
+          check_font_floor, check_banned_words]
 
 
 def main(argv):

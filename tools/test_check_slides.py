@@ -274,7 +274,7 @@ def test_every_check_function_is_wired_into_the_gate():
     assert [c.__name__ for c in cs.CHECKS] == [
         'check_script_present', 'check_slide_seconds', 'check_total',
         'check_dia_frames', 'check_no_external', 'check_script_terminator',
-        'check_font_floor',
+        'check_font_floor', 'check_banned_words',
     ], 'CHECKS 목록이 바뀌었다 — 규칙을 빼거나 더했다면 이 줄도 같이 고쳐라'
 
 
@@ -393,3 +393,66 @@ def test_every_id_the_core_js_reaches_for_is_in_the_chrome_block():
     missing = sorted(set(DOLLAR_ID.findall(core.group(1))) - NOT_CHROME - chrome)
     assert missing == [], \
         '코어 JS 가 찾는데 DECK:CHROME 에 없는 id: %s' % missing
+
+
+# --- Task 1 · 실행 시 생성되는 도해의 프레임 선언 ---------------------------------
+
+def test_declared_frames_satisfy_the_frame_check_without_data_at():
+    """paintRadiusDia 처럼 실행 시 SVG 를 그리는 도해는 마크업에 data-at 이 없다.
+    figure 의 data-frames 가 그 수를 대신 선언하고, 배열 리터럴이 아닌 wireDia 호출은
+    단계 수를 셀 수 없으므로 선언만 있으면 통과한다. 실제 프레임 수와 선언이 같은지는
+    브라우저 테스트가 잰다."""
+    assert cs.check_dia_frames(deck('deck_frames_declared.html')) == []
+
+
+def test_declared_frames_are_compared_with_a_literal_step_array():
+    problems = cs.check_dia_frames(deck('deck_frames_declared_mismatch.html'))
+    assert len(problems) == 1
+    assert '6' in problems[0] and '5' in problems[0]
+
+
+def test_uncountable_wiredia_call_without_declaration_is_reported():
+    problems = cs.check_dia_frames(deck('deck_frames_undeclared_call.html'))
+    assert len(problems) == 1
+    assert 'data-frames' in problems[0]
+
+
+def test_max_at_prefers_the_declaration():
+    assert cs._max_at('<figure class="dia" id="x" data-frames="6"><g data-at="0"></g></figure>') == 5
+    assert cs._max_at('<g data-at="0,2"></g><g data-at="1-4"></g>') == 4
+
+
+# --- Task 1 · 컨트롤러 넷의 마운트가 등록된 장에 있는가 -------------------------
+
+def test_demo_controller_registered_on_the_wrong_slide_is_reported():
+    problems = cs.check_dia_frames(deck('deck_demo_wrong_slide.html'))
+    assert len(problems) == 1
+    assert 'asmLab00' in problems[0] and 's01' in problems[0]
+
+
+def test_mount_bindings_know_the_four_demo_controllers():
+    html = ("registerBeats('s07', wireEl('elLab07'));"
+            "registerBeats('s21', wireAssembly('asmLab21', {beats:[{}]}));"
+            "registerBeats('s25', wireJudge('judgeLab25'));"
+            "registerBeats('s46', wireWord('wordLab46'));")
+    assert cs._mount_bindings(html) == [
+        ('s07', 'elLab07'), ('s21', 'asmLab21'), ('s25', 'judgeLab25'), ('s46', 'wordLab46')]
+
+
+# --- Task 1 · 본편 금지어 ------------------------------------------------------
+
+def test_banned_words_in_main_slides_and_script_are_reported_but_not_in_appendix():
+    problems = cs.check_banned_words(deck('deck_banned_word.html'))
+    assert sorted(problems) == sorted([
+        's00: 본편에 부록 용어 "격벽" — 풀어 쓰거나 부록으로 보내라',
+        's01: 본편에 부록 용어 "회로 차단기" — 풀어 쓰거나 부록으로 보내라',
+    ])
+
+
+def test_banned_word_list_is_the_one_the_spec_fixed():
+    assert cs.BANNED_MAIN == ['불변식', '사전조건', '사후조건', '격벽', '회로 차단기', '멱등',
+                              '백오프', '지터', '값 타입', '검사 예외', '비검사 예외', '리플렉션']
+
+
+def test_ok_fixture_has_no_banned_words():
+    assert cs.check_banned_words(deck('deck_ok.html')) == []
