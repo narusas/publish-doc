@@ -74,15 +74,19 @@ def test_every_diagram_has_a_caption_and_a_step_box(src):
         assert 'aria-hidden="true"' in body, f'{fid}: .dia-cap 을 낭독기에서 덮지 않았다'
 
 
-def test_figcaption_and_step_box_do_not_say_the_same_thing(src):
+def test_every_diagram_has_a_nonempty_figcaption(src):
     for fid, body in iter_figures(src):
         cap = re.search(r'<figcaption>(.*?)</figcaption>', body, re.S)
         assert cap and cap.group(1).strip(), f'{fid}: figcaption 이 비어 있다'
 
 
 def test_data_at_notation_is_valid_everywhere(src):
-    for raw in DATA_AT.findall(src):
-        assert DATA_AT_OK.match(raw), f'data-at="{raw}" 는 해석할 수 없는 표기다'
+    """표기 오타는 조용히 '그 단계에 안 보임'이 되므로 여기서 막는다.
+
+    figure 본문 안만 본다. 문서 산문과 주석에 적힌 예시까지 검사하면 헛경보가 난다."""
+    for fid, body in iter_figures(src):
+        for raw in DATA_AT.findall(body):
+            assert DATA_AT_OK.match(raw), f'{fid}: data-at="{raw}" 는 해석할 수 없는 표기다'
 
 
 def test_diagrams_carry_no_internal_identifiers(src):

@@ -587,10 +587,12 @@ table.t td.c{font-family:var(--mono); font-size:12px; color:var(--text-mut); whi
 .dia .s{font-size:11.5px; fill:var(--text-dim)}
 /* 값은 고정폭, 말은 본문 활자. 칸에 든 것이 데이터일 때는 자간이 벌어지는 것이 정보다. */
 .dia .m{font-family:var(--mono); font-size:10.5px; fill:var(--text-mut); letter-spacing:.3px}
+/* 열 줄짜리 스택처럼 한 상자에 여러 줄이 들어가는 자리. 줄 번호까지 그대로 실어야 하므로
+   글자를 줄여 상자 안에 맞춘다. */
+.dia .m.sm{font-size:9.5px; letter-spacing:.2px}
 .dia .cap-l{font-family:var(--mono); font-size:9.5px; letter-spacing:.6px; fill:var(--text-mut)}
 .dia .mut{fill:var(--text-mut)}
 .dia .no{fill:var(--bad)}
-.dia .ok{fill:var(--ok)}
 .dia .warn{fill:var(--warn)}
 
 .dia .wire{stroke:var(--border-2); stroke-width:1.4; fill:none}
@@ -826,18 +828,18 @@ table.t td.c{font-family:var(--mono); font-size:12px; color:var(--text-mut); whi
 
             <!-- 스택 열 줄. 위가 가장 깊은 자리다 -->
             <g data-at="4+" class="pop">
-              <rect class="nd soft" x="452" y="18" width="236" height="180" rx="10"/>
+              <rect class="nd soft" x="440" y="18" width="260" height="180" rx="10"/>
               <text class="cap-l" x="570" y="14" text-anchor="middle">스택트레이스가 찍은 것 · 열 줄</text>
-              <text class="m" x="460" y="36">BeanELResolver$BeanProperties.get:253</text>
-              <text class="m" x="460" y="53">BeanELResolver.property:322</text>
-              <text class="m" x="460" y="70">BeanELResolver.getValue:93</text>
-              <text class="m" x="460" y="87">JasperELResolver.getValue:123</text>
-              <text class="m" x="460" y="104">AstValue.getValue:160</text>
-              <text class="m" x="460" y="121">ValueExpressionImpl.getValue:149</text>
-              <text class="m" x="460" y="138">PageContextImpl.proprietaryEvaluate:655</text>
-              <text class="m" x="460" y="155">..._jspx_meth_c_005fset_005f141:9946</text>
-              <text class="m" x="460" y="172">..._jspx_meth_c_005fif_005f43:9832</text>
-              <text class="m" x="460" y="189">..._jspService:743</text>
+              <text class="m sm" x="448" y="36">BeanELResolver$BeanProperties.get:253</text>
+              <text class="m sm" x="448" y="53">BeanELResolver.property:322</text>
+              <text class="m sm" x="448" y="70">BeanELResolver.getValue:93</text>
+              <text class="m sm" x="448" y="87">JasperELResolver.getValue:123</text>
+              <text class="m sm" x="448" y="104">AstValue.getValue:160</text>
+              <text class="m sm" x="448" y="121">ValueExpressionImpl.getValue:149</text>
+              <text class="m sm" x="448" y="138">PageContextImpl.proprietaryEvaluate:655</text>
+              <text class="m sm" x="448" y="155">..._jspx_meth_c_005fset_005f141:9946</text>
+              <text class="m sm" x="448" y="172">..._jspx_meth_c_005fif_005f43:9832</text>
+              <text class="m sm" x="448" y="189">..._jspService:743</text>
             </g>
             <line class="wire" x1="570" y1="198" x2="570" y2="212" data-at="4+"/>
 
@@ -865,7 +867,7 @@ table.t td.c{font-family:var(--mono); font-size:12px; color:var(--text-mut); whi
             <line class="wire dash" x1="244" y1="228" x2="266" y2="228"/>
             <line class="wire dash" x1="370" y1="228" x2="392" y2="228"/>
             <line class="wire dash" x1="496" y1="228" x2="518" y2="228"/>
-            <text class="cap-l ok" x="318" y="260" text-anchor="middle" data-at="2+">아무 항의 없이 통과</text>
+            <text class="cap-l mut" x="318" y="260" text-anchor="middle" data-at="2+">아무 항의 없이 통과</text>
 
             <!-- 시간축 -->
             <line class="wire" x1="30" y1="278" x2="694" y2="278"/>
