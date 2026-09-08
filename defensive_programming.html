@@ -4384,8 +4384,8 @@ function paintRadiusDia(root){
     const w = 2 * (HW + k * DW), h = 2 * (HH + k * DH);
     base.push(`<rect class="nd" x="${x}" y="${y}" width="${w}" height="${h}" rx="12"/>`);
     if(k > 0){
-      base.push(`<text class="s" x="${x + 12}" y="${y + 18}">반경 ${k + 1} · ${RADIUS[k].n}</text>`);
-      base.push(`<text class="cap-l" x="${x + 12}" y="${y + 34}">${RADIUS[k].ch}장</text>`);
+      base.push(`<text class="s" x="${x + 10}" y="${y + 16}">반경 ${k + 1} · ${RADIUS[k].n}</text>`);
+      base.push(`<text class="cap-l" x="${x + 10}" y="${y + 32}">${RADIUS[k].ch}장</text>`);
     } else {
       base.push(`<text class="s" x="${CX}" y="${CY + 4}" text-anchor="middle">반경 1 · ${RADIUS[0].n}</text>`);
     }
