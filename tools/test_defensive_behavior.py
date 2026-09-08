@@ -211,3 +211,25 @@ def test_every_card_links_where_the_data_says(page):
         return [q.sec, a ? a.getAttribute('href') : null];
     })""")
     assert [p for p in pairs if p[1] != '#' + p[0]] == []
+
+# --- 코드 강조 ----------------------------------------------------------------
+
+def test_every_code_block_is_actually_highlighted(page):
+    """문법이 빠지면 Prism 은 조용히 강조를 포기하고 평문을 남긴다.
+
+    소스만 보아서는 알 수 없고, 검사기도 테스트도 전부 통과한다. 브라우저에서만 드러난다."""
+    plain = page.evaluate("""() => [...document.querySelectorAll('code[class*="language-"]')]
+        .filter(c => c.querySelectorAll('.token').length === 0)
+        .map(c => c.className)""")
+    assert plain == [], '강조되지 않은 코드 블록이 있다: %s' % plain
+
+
+def test_the_jsp_grammar_knows_jsp_specific_syntax(page):
+    """JSP 는 markup 에 셋을 더한 것이다. 그 셋이 살아 있는지 확인한다."""
+    kinds = page.evaluate("""() => {
+        const out = Prism.highlight(
+            '<%@ page buffer="8kb" %>\\n<%-- c --%>\\n<c:out value="x"/>${a.b}',
+            Prism.languages.jsp, 'jsp');
+        return ['jsp-directive', 'jsp-comment', 'namespace', 'el']
+                 .filter(k => out.indexOf(k) === -1);}""")
+    assert kinds == [], 'JSP 문법이 잃은 토큰: %s' % kinds

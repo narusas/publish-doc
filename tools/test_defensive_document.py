@@ -172,3 +172,27 @@ def test_stack_blocks_carry_no_load_bearing_content(src):
 def test_the_progress_key_does_not_collide_with_other_documents(src):
     assert 'defprog:' in src
     assert 'authbasic:' not in src
+
+# --- 코드 블록의 언어 ---------------------------------------------------------
+PRE_LANG = re.compile(r'<pre class="language-([\w-]+)"><code class="language-([\w-]+)">')
+ANY_CODE_LANG = re.compile(r'<code class="language-([\w-]+)"')
+
+
+def test_every_code_block_names_the_same_language_twice(src):
+    """pre 와 code 의 언어가 어긋나면 Prism 은 code 쪽을 따르고 pre 의 배경만 남는다.
+
+    눈으로는 '강조가 안 되네' 로만 보여서 원인을 찾기 어렵다."""
+    mismatched = [(a, b) for a, b in PRE_LANG.findall(src) if a != b]
+    assert mismatched == [], '<pre> 와 <code> 의 언어가 다르다: %s' % mismatched
+    # code 는 있는데 pre 가 감싸지 않은 블록이 없는지도 함께 본다
+    assert len(ANY_CODE_LANG.findall(src)) == len(PRE_LANG.findall(src)), (
+        '<pre class="language-…"> 로 감싸이지 않은 <code> 블록이 있다')
+
+
+def test_every_language_used_has_a_grammar_in_this_file(src):
+    """문서가 외부에서 문법을 받아 오지 않으므로, 쓰는 언어의 문법은 파일 안에 있어야 한다.
+
+    문법 블록을 지우면 강조만 조용히 사라지고 검사기는 전부 통과한다. 그 침묵을 막는다."""
+    for lang in sorted({a for a, _ in PRE_LANG.findall(src)}):
+        assert 'languages.%s' % lang in src, (
+            'language-%s 를 쓰는데 그 문법이 이 파일에 없다' % lang)
