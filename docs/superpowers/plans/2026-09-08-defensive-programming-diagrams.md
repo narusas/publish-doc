@@ -69,7 +69,7 @@
 - Produces: 뒤의 아홉 태스크가 전부 쓴다.
   - `wireDia(id, steps)` — `steps` 는 `{c:'단계 설명 HTML', h:밀리초}` 배열. `id` 는 `figure.dia` 의 id.
   - `diaAt(spec, n)` — `"0,2"` · `"1-3"` · `"2+"` 세 표기를 Set 으로 바꾼다.
-  - `.dia` 계열 CSS 중 이 태스크가 가져오는 것: `.dia` `.dia-top` `.dia-tag` `.dia-sp` `.dia-btn` `.dia-dots` `.dia-dot` `.dia-cap` `.dia-scroll` `.dia-hint` `.nd` `.ghost` `.hot` `.soft` `.s` `.m` `.cap-l` `.mut` `.no` `.ok` `.warn` `.wire` `.dash` `.bad` `.pop` `.breathe` `.draw`
+  - `.dia` 계열 CSS 중 이 태스크가 가져오는 것: `.dia` `.dia-top` `.dia-tag` `.dia-sp` `.dia-btn` `.dia-dots` `.dia-dot` `.dia-cap` `.dia-scroll` `.dia-hint` `.nd` `.ghost` `.hot` `.soft` `.s` `.m` `.cap-l` `.sm` `.mut` `.no` `.warn` `.wire` `.dash` `.bad` `.pop` `.breathe` `.draw`
   - 뒤 태스크가 새 부품(`.fly` 등)을 쓰려면 그 태스크가 CSS 를 함께 가져온다.
 
 - [ ] **Step 1: 실패하는 정적 테스트를 쓴다**
@@ -153,15 +153,20 @@ def test_every_diagram_has_a_caption_and_a_step_box(src):
         assert 'aria-hidden="true"' in body, f'{fid}: .dia-cap 을 낭독기에서 덮지 않았다'
 
 
-def test_figcaption_and_step_box_do_not_say_the_same_thing(src):
+def test_every_diagram_has_a_nonempty_figcaption(src):
+    """figcaption 은 그림이 주장하는 것 한 줄이다. 비어 있으면 그림이 아무 말도 하지 않는다."""
     for fid, body in iter_figures(src):
         cap = re.search(r'<figcaption>(.*?)</figcaption>', body, re.S)
         assert cap and cap.group(1).strip(), f'{fid}: figcaption 이 비어 있다'
 
 
 def test_data_at_notation_is_valid_everywhere(src):
-    for raw in DATA_AT.findall(src):
-        assert DATA_AT_OK.match(raw), f'data-at="{raw}" 는 해석할 수 없는 표기다'
+    """표기 오타는 조용히 '그 단계에 안 보임'이 되므로 여기서 막는다.
+
+    figure 본문 안만 본다. 문서 산문과 주석에 적힌 예시까지 검사하면 헛경보가 난다."""
+    for fid, body in iter_figures(src):
+        for raw in DATA_AT.findall(body):
+            assert DATA_AT_OK.match(raw), f'{fid}: data-at="{raw}" 는 해석할 수 없는 표기다'
 
 
 def test_diagrams_carry_no_internal_identifiers(src):
@@ -255,10 +260,13 @@ Expected: FAIL. `test_every_planned_diagram_is_present` 가 `[] != ['diaBlame']`
 .dia .s{font-size:11.5px; fill:var(--text-dim)}
 /* 값은 고정폭, 말은 본문 활자. 칸에 든 것이 데이터일 때는 자간이 벌어지는 것이 정보다. */
 .dia .m{font-family:var(--mono); font-size:10.5px; fill:var(--text-mut); letter-spacing:.3px}
+/* 열 줄짜리 스택처럼 한 상자에 여러 줄이 들어가는 자리. 줄 번호까지 그대로 실어야 하므로
+   글자를 줄여 상자 안에 맞춘다. 개요와 15장이 같은 트레이스를 번호까지 싣고 있어서,
+   그림에서만 번호를 빼면 세 자리가 어긋난다. */
+.dia .m.sm{font-size:9.5px; letter-spacing:.2px}
 .dia .cap-l{font-family:var(--mono); font-size:9.5px; letter-spacing:.6px; fill:var(--text-mut)}
 .dia .mut{fill:var(--text-mut)}
 .dia .no{fill:var(--bad)}
-.dia .ok{fill:var(--ok)}
 .dia .warn{fill:var(--warn)}
 
 .dia .wire{stroke:var(--border-2); stroke-width:1.4; fill:none}
@@ -443,18 +451,18 @@ function wireDia(id, steps){
 
       <!-- 스택 열 줄. 위가 가장 깊은 자리다 -->
       <g data-at="4+" class="pop">
-        <rect class="nd soft" x="452" y="18" width="236" height="180" rx="10"/>
+        <rect class="nd soft" x="440" y="18" width="260" height="180" rx="10"/>
         <text class="cap-l" x="570" y="14" text-anchor="middle">스택트레이스가 찍은 것 · 열 줄</text>
-        <text class="m" x="460" y="36">BeanELResolver$BeanProperties.get:253</text>
-        <text class="m" x="460" y="53">BeanELResolver.property:322</text>
-        <text class="m" x="460" y="70">BeanELResolver.getValue:93</text>
-        <text class="m" x="460" y="87">JasperELResolver.getValue:123</text>
-        <text class="m" x="460" y="104">AstValue.getValue:160</text>
-        <text class="m" x="460" y="121">ValueExpressionImpl.getValue:149</text>
-        <text class="m" x="460" y="138">PageContextImpl.proprietaryEvaluate:655</text>
-        <text class="m" x="460" y="155">..._jspx_meth_c_005fset_005f141:9946</text>
-        <text class="m" x="460" y="172">..._jspx_meth_c_005fif_005f43:9832</text>
-        <text class="m" x="460" y="189">..._jspService:743</text>
+        <text class="m sm" x="448" y="36">BeanELResolver$BeanProperties.get:253</text>
+        <text class="m sm" x="448" y="53">BeanELResolver.property:322</text>
+        <text class="m sm" x="448" y="70">BeanELResolver.getValue:93</text>
+        <text class="m sm" x="448" y="87">JasperELResolver.getValue:123</text>
+        <text class="m sm" x="448" y="104">AstValue.getValue:160</text>
+        <text class="m sm" x="448" y="121">ValueExpressionImpl.getValue:149</text>
+        <text class="m sm" x="448" y="138">PageContextImpl.proprietaryEvaluate:655</text>
+        <text class="m sm" x="448" y="155">..._jspx_meth_c_005fset_005f141:9946</text>
+        <text class="m sm" x="448" y="172">..._jspx_meth_c_005fif_005f43:9832</text>
+        <text class="m sm" x="448" y="189">..._jspService:743</text>
       </g>
       <line class="wire" x1="570" y1="198" x2="570" y2="212" data-at="4+"/>
 
@@ -482,7 +490,7 @@ function wireDia(id, steps){
       <line class="wire dash" x1="244" y1="228" x2="266" y2="228"/>
       <line class="wire dash" x1="370" y1="228" x2="392" y2="228"/>
       <line class="wire dash" x1="496" y1="228" x2="518" y2="228"/>
-      <text class="cap-l ok" x="318" y="260" text-anchor="middle" data-at="2+">아무 항의 없이 통과</text>
+      <text class="cap-l mut" x="318" y="260" text-anchor="middle" data-at="2+">아무 항의 없이 통과</text>
 
       <!-- 시간축 -->
       <line class="wire" x1="30" y1="278" x2="694" y2="278"/>
@@ -541,13 +549,16 @@ git commit -m "defprog-dia: 도해 기반과 첫 그림 — 두 길이 갈라지
 
 **Interfaces:**
 - Consumes: `wireDia`, Task 1 이 가져온 `.dia` CSS
-- Produces: `.dia .val`. D2 의 단계 표시가 처음 쓰므로 이 태스크가 가져온다.
+- Produces: `.dia .val` 과 `.dia .ok`. 둘 다 D2 가 처음 쓰므로 이 태스크가 가져온다.
 
-- [ ] **Step 0: 새 CSS 한 줄**
+- [ ] **Step 0: 새 CSS 두 줄**
 
-Task 1 이 넣은 `.dia .warn` 바로 아래에 넣는다.
+Task 1 이 넣은 `.dia .warn` 바로 아래에 넣는다. `.dia .ok` 는 Task 1 이 한 번 넣었다가
+색 축을 바로잡으면서 쓰는 자리가 없어져 도로 빠진 규칙이다. D2 의 "이 조건에서는 옳습니다"가
+그 첫 사용자다.
 
 ```css
+.dia .ok{fill:var(--ok)}
 .dia .val{fill:var(--purple)}
 ```
 
@@ -712,7 +723,7 @@ Task 1 이 넣은 `.dia .nd.ghost` 바로 아래에 넣는다.
       <rect fill="var(--purple)" opacity=".55" x="42" y="112" width="138" height="20" rx="5" data-at="0"/>
       <rect fill="var(--purple)" opacity=".55" x="42" y="112" width="308" height="20" rx="5" data-at="1"/>
       <rect fill="var(--purple)" opacity=".55" x="42" y="112" width="478" height="20" rx="5" data-at="2"/>
-      <rect fill="var(--purple)" opacity=".55" x="42" y="112" width="646" height="20" rx="5" data-at="3"/>
+      <rect fill="var(--purple)" opacity=".55" x="42" y="112" width="648" height="20" rx="5" data-at="3"/>
 
       <!-- 스택 -->
       <text class="cap-l" x="40" y="160">그때 찍히는 스택</text>
