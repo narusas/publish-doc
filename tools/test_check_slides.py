@@ -2,12 +2,22 @@ import os
 import re
 import sys
 
+import pytest
+
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import check_slides as cs
 
 HERE = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'testdata')
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-DECK = os.path.join(ROOT, 'oauth2_slides.html')
+
+DECK_FILES = ['oauth2_slides.html', 'defensive_programming_slides.html']
+# 검사기 전부를 통과해야 하는 덱. 둘째는 대본이 다 찬 뒤(Task 8)에 들어온다.
+SHIPPED = ['oauth2_slides.html']
+
+
+@pytest.fixture(params=DECK_FILES, ids=[f.split('_')[0] for f in DECK_FILES])
+def deck_path(request):
+    return os.path.join(ROOT, request.param)
 
 
 def deck(name):
@@ -254,13 +264,14 @@ def test_ok_fixture_has_no_appendix():
 # 넣기 — 열 가지가 전부 59/59 통과였다. 아래 한 줄이 그 열 가지를 다 닫는다.
 
 
-def test_the_shipped_deck_passes_every_check():
+@pytest.mark.parametrize('name', SHIPPED)
+def test_the_shipped_deck_passes_every_check(name):
     """실제로 배포하는 덱을 검사기 전부에 물린다.
 
     이 테스트가 없으면 검사기와 테스트가 서로 다른 물건을 보고 각자 '통과'라고
     말한다. 픽스처는 규칙 하나하나가 사는지를 보고, 이 줄은 그 규칙들이 실물에
     실제로 걸리는지를 본다."""
-    deck = cs.read_deck(DECK)
+    deck = cs.read_deck(os.path.join(ROOT, name))
     problems = [p for check in cs.CHECKS for p in check(deck)]
     assert problems == [], '배포하는 덱이 검사기를 통과하지 못한다:\n  %s' % (
         '\n  '.join(problems[:20]))
@@ -299,7 +310,7 @@ def test_the_browser_gate_does_not_skip_itself_away():
     그러니 test_deck_behavior.py 가 chromium 없다고 물러서면 그 계약은 통째로
     증발하면서 초록불이 뜬다. 이 테스트는 그 물러섬이 다시 들어오는 것을 막는다.
     브라우저가 필요 없으므로 chromium 없는 기계에서도 이 줄만은 돈다."""
-    with open(os.path.join(os.path.dirname(DECK), 'tools', 'test_deck_behavior.py'),
+    with open(os.path.join(ROOT, 'tools', 'test_deck_behavior.py'),
               encoding='utf-8') as fh:
         src = fh.read()
     assert 'pytest.importorskip(' not in src, \
@@ -315,7 +326,7 @@ def test_the_browser_gate_does_not_skip_itself_away():
 DECK_CONST = re.compile(r'^const\s+(SPEED|SLIDE_MIN|SLIDE_MAX)\s*=\s*([\d.]+)\s*;', re.M)
 
 
-def test_the_deck_and_the_checker_share_their_constants():
+def test_the_deck_and_the_checker_share_their_constants(deck_path):
     """같은 숫자를 두 파일이 들고 있으면 한쪽만 고쳐진다.
 
     SPEED 는 대본 길이를 초로 바꾸는 값이고, SLIDE_MIN·SLIDE_MAX 는 개요 그리드가
@@ -324,7 +335,7 @@ def test_the_deck_and_the_checker_share_their_constants():
     하는데 무대의 계기가 다른 말을 하거나, 위반이 아닌 장이 빨갛게 칠해진다.
 
     브라우저가 필요 없다. 두 파일의 텍스트를 읽어 비교할 뿐이다."""
-    with open(DECK, encoding='utf-8') as fh:
+    with open(deck_path, encoding='utf-8') as fh:
         found = dict(DECK_CONST.findall(fh.read()))
     assert set(found) == {'SPEED', 'SLIDE_MIN', 'SLIDE_MAX'}, \
         '덱에서 못 찾은 상수가 있다: %s' % (
@@ -337,9 +348,9 @@ def test_the_deck_and_the_checker_share_their_constants():
         '덱의 SLIDE_MAX %s ≠ 검사기의 %s' % (found['SLIDE_MAX'], cs.SLIDE_MAX)
 
 
-def test_the_deck_does_not_hardcode_the_slide_length_limits_again():
+def test_the_deck_does_not_hardcode_the_slide_length_limits_again(deck_path):
     """개요 그리드가 25·110 을 다시 박으면 위 대조가 아무것도 막지 못한다."""
-    with open(DECK, encoding='utf-8') as fh:
+    with open(deck_path, encoding='utf-8') as fh:
         line = [l for l in fh if l.lstrip().startswith('const warn =')]
     assert line, '개요 칸의 시간 색을 정하는 줄을 찾지 못했다'
     assert 'SLIDE_MAX' in line[0] and 'SLIDE_MIN' in line[0], \
@@ -362,14 +373,14 @@ CHROME_IDS = {'viewport', 'stage', 'bars', 'barPos', 'barTime', 'hud',
               'clock', 'counter', 'notes', 'overview', 'toast'}
 
 
-def test_the_deck_chrome_lives_inside_its_own_marker():
+def test_the_deck_chrome_lives_inside_its_own_marker(deck_path):
     """DECK:CORE:CSS 가 꾸미고 DECK:CORE:JS 가 붙잡는 DOM 도 마커를 가져야 한다.
 
     설계 9절은 CORE 블록을 build_slides.py 의 템플릿으로 뽑겠다고 한다. 그런데
     크롬 마크업이 어느 마커에도 없으면, 그 절차대로 뽑은 CSS 와 JS 는 붙을 DOM 이
     하나도 없는 채로 나온다. paint() 는 첫 번째 없는 id 에서 그 자리에 던지므로
     '기능 하나가 죽는' 것이 아니라 '덱이 안 켜지는' 것이다."""
-    with open(DECK, encoding='utf-8') as fh:
+    with open(deck_path, encoding='utf-8') as fh:
         html = fh.read()
     blocks = CHROME_BLOCK.findall(html)
     assert len(blocks) == 2, \
@@ -379,13 +390,13 @@ def test_the_deck_chrome_lives_inside_its_own_marker():
         'DECK:CHROME 이 들고 있는 id 가 달라졌다: %s' % sorted(have)
 
 
-def test_every_id_the_core_js_reaches_for_is_in_the_chrome_block():
+def test_every_id_the_core_js_reaches_for_is_in_the_chrome_block(deck_path):
     """코어 JS 가 $('#x') 로 찾는 것은 전부 크롬 안에 있어야 한다.
 
     이 짝이 어긋나면 두 조각을 같이 옮기지 않았다는 뜻이고, 그 결과는 화면이 아니라
     콘솔에서 터진다. 발표자 창의 id(now·nxt·el·pl…)는 자식 창 문서의 것이라
     d.getElementById 로 찾으므로 여기 걸리지 않는다."""
-    with open(DECK, encoding='utf-8') as fh:
+    with open(deck_path, encoding='utf-8') as fh:
         html = fh.read()
     core = CORE_JS.search(html)
     assert core, 'DECK:CORE:JS 블록을 찾지 못했다'
@@ -456,3 +467,28 @@ def test_banned_word_list_is_the_one_the_spec_fixed():
 
 def test_ok_fixture_has_no_banned_words():
     assert cs.check_banned_words(deck('deck_ok.html')) == []
+
+
+# --- Task 3 · 두 덱은 엔진을 바이트 단위로 공유한다 ------------------------------
+
+CORE_CSS = re.compile(
+    r'/\* ==== DECK:CORE:CSS ==== \*/(.*?)/\* ==== /DECK:CORE:CSS ==== \*/', re.S)
+
+
+def _engine_blocks(path):
+    with open(path, encoding='utf-8') as fh:
+        html = fh.read()
+    return {
+        'DECK:CORE:CSS': CORE_CSS.search(html).group(1),
+        'DECK:CORE:JS': CORE_JS.search(html).group(1),
+        'DECK:CHROME': CHROME_BLOCK.findall(html),
+    }
+
+
+def test_the_two_decks_share_the_engine_byte_for_byte():
+    """설계 10절. build_slides.py 를 뽑는 대신 두 벌을 같게 유지한다. 코어를 고쳐야
+    하면 두 덱을 같이 고쳐야 이 테스트가 통과한다 — 한쪽만 고치면 여기서 잡힌다."""
+    a = _engine_blocks(os.path.join(ROOT, 'oauth2_slides.html'))
+    b = _engine_blocks(os.path.join(ROOT, 'defensive_programming_slides.html'))
+    for name in a:
+        assert a[name] == b[name], '%s 가 두 덱에서 다르다' % name

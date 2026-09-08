@@ -56,7 +56,26 @@ MUST_EXIST = ('%s — 이 덱에는 있어야 하는 성질이다. 못 찾았다
               '만드는 코드가 깨진 것이므로 skip 하지 않는다.')
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-DECK = 'file://' + os.path.join(ROOT, 'oauth2_slides.html')
+DECK_FILES = ['oauth2_slides.html', 'defensive_programming_slides.html']
+PILOT = os.path.join(ROOT, 'oauth2_slides.html')
+
+# 파일럿에만 있는 성질(자동재생 시퀀스 · JWT 데모 한 쌍)을 보는 테스트는 pilot 을 받고,
+# 두 덱이 다 지켜야 하는 엔진 계약은 deck 을 받아 두 번 돈다.
+# LATER: 둘째 덱에 아직 그 내용이 없어 pilot 에 묶어 둔 테스트. Task 8 이 deck 으로 바꾼다.
+#   - test_appendix_quiz_bank_shows_exactly_one_question_per_beat
+#   - test_arrow_keys_scroll_the_open_notes_drawer_instead_of_the_deck
+#   - test_open_notes_drawer_keeps_its_scroll_while_the_timer_runs
+#   - test_form_controls_keep_the_keys_they_use
+
+
+@pytest.fixture(params=DECK_FILES, ids=[f.split('_')[0] for f in DECK_FILES])
+def deck(request):
+    return os.path.join(ROOT, request.param)
+
+
+@pytest.fixture
+def pilot():
+    return PILOT
 
 
 @pytest.fixture(scope='module')
@@ -95,13 +114,13 @@ def first_multi_beat_slide(pg):
     return got[0], got[1]
 
 
-def test_starts_on_first_slide_at_beat_zero(page):
-    page.goto(DECK)
+def test_starts_on_first_slide_at_beat_zero(page, deck):
+    page.goto('file://' + deck)
     assert at(page) == (0, 0)
 
 
-def test_right_arrow_consumes_every_beat_before_leaving_the_slide(page):
-    page.goto(DECK)
+def test_right_arrow_consumes_every_beat_before_leaving_the_slide(page, deck):
+    page.goto('file://' + deck)
     i, n = first_multi_beat_slide(page)
     goto(page, i)
     for expected in range(1, n):
@@ -111,24 +130,24 @@ def test_right_arrow_consumes_every_beat_before_leaving_the_slide(page):
     assert at(page) == (i + 1, 0), '비트를 다 썼는데 슬라이드를 안 넘겼다'
 
 
-def test_down_arrow_skips_the_whole_slide_ignoring_beats(page):
-    page.goto(DECK)
+def test_down_arrow_skips_the_whole_slide_ignoring_beats(page, deck):
+    page.goto('file://' + deck)
     i, _ = first_multi_beat_slide(page)
     goto(page, i)
     page.keyboard.press('ArrowDown')
     assert at(page) == (i + 1, 0)
 
 
-def test_left_arrow_enters_previous_slide_at_its_last_beat(page):
-    page.goto(DECK)
+def test_left_arrow_enters_previous_slide_at_its_last_beat(page, deck):
+    page.goto('file://' + deck)
     i, n = first_multi_beat_slide(page)
     goto(page, i + 1)
     page.keyboard.press('ArrowLeft')
     assert at(page) == (i, n - 1)
 
 
-def test_builds_are_visible_exactly_up_to_the_current_beat(page):
-    page.goto(DECK)
+def test_builds_are_visible_exactly_up_to_the_current_beat(page, deck):
+    page.goto('file://' + deck)
     i = page.evaluate(
         'Deck.slides.findIndex(s => s.querySelectorAll(".build").length >= 2)')
     if i < 0:
@@ -145,8 +164,8 @@ def test_builds_are_visible_exactly_up_to_the_current_beat(page):
         page.keyboard.press('ArrowRight')
 
 
-def test_cannot_advance_past_the_last_slide(page):
-    page.goto(DECK)
+def test_cannot_advance_past_the_last_slide(page, deck):
+    page.goto('file://' + deck)
     n = state(page)['n']
     page.evaluate('n => Deck.go(n - 1)', n)
     for _ in range(6):
@@ -154,23 +173,23 @@ def test_cannot_advance_past_the_last_slide(page):
     assert state(page)['i'] == n - 1
 
 
-def test_cannot_go_before_the_first_slide(page):
-    page.goto(DECK)
+def test_cannot_go_before_the_first_slide(page, deck):
+    page.goto('file://' + deck)
     for _ in range(6):
         page.keyboard.press('ArrowLeft')
     assert at(page) == (0, 0)
 
 
-def test_down_arrow_at_the_last_slide_does_not_move(page):
-    page.goto(DECK)
+def test_down_arrow_at_the_last_slide_does_not_move(page, deck):
+    page.goto('file://' + deck)
     n = state(page)['n']
     page.evaluate('n => Deck.go(n - 1)', n)
     page.keyboard.press('ArrowDown')
     assert state(page)['i'] == n - 1
 
 
-def test_up_arrow_at_the_first_slide_does_not_move(page):
-    page.goto(DECK)
+def test_up_arrow_at_the_first_slide_does_not_move(page, deck):
+    page.goto('file://' + deck)
     page.keyboard.press('ArrowUp')
     assert at(page) == (0, 0)
 
@@ -179,8 +198,8 @@ def on(pg, sel):
     return pg.eval_on_selector(sel, 'e => e.classList.contains("on")')
 
 
-def test_s_toggles_the_notes_drawer(page):
-    page.goto(DECK)
+def test_s_toggles_the_notes_drawer(page, deck):
+    page.goto('file://' + deck)
     assert on(page, '#notes') is False
     page.keyboard.press('s')
     assert on(page, '#notes') is True
@@ -189,8 +208,8 @@ def test_s_toggles_the_notes_drawer(page):
     assert on(page, '#notes') is False
 
 
-def test_open_notes_drawer_follows_the_current_slide(page):
-    page.goto(DECK)
+def test_open_notes_drawer_follows_the_current_slide(page, deck):
+    page.goto('file://' + deck)
     page.keyboard.press('s')
     first = page.inner_text('#notes')
     # ↓ 가 아니라 → 로 넘긴다. 서랍이 열려 있는 동안 ↓ 는 서랍을 굴리는 키다
@@ -243,14 +262,14 @@ def settled_scroll_top(pg, sel):
     return last
 
 
-def test_arrow_keys_scroll_the_open_notes_drawer_instead_of_the_deck(page):
+def test_arrow_keys_scroll_the_open_notes_drawer_instead_of_the_deck(page, pilot):
     """서랍이 열려 있으면 ↓·PageDown 은 대본을 굴린다. 슬라이드는 그대로다.
 
     서랍은 max-height:38% = 273px 이고, 대본이 그것을 넘치는 장이 예순일곱 중
     열여섯이다(s30 은 538px 이 필요하다). 굴릴 수 없는 서랍은 그 열여섯 장에서
     대본의 절반이 없는 것과 같다 — 그리고 읽으려고 누른 그 키가 덱을 두 장
     넘겨 버린다."""
-    page.goto(DECK)
+    page.goto('file://' + pilot)
     i = overflowing_notes_slide(page)
     goto(page, i)
     page.keyboard.press('s')
@@ -267,13 +286,13 @@ def test_arrow_keys_scroll_the_open_notes_drawer_instead_of_the_deck(page):
     assert state(page)['i'] == i, '서랍이 열려 있는데 ↑ 가 슬라이드를 되돌렸다'
 
 
-def test_open_notes_drawer_keeps_its_scroll_while_the_timer_runs(page):
+def test_open_notes_drawer_keeps_its_scroll_while_the_timer_runs(page, pilot):
     """타이머가 도는 동안에도 읽던 자리를 지킨다.
 
     paint() 는 타이머가 켜져 있으면 0.5초마다 불린다. 그때마다 서랍의 innerHTML 을
     다시 넣으면 scrollTop 이 0 으로 돌아간다 — 발표자는 타이머를 켜 놓고 발표하므로
     굴릴 수 있게 만들어 놓고도 0.5초마다 맨 위로 튕긴다."""
-    page.goto(DECK)
+    page.goto('file://' + pilot)
     i = overflowing_notes_slide(page)
     goto(page, i)
     page.keyboard.press('s')
@@ -287,9 +306,9 @@ def test_open_notes_drawer_keeps_its_scroll_while_the_timer_runs(page):
     page.keyboard.press('t')
 
 
-def test_arrow_keys_scroll_the_open_overview_instead_of_the_deck(page):
+def test_arrow_keys_scroll_the_open_overview_instead_of_the_deck(page, deck):
     """개요가 열려 있으면 ↓·End 는 그리드를 굴린다. 슬라이드는 그대로다."""
-    page.goto(DECK)
+    page.goto('file://' + deck)
     goto(page, 10)
     page.keyboard.press('o')
     assert on(page, '#overview') is True
@@ -308,7 +327,7 @@ def test_arrow_keys_scroll_the_open_overview_instead_of_the_deck(page):
     assert state(page)['i'] == 10, '개요가 열려 있는데 End 가 슬라이드를 옮겼다'
 
 
-def test_overview_brings_the_current_cell_into_view_when_it_opens(page):
+def test_overview_brings_the_current_cell_into_view_when_it_opens(page, deck):
     """어느 장에서 열어도 지금 서 있는 칸이 보인다.
 
     그리드는 720px 무대 안에서 1321px 이라 두 화면 가까이 된다. 스크롤을 0 에
@@ -316,7 +335,7 @@ def test_overview_brings_the_current_cell_into_view_when_it_opens(page):
     index 60 → 1098) — 예순일곱 장 중 스물일곱 장. 개요는 설계 10절이 '눈 검사'의
     도구로 지정한 자리이자 질의응답 때 부록으로 들어가는 문이라, 열었을 때 내가
     어디 있는지가 안 보이면 둘 다 못 한다."""
-    page.goto(DECK)
+    page.goto('file://' + deck)
     n = state(page)['n']
     bad = []
     for i in [0, n // 3, n // 2, 2 * n // 3, n - 1]:
@@ -339,23 +358,23 @@ def test_overview_brings_the_current_cell_into_view_when_it_opens(page):
     assert bad == [], '개요를 열었는데 현재 칸이 화면 밖이다:\n  %s' % '\n  '.join(bad)
 
 
-def test_o_opens_one_overview_cell_per_slide(page):
-    page.goto(DECK)
+def test_o_opens_one_overview_cell_per_slide(page, deck):
+    page.goto('file://' + deck)
     page.keyboard.press('o')
     assert on(page, '#overview') is True
     assert page.eval_on_selector_all('.ov-cell', 'els => els.length') == state(page)['n']
 
 
-def test_overview_cell_click_jumps_to_that_slide(page):
-    page.goto(DECK)
+def test_overview_cell_click_jumps_to_that_slide(page, deck):
+    page.goto('file://' + deck)
     page.keyboard.press('o')
     page.click('.ov-cell[data-i="2"]')
     assert state(page)['i'] == 2
     assert on(page, '#overview') is False
 
 
-def test_escape_closes_overview_and_notes(page):
-    page.goto(DECK)
+def test_escape_closes_overview_and_notes(page, deck):
+    page.goto('file://' + deck)
     page.keyboard.press('o')
     page.keyboard.press('s')
     page.keyboard.press('Escape')
@@ -374,21 +393,21 @@ def main_indexes(pg):
                        '.filter(([, a]) => !a).map(([i]) => i)')
 
 
-def test_number_then_enter_jumps_to_that_slide(page):
-    page.goto(DECK)
+def test_number_then_enter_jumps_to_that_slide(page, deck):
+    page.goto('file://' + deck)
     type_number(page, 3)
     assert state(page)['i'] == main_indexes(page)[2], \
         '화면 번호는 1-기반, 인덱스는 0-기반이다'
 
 
-def test_digit_jump_counts_main_slides_not_the_whole_file(page):
+def test_digit_jump_counts_main_slides_not_the_whole_file(page, deck):
     """숫자 점프의 좌표계는 HUD·개요와 같은 '본편 1..53'이다.
 
     본편만 세는 계기(막대) 옆에서 숫자만 67 좌표계로 남으면, 발표자가 화면에서
     읽은 번호와 쳐야 하는 번호가 갈린다. 부록이 앞에 없는 이 덱에서는 두 좌표계가
     본편 구간에서 우연히 겹치므로, 겹치지 않는 자리 — 마지막 본편 장과 그 너머 —
     에서 확인한다."""
-    page.goto(DECK)
+    page.goto('file://' + deck)
     mains = main_indexes(page)
     n = len(mains)
     type_number(page, n)
@@ -403,8 +422,8 @@ def test_digit_jump_counts_main_slides_not_the_whole_file(page):
     assert state(page)['i'] == here, '전체 장 수를 쳤더니 움직였다 — 67 좌표계가 남아 있다'
 
 
-def test_out_of_range_number_does_not_move(page):
-    page.goto(DECK)
+def test_out_of_range_number_does_not_move(page, deck):
+    page.goto('file://' + deck)
     page.keyboard.press('9')
     page.keyboard.press('9')
     page.keyboard.press('9')
@@ -412,8 +431,8 @@ def test_out_of_range_number_does_not_move(page):
     assert state(page)['i'] == 0
 
 
-def test_escape_discards_a_partially_typed_number(page):
-    page.goto(DECK)
+def test_escape_discards_a_partially_typed_number(page, deck):
+    page.goto('file://' + deck)
     page.keyboard.press('3')
     page.keyboard.press('Escape')
     page.keyboard.press('Enter')
@@ -425,14 +444,14 @@ def counter_head(pg):
     return pg.inner_text('#counter').split('·')[0].strip()
 
 
-def test_counter_measures_the_talk_not_the_file(page):
+def test_counter_measures_the_talk_not_the_file(page, deck):
     """HUD 의 숫자는 막대와 같은 것을 잰다 — 오늘 발표하는 본편 53장.
 
     막대 둘이 53장을 재는 옆에서 숫자만 "31 / 67"이면, 그 둘을 한눈에 보는
     발표자는 자기가 실제보다 덜 왔다고 읽는다. 'N / M'은 좌표가 아니라 진행률로
     읽히는 관용구이기 때문이다. 재보정을 한 이유가 그 실패였고, 숫자를 그대로 두면
     같은 실패가 옆 칸으로 옮겨 갈 뿐이다."""
-    page.goto(DECK)
+    page.goto('file://' + deck)
     mains = main_indexes(page)
     apps = appendix_indexes(page)
     n_main, n_app = len(mains), len(apps)
@@ -451,16 +470,16 @@ def test_counter_measures_the_talk_not_the_file(page):
             '부록 숫자가 아직 전체 장 수를 분모로 쓴다'
 
 
-def test_counter_keeps_the_beat_sub_counter(page):
+def test_counter_keeps_the_beat_sub_counter(page, deck):
     """비트 하위 숫자(· 3/7)는 좌표계와 무관하다 — 슬라이드 안의 단계 수다."""
-    page.goto(DECK)
+    page.goto('file://' + deck)
     i, n = first_multi_beat_slide(page)
     goto(page, i)
     assert page.inner_text('#counter').strip().endswith('· 1/%d' % n), \
         '비트가 %d 개인 장인데 하위 숫자가 없다: %s' % (n, page.inner_text('#counter'))
 
 
-def test_presenter_window_mirrors_the_current_slide(page):
+def test_presenter_window_mirrors_the_current_slide(page, deck):
     """발표자 창(P)이 부모의 DOM 을 직접 갱신하는 설계라서, 그 경로가 실제로
     file:// 팝업에서 동작하는지가 이 테스트의 핵심이다 — localStorage 나
     BroadcastChannel 을 안 쓰기 때문에 이것 말고는 검증할 수단이 없다.
@@ -468,7 +487,7 @@ def test_presenter_window_mirrors_the_current_slide(page):
     슬라이드 내용에는 기대지 않는다: 특정 제목 문자열이 아니라 titleOf() 가
     돌려주는 값과 발표자 창의 #now 가 같다는 '관계'만 확인한다.
     """
-    page.goto(DECK)
+    page.goto('file://' + deck)
     with page.context.expect_page() as pop_info:
         page.keyboard.press('p')
     pres = pop_info.value
@@ -514,12 +533,12 @@ def appendix_indexes(pg):
     return got
 
 
-def test_a_jumps_to_the_first_appendix_slide(page):
+def test_a_jumps_to_the_first_appendix_slide(page, deck):
     """s52 의 대본이 청중에게 "A 를 누르면 부록"이라고 예고한다.
 
     그 약속이 코드에 남아 있는지 확인한다. 번호가 아니라 class 로 찾는다 —
     본편이 한 장 늘어도 이 성질은 그대로여야 한다."""
-    page.goto(DECK)
+    page.goto('file://' + deck)
     first = appendix_indexes(page)[0]
     for probe in (0, first // 2, first - 1, first):
         goto(page, probe)
@@ -527,7 +546,7 @@ def test_a_jumps_to_the_first_appendix_slide(page):
         assert state(page)['i'] == first, '%d 번 장에서 A 가 부록 첫 장으로 안 갔다' % probe
 
 
-def test_appendix_sequences_do_not_play_by_themselves(page):
+def test_appendix_sequences_do_not_play_by_themselves(page, pilot):
     """부록의 시퀀스는 자동재생하지 않는다.
 
     s17·s51 이 자동재생하는 이유는 열여섯 단계의 '모양'을 정해진 시간 안에 보여
@@ -536,7 +555,7 @@ def test_appendix_sequences_do_not_play_by_themselves(page):
 
     ON_ENTER 에 부록이 하나라도 들어가면 그 자리에서 실패한다. 그것만으로는
     '등록하지 않았다'까지밖에 말하지 못하므로, 실제로 벽시계로도 재 본다."""
-    page.goto(DECK)
+    page.goto('file://' + pilot)
     ids = page.evaluate('Deck.slides.map(s => s.id)')
     leaked = [ids[i] for i in appendix_indexes(page)
               if page.evaluate('id => id in ON_ENTER', ids[i])]
@@ -593,14 +612,14 @@ def seq_step(pg, sid):
         '.textContent.trim().split("/")[0]', sid)
 
 
-def test_leaving_an_autoplaying_slide_stops_it(page):
+def test_leaving_an_autoplaying_slide_stops_it(page, pilot):
     """떠난 장의 자동재생은 멈춘다.
 
     안 멈추면 화면 밖에서 계속 돈다. 재현된 결과: leave() 없이 s19 에 6초 서
     있으면 #mainSeq17 이 6 / 16 을 가리킨다. 나중에 그 장으로 ← 로 돌아오면
     발표자가 말하려던 단계가 아니라 혼자 굴러간 단계가 서 있고, 다른 장의 자산까지
     깨어나면 두 장이 동시에 진행한다."""
-    page.goto(DECK)
+    page.goto('file://' + pilot)
     sid, i = autoplaying_slide(page)
     goto(page, i)
     page.wait_for_timeout(2200)                 # 자동재생은 1700ms 간격이다
@@ -615,13 +634,13 @@ def test_leaving_an_autoplaying_slide_stops_it(page):
             sid, left, seq_step(page, sid))
 
 
-def test_entering_an_autoplaying_slide_rewinds_and_starts_it(page):
+def test_entering_an_autoplaying_slide_rewinds_and_starts_it(page, pilot):
     """들어온 장의 자동재생은 처음부터 다시 시작한다.
 
     enter() 가 없으면 두 가지가 같이 죽는다. 되감기(← 로 돌아왔을 때 발표자가
     설명을 다시 시작하는데 화면은 마지막 단계에 서 있다)와 재생(화면이 아예 안
     움직인다). 활자 하한·720px 테스트의 '한 바퀴 깨우기'도 이 호출에 기댄다."""
-    page.goto(DECK)
+    page.goto('file://' + pilot)
     sid, i = autoplaying_slide(page)
     goto(page, i)
     page.wait_for_timeout(2200)
@@ -636,7 +655,7 @@ def test_entering_an_autoplaying_slide_rewinds_and_starts_it(page):
     assert seq_step(page, sid) > 1, '%s 에 들어왔는데 자동재생이 시작되지 않았다' % sid
 
 
-def test_a_stray_right_arrow_during_autoplay_does_not_cost_the_slide(page):
+def test_a_stray_right_arrow_during_autoplay_does_not_cost_the_slide(page, pilot):
     """자동재생 중의 → 한 번은 장을 잃지 않는다.
 
     두 장은 덱에서 가장 중요한 1분이다. 자동재생은 25.5초에 끝나는데 대본은 35초를
@@ -646,7 +665,7 @@ def test_a_stray_right_arrow_during_autoplay_does_not_cost_the_slide(page):
 
     지금은 → 가 '멈추고 마지막 단계에 선다'를 뜻한다. 자동재생이 어차피 가고 있던
     자리이므로 잃는 것이 없다. 한 번 더 누르면 그때 넘어간다."""
-    page.goto(DECK)
+    page.goto('file://' + pilot)
     sid, i = autoplaying_slide(page)
     n = page.evaluate('i => beatCount(Deck.slides[i])', i)
     assert n > 1, '%s 에 → 가 쓸 비트가 없다 — 한 번의 오타가 장을 통째로 넘긴다' % sid
@@ -667,14 +686,14 @@ def test_a_stray_right_arrow_during_autoplay_does_not_cost_the_slide(page):
     assert state(page)['i'] == i + 1, '비트를 다 썼는데 → 가 넘어가지 않는다'
 
 
-def test_backing_into_an_autoplaying_slide_lands_on_the_beat_it_shows(page):
+def test_backing_into_an_autoplaying_slide_lands_on_the_beat_it_shows(page, pilot):
     """← 로 들어온 장의 비트는 자산이 정한 상태와 같아야 한다.
 
     '스스로 도는' 자산은 enter() 에서 되감아 다시 재생한다. 그런데 ← 는 원칙적으로
     마지막 비트로 들어오므로, 그대로 두면 화면은 1단계인데 비트만 마지막이다.
     HUD 가 '2/2'라고 거짓말을 하고, ← 를 한 번 더 눌러야 그 장을 빠져나간다.
     가름은 leave() 의 유무다 — 스스로 도는 것만 leave() 를 갖는다."""
-    page.goto(DECK)
+    page.goto('file://' + pilot)
     sid, i = autoplaying_slide(page)
     goto(page, i + 1)
     page.keyboard.press('ArrowLeft')
@@ -686,7 +705,7 @@ def test_backing_into_an_autoplaying_slide_lands_on_the_beat_it_shows(page):
     assert state(page)['i'] == i - 1, '← 한 번으로 자동재생 장을 빠져나가지 못한다'
 
 
-def test_leaving_an_autoplaying_slide_backwards_never_shows_a_beat_that_lies(page):
+def test_leaving_an_autoplaying_slide_backwards_never_shows_a_beat_that_lies(page, pilot):
     """스스로 도는 장에는 뒤로 가는 비트가 없다 — ← 는 비트를 거치지 않고 떠난다.
 
     비트 1 은 '멈추고 마지막 단계에 선다'이고 비트 0 의 go() 는 일부러 아무것도
@@ -697,7 +716,7 @@ def test_leaving_an_autoplaying_slide_backwards_never_shows_a_beat_that_lies(pag
 
     도착 규칙과 대칭이다. ← 로 들어올 때 비트를 거치지 않고 0 에서 시작하듯,
     나갈 때도 비트를 거치지 않고 떠난다. 가름도 같은 술어(leave() 의 유무)를 쓴다."""
-    page.goto(DECK)
+    page.goto('file://' + pilot)
     sid, i = autoplaying_slide(page)
     goto(page, i)
     page.wait_for_timeout(2200)
@@ -717,14 +736,14 @@ def test_leaving_an_autoplaying_slide_backwards_never_shows_a_beat_that_lies(pag
     assert st['i'] == i - 1, '← 한 번으로 자동재생 장을 빠져나가지 못한다'
 
 
-def test_appendix_quiz_bank_shows_exactly_one_question_per_beat(page):
+def test_appendix_quiz_bank_shows_exactly_one_question_per_beat(page, pilot):
     """퀴즈 은행은 한 비트에 문제 하나만 세운다.
 
     .build 로는 안 되는 일이다 — 쌓이는 공개라 마지막 비트에서 다섯 문제가 한꺼번에
     서고, 720px 을 넘길뿐더러 청중이 발표자보다 먼저 다음 문제를 읽는다. 그래서
     registerBeats 의 컨트롤러 자리에 갈아 끼우기를 넣었다. 이 테스트가 그것을 붙잡는다:
     숨김이 opacity 로 바뀌거나(자리를 계속 먹는다) 누적 공개로 돌아가면 실패한다."""
-    page.goto(DECK)
+    page.goto('file://' + pilot)
     banks = [i for i in appendix_indexes(page)
              if page.evaluate('i => Deck.slides[i].querySelectorAll(".quiz").length > 1', i)]
     if not banks:
@@ -745,7 +764,7 @@ def test_appendix_quiz_bank_shows_exactly_one_question_per_beat(page):
         assert len(set(seen)) == n, '비트마다 다른 문제가 나오지 않는다: %s' % seen
 
 
-def test_the_time_meter_counts_only_the_slides_that_get_presented(page):
+def test_the_time_meter_counts_only_the_slides_that_get_presented(page, deck):
     """계측의 분모는 본편이다. 부록은 넘어가는 장이라 예정 시간에 들어가면 안 된다.
 
     이 덱에 시간 막대가 있는 이유는 타이밍을 리허설에서 발견하는 대신 숫자로 아는
@@ -754,7 +773,7 @@ def test_the_time_meter_counts_only_the_slides_that_get_presented(page):
 
     tools/check_slides.py 의 check_total 과 같은 가름이고, 둘은 늘 같이 움직여야
     한다. 한쪽만 고치면 검사기는 52:00 이라고 하는데 무대의 막대는 다른 말을 한다."""
-    page.goto(DECK)
+    page.goto('file://' + deck)
     all_sec = page.evaluate('Deck.slides.reduce((a, s) => a + Deck.secOf(s.id), 0)')
     main_sec = page.evaluate(
         'Deck.slides.filter(s => !s.classList.contains("appendix"))'
@@ -776,7 +795,7 @@ def test_the_time_meter_counts_only_the_slides_that_get_presented(page):
     assert tim == pytest.approx(100, abs=0.5), '예정대로 끝냈는데 시간 막대가 %.1f%%' % tim
 
 
-def test_the_position_bar_and_the_counter_read_the_same_coordinate_system(page):
+def test_the_position_bar_and_the_counter_read_the_same_coordinate_system(page, deck):
     """막대와 그 옆의 숫자가 같은 것을 세야 한다.
 
     무대 위에서 발표자는 이 둘을 한눈에 본다. 숫자가 "26 / 48"인데 막대가 64.6%
@@ -786,7 +805,7 @@ def test_the_position_bar_and_the_counter_read_the_same_coordinate_system(page):
     14장보다 앞에 있는 동안에는 절대 index + 1 과 본편 번호가 우연히 같기 때문이다.
     그 순서를 강제하는 것은 아무것도 없으므로, 여기서는 부록을 앞으로 끌어와
     두 좌표계를 일부러 갈라 놓고 잰다."""
-    page.goto(DECK)
+    page.goto('file://' + deck)
     moved = page.evaluate("""() => {
       // 앞쪽 본편 몇 장을 부록으로 다시 분류해 두 좌표계를 갈라 놓는다.
       const mains = Deck.slides.filter(s => !s.classList.contains('appendix'));
@@ -825,12 +844,12 @@ def test_the_position_bar_and_the_counter_read_the_same_coordinate_system(page):
         == pytest.approx(100, abs=0.5)
 
 
-def test_form_controls_keep_the_keys_they_use(page):
+def test_form_controls_keep_the_keys_they_use(page, pilot):
     """<select> 에 포커스가 있을 때 ↓ 는 값을 바꾸지, 슬라이드를 넘기지 않는다.
 
     동시에 덱의 손잡이는 살아 있어야 한다. tagName 만 보고 통째로 return 하면
     select 를 한 번 클릭한 뒤로 O·P·A·Escape 가 전부 죽는다 — 원래 버그보다 나쁘다."""
-    page.goto(DECK)
+    page.goto('file://' + pilot)
     sel = page.evaluate('Deck.slides.findIndex(s => s.querySelector("select"))')
     if sel < 0:
         pytest.fail(MUST_EXIST % '<select> 가 있는 슬라이드')
@@ -861,10 +880,10 @@ def test_form_controls_keep_the_keys_they_use(page):
     assert state(page)['i'] == sel + 1, 'select 에 포커스가 있으면 → 가 죽는다'
 
 
-def test_overview_marks_appendix_cells_apart(page):
+def test_overview_marks_appendix_cells_apart(page, deck):
     """개요 그리드에서 부록이 본편과 구별된다. 예순일곱 칸이 한 덩어리로 이어지면
     어디까지가 오늘 발표인지 눈으로 잘리지 않는다."""
-    page.goto(DECK)
+    page.goto('file://' + deck)
     page.keyboard.press('o')
     marked = page.eval_on_selector_all('.ov-cell.app', 'els => els.length')
     assert marked == len(appendix_indexes(page))
@@ -873,12 +892,12 @@ def test_overview_marks_appendix_cells_apart(page):
     assert idx == appendix_indexes(page)
 
 
-def test_overview_numbers_main_slides_from_one_and_appendix_apart(page):
+def test_overview_numbers_main_slides_from_one_and_appendix_apart(page, deck):
     """개요 칸의 번호도 HUD·숫자 점프와 같은 좌표계다.
 
     발표자는 개요에서 번호를 읽고 창을 닫은 뒤 그 번호를 친다. 여기가 67 좌표계로
     남으면 그 점프가 통째로 빗나간다."""
-    page.goto(DECK)
+    page.goto('file://' + deck)
     page.keyboard.press('o')
     nums = page.eval_on_selector_all(
         '.ov-cell', 'els => els.map(e => e.querySelector(".n").textContent.trim())')
@@ -892,7 +911,7 @@ def test_overview_numbers_main_slides_from_one_and_appendix_apart(page):
     assert state(page)['i'] == apps[0], '부록 칸을 눌렀는데 안 갔다'
 
 
-def test_overview_cells_hold_their_time_label_inside(page):
+def test_overview_cells_hold_their_time_label_inside(page, deck):
     """개요 칸의 0:xx 시간 이름표가 칸 밖으로 밀리지 않는다.
 
     이 화면은 설계 10절이 '눈 검사'의 도구로 지정한 자리다. 도구가 깨져 보이면
@@ -906,7 +925,7 @@ def test_overview_cells_hold_their_time_label_inside(page):
 
     두 가지를 같이 본다. 이름표를 칸 안에 넣겠다고 칸만 늘리면 이번에는 칸이
     아래 줄 칸을 덮는다 — 그것도 실패다."""
-    page.goto(DECK)
+    page.goto('file://' + deck)
     page.keyboard.press('o')
     bad = page.evaluate("""() => {
       const cells = [...document.querySelectorAll('.ov-cell')];
@@ -950,33 +969,50 @@ FONT_FLOOR_MONO = 20   # px, 코드 하한
 # 근거가 지켜지는지를 아무도 재지 않는 상태였다. 지금은 줄마다 제 바닥이 있고,
 # 값은 전부 '지금 쓰는 크기 그대로'다. 즉 더 줄이는 것만 막는다.
 #
-# 이 목록은 oauth2_slides.html 의 DECK:STAGE:CSS 「활자 하한」 주석 안
-# '예외 목록 시작/끝' 블록과 한 글자씩 짝을 이룬다. 아래
-# test_the_font_floor_exemptions_match_their_css_comment 가 대조한다.
-EXEMPT = [
-    ('.seq-cap', 20,
-     '시퀀스 행 이름표. 지도의 범례이고, 같은 말이 바로 아래 .seq-detail 의 .lbl 에 24px 로 다시 나온다'),
-    ('.seq-msg.self .seq-pill', 20,
-     'self 단계(from===to)의 이름표. .seq-cap 의 짝이고 근거도 같다. 부록 a02 에서 처음 쓰인다'),
-    ('.seq-legend, .seq-legend *', 15,
-     '채널 색 범례. "노란 파선이 프론트채널입니다"라고 발표자가 말한다'),
-    ('.dia-tag', 11,
-     '그림 왼쪽 위 꼬리표. 바로 옆 <h2> 가 같은 말을 44px 로 한다'),
-    ('.badge', 16,
-     '"실제 HMAC-SHA256 서명/검증" 같은 부가 표지. 내용이 아니라 표지다'),
-    ('.jwt-parts, .jwt-parts *', 15,
-     '토큰 세 토막의 이름표. 바로 위 .jwt-raw 의 세 가지 색이 같은 말을 한다'),
-    ('.seq-title', 18,
-     '시퀀스 제목 줄. 그 장의 <h2> 가 같은 말을 크게 한다'),
-    ('.seq-counter', 18,
-     '"3 / 16" 계기판. 청중이 아니라 발표자가 보는 숫자다'),
-    ('.step-n', 16,
-     '단계 번호. 바로 옆 .lbl 이 단계 이름을 24px 로 말한다'),
-    ('.seq-controls button', 18,
-     '◀ 이전 · 다음 ▶ 이송 버튼. 발표자의 손잡이다'),
-    ('svg, svg *', 12,
-     '그림 속 글자. viewBox 좌표를 화면 px 로 환산해서 잰다. 같은 말을 .dia-cap 이 26px 로 다시 싣는다'),
-]
+# 이 목록은 각 덱의 DECK:STAGE:CSS 「활자 하한」 주석 안 '예외 목록 시작/끝' 블록과
+# 한 글자씩 짝을 이룬다. 아래 test_the_font_floor_exemptions_match_their_css_comment
+# 가 대조한다.
+EXEMPT = {
+    'oauth2_slides.html': [
+        ('.seq-cap', 20,
+         '시퀀스 행 이름표. 지도의 범례이고, 같은 말이 바로 아래 .seq-detail 의 .lbl 에 24px 로 다시 나온다'),
+        ('.seq-msg.self .seq-pill', 20,
+         'self 단계(from===to)의 이름표. .seq-cap 의 짝이고 근거도 같다. 부록 a02 에서 처음 쓰인다'),
+        ('.seq-legend, .seq-legend *', 15,
+         '채널 색 범례. "노란 파선이 프론트채널입니다"라고 발표자가 말한다'),
+        ('.dia-tag', 11,
+         '그림 왼쪽 위 꼬리표. 바로 옆 <h2> 가 같은 말을 44px 로 한다'),
+        ('.badge', 16,
+         '"실제 HMAC-SHA256 서명/검증" 같은 부가 표지. 내용이 아니라 표지다'),
+        ('.jwt-parts, .jwt-parts *', 15,
+         '토큰 세 토막의 이름표. 바로 위 .jwt-raw 의 세 가지 색이 같은 말을 한다'),
+        ('.seq-title', 18,
+         '시퀀스 제목 줄. 그 장의 <h2> 가 같은 말을 크게 한다'),
+        ('.seq-counter', 18,
+         '"3 / 16" 계기판. 청중이 아니라 발표자가 보는 숫자다'),
+        ('.step-n', 16,
+         '단계 번호. 바로 옆 .lbl 이 단계 이름을 24px 로 말한다'),
+        ('.seq-controls button', 18,
+         '◀ 이전 · 다음 ▶ 이송 버튼. 발표자의 손잡이다'),
+        ('svg, svg *', 12,
+         '그림 속 글자. viewBox 좌표를 화면 px 로 환산해서 잰다. 같은 말을 .dia-cap 이 26px 로 다시 싣는다'),
+    ],
+    'defensive_programming_slides.html': [
+        ('svg, svg *', 12,
+         '그림 속 글자. viewBox 좌표를 화면 px 로 환산해서 잰다. 같은 말을 .dia-cap 이 26px 로 다시 싣는다'),
+    ],
+}
+# 덱마다 예외 줄 수. CSS 주석·노트의 "열한 줄" 같은 말과 같이 움직인다.
+EXEMPT_ROWS = {'oauth2_slides.html': 11, 'defensive_programming_slides.html': 1}
+
+
+def exempt_of(path):
+    return EXEMPT[os.path.basename(path)]
+
+
+def measure_spec(path):
+    return {'body': FONT_FLOOR, 'mono': FONT_FLOOR_MONO,
+            'exempt': [[sel, floor] for sel, floor, _ in exempt_of(path)]}
 
 # CSS 주석 쪽의 한 줄: "     [.seq-cap] 바닥 20px — 근거"
 EXEMPT_BLOCK = re.compile(
@@ -1020,14 +1056,8 @@ MEASURE_FONTS = """
 }
 """
 
-MEASURE_SPEC = {
-    'body': FONT_FLOOR,
-    'mono': FONT_FLOOR_MONO,
-    'exempt': [[sel, floor] for sel, floor, _ in EXEMPT],
-}
-
-
-def test_the_font_floor_exemptions_match_their_css_comment():
+@pytest.mark.parametrize('name', DECK_FILES)
+def test_the_font_floor_exemptions_match_their_css_comment(name):
     """예외 목록은 두 곳에 있고, 두 곳이 같아야 한다.
 
     덱의 CSS 주석은 다음 덱을 짓는 사람이 먼저 읽는 자리이고, 이 파일의 EXEMPT 는
@@ -1038,10 +1068,10 @@ def test_the_font_floor_exemptions_match_their_css_comment():
     그 약속을 사람의 성실함이 아니라 이 테스트가 지켜야 한다.
 
     브라우저가 필요 없는 검사라 chromium 이 없어도 돈다."""
-    with open(os.path.join(ROOT, 'oauth2_slides.html'), encoding='utf-8') as fh:
+    with open(os.path.join(ROOT, name), encoding='utf-8') as fh:
         html = fh.read()
     block = EXEMPT_BLOCK.search(html)
-    assert block, 'DECK:STAGE:CSS 에서 「예외 목록 시작/끝」 블록을 찾지 못했다'
+    assert block, '%s: DECK:STAGE:CSS 에서 「예외 목록 시작/끝」 블록을 찾지 못했다' % name
 
     parsed = []
     for line in block.group(1).splitlines():
@@ -1049,13 +1079,13 @@ def test_the_font_floor_exemptions_match_their_css_comment():
         if m:
             parsed.append((m.group(1), int(m.group(2)), m.group(3)))
 
-    assert parsed == EXEMPT, (
-        'CSS 주석의 예외 목록과 EXEMPT 가 다르다.\n'
+    assert parsed == EXEMPT[name], (
+        '%s: CSS 주석의 예외 목록과 EXEMPT 가 다르다.\n'
         'CSS  (%d줄): %s\nEXEMPT(%d줄): %s' % (
-            len(parsed), [p[:2] for p in parsed],
-            len(EXEMPT), [e[:2] for e in EXEMPT]))
-    assert len(EXEMPT) == 11, \
-        '예외가 %d줄이다 — CSS 주석·노트의 "열한 줄"도 같이 고쳐라' % len(EXEMPT)
+            name, len(parsed), [p[:2] for p in parsed],
+            len(EXEMPT[name]), [e[:2] for e in EXEMPT[name]]))
+    assert len(EXEMPT[name]) == EXEMPT_ROWS[name], \
+        '%s: 예외가 %d줄이다 — CSS 주석·노트의 줄 수도 같이 고쳐라' % (name, len(EXEMPT[name]))
 
 
 def warm_up(pg):
@@ -1073,7 +1103,7 @@ def warm_up(pg):
     pg.evaluate('fn => { window.__measure = eval(fn); }', MEASURE_FONTS)
 
 
-def test_every_exempted_selector_is_measured_against_a_real_floor(page):
+def test_every_exempted_selector_is_measured_against_a_real_floor(page, deck):
     """예외에도 바닥이 있다 — 건너뛰는 것이 아니라 낮춰서 잰다.
 
     한때 예외 셀렉터에 걸리면 측정 자체를 건너뛰었다. 그래서 .seq-cap(20px)·
@@ -1087,16 +1117,16 @@ def test_every_exempted_selector_is_measured_against_a_real_floor(page):
 
     CSS 를 주입해서 확인할 수는 없다. 크롬은 지금 서 있지 않은 장의 숨은 요소를
     다시 스타일링하지 않아서, 넣은 규칙이 그 장에는 닿지 않는다."""
-    page.goto(DECK)
+    page.goto('file://' + deck)
     warm_up(page)
     slack = []
-    for sel, floor, _ in EXEMPT:
+    for sel, floor, _ in exempt_of(deck):
         # 대상만 바닥을 1 올리고 나머지 예외는 0 으로 내린다. 그러면 보고되는 것은
         # 이 셀렉터가 잡은 요소뿐이다 — 본문·코드 하한은 덱이 이미 지키고 있다.
         spec = {
             'body': FONT_FLOOR, 'mono': FONT_FLOOR_MONO,
             'exempt': [[other, (floor + 1) if other == sel else 0]
-                       for other, _f, _r in EXEMPT],
+                       for other, _f, _r in exempt_of(deck)],
         }
         if not page.evaluate('spec => window.__measure(spec)', spec):
             slack.append('%s: 바닥 %dpx 인데 실제 크기가 그보다 커서 헐겁다 — '
@@ -1105,24 +1135,24 @@ def test_every_exempted_selector_is_measured_against_a_real_floor(page):
         '예외의 바닥이 실제 크기에 닿아 있지 않다:\n  %s' % '\n  '.join(slack)
 
 
-def test_every_visible_text_is_at_or_above_the_font_floor(page):
+def test_every_visible_text_is_at_or_above_the_font_floor(page, deck):
     """슬라이드 전체를 돌며 실제 computed font-size 를 재고 하한과 대조한다.
 
     특정 슬라이드를 가리키지 않는다 — 문서에 있는 .slide 를 전부 훑으므로 장이
     늘어도 그대로 돈다. 예외는 EXEMPT 에 적힌 것뿐이고, 목록에 없는 것이 하한
     아래로 내려가면 그 자리에서 실패한다."""
-    page.goto(DECK)
+    page.goto('file://' + deck)
     warm_up(page)
-    bad = page.evaluate(MEASURE_FONTS, MEASURE_SPEC)
+    bad = page.evaluate(MEASURE_FONTS, measure_spec(deck))
     assert bad == [], '하한 미만 %d개:\n  %s' % (len(bad), '\n  '.join(bad[:20]))
 
 
-def test_no_slide_overflows_the_720px_stage(page):
+def test_no_slide_overflows_the_720px_stage(page, deck):
     """어느 비트에서도 슬라이드 내용이 무대(0..720) 밖으로 나가지 않는다.
 
     스크롤 상자(.demo · .win-body · .seq-rows · .jwt-checks …) 안의 내용은 그 상자가
     가두므로 상자까지만 잰다. 넘치는 장은 줄일 것이 아니라 쪼갤 장이라는 신호다."""
-    page.goto(DECK)
+    page.goto('file://' + deck)
     n = page.evaluate('Deck.slides.length')
     page.evaluate("document.querySelectorAll('.slide .explain')"
                   ".forEach(e => e.classList.add('show'))")
@@ -1163,7 +1193,7 @@ def test_no_slide_overflows_the_720px_stage(page):
     assert over == [], '무대 밖으로 나간 장 %d건:\n  %s' % (len(over), '\n  '.join(over[:10]))
 
 
-def test_the_two_jwt_demos_stay_identical_apart_from_their_button_rows(page):
+def test_the_two_jwt_demos_stay_identical_apart_from_their_button_rows(page, pilot):
     """s44 와 s45 는 JWT 데모 마크업을 한 벌씩 따로 들고 있다.
 
     Task 6 이 중복 id(jwtRaw·jwtDecoded·jwtChecks)를 클래스로 바꾸면서 두 벌을
@@ -1177,7 +1207,7 @@ def test_the_two_jwt_demos_stay_identical_apart_from_their_button_rows(page):
       - 실행 중에 채워지는 세 곳(.jwt-raw · .jwt-decoded · .jwt-checks)의 내용
     나머지(구조·제목·이름표·배지)가 한 글자라도 벌어지면 실패한다.
     """
-    page.goto(DECK)
+    page.goto('file://' + pilot)
     skeleton = """
     (id) => {
       const src = document.getElementById(id);
@@ -1198,7 +1228,7 @@ def test_the_two_jwt_demos_stay_identical_apart_from_their_button_rows(page):
 
 # --- 검사기와 덱이 같은 초를 말한다 (M6 후속) ---------------------------------
 
-def test_the_deck_and_the_checker_agree_on_every_slide_time(page):
+def test_the_deck_and_the_checker_agree_on_every_slide_time(page, deck):
     """예순일곱 장 전부에서 두 구현이 같은 초를 내야 한다.
 
     한때 아니었다. 검사기가 `round(chars/SPEED, 1)` 로 한 번 접고 `_fmt` 가 다시
@@ -1215,15 +1245,15 @@ def test_the_deck_and_the_checker_agree_on_every_slide_time(page):
 
     개요 칸의 0:xx 도 같은 값을 쓰므로, 여기가 갈리면 화면과 검사기 출력이
     한 장에서 다른 숫자를 말한다."""
-    page.goto(DECK)
-    deck = cs.read_deck(os.path.join(ROOT, 'oauth2_slides.html'))
+    page.goto('file://' + deck)
+    deck_read = cs.read_deck(deck)
     mine = page.evaluate(
         'Deck.slides.map(s => [s.id, Deck.secOf(s.id), fmt(Deck.secOf(s.id))])')
-    assert len(mine) == len(deck.slides), '장 수가 다르다'
+    assert len(mine) == len(deck_read.slides), '장 수가 다르다'
 
     bad = []
     for sid, sec, shown in mine:
-        want = cs.seconds(deck.script[sid])
+        want = cs.seconds(deck_read.script[sid])
         if abs(sec - want) > 1e-9:
             bad.append('%s: 덱 %.4f초 ≠ 검사기 %.4f초' % (sid, sec, want))
         elif shown != cs._fmt(want):
@@ -1256,14 +1286,14 @@ def non_overflowing_notes_slide(pg):
     return i
 
 
-def test_a_notes_drawer_that_fits_does_not_eat_the_navigation_keys(page):
+def test_a_notes_drawer_that_fits_does_not_eat_the_navigation_keys(page, deck):
     """넘치지 않는 서랍은 굴릴 것이 없으므로 키를 가져가면 안 된다.
 
     열려 있다는 이유만으로 넘겨주면, 그 키는 창을 굴리지도 못하고 덱을 넘기지도
     못한 채 그냥 죽는다. 서랍이 넘치는 장은 예순일곱 중 열여섯뿐이라 나머지
     쉰한 장에서 네 키가 전부 무반응이었다. 그중 PageDown·PageUp 은 발표자용
     리모컨이 보내는 키이고, 서랍은 발표하는 내내 열어 두는 물건이다."""
-    page.goto(DECK)
+    page.goto('file://' + deck)
     i = non_overflowing_notes_slide(page)
     dead = []
     for key, delta in (('PageDown', 1), ('ArrowDown', 1), ('PageUp', -1), ('ArrowUp', -1)):
