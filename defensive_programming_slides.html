@@ -157,6 +157,13 @@ body{font-family:var(--sans);color:var(--text);-webkit-font-smoothing:antialiase
    ==== 예외 목록 끝 ====
    svg 줄의 근거는 파일럿 DECK:STAGE:CSS 의 「svg 줄의 근거를 따로 적는다」와 같다. */
 
+/* ---- 산문 build 슬라이드의 목록 (Task 2 fix) ----
+   코어 CSS 는 li 의 크기를 정하지 않는다. 골격의 s02 가 목록이라 여기서 하한을 준다. */
+.slide ul,.slide ol{margin:0;padding-left:1.1em}
+.slide li{font-size:26px;line-height:1.6;color:var(--text-dim);margin:0 0 12px}
+.slide li b{color:var(--text)}
+.slide .suspects li{font-size:26px}
+
 /* 이후 태스크가 이 아래에 무대 규칙을 더한다: Task 4 도해, Task 5 데모·퀴즈,
    Task 6 막 표지·전과 후·내일 할 것. */
 /* ==== /DECK:STAGE:CSS ==== */
