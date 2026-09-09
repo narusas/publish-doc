@@ -258,14 +258,12 @@ body{font-family:var(--sans);color:var(--text);-webkit-font-smoothing:antialiase
   border:1px solid var(--border-2);border-radius:99px;padding:6px 16px;
 }
 .slide.act .act-map span.on{color:#1a1005;background:var(--accent);border-color:transparent}
-/* 반경 이름표. 표지 셋(s05·s20·s39)에는 놓지 않는다 — 그 세 장의 <h2> 가 대장의 제목
-   그대로 "반경 N · 이름 — 한 문장" 을 통째로 들고 있어서, 이름표를 따로 두면 같은 말이
-   한 화면에 두 번 선다. 2·3·5막은 표지 없이 도해가 막을 여는데(s13·s17·s33) 그 장에는
-   반경 띠가 없으므로 이름표만 제목 위 여백에 얹는다. 흐름에 넣으면 넘친다 — 그 세 장은
-   도해가 세로를 다 써서 무대 아래쪽 666.9·675.6·675.6px 까지 차 있고 남는 자리가
-   26px 뿐이다(실측, 1280x720 좌표계). 그래서 흐름에서 빼고 절대 배치한다. */
-.slide .act-no{position:absolute;top:12px;left:40px;margin:0;
-  font-family:var(--mono);font-size:24px;color:var(--accent)}
+/* 반경 이름표(.act-no)는 두지 않는다. 어느 장이든 그 장의 <h2> 가 대장의 제목 그대로
+   "반경 N · 이름 — 한 문장" 을 통째로 들고 있어서, 이름표를 따로 세우면 같은 말이 한
+   화면에 두 번 선다. 표지 셋(s05·s20·s39)은 위의 반경 띠가 지금 어디인지 말하고,
+   표지 없이 도해가 막을 여는 2·3·5막(s13·s17·s33)은 제목이 그 일을 한다. 한때 그 세
+   장에만 이름표를 절대 배치로 얹어 두었는데(도해가 무대 아래쪽 666.9~675.6px 까지 차서
+   흐름에 넣을 자리가 없었다) 표지와 규칙이 갈라지므로 셋 다 걷어냈다. */
 /* 52px 로 두면 s05·s20 의 제목이 두 줄로 접히고 둘째 줄에 음절 하나만 남는다("…곳입니
    다"의 '다'). 제목은 대장이 정한 문구라 줄일 수 없으므로 활자를 한 치수 내린다 —
    50px 에서 표지 셋이 모두 한 줄이다(실측: 높이 62.5px = 1.25em 한 줄). */
@@ -911,7 +909,6 @@ body{font-family:var(--sans);color:var(--text);-webkit-font-smoothing:antialiase
     </dl>
   </section>
   <section class="slide" id="s13">
-    <p class="act-no">반경 2 · 한 함수</p>
     <h2>반경 2 · 한 함수 — 검증을 미룬 만큼 늘어나는 거리</h2>
     <!-- 출처: defensive_programming.html 1342-1416 (diaBoundary). dia-btn(재생 버튼)은 뺀다. -->
     <figure class="dia" id="diaBoundary">
@@ -1047,7 +1044,6 @@ if (section != null &amp;&amp; banners != null)
     </dl>
   </section>
   <section class="slide" id="s17">
-    <p class="act-no">반경 3 · 한 객체</p>
     <h2>반경 3 · 한 객체 — 무엇이든 담기는 모델이 치르는 대가</h2>
     <!-- 출처: defensive_programming.html 1595-1647 (diaShape). dia-btn(재생 버튼)은 뺀다. -->
     <figure class="dia" id="diaShape">
@@ -1365,7 +1361,6 @@ model.addAttribute("section", section);
     </dl>
   </section>
   <section class="slide" id="s33">
-    <p class="act-no">반경 5 · 프로세스 경계</p>
     <h2>반경 5 · 프로세스 경계 — 죽는 것보다 느린 것이 위험합니다</h2>
     <!-- 출처: defensive_programming.html 2372-2431 (diaPool). dia-btn(재생 버튼)은 뺀다. -->
     <figure class="dia" id="diaPool">
@@ -1605,7 +1600,7 @@ String body =
       <li class="build" data-beat="2">② 이 값이 오래된 것이어도 괜찮습니까. 몇 분까지 괜찮습니까</li>
       <li class="build" data-beat="3">④ 이 정보를 주는 쪽이 응답하지 않으면 얼마나 기다립니까. 기다린 뒤에는 무엇을 합니까</li>
       <li class="build" data-beat="4">⑥ <b>이 화면에서 어느 부분이 없어도 화면이 성립합니까. 어느 부분이 없으면 화면을 띄우면 안 됩니까</b></li>
-      <li class="build" data-beat="5"><b>이 질문 하나만 기획 단계에서 던졌어도 그날 장애는 없었습니다</b></li>
+      <li class="build" data-beat="5"><b>이 질문에 답이 정해져 있었다면 그날 화면은 그렇게 되지 않았습니다</b></li>
     </ul>
   </section>
   <section class="slide" id="s44">
