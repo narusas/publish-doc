@@ -667,7 +667,8 @@ body{font-family:var(--sans);color:var(--text);-webkit-font-smoothing:antialiase
   </section>
   <section class="slide" id="s01">
     <h2>지난 9월 7일, 메인페이지가 통째로 오류를 냈습니다</h2>
-    <!-- 출처: defensive_programming.html 696-707 (.trace). s51 과 같은 마크업.
+    <!-- 출처: defensive_programming.html 696-707 (.trace). 덱에서 이 트레이스를
+         띄우는 장은 여기 하나다 — s51 은 반경 지도와 같이 세우면 눌려서 뺐다.
          원본에서 두 곳을 줄였다. 이 판은 안쪽 폭이 1070px 이고 글자는 22px 등폭이라
          (.slide .trace 는 pre 를 20px 로 두지만 안쪽 code 에는 .slide code 의 22px 이
          걸린다) 한 줄에 80자까지만 들어간다. 그래서 (1) 긴 프레임 넷의 패키지 경로를
@@ -1721,20 +1722,10 @@ void 전시_섹션_응답이_2초를_넘으면_그_섹션만_숨고_나머지는
   </section>
   <section class="slide" id="s51">
     <h2>다시 그 스택트레이스로 — 반경마다 막은 것과 남긴 구멍</h2>
-    <!-- 출처: defensive_programming.html 696-707 (.trace). s01 과 같은 마크업.
-         줄인 자리와 80자 예산의 근거는 s01 의 주석에 적어 두었다. -->
-    <pre class="trace"><code>javax.el.PropertyNotFoundException:
-   Property [bannerImageList] not found on type [java.lang.String]
-   at javax.el.BeanELResolver$BeanProperties.get(BeanELResolver.java:253)
-   at javax.el.BeanELResolver.property(BeanELResolver.java:322)
-   at javax.el.BeanELResolver.getValue(BeanELResolver.java:93)
-   at org.apache.jasper.el.JasperELResolver.getValue(JasperELResolver.java:123)
-   at org.apache.el.parser.AstValue.getValue(AstValue.java:160)
-   at org.apache.el.ValueExpressionImpl.getValue(ValueExpressionImpl.java:149)
-   at org.apache…PageContextImpl.proprietaryEvaluate(PageContextImpl.java:655)
-   at …mainSections_jsp._jspx_meth_c_005fset_005f141(mainSections_jsp.java:9946)
-   at …mainSections_jsp._jspx_meth_c_005fif_005f43(mainSections_jsp.java:9832)
-   at …mainSections_jsp._jspService(mainSections_jsp.java:743)</code></pre>
+    <!-- 이 장에는 스택트레이스를 두지 않는다. 열두 줄과 반경 지도를 함께 세우면
+         720 안에서 트레이스가 26px 로 눌려 첫 줄의 위쪽 절반만 띠처럼 남았다(그림이
+         581px 을 가져간다). 제목과 대본이 첫 장을 되짚어 주고, 이 장의 그림은
+         반경 지도다. 트레이스 원본은 s01 에 있다. -->
     <!-- 출처: defensive_programming.html 3696-3711 (diaRadius). id 를 diaRadiusRecap 으로
          바꾸고 data-frames="6" 을 id 바로 뒤에 둔다. 안쪽 g#radiusBands 도
          radiusBandsRecap 으로 바꾼다. dia-btn(재생 버튼)은 뺀다. 이 장은 registerBeats
@@ -2574,7 +2565,7 @@ Prism.languages.insertBefore('jsp', 'tag', {
   "이 반경이 하는 일은 무엇을 보여 줄지 문서에 문장으로 남기는 것입니다. 여기가 종착지입니다."
  ],
  "s51": [
-  "여기가 종착지라면 종착지에서 출발점을 다시 봐야 합니다. 화면에 다시 띄운 것이 그날의 열 줄입니다. 반경 1 이 한 일은 그 값이 이상하다는 것을 그 자리에서 알리는 것이었고, 그렇다고 모든 곳에서 터뜨릴 수는 없었습니다.",
+  "여기가 종착지라면 종착지에서 출발점을 다시 봐야 합니다. 첫 장에서 본 그 열 줄이 그날 우리 손에 남은 전부였습니다. 반경 1 이 한 일은 그 값이 이상하다는 것을 그 자리에서 알리는 것이었고, 그렇다고 모든 곳에서 터뜨릴 수는 없었습니다.",
   "반경 2 는 문턱에서 한 번 검사해 안쪽을 믿을 수 있게 만듭니다. 그럼에도 검사를 통과한 뒤에 객체가 이상해질 수 있었습니다.",
   "반경 3 은 그런 상태를 애초에 가질 수 없게 만듭니다. 그럼에도 객체가 옳아도 조립이 틀릴 수 있었습니다.",
   "반경 4 는 실패를 섹션 경계에서 멈춰 세웁니다. 그럼에도 죽지 않고 느려지면 그 방어는 통하지 않았습니다.",
@@ -3136,7 +3127,11 @@ const RADIUS = [
 
 /* 출처: defensive_programming.html 4595-4624 (paintRadiusDia)
    반경 지도를 그림으로도 그린다. 문구는 손으로 적지 않고 위의 RADIUS 에서 가져온다.
-   여기 적어 두면 배열과 어긋날 수 있고, 그 어긋남은 눈에 띄지 않는 채로 남는다. */
+   여기 적어 두면 배열과 어긋날 수 있고, 그 어긋남은 눈에 띄지 않는 채로 남는다.
+   원본은 띠마다 장 번호(RADIUS 의 ch)를 두 번째 줄로 한 줄 더 그리는데, 덱은 그
+   줄을 그리지 않는다 — 그 번호가 가리키는 장이 덱에는 없어서, 무대에서는 "4장"이
+   무엇인지 알 길이 없는 글자가 된다. RADIUS 배열 자체는 손대지 않는다: 단계 캡션
+   문구가 나오는 유일한 자리이고, ch 는 원문을 찾아갈 때 쓰는 값이다. */
 function paintRadiusDia(root){
   if(!root) return;
   const CX = 360, CY = 150, HW = 52, HH = 22, DW = 52, DH = 20;
@@ -3148,7 +3143,6 @@ function paintRadiusDia(root){
     base.push(`<rect class="nd" x="${x}" y="${y}" width="${w}" height="${h}" rx="12"/>`);
     if(k > 0){
       base.push(`<text class="s" x="${x + 10}" y="${y + 16}">반경 ${k + 1} · ${RADIUS[k].n}</text>`);
-      base.push(`<text class="cap-l" x="${x + 10}" y="${y + 32}">${RADIUS[k].ch}장</text>`);
     } else {
       base.push(`<text class="s" x="${CX}" y="${CY + 4}" text-anchor="middle">반경 1 · ${RADIUS[0].n}</text>`);
     }
