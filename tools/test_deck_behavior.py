@@ -61,11 +61,6 @@ PILOT = os.path.join(ROOT, 'oauth2_slides.html')
 
 # 파일럿에만 있는 성질(자동재생 시퀀스 · JWT 데모 한 쌍)을 보는 테스트는 pilot 을 받고,
 # 두 덱이 다 지켜야 하는 엔진 계약은 deck 을 받아 두 번 돈다.
-# LATER: 둘째 덱에 아직 그 내용이 없어 pilot 에 묶어 둔 테스트. Task 8 이 deck 으로 바꾼다.
-#   - test_appendix_quiz_bank_shows_exactly_one_question_per_beat
-#   - test_arrow_keys_scroll_the_open_notes_drawer_instead_of_the_deck
-#   - test_open_notes_drawer_keeps_its_scroll_while_the_timer_runs
-#   - test_form_controls_keep_the_keys_they_use
 
 
 @pytest.fixture(params=DECK_FILES, ids=[f.split('_')[0] for f in DECK_FILES])
@@ -262,14 +257,14 @@ def settled_scroll_top(pg, sel):
     return last
 
 
-def test_arrow_keys_scroll_the_open_notes_drawer_instead_of_the_deck(page, pilot):
+def test_arrow_keys_scroll_the_open_notes_drawer_instead_of_the_deck(page, deck):
     """서랍이 열려 있으면 ↓·PageDown 은 대본을 굴린다. 슬라이드는 그대로다.
 
     서랍은 max-height:38% = 273px 이고, 대본이 그것을 넘치는 장이 예순일곱 중
     열여섯이다(s30 은 538px 이 필요하다). 굴릴 수 없는 서랍은 그 열여섯 장에서
     대본의 절반이 없는 것과 같다 — 그리고 읽으려고 누른 그 키가 덱을 두 장
     넘겨 버린다."""
-    page.goto('file://' + pilot)
+    page.goto('file://' + deck)
     i = overflowing_notes_slide(page)
     goto(page, i)
     page.keyboard.press('s')
@@ -286,13 +281,13 @@ def test_arrow_keys_scroll_the_open_notes_drawer_instead_of_the_deck(page, pilot
     assert state(page)['i'] == i, '서랍이 열려 있는데 ↑ 가 슬라이드를 되돌렸다'
 
 
-def test_open_notes_drawer_keeps_its_scroll_while_the_timer_runs(page, pilot):
+def test_open_notes_drawer_keeps_its_scroll_while_the_timer_runs(page, deck):
     """타이머가 도는 동안에도 읽던 자리를 지킨다.
 
     paint() 는 타이머가 켜져 있으면 0.5초마다 불린다. 그때마다 서랍의 innerHTML 을
     다시 넣으면 scrollTop 이 0 으로 돌아간다 — 발표자는 타이머를 켜 놓고 발표하므로
     굴릴 수 있게 만들어 놓고도 0.5초마다 맨 위로 튕긴다."""
-    page.goto('file://' + pilot)
+    page.goto('file://' + deck)
     i = overflowing_notes_slide(page)
     goto(page, i)
     page.keyboard.press('s')
@@ -736,14 +731,14 @@ def test_leaving_an_autoplaying_slide_backwards_never_shows_a_beat_that_lies(pag
     assert st['i'] == i - 1, '← 한 번으로 자동재생 장을 빠져나가지 못한다'
 
 
-def test_appendix_quiz_bank_shows_exactly_one_question_per_beat(page, pilot):
+def test_appendix_quiz_bank_shows_exactly_one_question_per_beat(page, deck):
     """퀴즈 은행은 한 비트에 문제 하나만 세운다.
 
     .build 로는 안 되는 일이다 — 쌓이는 공개라 마지막 비트에서 다섯 문제가 한꺼번에
     서고, 720px 을 넘길뿐더러 청중이 발표자보다 먼저 다음 문제를 읽는다. 그래서
     registerBeats 의 컨트롤러 자리에 갈아 끼우기를 넣었다. 이 테스트가 그것을 붙잡는다:
     숨김이 opacity 로 바뀌거나(자리를 계속 먹는다) 누적 공개로 돌아가면 실패한다."""
-    page.goto('file://' + pilot)
+    page.goto('file://' + deck)
     banks = [i for i in appendix_indexes(page)
              if page.evaluate('i => Deck.slides[i].querySelectorAll(".quiz").length > 1', i)]
     if not banks:
@@ -844,12 +839,12 @@ def test_the_position_bar_and_the_counter_read_the_same_coordinate_system(page, 
         == pytest.approx(100, abs=0.5)
 
 
-def test_form_controls_keep_the_keys_they_use(page, pilot):
+def test_form_controls_keep_the_keys_they_use(page, deck):
     """<select> 에 포커스가 있을 때 ↓ 는 값을 바꾸지, 슬라이드를 넘기지 않는다.
 
     동시에 덱의 손잡이는 살아 있어야 한다. tagName 만 보고 통째로 return 하면
     select 를 한 번 클릭한 뒤로 O·P·A·Escape 가 전부 죽는다 — 원래 버그보다 나쁘다."""
-    page.goto('file://' + pilot)
+    page.goto('file://' + deck)
     sel = page.evaluate('Deck.slides.findIndex(s => s.querySelector("select"))')
     if sel < 0:
         pytest.fail(MUST_EXIST % '<select> 가 있는 슬라이드')
@@ -876,8 +871,18 @@ def test_form_controls_keep_the_keys_they_use(page, pilot):
     assert on(page, '#overview') is True, 'select 에 포커스가 있으면 O 가 죽는다'
     page.keyboard.press('Escape')
     assert on(page, '#overview') is False, 'select 에 포커스가 있으면 Escape 가 죽는다'
+    # → 는 이 장에 남은 비트를 먼저 쓰고 그다음에 다음 장으로 간다. 파일럿에서
+    # <select> 가 처음 나오는 장은 비트가 하나뿐이라 한 번 눌러 넘어갔지만, 둘째 덱의
+    # 그 장은 조립 시뮬레이터라 비트가 둘이다. 재려는 것은 '한 번에 넘어가는가'가
+    # 아니라 '포커스가 select 에 남아 있어도 → 가 살아 있는가'이므로, 먼저 한 번
+    # 눌러 자리가 앞으로 갔는지 보고, 남은 비트를 다 쓴 뒤 장이 넘어가는지 본다.
+    n = page.evaluate('i => beatCount(Deck.slides[i])', sel)
     page.keyboard.press('ArrowRight')
-    assert state(page)['i'] == sel + 1, 'select 에 포커스가 있으면 → 가 죽는다'
+    assert at(page) > (sel, 0), 'select 에 포커스가 있으면 → 가 죽는다'
+    for _ in range(n - 1):
+        page.keyboard.press('ArrowRight')
+    assert state(page)['i'] == sel + 1, \
+        'select 에 포커스가 있으면 → 가 비트를 다 쓰고도 다음 장으로 가지 못한다'
 
 
 def test_overview_marks_appendix_cells_apart(page, deck):

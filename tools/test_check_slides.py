@@ -12,7 +12,7 @@ ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 DECK_FILES = ['oauth2_slides.html', 'defensive_programming_slides.html']
 # 검사기 전부를 통과해야 하는 덱. 둘째는 대본이 다 찬 뒤(Task 8)에 들어온다.
-SHIPPED = ['oauth2_slides.html']
+SHIPPED = ['oauth2_slides.html', 'defensive_programming_slides.html']
 
 
 @pytest.fixture(params=DECK_FILES, ids=[f.split('_')[0] for f in DECK_FILES])
