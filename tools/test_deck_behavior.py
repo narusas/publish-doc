@@ -878,7 +878,11 @@ def test_form_controls_keep_the_keys_they_use(page, deck):
     # 눌러 자리가 앞으로 갔는지 보고, 남은 비트를 다 쓴 뒤 장이 넘어가는지 본다.
     n = page.evaluate('i => beatCount(Deck.slides[i])', sel)
     page.keyboard.press('ArrowRight')
-    assert at(page) > (sel, 0), 'select 에 포커스가 있으면 → 가 죽는다'
+    # 한 번 누르면 자리는 정확히 한 칸 간다. 비트가 남아 있으면 다음 비트로, 남은
+    # 비트가 없으면 다음 장의 첫 비트로. > 로만 재면 남은 비트를 통째로 건너뛰고
+    # 다음 장으로 가 버리는 → 도 통과한다.
+    assert at(page) == ((sel, 1) if n > 1 else (sel + 1, 0)), \
+        'select 에 포커스가 있으면 → 가 죽는다'
     for _ in range(n - 1):
         page.keyboard.press('ArrowRight')
     assert state(page)['i'] == sel + 1, \
@@ -1156,7 +1160,13 @@ def test_no_slide_overflows_the_720px_stage(page, deck):
     """어느 비트에서도 슬라이드 내용이 무대(0..720) 밖으로 나가지 않는다.
 
     스크롤 상자(.demo · .win-body · .seq-rows · .jwt-checks …) 안의 내용은 그 상자가
-    가두므로 상자까지만 잰다. 넘치는 장은 줄일 것이 아니라 쪼갤 장이라는 신호다."""
+    가두므로 상자까지만 잰다. 넘치는 장은 줄일 것이 아니라 쪼갤 장이라는 신호다.
+
+    가로도 같은 고리에서 본다. 코드 판(pre)은 줄을 접지 않으므로(white-space:pre)
+    한 줄이 길면 그대로 판 밖으로 밀려 나간다. 세로와 달리 이쪽은 스크롤 상자라고
+    봐주지 않는다 — 발표 화면에는 스크롤바를 미는 손이 없고, 잘린 줄은 잘렸다는
+    표시도 없이 그냥 없는 줄이 된다. 스택트레이스 꼬리 세 프레임과 전과 후 판의 두
+    줄이 그렇게 잘린 채로 최종 리뷰까지 갔다. 여기가 그 자리다."""
     page.goto('file://' + deck)
     n = page.evaluate('Deck.slides.length')
     page.evaluate("document.querySelectorAll('.slide .explain')"
@@ -1183,7 +1193,14 @@ def test_no_slide_overflows_the_720px_stage(page, deck):
         top = Math.min(top, (r.top - st.top) / k);
         bottom = Math.max(bottom, (r.bottom - st.top) / k);
       });
-      return [slide.id, top, bottom];
+      const wide = [];
+      slide.querySelectorAll('pre').forEach(el => {
+        if (el.scrollWidth > el.clientWidth + 1) {
+          const first = (el.textContent || '').split('\\n').find(x => x.trim()) || '';
+          wide.push(first.trim().slice(0, 60));
+        }
+      });
+      return [slide.id, top, bottom, wide];
     }
     """
     over = []
@@ -1192,9 +1209,11 @@ def test_no_slide_overflows_the_720px_stage(page, deck):
         beats = page.evaluate('i => beatCount(Deck.slides[i])', i)
         for b in range(beats):
             page.evaluate('b => { Deck.beat = b; applyBeat(Deck.slides[Deck.index], b); }', b)
-            sid, top, bottom = page.evaluate(box_js)
+            sid, top, bottom, wide = page.evaluate(box_js)
             if top < 0 or bottom > 720:
                 over.append('%s 비트%d: top=%.1f bottom=%.1f' % (sid, b, top, bottom))
+            for first in wide:
+                over.append('%s 비트%d: pre 가 가로로 넘친다 — %s' % (sid, b, first))
     assert over == [], '무대 밖으로 나간 장 %d건:\n  %s' % (len(over), '\n  '.join(over[:10]))
 
 
