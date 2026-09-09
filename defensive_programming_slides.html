@@ -430,7 +430,6 @@ body{font-family:var(--sans);color:var(--text);-webkit-font-smoothing:antialiase
 }
 .tog:hover{border-color:var(--accent); color:#fff; transform:none}
 .tog.on{background:rgba(52,211,153,.14); border-color:var(--ok); color:#86efac}
-.cl-togs{display:flex; flex-direction:column; gap:7px; margin:10px 0 4px}
 
 /* 남은 조사 목록. 로그 취조실이 처음 쓴다 */
 .todo{margin:10px 0 0; padding-left:20px; color:var(--text-mut); font-size:14.5px; line-height:1.9}
@@ -519,8 +518,6 @@ body{font-family:var(--sans);color:var(--text);-webkit-font-smoothing:antialiase
 }
 .dia-dot:hover{transform:none; border-color:var(--accent)}
 .dia-dot.on{background:var(--accent); border-color:var(--accent)}
-/* 멈춰 있는 동안에는 지금 단계가 어디인지가 더 중요해진다 */
-.dia.paused .dia-dot.on{background:var(--warn); border-color:var(--warn)}
 .dia svg{display:block; width:100%; height:auto; margin:2px 0 0}
 
 /* 단계 설명. figcaption 과 갈라 둔다. figcaption 은 그림이 주장하는 것 한 줄이라
