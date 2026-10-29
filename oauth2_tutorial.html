@@ -174,6 +174,46 @@ pre b{color:var(--auth);font-weight:700}
 @keyframes fadeIn{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
 
 /* ===== Sequence player ===== */
+/* ===== 사용자 대행 실험실 (시나리오 · 각자 가진 것) ===== */
+.wl{background:#070d18;border:1px solid var(--border-2);border-radius:13px;margin:18px 0;box-shadow:var(--shadow);overflow:hidden;outline:none}
+.wl:focus-visible{box-shadow:0 0 0 2px var(--user),var(--shadow)}
+.wl-top{display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:space-between;padding:12px 14px;border-bottom:1px solid var(--border)}
+.wl-title{font-family:var(--mono);font-size:12px;color:var(--text-dim);letter-spacing:.5px}
+.wl-tabs{display:flex;flex-wrap:wrap;gap:6px}
+.wl-dia{max-height:400px;overflow:auto;border-bottom:1px solid var(--border)}
+.wl-dia-in{min-width:640px}
+.wl-head{position:sticky;top:0;z-index:2;background:#070d18;border-bottom:1px solid var(--border)}
+.wl svg{display:block;width:100%;height:auto}
+.wl svg text{font-family:var(--sans)}
+.wl .row{cursor:pointer;transition:opacity .2s}
+.wl .row .hit{fill:transparent}
+.wl .row:hover .hit{fill:rgba(255,255,255,.04)}
+.wl .row.cur .hit{fill:rgba(56,189,248,.12)}
+.wl .row.future{opacity:.22}
+.wl-ctl{display:flex;flex-wrap:wrap;gap:8px 12px;align-items:center;padding:10px 14px;border-bottom:1px solid var(--border)}
+.wl-bar{flex:1;min-width:140px;display:flex;gap:2px;height:12px}
+.wl-bar span{flex:1;border-radius:2px;opacity:.28;cursor:pointer}
+.wl-bar span.done{opacity:.8}
+.wl-bar span.cur{opacity:1;outline:2px solid #fff;outline-offset:1px}
+.wl-count{font-family:var(--mono);font-size:12px;color:var(--text-mut);min-width:52px}
+.wl-body{display:grid;grid-template-columns:minmax(0,1.25fr) minmax(0,1fr);gap:16px;padding:14px}
+@media (max-width:860px){.wl-body{grid-template-columns:1fr}}
+.wl-phase{display:inline-block;font-size:11.5px;font-weight:700;color:#0a0f1a;padding:1px 9px;border-radius:10px}
+.wl-step{font-size:15.5px;font-weight:700;color:#fff;margin:8px 0 2px;line-height:1.45}
+.wl-net{font-size:12px;color:var(--text-mut);margin-bottom:8px}
+.wl-desc p{margin:0 0 8px;font-size:14px;color:var(--text-dim);line-height:1.65}
+.wl-http{font-size:11.5px;white-space:pre-wrap;word-break:break-all;margin:6px 0 0}
+.wl-http:empty{display:none}
+.wl-wal h5{margin:0 0 8px;font-size:12px;color:var(--text-mut);font-weight:600}
+.wl-wgrid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.wl-w{border:1px solid var(--border);border-radius:9px;padding:7px 9px;font-size:12px;background:var(--panel);line-height:1.5}
+.wl-w.on{border-color:var(--user);background:var(--panel-2)}
+.wl-w b{display:block;font-size:12px;color:#fff;margin-bottom:3px}
+.wl-w ul{margin:0;padding-left:15px}
+.wl-w li{margin:1px 0;color:var(--text-dim)}
+.wl-w li.new{background:rgba(251,191,36,.2);color:#fff;border-radius:3px}
+.wl-w li.gone{text-decoration:line-through;color:var(--text-mut)}
+.wl-w li.none{list-style:none;margin-left:-15px;color:var(--text-mut)}
 .seq{background:#070d18;border:1px solid var(--border-2);border-radius:13px;padding:16px;margin:18px 0;box-shadow:var(--shadow)}
 .seq-head{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;margin-bottom:12px}
 .seq-title{font-family:var(--mono);font-size:12px;color:var(--text-dim);letter-spacing:.5px}
@@ -1764,7 +1804,7 @@ grant_type=authorization_code
       <tr><td>백엔드가 자기 권한으로 호출</td><td>Client Credentials / workload identity</td><td>주체는 <code>service:billing</code>이지 <code>user:kim</code>이 아님</td></tr>
       <tr><td>CI/CD 자동화</td><td>짧은 수명 service token / app installation token</td><td>저장소·환경 단위 scope + 감사 로그</td></tr>
       <tr><td>로컬 개발 스크립트</td><td>fine-grained PAT (제한적 허용)</td><td>만료·최소 scope·이름·보관 위치 강제</td></tr>
-      <tr><td>서비스가 사용자 대행</td><td>명시적 delegation / on-behalf-of 설계</td><td>몰래 사용자처럼 쓰면 감사 모델 붕괴</td></tr>
+      <tr><td>서비스가 사용자 대행 (A → app 1 → app 2)</td><td>Token Exchange(RFC 8693) / Entra OBO — <a href="#obo">다음 장</a></td><td>서비스 토큰 + 사용자 ID 헤더는 신원 증거가 없음</td></tr>
     </table>
 
     <div class="quiz" data-qid="q-m2m" data-answer="c">
@@ -1777,9 +1817,138 @@ grant_type=authorization_code
     </div>
   </section>
 
+  <!-- ===================== 15b. ON-BEHALF-OF ===================== -->
+  <section id="obo" data-title="사용자 대행 (앱→앱)">
+    <div class="kicker"><b>10 · 심화</b> 사람은 있는데, 호출하는 건 서비스일 때</div>
+    <h2>사용자 A의 권한으로 app 1이 app 2를 부른다</h2>
+    <p class="lead">사내 SSO로 로그인한 A가 포털(app 1)에서 "내 결재함"을 엽니다. 결재 목록은 포털이 아니라 결재 서비스(app 2)에 있으니, 포털 서버가 결재 서비스를 호출해야 합니다. 이때 결재 서비스가 알아야 하는 것은 "포털이 불렀다"가 아니라 <strong>"A가 볼 수 있는 결재만 돌려줘야 한다"</strong>입니다. 앞 장의 client credentials로는 이 질문에 답할 수 없습니다. 그 토큰의 주체는 <code>service:portal</code>이고, 거기엔 A가 없습니다.</p>
+
+<pre>👤 A ──SSO 로그인──▶ 🖥️ app 1 (포털) ──── ? ────▶ 📦 app 2 (결재 API)
+                     A의 access_token          A의 권한으로 판단해야 한다
+                     (aud = portal)</pre>
+
+    <h3>🔀 현장에서 쓰이는 네 가지 방법</h3>
+    <div class="grid2">
+      <div class="token-card">
+        <h4>① Token Exchange <span class="badge ok">표준 · RFC 8693</span></h4>
+        <p>포털이 A의 토큰을 인증 서버에 내고, <span class="term" data-t="tokenexchange">결재 API용 새 토큰으로 바꿔</span> 받습니다.</p>
+        <ul style="font-size:13px;margin:6px 0">
+          <li>새 토큰: <code>sub=user-a</code>, <code>aud=approval-api</code>, <code>act.sub=portal</code>, scope 축소</li>
+          <li>"포털이 결재 API용으로 교환해도 되는가"를 인증 서버가 정책으로 결정</li>
+          <li>A의 원래 토큰은 포털 밖으로 나가지 않습니다. A가 다시 나설 필요도 없습니다.</li>
+        </ul>
+      </div>
+      <div class="token-card">
+        <h4>② app 2용 토큰을 따로 받기 <span class="badge ok">사용자가 있을 때</span></h4>
+        <p>포털이 A를 SSO authorize로 한 번 더 보내 결재 API용 토큰을 받습니다. A는 SSO 세션이 있어 다시 로그인하지 않고, 처음 한 번 동의만 합니다.</p>
+        <ul style="font-size:13px;margin:6px 0">
+          <li>표준 Authorization Code만으로 됩니다. SSO가 교환을 지원하지 않아도 됩니다.</li>
+          <li>처음 받을 때 A의 브라우저가 있어야 합니다. 이후는 refresh_token으로 갱신합니다.</li>
+          <li>AI 어시스턴트의 MCP 커넥터가 이 방식입니다.</li>
+        </ul>
+      </div>
+      <div class="token-card">
+        <h4>③ 받은 토큰을 그대로 전달 <span class="badge warn">조건부</span></h4>
+        <p>포털이 A의 access_token을 <code>Authorization</code> 헤더 그대로 결재 API에 넘깁니다(token relay).</p>
+        <ul style="font-size:13px;margin:6px 0">
+          <li>토큰의 <code>aud</code>에 결재 API가 들어 있어야 성립합니다. <code>aud=portal</code>인 토큰을 결재 API가 받아 준다면, 결재 API가 aud 검증을 안 하고 있다는 뜻입니다.</li>
+          <li>결재 API 로그에는 포털을 거쳤다는 흔적이 없습니다.</li>
+          <li>여러 서비스에 통하도록 aud·scope를 넓히게 되고, 어디서 새든 전부에 쓰입니다.</li>
+        </ul>
+        <p style="margin:0;font-size:13px">쓸 곳: 게이트웨이 뒤 같은 신뢰 경계 안 (예: Spring Cloud Gateway의 TokenRelay 필터)</p>
+      </div>
+      <div class="token-card">
+        <h4>④ 서비스 토큰 + 사용자 ID 헤더 <span class="badge bad">피할 것</span></h4>
+        <p>포털이 자기 client credentials 토큰으로 호출하면서 <code>X-User-Id: user-a</code>를 붙이고, 결재 API는 그 헤더를 믿고 A의 권한을 적용합니다.</p>
+        <ul style="font-size:13px;margin:6px 0">
+          <li>A가 실제로 요청했다는 증거가 없습니다. 증거는 포털의 주장뿐입니다.</li>
+          <li>포털의 secret이 새거나 포털에 버그가 있으면 <strong>아무 사용자로나</strong> 행동할 수 있습니다.</li>
+          <li>감사 로그에는 "A가 했다"로 남습니다.</li>
+        </ul>
+      </div>
+    </div>
+
+    <h3>▶ 시나리오를 바꿔 가며 따라가기</h3>
+    <p>앞 8단계(로그인과 "내 결재함" 클릭)는 네 시나리오가 같고, 9단계부터 갈립니다. 탭을 바꾸면 갈리는 첫 단계로 바로 갑니다. 아래 <strong>"이 시점에 각자 가진 것"</strong>을 같이 보세요. 새로 생긴 것은 노랗게, 다 쓴 것은 줄을 그어 표시합니다. 토큰이 어디에 생기고 어디로 가는지, 그리고 SSO 세션 쿠키가 <em>끝까지 A의 브라우저에만 있다</em>는 점이 결과를 가릅니다. 시나리오 ④는 ①~④ 방법이 아니라, 서버 간 호출을 브라우저용 보호 뒤에 두면 어떻게 되는지 보여 주는 대조군입니다.</p>
+    <div id="oboLab"></div>
+    <p style="font-size:13px;color:var(--text-mut)">단계 줄을 눌러 바로 이동할 수 있고, 상자를 한 번 누른 뒤에는 ← → 키로도 움직입니다.</p>
+
+    <div class="callout warn">
+      <h4><span class="ic">🍪</span> "A가 SSO로 로그인해 있다"는 서버로 따라가지 않는다</h4>
+      <p style="margin:0">SSO 세션은 A의 브라우저와 SSO 사이의 쿠키입니다. 포털 서버가 결재 API를 부를 때 이 쿠키는 따라가지 않고, 결재 API가 SSO 로그인으로 리다이렉트해도 서버는 그 화면을 통과할 수 없습니다(시나리오 ④). 서버 간 호출에서는 사용자의 로그인 사실을 <strong>토큰으로 옮겨야</strong> 하고, 그 방법이 ①과 ②입니다. 서비스가 부르는 API는 리다이렉트 대신 Bearer 토큰 검증으로 보호하고, 실패하면 401을 돌려줍니다.</p>
+    </div>
+
+    <h3>🔬 교환 전후 토큰 비교</h3>
+    <div class="grid2">
+      <div class="card">
+        <h4>교환 전 — 포털이 받은 토큰</h4>
+<pre style="font-size:12px">{
+  "iss": "https://sso.example.com",
+  "sub": "user-a",
+  "aud": "portal",
+  "scope": "openid profile portal",
+  "exp": 1793178000
+}</pre>
+      </div>
+      <div class="card">
+        <h4>교환 후 — 결재 API가 받는 토큰</h4>
+<pre style="font-size:12px">{
+  "iss": "https://sso.example.com",
+  "sub": "user-a",
+  "aud": "approval-api",
+  "scope": "approval:read",
+  "act": { "sub": "portal" },
+  "exp": 1793174700
+}</pre>
+      </div>
+    </div>
+    <p>바뀐 것은 <code>aud</code>(대상), <code>scope</code>(좁아짐), <code>exp</code>(짧아짐), 그리고 새로 생긴 <code>act</code>입니다. 바뀌지 않은 것은 <code>sub</code>입니다. 결재 API는 <code>sub</code>로 <em>누구의 권한인지</em>를, <code>act</code>로 <em>누가 대신 왔는지</em>를 판단합니다. 둘 다 인증 서버가 서명한 값이라, 헤더로 받은 사용자 ID와 달리 포털이 꾸며낼 수 없습니다.</p>
+
+    <h3>🎭 위임(delegation)과 가장(impersonation)</h3>
+    <div class="grid2">
+      <div class="callout ok">
+        <h4><span class="ic">🤝</span> delegation — <code>act</code>가 있다</h4>
+        <p style="margin:0">"A의 권한이고, 지금 호출하는 건 portal"을 토큰이 둘 다 말합니다. 결재 API는 호출자별로 허용 여부를 정할 수 있고, 로그에 <code>user-a via portal</code>로 남습니다. 서비스 간 호출의 기본값은 이쪽입니다.</p>
+      </div>
+      <div class="callout warn">
+        <h4><span class="ic">🎭</span> impersonation — <code>act</code>가 없다</h4>
+        <p style="margin:0"><code>sub=user-a</code>만 있어서, 결재 API 입장에서는 A가 직접 온 것과 구별되지 않습니다. RFC 8693이 허용하는 형태지만, 장애 추적과 감사에서 중간 서비스가 사라집니다.</p>
+      </div>
+    </div>
+    <p>결재 API가 다시 알림 서비스(app 3)를 A의 권한으로 부르면, 같은 방식으로 한 번 더 교환하고 <code>act</code>가 중첩됩니다: <code>"act": { "sub": "approval-api", "act": { "sub": "portal" } }</code>. 가장 바깥의 <code>act</code>가 지금의 호출자이고, 안쪽은 지나온 경로입니다. RFC 8693은 안쪽(이전 호출자)을 접근 결정에 쓰지 말고 기록용으로만 보라고 합니다.</p>
+
+    <h3>✅ app 2(결재 API)가 확인할 것</h3>
+    <ul>
+      <li><code>iss</code>·서명·<code>exp</code> — 다른 access_token과 같습니다.</li>
+      <li><code>aud</code>가 나(<code>approval-api</code>)인가. 아니면 거부합니다. ③번 방식(aud=portal 토큰 그대로 전달)이 통한다면 이 검사가 빠져 있는 것입니다.</li>
+      <li><code>scope</code>에 이 API가 요구하는 권한이 있는가.</li>
+      <li><code>act.sub</code>가 나를 사용자 대행으로 부를 수 있는 서비스인가 (허용 목록).</li>
+      <li>데이터는 <code>sub</code>의 권한으로 조회합니다. 서비스 권한으로 전부 꺼낸 뒤 코드에서 거르면, 거르는 코드의 버그가 곧 유출입니다.</li>
+      <li>감사 로그에 <code>sub</code>와 <code>act</code>를 함께 남깁니다.</li>
+    </ul>
+
+    <div class="callout warn">
+      <h4><span class="ic">🏷️</span> 제품마다 이름과 요청 모양이 다르다</h4>
+      <ul style="margin:0">
+        <li><strong>Microsoft Entra ID</strong>: "On-Behalf-Of(OBO) flow". RFC 8693 형식이 아니라 <code>grant_type=urn:ietf:params:oauth:grant-type:jwt-bearer</code>, <code>assertion=&lt;받은 토큰&gt;</code>, <code>requested_token_use=on_behalf_of</code>로 요청합니다. 받은 토큰을 내고 다음 API용 토큰을 받는 구조는 같습니다.</li>
+        <li><strong>Keycloak · Okta 등</strong>: RFC 8693 token exchange를 지원합니다. 기본으로 꺼져 있는 경우가 많고, 어느 클라이언트가 어느 audience로 교환할 수 있는지 정책을 따로 설정합니다.</li>
+        <li><strong>인증 서버가 교환을 지원하지 않으면</strong>: ②(app 2용 토큰을 따로 받기)를 씁니다. 그것도 어렵다면 ③을 aud 검증과 함께 같은 신뢰 경계 안에서만 쓰고, ④로 넘어가지 않습니다.</li>
+      </ul>
+    </div>
+
+    <div class="quiz" data-qid="q-obo" data-answer="b">
+      <div class="q-head">⚡ Quick Check</div>
+      <div class="q">포털(app 1)이 SSO 사용자 A의 요청을 받아 결재 API(app 2)를 호출합니다. 결재 API는 A가 볼 수 있는 결재만 돌려줘야 합니다. 가장 적절한 설계는?</div>
+      <button class="opt" data-opt="a">A. 포털의 client credentials 토큰으로 호출하고 <code>X-User-Id: user-a</code> 헤더를 붙인다</button>
+      <button class="opt" data-opt="b">B. 포털이 A의 토큰을 인증 서버에서 <code>aud=approval-api</code>인 토큰으로 교환(token exchange)해 그 토큰으로 호출한다</button>
+      <button class="opt" data-opt="c">C. A의 id_token을 결재 API에 넘긴다</button>
+      <div class="explain">정답은 <strong>B</strong>. 교환된 토큰은 <code>sub=user-a</code>, <code>aud=approval-api</code>, <code>act.sub=portal</code>을 서명된 값으로 담고 있어, 결재 API가 "누구의 권한인지"와 "누가 대신 왔는지"를 직접 확인합니다. A는 사용자 신원의 증거가 포털의 주장뿐이라 포털이 뚫리면 아무 사용자로나 행동할 수 있고, C는 id_token을 API에 쓰는 오용입니다(그 id_token의 aud는 포털입니다).</div>
+    </div>
+  </section>
+
   <!-- ===================== 16. MISTAKES ===================== -->
   <section id="mistakes" data-title="흔한 실수 & 보안">
-    <div class="kicker"><b>10 · 정리</b> 사고는 늘 같은 곳에서</div>
+    <div class="kicker"><b>11 · 정리</b> 사고는 늘 같은 곳에서</div>
     <h2>주니어가 자주 밟는 지뢰 & 보안 체크리스트</h2>
     <p class="lead">"작동한다"와 "안전하다"는 다릅니다. 토큰이 나온다고 끝이 아니에요. 아래는 실무에서 반복되는 실수들입니다.</p>
 
@@ -1794,6 +1963,7 @@ grant_type=authorization_code
           <li><strong>토큰을 URL·로그에 노출</strong> → 헤더로만</li>
           <li><strong>과도한 scope 요청</strong> → 최소 권한 원칙</li>
           <li><strong>secret/PAT를 코드에 커밋</strong> → secret manager로</li>
+          <li><strong>사용자 대행을 X-User-Id 헤더로</strong> → token exchange로</li>
         </ul>
       </div>
       <div class="card">
@@ -1875,7 +2045,7 @@ grant_type=authorization_code
 
   <!-- ===================== 17. REVIEW ===================== -->
   <section id="review" data-title="복습 & 최종 퀴즈">
-    <div class="kicker"><b>11 · 마무리</b> 한 번에 복습</div>
+    <div class="kicker"><b>12 · 마무리</b> 한 번에 복습</div>
     <h2>요청과 실패 케이스를 눌러서 복습하기</h2>
     <p class="lead">아래 콘솔은 실제 네트워크를 호출하지 않는 시뮬레이터입니다. 핵심 흐름과 대표적 실패 케이스를 빠르게 되짚어 보세요.</p>
 
@@ -1887,6 +2057,7 @@ grant_type=authorization_code
           <button class="console-cmd" data-cmd="exchange-code">token exchange</button>
           <button class="console-cmd" data-cmd="call-api">call API</button>
           <button class="console-cmd" data-cmd="client-credentials">client credentials</button>
+          <button class="console-cmd" data-cmd="token-exchange-obo">사용자 대행 교환</button>
           <button class="console-cmd" data-cmd="pat-risk">PAT 위험</button>
           <button class="console-cmd" data-cmd="bad-state">state 불일치</button>
           <button class="console-cmd" data-cmd="oidc-verify">id_token 검증</button>
@@ -1914,6 +2085,7 @@ grant_type=authorization_code
         <li>id_token은 <strong>서명까지 검증</strong>해야 신뢰</li>
         <li>secret 못 숨기는 앱(SPA/모바일)은 PKCE 필수, secret 없음</li>
         <li>사람 없는 호출 = client credentials / workload identity. PAT는 신중히</li>
+        <li>사용자 권한으로 앱→앱 = <strong>token exchange</strong>(sub=사용자, act=호출 서비스). 사용자 ID 헤더로 대신하지 말 것</li>
       </ul>
     </div>
   </section>
@@ -1937,6 +2109,7 @@ const GLOSSARY={
   PKCE:'Proof Key for Code Exchange. code_verifier(비밀)와 그 해시 code_challenge로 코드 탈취를 무력화하는 확장.',
   jwks:'JSON Web Key Set. 인증 서버가 공개하는 "공개키 묶음". 클라이언트는 이걸로 id_token 서명을 검증합니다.',
   PAT:'Personal Access Token. 사람 계정 권한을 API 토큰처럼 쓰는 제품별 기능. OAuth2 표준 grant가 아닙니다.',
+  tokenexchange:'Token Exchange (RFC 8693). 받은 토큰(subject_token)을 인증 서버에 내고 다른 대상(audience)용 토큰으로 바꿔 받는 grant. 사용자 권한을 유지한 채 서비스 간 호출에 씁니다.',
   workload:'사람이 아닌 워크로드(서비스/머신)에 부여되는 신원. AWS IAM Role, GCP SA, K8s SA, SPIFFE 등.',
   storage:'토큰 저장 위치. localStorage는 XSS에 약하고, HttpOnly 쿠키는 CSRF 대비가 필요. BFF 패턴이 권장됩니다.'
 };
@@ -2138,7 +2311,7 @@ function renderTokenChoice(){
     backend:['Client Credentials 또는 workload identity','서비스가 자기 자신(service:billing-worker)으로 호출. 사용자 동의/id_token 없음.'],
     ci:['짧은 수명 service token / app installation token','저장소·환경 단위 scope, 만료, 감사 로그가 핵심.'],
     local:['fine-grained PAT (제한적 허용)','개인 계정 권한이므로 최소 scope·만료일·이름·보관 위치를 강제.'],
-    impersonation:['명시적 delegation / on-behalf-of 설계','서비스 토큰을 몰래 사용자처럼 쓰면 감사·권한 모델이 무너짐.']
+    impersonation:['Token Exchange (RFC 8693) / Entra OBO','받은 사용자 토큰을 다음 API용(aud) 토큰으로 교환. sub=사용자, act=호출 서비스. 서비스 토큰 + X-User-Id 헤더는 신원 증거가 없어 피할 것.']
   };
   const [rec,why]=map[c];
   const warn = (c!=='browser' && h==='yes') ? '\n\n⚠️ "사람이 참여"인데 머신 호출 주체를 골랐어요. 정말 사람의 로그인이라면 Authorization Code+OIDC가 맞습니다.'
@@ -2152,6 +2325,7 @@ const CONSOLE={
   'exchange-code':'$ POST /oauth/token   (백채널)\n  grant_type=authorization_code & code & code_verifier & client_secret\n→ 200 { access_token, refresh_token, id_token, expires_in }',
   'call-api':'$ GET /me\n  Authorization: Bearer <access_token>\n→ scope 충분: 200 OK / 부족: 403 insufficient_scope',
   'client-credentials':'$ POST /oauth/token   (백채널, 사용자 없음)\n  grant_type=client_credentials & client_secret & scope\n→ 200 { access_token }  (id_token·refresh_token 없음)\n   주체 = service:billing-worker',
+  'token-exchange-obo':'$ POST /oauth/token   (백채널, portal이 A의 요청을 처리 중)\n  grant_type=urn:ietf:params:oauth:grant-type:token-exchange\n  & subject_token=<A의 access_token> & audience=approval-api & scope=approval:read\n→ 200 { access_token, issued_token_type }\n   sub = user-a · aud = approval-api · act.sub = portal',
   'pat-risk':'$ PAT 점검\n  주체 = 사람 계정(과한 권한) · 퇴사 시 중단 · 잘 샘(코드 커밋)\n→ 운영 서비스 기본값으로 부적합. fine-grained + 만료 + secret manager.',
   'bad-state':'$ 콜백 state 검사\n  saved=st_7Yqk9bV2  received=zzz_attacker\n→ 🚨 불일치: CSRF 의심. 토큰 교환 중단, 요청 폐기.',
   'oidc-verify':'$ id_token 검증\n  iss✅ aud✅ exp✅ signature✅ nonce✅\n→ 전부 통과해야 로그인 세션 생성. 하나라도 실패 = 거부.'
@@ -2263,6 +2437,306 @@ const CC_STEPS=[
   {from:'client',to:'api',ch:'back',cap:'GET /invoices (Bearer)',wire:'GET /invoices\nAuthorization: Bearer at_svc_...',note:'<p><span class="nl what">무슨 일</span>받은 서비스 토큰을 Bearer로 실어 API를 호출합니다.</p><p><span class="nl tip">초보 주의</span>서비스 토큰에도 최소 scope만 부여하세요. invoice:read만 필요하면 쓰기 권한은 빼는 게 사고 시 피해를 줄입니다.</p>'},
   {from:'api',to:'client',ch:'back',cap:'200 데이터',wire:'HTTP/1.1 200 OK\n[ ...invoices... ]',note:'<p><span class="nl what">무슨 일</span>API 서버가 토큰의 scope(invoice:read)와 주체(서비스)를 확인하고 데이터를 돌려줍니다.</p><p><span class="nl why">왜 중요</span>사람 대상 토큰과 똑같이, 서비스 토큰도 매 호출마다 권한과 만료를 검증받습니다. "내부 서비스니까 통과"는 위험한 가정입니다.</p>'}
 ];
+
+/* ---------- 사용자 대행 실험실: 시나리오 · 단계 · 각자 가진 것 ---------- */
+const OBO_LAB={
+  title:'사용자 A의 권한으로 app 1 → app 2',
+  actors:[
+    {id:'br',nm:'🌐 A의 브라우저',sub:'사용자 A',c:'--browser'},
+    {id:'app1',nm:'🖥️ app 1 · 포털',sub:'서버',c:'--client'},
+    {id:'sso',nm:'🔐 SSO',sub:'인증 서버',c:'--auth'},
+    {id:'app2',nm:'📦 app 2 · 결재 API',sub:'API 서버',c:'--api'}
+  ],
+  phases:{
+    L:{nm:'로그인 (네 시나리오 공통)',c:'--browser'},
+    T:{nm:'app 2용 토큰 확보',c:'--auth'},
+    A:{nm:'app 2 호출',c:'--client'},
+    X:{nm:'막히는 지점',c:'--bad'}
+  },
+  base:{
+    br:[],
+    app1:['client_id / secret (portal)'],
+    sso:['앱 등록: portal','리소스 등록: approval-api'],
+    app2:['결재 데이터','토큰 검증 설정 (iss, aud = approval-api)']
+  },
+  scenarios:[
+    {id:'xchg',nm:'① Token Exchange',extra:{sso:['교환 정책: portal → approval-api 허용'],app2:['사용자 대행 허용 목록: portal']}},
+    {id:'consent',nm:'② app 2용 토큰을 따로 받기',extra:{}},
+    {id:'relay',nm:'③ 받은 토큰 그대로 전달',extra:{}},
+    {id:'cookie',nm:'④ 대조: app 2 앞에 브라우저용 SSO',extra:{app2:['앞단: 브라우저용 SSO 로그인 (세션 쿠키 검사)']}}
+  ],
+  steps:[
+    // ── 공통: 로그인 ──
+    {sc:'*',p:'L',f:'br',t:'app1',k:'req',label:'포털 접속',
+      title:'사용자 A가 포털에 접속한다',
+      desc:['아직 포털 세션이 없습니다. 포털은 로그인 화면을 직접 그리지 않고 SSO로 보냅니다. 05장에서 본 흐름과 같습니다.'],
+      http:'GET https://portal.example.com/\n\n→ 302 Location: https://sso.example.com/authorize\n    ?response_type=code&client_id=portal&state=...&code_challenge=...'},
+    {sc:'*',p:'L',f:'br',t:'sso',k:'req',label:'SSO 로그인 (ID/PW · MFA)',add:[['br','SSO 세션 쿠키 (sso.example.com 전용)'],['sso','A의 SSO 세션']],
+      title:'A가 SSO에 로그인하고 SSO 세션이 생긴다',
+      desc:['비밀번호는 SSO에만 입력됩니다. 성공하면 SSO가 자기 도메인에 세션 쿠키를 심습니다.','이 쿠키는 A의 브라우저에만 있고 sso.example.com으로 가는 요청에만 실립니다. 포털 서버도 결재 API도 이 쿠키를 갖지 않습니다. 시나리오 ②와 ④의 결과가 여기서 갈립니다.'],
+      http:'POST /login   (ID/비밀번호, MFA)\nHost: sso.example.com\n\n→ Set-Cookie: sso_session=...; Domain=sso.example.com; HttpOnly; Secure'},
+    {sc:'*',p:'L',f:'sso',t:'br',k:'res',label:'302 code (포털용)',
+      title:'SSO가 포털용 인가 코드를 준다',desc:[],
+      http:'HTTP/1.1 302 Found\nLocation: https://portal.example.com/callback?code=P-CODE&state=...'},
+    {sc:'*',p:'L',f:'br',t:'app1',k:'req',label:'code 전달',
+      title:'브라우저가 코드를 포털에 전달한다',desc:[],
+      http:'GET /callback?code=P-CODE&state=...\nHost: portal.example.com'},
+    {sc:'*',p:'L',f:'app1',t:'sso',k:'req',label:'POST /token (code)',
+      title:'포털 서버가 코드를 토큰으로 바꾼다',
+      desc:['포털 서버가 SSO의 token 엔드포인트를 직접 부릅니다. 브라우저는 거치지 않습니다.'],
+      http:'POST /token\nHost: sso.example.com\nAuthorization: Basic base64(portal:client_secret)\n\ngrant_type=authorization_code&code=P-CODE&code_verifier=...'},
+    {sc:'*',p:'L',f:'sso',t:'app1',k:'res',label:'access_token (aud = portal)',add:[['app1','A의 access_token (aud = portal)'],['app1','A의 refresh_token (포털용)']],
+      title:'포털용 토큰이 발급된다',
+      desc:['이 토큰은 포털을 위해 발급됐습니다. aud가 portal입니다. 결재 API를 위한 토큰은 아직 어디에도 없습니다.'],
+      http:'{ "access_token": "eyJ...", "refresh_token": "...", "expires_in": 3600 }\n\n# access_token payload\n{ "iss": "https://sso.example.com", "sub": "user-a",\n  "aud": "portal", "scope": "openid profile portal" }'},
+    {sc:'*',p:'L',f:'app1',t:'br',k:'res',label:'포털 세션',add:[['br','포털 세션 쿠키']],
+      title:'포털 로그인 완료',
+      desc:['포털은 토큰을 자기 서버 세션에 두고, 브라우저에는 포털 세션 쿠키만 줍니다.'],
+      http:'Set-Cookie: portal_session=...; HttpOnly; Secure'},
+    {sc:'*',p:'L',f:'br',t:'app1',k:'req',label:'"내 결재함" 클릭',
+      title:'A가 "내 결재함"을 연다',
+      desc:['결재 목록은 결재 API(app 2)에 있습니다. 여기서부터 포털 서버가 A 대신 결재 API를 불러야 하고, 네 시나리오가 갈립니다.'],
+      http:'GET /my/approvals\nHost: portal.example.com\nCookie: portal_session=...'},
+
+    // ── ① Token Exchange ──
+    {sc:'xchg',p:'T',f:'app1',t:'sso',k:'req',label:'POST /token (token-exchange)',
+      title:'포털이 A의 토큰을 결재 API용으로 교환해 달라고 한다',
+      desc:['포털이 두 가지를 함께 냅니다. 자기 자격증명(client_id·secret)과 A의 토큰(subject_token)입니다.','client credentials와 갈리는 지점입니다. 포털은 "나는 portal이다"와 "지금 A의 요청을 처리 중이다"를 동시에 증명합니다. 어느 한쪽만으로는 교환되지 않습니다.'],
+      http:'POST /token\nHost: sso.example.com\nAuthorization: Basic base64(portal:client_secret)\n\ngrant_type=urn:ietf:params:oauth:grant-type:token-exchange\n&subject_token=eyJ...(A의 access_token, aud=portal)\n&subject_token_type=urn:ietf:params:oauth:token-type:access_token\n&audience=approval-api\n&scope=approval:read'},
+    {sc:'xchg',p:'T',f:'sso',t:'sso',k:'self',label:'교환 정책 검사',
+      title:'SSO가 교환해도 되는지 판단한다',
+      desc:['A의 토큰이 유효한지, 포털이 이 대상으로 교환할 수 있는지 확인합니다. "어떤 서비스가 어떤 서비스를 사용자 권한으로 부를 수 있는가"가 SSO 한 곳의 정책으로 모입니다.','교환으로 권한이 늘어나지 않도록, 새 토큰은 원래 토큰과 같거나 더 좁은 범위로 발급하는 것이 일반적인 정책입니다.'],
+      http:'subject_token 서명·iss·exp      ✅  → sub = user-a\nclient portal 인증               ✅\n정책: portal → approval-api      ✅\n요청 scope ⊆ A에게 허용된 범위   ✅'},
+    {sc:'xchg',p:'T',f:'sso',t:'app1',k:'res',label:'새 토큰 (aud = approval-api)',add:[['app1','approval-api용 토큰 (sub = A, act = portal, 5분)']],
+      title:'결재 API 전용 토큰이 나온다',
+      desc:['sub는 그대로 user-a이고, aud는 approval-api, act.sub는 portal입니다. 이 토큰이 새도 쓸 수 있는 곳은 결재 API 하나, 기간은 몇 분입니다.','refresh_token은 보통 주지 않습니다. 만료되면 다시 교환합니다.'],
+      http:'{ "access_token": "eyJ...",\n  "issued_token_type": "urn:ietf:params:oauth:token-type:access_token",\n  "token_type": "Bearer", "expires_in": 300 }\n\n# payload\n{ "iss": "https://sso.example.com", "sub": "user-a",\n  "aud": "approval-api", "scope": "approval:read",\n  "act": { "sub": "portal" } }'},
+    {sc:'xchg',p:'A',f:'app1',t:'app2',k:'req',label:'GET /approvals (Bearer)',
+      title:'포털이 교환된 토큰으로 결재 API를 부른다',
+      desc:['A의 원래 토큰(aud=portal)은 포털 밖으로 나가지 않습니다. 서비스마다 자기 전용 토큰만 받습니다.'],
+      http:'GET /approvals?status=pending\nHost: approval-api.example.com\nAuthorization: Bearer eyJ...(교환된 토큰)'},
+    {sc:'xchg',p:'A',f:'app2',t:'app2',k:'self',label:'토큰 검사 · A 기준 조회',add:[['app2','감사 로그: user-a via portal']],
+      title:'결재 API가 A의 권한으로 조회한다',
+      desc:['sub와 act 모두 SSO가 서명한 값이라 포털이 꾸밀 수 없습니다.','서비스 권한으로 전부 꺼낸 뒤 코드에서 A 것만 거르지 마세요. 거르는 코드의 버그가 곧 유출입니다.'],
+      http:'서명·iss·exp                 ✅\naud == "approval-api"        ✅\nscope ∋ approval:read        ✅\nact.sub == "portal"          ✅ 허용 목록\nsub == "user-a"              → A가 결재자인 건만 조회'},
+    {sc:'xchg',p:'A',f:'app2',t:'app1',k:'res',label:'200 A의 결재 목록',
+      title:'A가 볼 수 있는 결재만 돌아온다',desc:[],
+      http:'HTTP/1.1 200 OK\n[ ...user-a가 결재자인 건만... ]'},
+    {sc:'xchg',p:'A',f:'app1',t:'br',k:'res',label:'결재함 표시',
+      title:'A에게 결재함이 보인다',
+      desc:['A는 다시 로그인하지도, 동의하지도 않았습니다. 교환은 전부 백채널에서 일어났습니다.'],
+      http:''},
+
+    // ── ② app 2용 토큰을 따로 받기 ──
+    {sc:'consent',p:'T',f:'app1',t:'br',k:'res',label:'302 → authorize (approval-api)',add:[['app1','state, code_verifier (결재 API용)']],
+      title:'포털이 결재 API용 인가를 따로 요청한다',
+      desc:['결재 API용 토큰이 없으니 포털이 A를 SSO authorize로 한 번 더 보냅니다. 이번 요청의 대상은 결재 API입니다(resource 파라미터 RFC 8707, 또는 결재 API용 scope).','제품에 따라 포털이 결재 API용으로 등록된 client_id를 대신 들고 이 흐름을 돌기도 합니다. AI 어시스턴트의 MCP 커넥터가 이렇게 동작합니다. 관리자가 커넥터에 MCP 서버용 client_id·secret과 SSO의 Authorization/Token URL을 등록해 둡니다.'],
+      http:'HTTP/1.1 302 Found\nLocation: https://sso.example.com/authorize\n  ?response_type=code&client_id=portal\n  &redirect_uri=https://portal.example.com/callback/approval\n  &resource=https://approval-api.example.com\n  &scope=approval:read offline_access\n  &state=S2&code_challenge=...&code_challenge_method=S256'},
+    {sc:'consent',p:'T',f:'br',t:'sso',k:'req',label:'authorize (SSO 세션 쿠키)',
+      title:'SSO에 다시 로그인하지 않는다',
+      desc:['2단계에서 생긴 SSO 세션 쿠키가 함께 갑니다. 사용자가 같으므로 ID/비밀번호를 다시 묻지 않습니다. 처음 한 번은 "포털이 결재함 읽기를 요청합니다" 같은 동의 화면이 나올 수 있습니다.','SSO 세션이 만료됐거나 결재 API에 MFA 정책이 따로 걸려 있으면 여기서 로그인이나 추가 인증이 다시 나옵니다.'],
+      http:'GET /authorize?client_id=portal&resource=...&state=S2\nHost: sso.example.com\nCookie: sso_session=...\n\n→ 세션 유효 → 로그인 화면 없이 302'},
+    {sc:'consent',p:'T',f:'sso',t:'br',k:'res',label:'302 code (결재 API용)',
+      title:'SSO가 결재 API용 코드를 준다',desc:[],
+      http:'HTTP/1.1 302 Found\nLocation: https://portal.example.com/callback/approval?code=A-CODE&state=S2'},
+    {sc:'consent',p:'T',f:'br',t:'app1',k:'req',label:'code 전달',
+      title:'브라우저가 코드를 포털에 전달한다',
+      desc:['브라우저의 역할은 여기서 끝납니다. 이후 결재 API 호출은 모두 포털 서버가 합니다.'],
+      http:'GET /callback/approval?code=A-CODE&state=S2'},
+    {sc:'consent',p:'T',f:'app1',t:'sso',k:'req',label:'POST /token (code)',
+      title:'포털이 결재 API용 토큰을 받는다',desc:[],
+      http:'POST /token\nAuthorization: Basic base64(portal:client_secret)\n\ngrant_type=authorization_code&code=A-CODE\n&redirect_uri=https://portal.example.com/callback/approval\n&code_verifier=...'},
+    {sc:'consent',p:'T',f:'sso',t:'app1',k:'res',label:'access_token (aud = approval-api) + refresh',del:[['app1','state, code_verifier (결재 API용)']],add:[['app1','approval-api용 토큰 (sub = A, client_id = portal)'],['app1','approval-api용 refresh_token']],
+      title:'결재 API용 토큰과 refresh_token이 발급된다',
+      desc:['포털이 이 토큰을 사용자별로 보관하고, 만료되면 refresh_token으로 갱신합니다. 다음부터는 이 앞의 다섯 단계 없이 바로 결재 API를 부릅니다.','토큰에 act는 없지만, 누가 받은 토큰인지는 client_id 클레임에 남습니다(RFC 9068 JWT access token).'],
+      http:'{ "access_token": "eyJ...", "refresh_token": "...", "expires_in": 3600 }\n\n# payload\n{ "iss": "https://sso.example.com", "sub": "user-a",\n  "aud": "approval-api", "client_id": "portal",\n  "scope": "approval:read" }'},
+    {sc:'consent',p:'A',f:'app1',t:'app2',k:'req',label:'GET /approvals (Bearer)',
+      title:'포털이 결재 API용 토큰으로 호출한다',desc:[],
+      http:'GET /approvals?status=pending\nHost: approval-api.example.com\nAuthorization: Bearer eyJ...(aud=approval-api)'},
+    {sc:'consent',p:'A',f:'app2',t:'app2',k:'self',label:'토큰 검사 · A 기준 조회',add:[['app2','감사 로그: user-a (client portal)']],
+      title:'결재 API가 A의 권한으로 조회한다',
+      desc:['aud가 자기 자신이고 sub가 user-a이니 A의 권한으로 조회합니다.'],
+      http:'서명·iss·exp              ✅\naud == "approval-api"     ✅\nscope ∋ approval:read     ✅\nsub == "user-a"           → A가 결재자인 건만 조회'},
+    {sc:'consent',p:'A',f:'app2',t:'app1',k:'res',label:'200 A의 결재 목록',
+      title:'A가 볼 수 있는 결재만 돌아온다',desc:[],
+      http:'HTTP/1.1 200 OK\n[ ...user-a가 결재자인 건만... ]'},
+    {sc:'consent',p:'A',f:'app1',t:'br',k:'res',label:'결재함 표시',
+      title:'A에게 결재함이 보인다',
+      desc:['장점: 표준 Authorization Code만으로 됩니다. SSO가 token exchange를 지원하지 않아도 됩니다.','대가: 처음 받을 때는 A의 브라우저가 있어야 합니다. 부를 서비스가 늘 때마다 인가가 늘고, 포털이 서비스별 refresh_token을 오래 보관합니다.'],
+      http:''},
+
+    // ── ③ 받은 토큰 그대로 전달 ──
+    {sc:'relay',p:'X',f:'app1',t:'app2',k:'req',label:'GET /approvals (Bearer, aud = portal)',warn:true,
+      title:'포털이 받은 토큰을 그대로 넘긴다',
+      desc:['포털이 갖고 있는 A의 토큰을 Authorization 헤더 그대로 결재 API에 실어 보냅니다.'],
+      http:'GET /approvals?status=pending\nHost: approval-api.example.com\nAuthorization: Bearer eyJ...(A의 토큰, aud=portal)'},
+    {sc:'relay',p:'X',f:'app2',t:'app2',k:'self',label:'aud 검사: portal ≠ approval-api',warn:true,
+      title:'결재 API가 aud에서 거부한다',
+      desc:['서명·iss·exp는 통과합니다. 같은 SSO가 서명한 진짜 토큰이니까요. 걸리는 것은 aud입니다. 이 토큰은 포털을 위해 발급됐습니다.','결재 API가 aud 검사를 빼면 통과합니다. 그러면 포털용으로 발급된 어떤 토큰이든, 포털이 털렸을 때 공격자가 손에 넣은 토큰까지 결재 API에서 쓰입니다.'],
+      http:'서명·iss·exp              ✅\npayload.aud == "portal"\nexpected    == "approval-api"   ❌'},
+    {sc:'relay',p:'X',f:'app2',t:'app1',k:'res',label:'401 invalid_token',warn:true,
+      title:'401이 돌아온다',desc:[],
+      http:'HTTP/1.1 401 Unauthorized\nWWW-Authenticate: Bearer error="invalid_token",\n  error_description="audience mismatch"'},
+    {sc:'relay',p:'X',f:'app1',t:'br',k:'res',label:'결재함 오류',warn:true,
+      title:'결재함을 열 수 없다',
+      desc:['그대로 전달이 통하는 경우는 둘입니다. 로그인할 때부터 aud에 결재 API까지 넣어 받았거나(토큰 하나가 여러 서비스에서 통합니다), 게이트웨이와 그 뒤 서비스처럼 처음부터 같은 aud를 쓰기로 한 신뢰 경계 안입니다. 그 밖에서는 ①이나 ②로 바꿉니다.'],
+      http:''},
+
+    // ── ④ 대조: 브라우저용 SSO가 app 2 앞에 ──
+    {sc:'cookie',p:'X',f:'app1',t:'app2',k:'req',label:'GET /approvals (쿠키 없음)',
+      title:'포털 서버가 결재 API를 부른다 — 결재 API는 브라우저용 SSO 뒤에 있다',
+      desc:['결재 API가 사람용 웹 화면처럼 보호된 경우입니다. 앞단의 게이트웨이나 로드밸런서가 세션 쿠키를 보고, 없으면 SSO 로그인으로 리다이렉트합니다(예: ALB의 authenticate-oidc).','포털 서버에는 그 쿠키가 없습니다. SSO 세션 쿠키는 A의 브라우저에 있고 sso.example.com에 묶여 있습니다. 오른쪽 "각자 가진 것"에서 확인해 보세요.'],
+      http:'GET /approvals\nHost: approval-api.example.com\nCookie: (없음)'},
+    {sc:'cookie',p:'X',f:'app2',t:'app2',k:'self',label:'세션 쿠키 없음 → 로그인 필요',warn:true,
+      title:'앞단이 인증되지 않은 요청으로 판단한다',
+      desc:['브라우저용 보호는 세션 쿠키만 봅니다. Authorization 헤더에 토큰을 실어 보내도 보지 않는 구성이 많습니다.'],
+      http:'세션 쿠키      없음\n→ on-unauthenticated: SSO 로그인으로 302'},
+    {sc:'cookie',p:'X',f:'app2',t:'app1',k:'res',label:'302 → SSO 로그인',warn:true,
+      title:'포털 서버에게 로그인 화면으로 가라고 한다',desc:[],
+      http:'HTTP/1.1 302 Found\nLocation: https://sso.example.com/authorize?response_type=code&client_id=approval-web&...'},
+    {sc:'cookie',p:'X',f:'app1',t:'app1',k:'self',label:'서버는 로그인 화면을 통과할 수 없다',warn:true,
+      title:'호출이 실패한다',
+      desc:['포털 서버는 브라우저가 아닙니다. 302를 따라가도 ID/비밀번호를 입력할 사람이 없습니다.','"A가 SSO로 로그인해 있다"는 A의 브라우저와 SSO 사이의 사실입니다. 서버 간 호출에서는 그 사실을 토큰으로 옮겨 와야 합니다(①, ②). 서비스가 부르는 API는 리다이렉트 대신 Bearer 토큰 검증으로 보호하고, 실패하면 401을 돌려줍니다.'],
+      http:''}
+  ]
+};
+
+function createWalletLab(mountId,cfg){
+  const root=$('#'+mountId); if(!root)return;
+  const NS='http://www.w3.org/2000/svg', W=720, ROW=44, TOP=8;
+  const X={}; cfg.actors.forEach((a,i)=>X[a.id]=90+i*180);
+  const NAME={}; cfg.actors.forEach(a=>NAME[a.id]=a.nm.replace(/^\S+\s/,''));
+  const svgEl=(tag,attrs,parent)=>{const e=document.createElementNS(NS,tag);for(const k in attrs)e.setAttribute(k,attrs[k]);parent&&parent.appendChild(e);return e;};
+  const wrap=document.createElement('div'); wrap.className='wl'; wrap.tabIndex=0;
+  wrap.innerHTML=`
+    <div class="wl-top"><div class="wl-title">▶ ${cfg.title}</div><div class="wl-tabs"></div></div>
+    <div class="wl-dia"><div class="wl-dia-in">
+      <div class="wl-head"><svg viewBox="0 0 ${W} 62"></svg></div>
+      <svg class="wl-seq" viewBox="0 0 ${W} 100"></svg>
+    </div></div>
+    <div class="wl-ctl">
+      <button class="sm wl-prev">◀ 이전</button>
+      <button class="primary wl-play">⏯ 자동재생</button>
+      <button class="sm wl-next">다음 ▶</button>
+      <div class="wl-bar"></div><span class="wl-count"></span>
+    </div>
+    <div class="wl-body">
+      <div><span class="wl-phase"></span><div class="wl-step"></div><div class="wl-net"></div><div class="wl-desc"></div><pre class="wl-http"></pre></div>
+      <div class="wl-wal"><h5>이 시점에 각자 가진 것</h5><div class="wl-wgrid"></div></div>
+    </div>`;
+  root.appendChild(wrap);
+  const head=$('.wl-head svg',wrap), seq=$('.wl-seq',wrap), dia=$('.wl-dia',wrap);
+  let sc=cfg.scenarios[0].id, steps=[], cur=0, timer=null, anim=null;
+
+  cfg.actors.forEach(a=>{
+    const x=X[a.id];
+    svgEl('rect',{x:x-78,y:8,width:156,height:46,rx:9,id:'wlh-'+mountId+'-'+a.id,style:'fill:var(--panel);stroke:var(--border)'},head);
+    svgEl('text',{x,y:28,'text-anchor':'middle','font-size':12.5,'font-weight':700,style:'fill:#fff'},head).textContent=a.nm;
+    svgEl('text',{x,y:45,'text-anchor':'middle','font-size':10.5,style:'fill:var(--text-mut)'},head).textContent=a.sub;
+  });
+  const tabs=$('.wl-tabs',wrap);
+  cfg.scenarios.forEach(s=>{const b=document.createElement('button');b.className='sm';b.textContent=s.nm;b.dataset.id=s.id;b.onclick=()=>setSc(s.id,true);tabs.appendChild(b);});
+
+  function drawSeq(){
+    seq.innerHTML='';
+    const H=TOP+steps.length*ROW+14; seq.setAttribute('viewBox',`0 0 ${W} ${H}`);
+    cfg.actors.forEach(a=>svgEl('line',{x1:X[a.id],y1:0,x2:X[a.id],y2:H,'stroke-dasharray':'4 4',style:'stroke:var(--border-2);stroke-width:1.2'},seq));
+    steps.forEach((s,i)=>{
+      const y=TOP+i*ROW+28, col=`var(${cfg.phases[s.p].c})`;
+      const g=svgEl('g',{class:'row','data-i':i},seq);
+      svgEl('rect',{class:'hit',x:0,y:y-28,width:W,height:ROW},g);
+      svgEl('text',{x:6,y:y+4,'font-size':10.5,style:'fill:var(--text-mut)'},g).textContent=i+1;
+      const lbl=(s.warn?'⚠ ':'')+s.label;
+      if(s.k==='self'){
+        const x=X[s.f], right=x<600;
+        svgEl('rect',{x:x-6,y:y-13,width:12,height:20,rx:3,style:`fill:var(--panel);stroke:${col};stroke-width:2`},g);
+        svgEl('text',{x:right?x+12:x-12,y:y+1,'text-anchor':right?'start':'end','font-size':11.5,'font-weight':700,style:`fill:${s.warn?'var(--bad)':col}`},g).textContent=lbl;
+      }else{
+        const x1=X[s.f], x2=X[s.t], d=Math.sign(x2-x1);
+        svgEl('line',{x1,y1:y,x2:x2-d*8,y2:y,'stroke-dasharray':s.k==='res'?'6 4':'',style:`stroke:${col};stroke-width:2`},g);
+        svgEl('path',{d:`M${x2},${y} l${-d*9},-5 l0,10 z`,style:`fill:${col}`},g);
+        svgEl('text',{x:(x1+x2)/2,y:y-7,'text-anchor':'middle','font-size':11.5,'font-weight':600,style:`fill:${s.warn?'var(--bad)':'var(--text-dim)'}`},g).textContent=lbl;
+      }
+      g.addEventListener('click',()=>{stop();go(i);});
+    });
+    svgEl('g',{class:'wl-pk'},seq);
+  }
+  function wallets(i){
+    const s=cfg.scenarios.find(x=>x.id===sc), w={};
+    cfg.actors.forEach(a=>w[a.id]=[...cfg.base[a.id],...(s.extra[a.id]||[])].map(v=>({v,st:''})));
+    for(let j=0;j<=i;j++){
+      cfg.actors.forEach(a=>w[a.id]=w[a.id].filter(x=>x.st!=='gone').map(x=>({v:x.v,st:''})));
+      (steps[j].del||[]).forEach(([a,v])=>w[a].forEach(x=>{if(x.v===v)x.st='gone';}));
+      (steps[j].add||[]).forEach(([a,v])=>w[a].push({v,st:'new'}));
+    }
+    return w;
+  }
+  function render(){
+    const s=steps[cur], ph=cfg.phases[s.p], css=v=>getComputedStyle(document.documentElement).getPropertyValue(v).trim();
+    const pe=$('.wl-phase',wrap); pe.textContent=ph.nm; pe.style.background=`var(${ph.c})`;
+    $('.wl-step',wrap).textContent=`${cur+1}. ${s.title}`;
+    const route=s.k==='self'?NAME[s.f]:`${NAME[s.f]} → ${NAME[s.t]}`;
+    const chan=s.k==='self'?'내부 검사':(s.f==='br'||s.t==='br')?'프론트채널 (브라우저 경유)':'백채널 (서버 직접)';
+    $('.wl-net',wrap).textContent=`${route}  ·  ${chan}`+(s.warn?'  ·  ⚠ 막히는 지점':'');
+    const d=$('.wl-desc',wrap); d.innerHTML=''; s.desc.forEach(t=>{const p=document.createElement('p');p.textContent=t;d.appendChild(p);});
+    $('.wl-http',wrap).textContent=s.http;
+    const w=wallets(cur), wg=$('.wl-wgrid',wrap); wg.innerHTML='';
+    cfg.actors.forEach(a=>{
+      const box=document.createElement('div'); box.className='wl-w'+(a.id===s.f||a.id===s.t?' on':'');
+      const b=document.createElement('b'); b.textContent=a.nm; box.appendChild(b);
+      const ul=document.createElement('ul');
+      if(!w[a.id].length){const li=document.createElement('li');li.className='none';li.textContent='(없음)';ul.appendChild(li);}
+      w[a.id].forEach(x=>{const li=document.createElement('li');li.textContent=x.v;if(x.st)li.className=x.st;ul.appendChild(li);});
+      box.appendChild(ul); wg.appendChild(box);
+    });
+    $$('.row',seq).forEach(g=>{const i=+g.dataset.i;g.classList.toggle('cur',i===cur);g.classList.toggle('future',i>cur);});
+    cfg.actors.forEach(a=>{const r=document.getElementById('wlh-'+mountId+'-'+a.id), on=a.id===s.f||a.id===s.t;
+      r.style.stroke=on?`var(${ph.c})`:'var(--border)'; r.style.strokeWidth=on?2.5:1;});
+    $$('.wl-bar span',wrap).forEach((b,i)=>b.className=i<cur?'done':i===cur?'cur':'');
+    $('.wl-count',wrap).textContent=`${cur+1} / ${steps.length}`;
+    const scale=seq.getBoundingClientRect().width/W, hh=$('.wl-head',wrap).offsetHeight;
+    if(scale>0) dia.scrollTo({top:Math.max(0,hh+(TOP+cur*ROW)*scale-dia.clientHeight/2),behavior:'smooth'});
+    packet(s,css(ph.c));
+  }
+  function packet(s,color){
+    const layer=$('.wl-pk',seq); if(anim)cancelAnimationFrame(anim); layer.innerHTML='';
+    const y=TOP+cur*ROW+28, t0=performance.now();
+    if(s.k==='self'){
+      const c=svgEl('circle',{cx:X[s.f],cy:y-3,r:8,style:`fill:none;stroke:${color};stroke-width:2`},layer);
+      const tick=now=>{const p=((now-t0)%1200)/1200;c.setAttribute('r',8+p*16);c.setAttribute('opacity',1-p);anim=requestAnimationFrame(tick);};
+      anim=requestAnimationFrame(tick); return;
+    }
+    const x1=X[s.f], x2=X[s.t], g=svgEl('g',{},layer);
+    svgEl('rect',{x:-11,y:-8,width:22,height:16,rx:3,style:`fill:${color}`},g);
+    svgEl('path',{d:'M-11,-8 L0,1 L11,-8',style:'fill:none;stroke:#0a0f1a;stroke-width:1.5'},g);
+    const ease=p=>p<.5?2*p*p:1-Math.pow(-2*p+2,2)/2;
+    const tick=now=>{const p=Math.min(1,(now-t0)/900);g.setAttribute('transform',`translate(${x1+(x2-x1)*ease(p)},${y})`);
+      if(p<1)anim=requestAnimationFrame(tick);else g.setAttribute('opacity',0);};
+    anim=requestAnimationFrame(tick);
+  }
+  function go(i){cur=Math.max(0,Math.min(steps.length-1,i));render();}
+  function stop(){clearInterval(timer);timer=null;$('.wl-play',wrap).textContent='⏯ 자동재생';}
+  function play(){if(cur>=steps.length-1)go(0);$('.wl-play',wrap).textContent='⏸ 멈춤';
+    timer=setInterval(()=>{if(cur>=steps.length-1){stop();return;}go(cur+1);},2600);}
+  function setSc(id,jump){
+    stop(); sc=id; steps=cfg.steps.filter(s=>s.sc==='*'||s.sc===id);
+    $$('button',tabs).forEach(b=>b.classList.toggle('primary',b.dataset.id===id));
+    const bar=$('.wl-bar',wrap); bar.innerHTML='';
+    steps.forEach((s,i)=>{const sp=document.createElement('span');sp.style.background=`var(${cfg.phases[s.p].c})`;sp.title=`${i+1}. ${s.title}`;sp.onclick=()=>{stop();go(i);};bar.appendChild(sp);});
+    drawSeq();
+    // 시나리오를 바꾸면 공통 로그인 뒤, 갈리는 첫 단계에서 시작한다
+    cur=jump?Math.max(0,steps.findIndex(s=>s.sc!=='*')):0;
+    render();
+  }
+  $('.wl-prev',wrap).onclick=()=>{stop();go(cur-1);};
+  $('.wl-next',wrap).onclick=()=>{stop();go(cur+1);};
+  $('.wl-play',wrap).onclick=()=>timer?stop():play();
+  wrap.addEventListener('keydown',e=>{
+    if(e.key==='ArrowRight'){e.preventDefault();stop();go(cur+1);}
+    else if(e.key==='ArrowLeft'){e.preventDefault();stop();go(cur-1);}
+  });
+  setSc(sc,false);
+}
 
 const OIDC_ACTORS=[
   {id:'user',ic:'👤',nm:'사용자'},
@@ -2426,6 +2900,7 @@ function init(){
 
   createSequence('mainSeq',{title:'Authorization Code + PKCE (+ OIDC) Flow',actors:MAIN_ACTORS,steps:MAIN_STEPS});
   createSequence('ccSeq',{title:'Client Credentials Flow (머신 to 머신)',actors:CC_ACTORS,steps:CC_STEPS});
+  createWalletLab('oboLab',OBO_LAB);
   createSequence('oidcSeq',{title:'OIDC 메시지 흐름 (Discovery · JWKS · id_token 검증 · UserInfo)',actors:OIDC_ACTORS,steps:OIDC_STEPS,hasCheck:true});
   createSequence('nativeSeq',{title:'CLI · 네이티브 앱 로그인 (Authorization Code + PKCE · 루프백 리다이렉트)',actors:NATIVE_ACTORS,steps:NATIVE_STEPS,hasCheck:true});
   createSequence('deviceSeq',{title:'디바이스 코드 흐름 (Device Authorization Grant · 폴링)',actors:DEVICE_ACTORS,steps:DEVICE_STEPS});
